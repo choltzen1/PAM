@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Promotions – {{ promotion_code }}</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/promotions.css') }}">
+  <!-- Font Awesome for icons -->
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+</head>
+<body>
+  <!-- Header -->
+  <header class="header">
+    <div class="header-title">Promotions – {{ promotion_code }}</div>
+    <div class="user-name">{{ user_name }}</div>
+  </header>
+
+  <div class="container">
+    <!-- Controls: filter / search / actions -->
+    <div class="controls">
+      <div class="filter-bar">
+        <label for="owner-filter">Filter by Promotion Owner</label>
+        <select id="owner-filter" name="owner">
+          <option value="all">All</option>
+          {% for owner in owners %}
+            <option value="{{ owner }}" {% if owner == selected_owner %}selected{% endif %}>{{ owner }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="search-bar">
+        <input type="text"
+               id="search-input"
+               name="search"
+               placeholder="Promo Code or Owner"
+               value="{{ search_query }}">
+      </div>
+
+      <div class="action-buttons">
+        <button class="button"><i class="fas fa-plus"></i> Create JIRA</button>
+        <button class="button"><i class="fas fa-calendar-alt"></i> Date Mismatch</button>
+        <button class="button"><i class="fas fa-wrench"></i> Get Promo Code</button>
+        <button class="button"><i class="fas fa-check-square"></i> DCD Validation</button>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      {% for tab in ['RDC','SPE','Sprint','Functional','Z-Lab'] %}
+        <button class="tab {% if tab == active_tab %}active{% endif %}">
+          {{ tab }}
+        </button>
+      {% endfor %}
+    </div>
+
+    <!-- Data Table -->
+    <table>
+      <thead>
+        <tr>
+          <th>Promo Code</th>
+          <th>Orbit ID</th>
+          <th>Status</th>
+          <th>Bill Facing Name</th>
+          <th>Start Date</th>
+          <th>End Date</th>
+          <th>Promo Owner</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for promo in promotions %}
+        <tr>
+          <td>{{ promo.code }}</td>
+          <td>{{ promo.orbit_id }}</td>
+          <td>{{ promo.status }}</td>
+          <td>{{ promo.description }}</td>
+          <td>{{ promo.start_date }}</td>
+          <td>{{ promo.end_date }}</td>
+          <td>{{ promo.owner }}</td>
+          <td>
+            <div class="actions">
+              <button class="icon-button" title="Edit"><i class="fas fa-edit"></i></button>
+              <button class="icon-button" title="Team"><i class="fas fa-users"></i></button>
+              <button class="icon-button" title="Export"><i class="fas fa-file-export"></i></button>
+              <button class="icon-button" title="Refresh"><i class="fas fa-sync-alt"></i></button>
+              <button class="icon-button" title="Link"><i class="fas fa-link"></i></button>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <!-- Footer / Navigation -->
+    <footer class="footer">
+      <div class="footer-time">{{ current_datetime }}</div>
+      <div>
+        <button class="nav-button" title="Back"><i class="fas fa-chevron-left"></i></button>
+        <button class="nav-button" title="Home"><i class="fas fa-home"></i></button>
+      </div>
+    </footer>
+  </div>
+</body>
+</html>
