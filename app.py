@@ -57,6 +57,14 @@ def edit_promo():
         ]
     }
 
+    # Load SOC Grouping content from text file
+    soc_grouping_content = []
+    try:
+        with open("static/soc_grouping.txt", "r") as file:
+            soc_grouping_content = file.readlines()
+    except FileNotFoundError:
+        soc_grouping_content = ["Error: SOC Grouping file not found."]
+
     # Determine active tab from GET or POST
     active_tab = request.args.get('tab')
     if request.method == 'POST':
@@ -65,11 +73,13 @@ def edit_promo():
         # For now, just simulate a save and stay on the same tab
     if not active_tab:
         active_tab = 'Details'
+
     return render_template(
         "edit_promo.html",
         promo=fake_promo,
         user_name="Daniel Zhang",
-        active_tab=active_tab
+        active_tab=active_tab,
+        soc_grouping_content=soc_grouping_content
     )
 
 

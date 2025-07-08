@@ -1,4 +1,3 @@
-
 {% extends "base.html" %}
 {% block title %}Edit Promotion – {{ promo.code }}{% endblock %}
 {% block content %}
@@ -49,11 +48,11 @@
       </div>
       <!-- RIGHT PANEL -->
       <div style="flex: 2.2; min-width: 0; background: #fff; padding: 0;">
-        <div class="tabs" style="margin: 0 0 0.5rem 0;">
+        <div class="tabs" style="margin: 0 0 1rem 0;">
           {% for tab in ['Details','Dates & Times','Requirements','Segmentation','Groupings','BPTCR'] %}
             <a href="{{ url_for('edit_promo', promo_code=promo.code, tab=tab) }}"
                class="tab {% if tab == active_tab %}active{% endif %}"
-               style="min-width: 160px; text-decoration: none; display: inline-block;">
+               style="min-width: 120px; text-decoration: none; display: inline-block; margin-right: 0.3rem; font-size: 0.9rem;">
               {{ tab }}
             </a>
           {% endfor %}
@@ -226,6 +225,39 @@
                 </div>
               </div>
             </div>
+          {% elif active_tab == 'Segmentation' %}
+            <!-- Segmentation Tab Content (Modernized, Consistent Layout) -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 1.2rem 0.7rem; align-items: start;">
+              <!-- Segment Name -->
+              <div style="grid-column: 1 / 5; font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); margin-bottom: 0.5rem; padding-bottom: 0.2rem;">Segment Name</div>
+              <input style="grid-column: 1 / 5; margin-bottom: 0.5rem;" class="form-control" name="segment_name" value="{{ promo.segment_name }}">
+
+              <!-- Sub Segment -->
+              <div style="grid-column: 1 / 5; font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); margin-bottom: 0.5rem; padding-bottom: 0.2rem;">Sub Segment</div>
+              <div style="grid-column: 1 / 5; display: flex; gap: 1rem; align-items: center; background: #f7f7f7; border-radius: 4px; padding: 0.5rem 0.7rem; border: 1px solid #ccc; margin-bottom: 0.5rem;">
+                {% for segment in ['Active Military','Family','Reserve','Retired','Promo Code'] %}
+                  <label style="font-weight: 500; color: #333;">
+                    <input type="radio" name="sub_segment" value="{{ segment }}" {% if promo.sub_segment == segment %}checked{% endif %}>
+                    <span style="margin-left: 0.2rem;">{{ segment }}</span>
+                  </label>
+                {% endfor %}
+              </div>
+
+              <!-- Segment Group ID -->
+              <div style="font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); padding-bottom: 0.2rem; grid-column: 1 / 3;">Segment Group ID</div>
+              <div style="font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); padding-bottom: 0.2rem; grid-column: 3 / 5;">Segment Level</div>
+              <input style="grid-column: 1 / 3;" class="form-control" name="segment_group_id" value="{{ promo.segment_group_id }}">
+              <div style="grid-column: 3 / 5;">
+                <div style="display: flex; gap: 1rem; align-items: center; background: #f7f7f7; border-radius: 4px; padding: 0.3rem 0.7rem; border: 1px solid #ccc;">
+                  {% for level in ['BAN','LINE','NA'] %}
+                    <label style="font-weight: 500; color: #333;">
+                      <input type="radio" name="segment_level" value="{{ level }}" {% if promo.segment_level == level %}checked{% endif %}>
+                      <span style="margin-left: 0.2rem;">{{ level }}</span>
+                    </label>
+                  {% endfor %}
+                </div>
+              </div>
+            </div>
           {% elif active_tab == 'Requirements' %}
             <!-- Requirements Tab Content (Legacy/Modernized) -->
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem 0.7rem; align-items: start;">
@@ -283,6 +315,112 @@
                     <span style="margin-left: 0.2rem;">{{ group }}</span>
                   </label>
                 {% endfor %}
+              </div>
+            </div>
+          {% elif active_tab == 'BPTCR' %}
+            <!-- BPTCR Tab Content -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem 0.7rem; align-items: start;">
+              <!-- BPTCR Section -->
+              <div style="grid-column: 1 / 3; font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); margin-bottom: 0.5rem; padding-bottom: 0.2rem;">BPTCR Details</div>
+              <div style="grid-column: 1 / 3; background: #f7f7f7; border-radius: 4px; padding: 0.5rem 0.7rem; border: 1px solid #ccc;">
+                <ul style="margin: 0; padding: 0; list-style: none;">
+                  {% for detail in promo.bptcr_details %}
+                    <li style="margin-bottom: 0.5rem;">{{ detail }}</li>
+                  {% endfor %}
+                </ul>
+              </div>
+            </div>
+          {% elif active_tab == 'Groupings' %}
+            <!-- Groupings Tab Content -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem 0.7rem; align-items: start;">
+              <!-- SOC Grouping -->
+              <div style="grid-column: 1 / 3; font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); margin-bottom: 1rem; padding-bottom: 0.5rem; text-align: center;">SOC Grouping</div>
+              <div style="grid-column: 1 / 2; flex: 1; padding: 1rem; background: #e6e6e6; border-radius: 4px;">
+                <select class="form-select" name="soc_grouping" style="width: 100%; padding: 0.5rem; font-size: 1rem;">
+                  <option value="Group 1NS">Group 1NS</option>
+                  <option value="Group 3">Group 3</option>
+                  <option value="Group 4">Group 4</option>
+                  <option value="Group 5">Group 5</option>
+                  <option value="Group 6">Group 6</option>
+                </select>
+              </div>
+              <div style="grid-column: 2 / 3; flex: 3; padding: 1rem; background: #f7f7f7; border-radius: 4px; border: 1px solid #ccc; overflow-y: auto; max-height: 300px;">
+                <ul style="margin: 0; padding: 0; list-style: none; font-size: 0.9rem; line-height: 1.5;">
+                  <li style="margin-bottom: 0.5rem; font-weight: bold;">Group 1NS - GSM - Consumer & TFB</li>
+                  <li style="margin-bottom: 0.5rem;">T-Mobile ONE rate plans</li>
+                  <li style="margin-bottom: 0.5rem;">Magenta rate plans</li>
+                  <li style="margin-bottom: 0.5rem;">Essentials rate plans</li>
+                  <li style="margin-bottom: 0.5rem;">Bus/Gov Unlimited rate plans</li>
+                  <li style="margin-bottom: 0.5rem; font-weight: bold;">Group 3 - MI - Consumer & TFB</li>
+                  <li style="margin-bottom: 0.5rem;">10GB or higher Mobile Internet rate plans (limited buckets)</li>
+                  <li style="margin-bottom: 0.5rem;">Excludes unlimited highspeed data plans</li>
+                  <li style="margin-bottom: 0.5rem; font-weight: bold;">Group 4 - GSM - Consumer & TFB - excludes PlusUP & MAXUp line level upsell SOCs)</li>
+                  <li style="margin-bottom: 0.5rem; font-weight: bold;">Group 5 - MI - All MTME Eligible MI/BTS - Consumer & TFB</li>
+                  <li style="margin-bottom: 0.5rem; font-weight: bold;">Group 6 - GSM - Consumer & TFB</li>
+                  <li style="margin-bottom: 0.5rem;">TMO ONE Plus rate plans (Incl. 55+)</li>
+                  <li style="margin-bottom: 0.5rem;">Magenta Plus rate plans (Incl. First Responder & 55+)</li>
+                  <li style="margin-bottom: 0.5rem;">Magenta MAX rate plans (Incl. First responder & 55+)</li>
+                  <li style="margin-bottom: 0.5rem;">TMO ONE Plus Military rate plans</li>
+                  <li style="margin-bottom: 0.5rem;">Magenta Plus Military rate plans</li>
+                  <li style="margin-bottom: 0.5rem;">Magenta MAX Military rate plans</li>
+                  <li style="margin-bottom: 0.5rem;">Business Unlimited Plus plans</li>
+                  <li style="margin-bottom: 0.5rem;">Magenta Plus DHH plans</li>
+                  <li style="margin-bottom: 0.5rem;">Magenta MAX DHH plans</li>
+                  <li style="margin-bottom: 0.5rem;">Business Unlimited Ultimate plans</li>
+                  <li style="margin-bottom: 0.5rem;">Plus Up Upsell SOCs (Include Intl/Global Plus SOCs)</li>
+                  <li style="margin-bottom: 0.5rem;">MAXUp Upsell SOCs</li>
+                  <li style="margin-bottom: 0.5rem;">Business Unlimited Upsell SOCs (Ultimate)</li>
+                </ul>
+              </div>
+
+              <!-- Account Type -->
+              <div style="grid-column: 1 / 3; font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); margin-top: 1rem; margin-bottom: 0.5rem; padding-bottom: 0.2rem;">Account Type</div>
+              <div style="grid-column: 1 / 2;">
+                <select class="form-select">
+                  <option value="A01">A01</option>
+                  <option value="A02">A02</option>
+                  <option value="A03">A03</option>
+                  <option value="A04">A04</option>
+                  <option value="A05">A05</option>
+                  <option value="A06">A06</option>
+                  <option value="A07">A07</option>
+                  <option value="A08">A08</option>
+                  <option value="A09">A09</option>
+                  <option value="A10">A10</option>
+                </select>
+              </div>
+              <div style="grid-column: 2 / 3; background: #f7f7f7; border-radius: 4px; padding: 0.5rem 0.7rem; border: 1px solid #ccc; overflow-y: auto; max-height: 150px;">
+                <ul style="margin: 0; padding: 0; list-style: none;">
+                  <li style="margin-bottom: 0.5rem;">Regular (I/R); Association (I/A); GSA (I/F); Government (I/G); MCSA (I/M)</li>
+                  <li style="margin-bottom: 0.5rem;">Corporate (B/C); Retail (B/L); MCSA (B/M); National (B/N); MCSAGE (B/O)</li>
+                  <li style="margin-bottom: 0.5rem;">Non-Profit (B/P); Sole-Proprietorship (I/S)</li>
+                  <li style="margin-bottom: 0.5rem;">Employee (S/Y); Non TMO Employee (S/6)</li>
+                </ul>
+              </div>
+
+              <!-- Sales Applications -->
+              <div style="grid-column: 1 / 3; font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); margin-top: 1rem; margin-bottom: 0.5rem; padding-bottom: 0.2rem;">Sales Applications</div>
+              <div style="grid-column: 1 / 2;">
+                <select class="form-select">
+                  <option value="S01">S01</option>
+                  <option value="S02">S02</option>
+                  <option value="S03">S03</option>
+                  <option value="S04">S04</option>
+                  <option value="S05">S05</option>
+                  <option value="S06">S06</option>
+                  <option value="S07">S07</option>
+                  <option value="S08">S08</option>
+                  <option value="S09">S09</option>
+                  <option value="S10">S10</option>
+                </select>
+              </div>
+              <div style="grid-column: 2 / 3; background: #f7f7f7; border-radius: 4px; padding: 0.5rem 0.7rem; border: 1px solid #ccc; overflow-y: auto; max-height: 150px;">
+                <ul style="margin: 0; padding: 0; list-style: none;">
+                  <li style="margin-bottom: 0.5rem;">Care - QVXPC; Dash (TSL) - Virtual Retail</li>
+                  <li style="margin-bottom: 0.5rem;">QVXPR - Retail; POS - Retail; NAT - National Retail</li>
+                  <li style="margin-bottom: 0.5rem;">Web (TMO) - T-Mo.com; Web - MyT-Mo (cloud)</li>
+                  <li style="margin-bottom: 0.5rem;">Costco with EIP; BestBuy</li>
+                </ul>
               </div>
             </div>
           {% endif %}
