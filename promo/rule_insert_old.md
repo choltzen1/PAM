@@ -1,0 +1,120 @@
+
+def generate_eligibility_insert(data: dict) -> str:
+    """
+    Build the INSERT for PROMO_ELIGIBILITY_RULES using
+    the parsed PDT fields.
+    """
+    tmpl = """
+INSERT INTO PROMO_ELIGIBILITY_RULES (
+  RULE_ID,
+  PROMO_CODE,
+  PROMO_START_DATE,
+  PROMO_END_DATE,
+  SYS_CREATION_DATE,
+  OPERATOR_ID,
+  APPLICATION_ID,
+  DL_SERVICE_CODE,
+  PROMO_DESCRIPTION,
+  PROMO_DURATION,
+  PROMO_AMOUNT,
+  EFFECTIVE_DATE,
+  EXPIRATION_DATE,
+  SKU_GROUP_ID,
+  PRIM_SKU_GROUP_ID,
+  SOC_GROUP_ID,
+  ATST_GROUP_ID,
+  APPL_GROUP_ID,
+  DEVICE_ST_GROUP_ID,
+  FINANCE_TYPE,
+  ACT_LINE_REQ_IND,
+  APP_GRACE_GROUP_ID,
+  TRADE_IN_GRP_ID,
+  TRADE_IN_GRACE_PERIOD,
+  MAINT_ACT_LINE_CHK_IND,
+  MAINT_SOC_CHK_IND,
+  STORE_GRP_ID,
+  MARKET_GRP_ID,
+  LIMIT_PER_BAN,
+  TENURE_GROUP_ID,
+  PORTIN_GROUP_ID,
+  PROMO_PERC_DISC,
+  C2_LINK,
+  MIN_GSM_COUNT,
+  MAX_GSM_COUNT,
+  DISPLAY_PROMO,
+  TIERED_GRP_ID,
+  SEGMENT_GRP_ID,
+  BOLTON_TRADE_IN_GRP_ID,
+  PRODUCT_TYPE,
+  PR_DATE,
+  PROMO_GRACE_PERIOD,
+  LINE_ST_GROUP_ID,
+  NSEIP_DROP_IND,
+  DELAY_TIME,
+  DISPLAY_PROMO_START_DATE,
+  DISPLAY_PROMO_END_DATE,
+  MPSS_LOOKBACK,
+  FLOW_INDICATOR,
+  DOCUMENT_ID,
+  DVC_STS_GRP_ID,
+  CLAWBACK_IND
+) VALUES (
+  PROMO_ELIGIBILITY_RULES_SEQ.NEXTVAL,
+  '{promo_code}',
+  {promo_start_date},
+  {promo_end_date},
+  sysdate,
+  {operator_id},
+  'CPO',           -- hard-coded application & DL codes?
+  'USRST',
+  '{promo_description}',
+  {promo_duration},
+  NULL,            -- PROMO_AMOUNT (if any)
+  {effective_date},
+  {expiration_date},
+  '{sku_group_id}',
+  '{prim_sku_group_id}',
+  '{soc_group_id}',
+  '{atst_group_id}',
+  '{appl_group_id}',
+  '{device_st_group_id}',
+  '{finance_type}',
+  '{act_line_req_ind}',
+  'G14',           -- example APP_GRACE_GROUP_ID
+  NULL,            -- TRADE_IN_GRP_ID (if you have one)
+  NULL,
+  '{maint_act_line_chk_ind}',
+  '{maint_soc_chk_ind}',
+  '{store_grp_id}',
+  '{market_grp_id}',
+  '{limit_per_ban}',
+  '{tenure_group_id}',
+  '{portin_group_id}',
+  '{promo_perc_disc}',
+  '{c2_link}',
+  '{min_gsm_count}',
+  '{max_gsm_count}',
+  '{display_promo}',
+  '{tiered_grp_id}',
+  '{segment_grp_id}',
+  '{bolton_trade_in_grp_id}',
+  '{product_type}',
+  sysdate,         -- PR_DATE
+  '{promo_grace_period}',
+  '{line_st_group_id}',
+  '{nseip_drop_ind}',
+  '{delay_time}',
+  {display_promo_start_date},
+  {display_promo_end_date},
+  '{mpss_lookback}',
+  '{flow_indicator}',
+  '{document_id}',
+  '{dvc_sts_grp_id}',
+  '{clawback_ind}'
+);
+""".strip()
+
+    # escape single quotes in all string fields
+    esc = lambda x: (x.replace("'", "''") if isinstance(x, str) else x)
+
+    return tmpl.format(**{k: esc(v) for k, v in data.items()})
