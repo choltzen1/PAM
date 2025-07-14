@@ -21,7 +21,7 @@ def edit_promo():
         "pj_code": "P047",
         "description": "Magenta Only: Customers can get up to $600 off GS22 Series when they trade in an eligible device (new and existing customers qualify) on a qualifying rate plan - TFB Retail Only.",
         "promo_notes": "Two-tiered discount structure.\n1. $700: All iPhones EXCEPT the iPhone 14 and 15\n2. $730: iPhone 14 and 15 (including all memory variants) to have $730\nTier 1 $730: iPhone 15, iPhone 15 Plus, iPhone 15 Pro, iPhone 15 Pro Max, iPhone 14, iPhone 14 Plus, iPhone 14 Pro, iPhone 14 Pro Max\nTier 2 $700: iPhone 15 Plus, iPhone 15 Pro, iPhone 15 Pro Max, iPhone 14 Plus, iPhone 14 Pro, iPhone 14 Pro Max, iPhone 13 Mini, iPhone 13 Pro, iPhone 13 Pro Max",
-        "discount": 10,
+        "discount": 'NULL',
         "amount": 600,
         "nseip_drop": "N",
         "dcd_web_cart": "Y",

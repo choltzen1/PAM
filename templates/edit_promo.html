@@ -48,11 +48,11 @@
       </div>
       <!-- RIGHT PANEL -->
       <div style="flex: 2.2; min-width: 0; background: #fff; padding: 0;">
-        <div class="tabs" style="margin: 0 0 1rem 0;">
-          {% for tab in ['Details','Dates & Times','Requirements','Segmentation','Groupings','BPTCR'] %}
+        <div class="tabs" style="margin: 0 0 1rem 0; display: flex; flex-wrap: wrap; gap: 0.3rem;">
+          {% for tab in ['Details','Dates & Times','Requirements','Segmentation','Groupings','BPTCR','Export to CSV'] %}
             <a href="{{ url_for('edit_promo', promo_code=promo.code, tab=tab) }}"
                class="tab {% if tab == active_tab %}active{% endif %}"
-               style="min-width: 120px; text-decoration: none; display: inline-block; margin-right: 0.3rem; font-size: 0.9rem;">
+               style="flex: 1; min-width: 100px; max-width: 140px; text-decoration: none; display: inline-block; font-size: 0.85rem; text-align: center; padding: 0.5rem 0.3rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
               {{ tab }}
             </a>
           {% endfor %}
@@ -114,7 +114,7 @@
             </div>
           {% elif active_tab == 'Dates & Times' %}
             <!-- Dates & Times Tab Content (Editable) -->
-            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 1.2rem 0.7rem; align-items: start;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 1.2rem 0.7rem; align-items: start; width: 100%; max-width: 100%; overflow-x: auto;">
 
               <!-- Promo Start Date, End Date, Comm End Date, Promo Duration (Legacy style) -->
               <div style="font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); padding-bottom: 0.2rem;">Promo Start Date</div>
@@ -124,17 +124,17 @@
               <input class="form-control" name="promo_start_date" type="date" value="{{ promo.promo_start_date }}">
               <input class="form-control" name="promo_end_date" type="date" value="{{ promo.promo_end_date }}">
               <input class="form-control" name="comm_end_date" type="date" value="{{ promo.comm_end_date }}">
-              <div style="display: flex; gap: 0.5rem; align-items: center; justify-content: flex-start; background: #f7f7f7; border-radius: 4px; padding: 0.3rem 0.7rem; border: 1px solid #ccc;">
-                <label style="margin-right: 1.2rem; font-weight: 500; color: #333;">Duration:</label>
-                <label style="margin-right: 0.7rem;">
+              <div style="display: flex; gap: 0.3rem; align-items: center; justify-content: flex-start; background: #f7f7f7; border-radius: 4px; padding: 0.3rem 0.5rem; border: 1px solid #ccc; flex-wrap: wrap; width: 100%; box-sizing: border-box;">
+                <label style="margin-right: 0.5rem; font-weight: 500; color: #333; font-size: 0.9rem;">Duration:</label>
+                <label style="margin-right: 0.5rem; font-size: 0.9rem;">
                   <input type="radio" name="promo_duration" value="24" {% if promo.promo_duration == 24 %}checked{% endif %}>
                   <span style="margin-left: 0.2rem;">24</span>
                 </label>
-                <label style="margin-right: 0.7rem;">
+                <label style="margin-right: 0.5rem; font-size: 0.9rem;">
                   <input type="radio" name="promo_duration" value="30" {% if promo.promo_duration == 30 %}checked{% endif %}>
                   <span style="margin-left: 0.2rem;">30</span>
                 </label>
-                <label>
+                <label style="font-size: 0.9rem;">
                   <input type="radio" name="promo_duration" value="36" {% if promo.promo_duration == 36 %}checked{% endif %}>
                   <span style="margin-left: 0.2rem;">36</span>
                 </label>
@@ -146,10 +146,10 @@
               <div style="font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); padding-bottom: 0.2rem;">Promo Grace</div>
               <div style="font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); padding-bottom: 0.2rem;">Trade-In Grace</div>
               <input class="form-control" name="delay_time" type="number" min="0" value="{{ promo.delay_time }}">
-              <div style="display: flex; gap: 0.5rem; align-items: center; justify-content: flex-start; background: #f7f7f7; border-radius: 4px; padding: 0.3rem 0.7rem; border: 1px solid #ccc;">
-                <label style="margin-right: 1.2rem; font-weight: 500; color: #333;">Grace:</label>
+              <div style="display: flex; gap: 0.3rem; align-items: center; justify-content: flex-start; background: #f7f7f7; border-radius: 4px; padding: 0.3rem 0.5rem; border: 1px solid #ccc; flex-wrap: wrap; width: 100%; box-sizing: border-box;">
+                <label style="margin-right: 0.5rem; font-weight: 500; color: #333; font-size: 0.85rem;">Grace:</label>
                 {% for grace in ['G11','G12','G13','G14','G15','G16','G17','NULL'] %}
-                  <label style="margin-right: 0.7rem;">
+                  <label style="margin-right: 0.3rem; font-size: 0.85rem;">
                     <input type="radio" name="application_grace_period" value="{{ grace }}" {% if promo.application_grace_period == grace %}checked{% endif %}>
                     <span style="margin-left: 0.2rem;">{{ grace }}</span>
                   </label>
@@ -319,17 +319,278 @@
             </div>
           {% elif active_tab == 'BPTCR' %}
             <!-- BPTCR Tab Content -->
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem 0.7rem; align-items: start;">
-              <!-- BPTCR Section -->
-              <div style="grid-column: 1 / 3; font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); margin-bottom: 0.5rem; padding-bottom: 0.2rem;">BPTCR Details</div>
-              <div style="grid-column: 1 / 3; background: #f7f7f7; border-radius: 4px; padding: 0.5rem 0.7rem; border: 1px solid #ccc;">
-                <ul style="margin: 0; padding: 0; list-style: none;">
-                  {% for detail in promo.bptcr_details %}
-                    <li style="margin-bottom: 0.5rem;">{{ detail }}</li>
-                  {% endfor %}
-                </ul>
+            <div style="display: grid; grid-template-columns: 1fr; gap: 1.2rem; align-items: start; max-width: 100%;">
+              <!-- C2 Link Section -->
+              <div style="font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); margin-bottom: 1rem; padding-bottom: 0.2rem;">C2 Link Configuration</div>
+              <div style="background: #f7f7f7; border-radius: 4px; padding: 1.5rem; border: 1px solid #ccc; margin-bottom: 2rem;">
+                <div style="display: grid; grid-template-columns: 1fr 3fr; gap: 1rem; align-items: center;">
+                  <label style="font-weight: 500; color: #333;">C2 Link URL:</label>
+                  <input class="form-control" name="c2_link" value="{{ promo.c2_link or 'https://c2.t-mobile.com/offers/' }}" style="width: 100%;" placeholder="Enter C2 link URL">
+                </div>
+                <div style="margin-top: 1rem; font-size: 0.85rem; color: #666;">
+                  <i class="fas fa-info-circle" style="margin-right: 0.5rem;"></i>
+                  This link will be used in the promotion system to direct customers to the appropriate offer page.
+                </div>
+              </div>
+
+              <!-- Jira Ticket Section -->
+              <div style="font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); margin-bottom: 1rem; padding-bottom: 0.2rem;">Jira Ticket Management</div>
+              <div style="background: #f7f7f7; border-radius: 4px; padding: 1.5rem; border: 1px solid #ccc; margin-bottom: 2rem;">
+                <div style="display: flex; flex-direction: column; gap: 1rem;">
+                  <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                      <div style="font-weight: 500; color: #333; margin-bottom: 0.5rem;">Generate BPTCR Jira Ticket</div>
+                      <div style="font-size: 0.85rem; color: #666;">Create a new Jira ticket for BPTCR approval process</div>
+                    </div>
+                    <button type="button" class="btn btn-primary" style="background: var(--tmobile-magenta); border: none; padding: 0.8rem 1.5rem; font-size: 1rem; border-radius: 4px; color: white; cursor: pointer; transition: all 0.2s; white-space: nowrap;" onclick="generateJiraTicket()">
+                      <i class="fas fa-ticket-alt" style="margin-right: 0.5rem;"></i>
+                      Generate Jira Ticket
+                    </button>
+                  </div>
+                  
+                  <!-- Jira Ticket Status (Initially Hidden) -->
+                  <div id="jira-ticket-status" style="display: none; margin-top: 1rem;">
+                    <div style="background: #e8f5e8; border: 1px solid #4caf50; border-radius: 4px; padding: 1rem;">
+                      <div style="font-weight: 500; color: #2e7d32; margin-bottom: 0.5rem;">
+                        <i class="fas fa-check-circle" style="margin-right: 0.5rem;"></i>
+                        Jira Ticket Created Successfully
+                      </div>
+                      <div style="font-size: 0.9rem; color: #2e7d32;">
+                        <strong>Ticket ID:</strong> <span id="jira-ticket-id">BPTCR-{{ promo.code }}-2025-07-14</span>
+                      </div>
+                      <div style="font-size: 0.9rem; color: #2e7d32; margin-top: 0.5rem;">
+                        <strong>Status:</strong> Open - Pending BPTCR Review
+                      </div>
+                      <div style="margin-top: 1rem; display: flex; gap: 1rem;">
+                        <button type="button" class="btn btn-outline-secondary" onclick="viewJiraTicket()">
+                          <i class="fas fa-external-link-alt" style="margin-right: 0.5rem;"></i>
+                          View in Jira
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary" onclick="copyJiraTicketId()">
+                          <i class="fas fa-copy" style="margin-right: 0.5rem;"></i>
+                          Copy Ticket ID
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- BPTCR Approval Workflow -->
+              <div style="font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); margin-bottom: 1rem; padding-bottom: 0.2rem;">BPTCR Approval Workflow</div>
+              <div style="background: #f7f7f7; border-radius: 4px; padding: 1.5rem; border: 1px solid #ccc;">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                  <div style="background: white; border-radius: 4px; padding: 1rem; border: 1px solid #ddd; text-align: center;">
+                    <div style="font-size: 2rem; color: var(--tmobile-magenta); margin-bottom: 0.5rem;">1</div>
+                    <div style="font-weight: 500; color: #333; margin-bottom: 0.5rem;">Submit Request</div>
+                    <div style="font-size: 0.85rem; color: #666;">Generate Jira ticket for BPTCR review</div>
+                  </div>
+                  <div style="background: white; border-radius: 4px; padding: 1rem; border: 1px solid #ddd; text-align: center;">
+                    <div style="font-size: 2rem; color: var(--tmobile-magenta); margin-bottom: 0.5rem;">2</div>
+                    <div style="font-weight: 500; color: #333; margin-bottom: 0.5rem;">BPTCR Review</div>
+                    <div style="font-size: 0.85rem; color: #666;">Business team reviews promotion details</div>
+                  </div>
+                  <div style="background: white; border-radius: 4px; padding: 1rem; border: 1px solid #ddd; text-align: center;">
+                    <div style="font-size: 2rem; color: var(--tmobile-magenta); margin-bottom: 0.5rem;">3</div>
+                    <div style="font-weight: 500; color: #333; margin-bottom: 0.5rem;">Approval</div>
+                    <div style="font-size: 0.85rem; color: #666;">Final approval and implementation</div>
+                  </div>
+                </div>
               </div>
             </div>
+            
+            <!-- JavaScript for BPTCR functionality -->
+            <script>
+              function generateJiraTicket() {
+                // Simulate Jira ticket generation
+                const ticketId = 'BPTCR-{{ promo.code }}-' + new Date().toISOString().split('T')[0];
+                
+                // Show loading state
+                const button = event.target;
+                const originalText = button.innerHTML;
+                button.innerHTML = '<i class="fas fa-spinner fa-spin" style="margin-right: 0.5rem;"></i>Generating...';
+                button.disabled = true;
+                
+                // Simulate API call delay
+                setTimeout(() => {
+                  // Update ticket ID and show status
+                  document.getElementById('jira-ticket-id').textContent = ticketId;
+                  document.getElementById('jira-ticket-status').style.display = 'block';
+                  
+                  // Reset button
+                  button.innerHTML = originalText;
+                  button.disabled = false;
+                  
+                  // Show success message
+                  alert('Jira ticket created successfully: ' + ticketId);
+                }, 2000);
+              }
+              
+              function viewJiraTicket() {
+                const ticketId = document.getElementById('jira-ticket-id').textContent;
+                // In production, this would open the actual Jira ticket
+                alert('Opening Jira ticket: ' + ticketId + '\n(In production, this would open the actual Jira URL)');
+              }
+              
+              function copyJiraTicketId() {
+                const ticketId = document.getElementById('jira-ticket-id').textContent;
+                navigator.clipboard.writeText(ticketId).then(function() {
+                  alert('Ticket ID copied to clipboard: ' + ticketId);
+                });
+              }
+            </script>
+          {% elif active_tab == 'Export to CSV' %}
+            <!-- Export to CSV Tab Content -->
+            <div style="display: grid; grid-template-columns: 1fr; gap: 1.2rem; align-items: start;">
+              <!-- CSV Upload Section -->
+              <div style="font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); margin-bottom: 1rem; padding-bottom: 0.2rem;">Upload SKU List</div>
+              
+              <!-- File Upload Area -->
+              <div style="background: #f7f7f7; border: 2px dashed #ccc; border-radius: 8px; padding: 2rem; text-align: center; margin-bottom: 2rem;">
+                <div style="margin-bottom: 1rem;">
+                  <i class="fas fa-upload" style="font-size: 2rem; color: var(--tmobile-magenta); margin-bottom: 1rem;"></i>
+                  <div style="font-size: 1.1rem; color: #666; margin-bottom: 0.5rem;">Upload your SKU list Excel file</div>
+                  <div style="font-size: 0.9rem; color: #999;">Drag and drop or click to select a file</div>
+                </div>
+                <input type="file" name="sku_excel" accept=".xlsx,.xls" style="display: none;" id="sku-upload">
+                <label for="sku-upload" class="btn btn-outline-primary" style="cursor: pointer; display: inline-block; padding: 0.5rem 1rem; border: 2px solid var(--tmobile-magenta); color: var(--tmobile-magenta); background: white; border-radius: 4px; text-decoration: none; transition: all 0.2s; font-weight: 500;">
+                  Choose Excel File
+                </label>
+                <div id="file-name" style="margin-top: 1rem; font-size: 0.9rem; color: #333; display: none;">
+                  <strong>Selected file:</strong> <span id="selected-file-name"></span>
+                </div>
+              </div>
+              
+              <!-- Generate Button -->
+              <div style="display: flex; justify-content: center; margin-top: 1rem;">
+                <button type="button" class="btn btn-primary" style="background: var(--tmobile-magenta); border: none; padding: 0.8rem 2rem; font-size: 1.1rem; border-radius: 4px; color: white; cursor: pointer; transition: all 0.2s;" onclick="generateInsertStatements()">
+                  Generate INSERT Statements
+                </button>
+              </div>
+              
+              <!-- Results Area (Initially Hidden) -->
+              <div id="insert-results" style="display: none; margin-top: 2rem;">
+                <div style="font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); margin-bottom: 1rem; padding-bottom: 0.2rem;">Generated INSERT Statements</div>
+                <div style="background: #f8f9fa; border: 1px solid #ddd; border-radius: 4px; padding: 1rem; max-height: 400px; overflow-y: auto; overflow-x: auto; width: 100%; box-sizing: border-box;">
+                  <pre id="insert-statements-content" style="margin: 0; font-family: 'Courier New', monospace; font-size: 0.85rem; line-height: 1.4; white-space: pre-wrap; word-wrap: break-word; overflow-wrap: anywhere; hyphens: auto; max-width: 100%; width: 100%; box-sizing: border-box;"></pre>
+                </div>
+                <div style="margin-top: 1rem; display: flex; gap: 1rem;">
+                  <button type="button" class="btn btn-secondary" onclick="copyToClipboard()">Copy to Clipboard</button>
+                  <button type="button" class="btn btn-success" onclick="downloadStatements()">Download SQL File</button>
+                </div>
+              </div>
+            </div>
+            
+            <!-- JavaScript for file upload handling -->
+            <script>
+              document.getElementById('sku-upload').addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                  document.getElementById('selected-file-name').textContent = file.name;
+                  document.getElementById('file-name').style.display = 'block';
+                }
+              });
+              
+              function generateInsertStatements() {
+                const fileInput = document.getElementById('sku-upload');
+                const file = fileInput.files[0];
+                
+                if (!file) {
+                  alert('Please select an Excel file first.');
+                  return;
+                }
+                
+                // Demo SQL content - in production this would be generated from the Excel file
+                const demoSqlContent = `-- User Story No. 			= CPO-15843
+-- Requested By 			= Cade Holtzen
+-- Request Date(DD/MM/YYYY) = 04/02/2025 
+-- Project 					= EFPE Device - New Promo R043 - Orbit 23578 - NR x Apple: $800 off iPhone 16 w/Trade on Go5G Plus/Next - Launch 04/03/2025
+-------------------------------------------------------------------------
+
+--PROD / ZLAB
+BEGIN
+
+--PROMO_ELIGIBILITY_RULES 
+
+Insert into PROMO_ELIGIBILITY_RULES (RULE_ID,PROMO_CODE,PROMO_START_DATE,PROMO_END_DATE,SYS_CREATION_DATE,OPERATOR_ID,APPLICATION_ID,DL_SERVICE_CODE,PROMO_DESCRIPTION,PROMO_DURATION,PROMO_AMOUNT,EFFECTIVE_DATE,EXPIRATION_DATE,SKU_GROUP_ID,PRIM_SKU_GROUP_ID,SOC_GROUP_ID,ATST_GROUP_ID,APPL_GROUP_ID,DEVICE_ST_GROUP_ID,FINANCE_TYPE,ACT_LINE_REQ_IND,APP_GRACE_GROUP_ID,TRADE_IN_GRP_ID,TRADE_IN_GRACE_PERIOD,MAINT_ACT_LINE_CHK_IND,MAINT_SOC_CHK_IND,STORE_GRP_ID,MARKET_GRP_ID,LIMIT_PER_BAN,TENURE_GROUP_ID,PORTIN_GROUP_ID,PROMO_PERC_DISC,C2_LINK,MIN_GSM_COUNT,MAX_GSM_COUNT,DISPLAY_PROMO,TIERED_GRP_ID,SEGMENT_GRP_ID,BOLTON_TRADE_IN_GRP_ID,PRODUCT_TYPE,PR_DATE,PROMO_GRACE_PERIOD,LINE_ST_GROUP_ID,NSEIP_DROP_IND,DELAY_TIME,DISPLAY_PROMO_START_DATE, DISPLAY_PROMO_END_DATE, MPSS_LOOKBACK, FLOW_INDICATOR, DOCUMENT_ID, DVC_STS_GRP_ID, CLAWBACK_IND) values (PROMO_ELIGIBILITY_RULES_1SQ.NEXTVAL,'R043',to_date('04/02/2025 20:00:00','MM/DD/YYYY HH24:MI:SS'),to_date('07/10/2025 05:00:00','MM/DD/YYYY HH24:MI:SS'),sysdate,15483,'CPO','USRST','Apple Retail Trade ID250078',24,NULL,to_date('04/02/2025 20:00:00','MM/DD/YYYY HH24:MI:SS'),to_date('07/10/2028 05:00:00','MM/DD/YYYY HH24:MI:SS'),'W44',NULL,'A7N','A13','S15','S01','LOAN','Y',NULL,'L81',32,'Y','Y','*','*','4',NULL,NULL,NULL,'https://c2.t-mobile.com/offers/ec1df',NULL,12,'Y',NULL,NULL,NULL,'G',NULL,NULL,'*','N',NULL,to_date('04/03/2025 00:00:00','MM/DD/YYYY HH24:MI:SS'),to_date('07/09/2025 00:00:00','MM/DD/YYYY HH24:MI:SS'),14,NULL,'ec1df','DS1','N');
+
+
+--PROMO_DEVICE_GROUPS
+
+Insert into PROMO_DEVICE_GROUPS (SKU_GROUP_ID,SKU,SYS_CREATION_DATE,OPERATOR_ID,APPLICATION_ID,DL_SERVICE_CODE,SKU_DESCRIPTION,SKU_GROUP_DESCRIPTION) values ('W44','000000195949035005',sysdate,15483,'CPO','USRST','APL IPHONE 15 128G BLK KIT','NEW PROMO R043 - CPO-15483 Orbit 23578 - Apple Retail Trade ID250078');
+Insert into PROMO_DEVICE_GROUPS (SKU_GROUP_ID,SKU,SYS_CREATION_DATE,OPERATOR_ID,APPLICATION_ID,DL_SERVICE_CODE,SKU_DESCRIPTION,SKU_GROUP_DESCRIPTION) values ('W44','000000195949035012',sysdate,15483,'CPO','USRST','APL IPHONE 15 128G PNK KIT','NEW PROMO R043 - CPO-15483 Orbit 23578 - Apple Retail Trade ID250078');
+Insert into PROMO_DEVICE_GROUPS (SKU_GROUP_ID,SKU,SYS_CREATION_DATE,OPERATOR_ID,APPLICATION_ID,DL_SERVICE_CODE,SKU_DESCRIPTION,SKU_GROUP_DESCRIPTION) values ('W44','000000195949035029',sysdate,15483,'CPO','USRST','APL IPHONE 15 128G YLW KIT','NEW PROMO R043 - CPO-15483 Orbit 23578 - Apple Retail Trade ID250078');
+Insert into PROMO_DEVICE_GROUPS (SKU_GROUP_ID,SKU,SYS_CREATION_DATE,OPERATOR_ID,APPLICATION_ID,DL_SERVICE_CODE,SKU_DESCRIPTION,SKU_GROUP_DESCRIPTION) values ('W44','000000195949035036',sysdate,15483,'CPO','USRST','APL IPHONE 15 128G BLU KIT','NEW PROMO R043 - CPO-15483 Orbit 23578 - Apple Retail Trade ID250078');
+Insert into PROMO_DEVICE_GROUPS (SKU_GROUP_ID,SKU,SYS_CREATION_DATE,OPERATOR_ID,APPLICATION_ID,DL_SERVICE_CODE,SKU_DESCRIPTION,SKU_GROUP_DESCRIPTION) values ('W44','000000195949035043',sysdate,15483,'CPO','USRST','APL IPHONE 15 128G GRN KIT','NEW PROMO R043 - CPO-15483 Orbit 23578 - Apple Retail Trade ID250078');
+Insert into PROMO_DEVICE_GROUPS (SKU_GROUP_ID,SKU,SYS_CREATION_DATE,OPERATOR_ID,APPLICATION_ID,DL_SERVICE_CODE,SKU_DESCRIPTION,SKU_GROUP_DESCRIPTION) values ('W44','000000195949035050',sysdate,15483,'CPO','USRST','APL IPHONE 15 256G BLK KIT','NEW PROMO R043 - CPO-15483 Orbit 23578 - Apple Retail Trade ID250078');
+Insert into PROMO_DEVICE_GROUPS (SKU_GROUP_ID,SKU,SYS_CREATION_DATE,OPERATOR_ID,APPLICATION_ID,DL_SERVICE_CODE,SKU_DESCRIPTION,SKU_GROUP_DESCRIPTION) values ('W44','000000195949035067',sysdate,15483,'CPO','USRST','APL IPHONE 15 256G PNK KIT','NEW PROMO R043 - CPO-15483 Orbit 23578 - Apple Retail Trade ID250078');
+Insert into PROMO_DEVICE_GROUPS (SKU_GROUP_ID,SKU,SYS_CREATION_DATE,OPERATOR_ID,APPLICATION_ID,DL_SERVICE_CODE,SKU_DESCRIPTION,SKU_GROUP_DESCRIPTION) values ('W44','000000195949035074',sysdate,15483,'CPO','USRST','APL IPHONE 15 256G YLW KIT','NEW PROMO R043 - CPO-15483 Orbit 23578 - Apple Retail Trade ID250078');
+Insert into PROMO_DEVICE_GROUPS (SKU_GROUP_ID,SKU,SYS_CREATION_DATE,OPERATOR_ID,APPLICATION_ID,DL_SERVICE_CODE,SKU_DESCRIPTION,SKU_GROUP_DESCRIPTION) values ('W44','000000195949035081',sysdate,15483,'CPO','USRST','APL IPHONE 15 256G BLU KIT','NEW PROMO R043 - CPO-15483 Orbit 23578 - Apple Retail Trade ID250078');
+Insert into PROMO_DEVICE_GROUPS (SKU_GROUP_ID,SKU,SYS_CREATION_DATE,OPERATOR_ID,APPLICATION_ID,DL_SERVICE_CODE,SKU_DESCRIPTION,SKU_GROUP_DESCRIPTION) values ('W44','000000195949035098',sysdate,15483,'CPO','USRST','APL IPHONE 15 256G GRN KIT','NEW PROMO R043 - CPO-15483 Orbit 23578 - Apple Retail Trade ID250078');
+Insert into PROMO_DEVICE_GROUPS (SKU_GROUP_ID,SKU,SYS_CREATION_DATE,OPERATOR_ID,APPLICATION_ID,DL_SERVICE_CODE,SKU_DESCRIPTION,SKU_GROUP_DESCRIPTION) values ('W44','000000195949035104',sysdate,15483,'CPO','USRST','APL IPHONE 15 512G BLK KIT','NEW PROMO R043 - CPO-15483 Orbit 23578 - Apple Retail Trade ID250078');
+Insert into PROMO_DEVICE_GROUPS (SKU_GROUP_ID,SKU,SYS_CREATION_DATE,OPERATOR_ID,APPLICATION_ID,DL_SERVICE_CODE,SKU_DESCRIPTION,SKU_GROUP_DESCRIPTION) values ('W44','000000195949035111',sysdate,15483,'CPO','USRST','APL IPHONE 15 512G PNK KIT','NEW PROMO R043 - CPO-15483 Orbit 23578 - Apple Retail Trade ID250078');
+Insert into PROMO_DEVICE_GROUPS (SKU_GROUP_ID,SKU,SYS_CREATION_DATE,OPERATOR_ID,APPLICATION_ID,DL_SERVICE_CODE,SKU_DESCRIPTION,SKU_GROUP_DESCRIPTION) values ('W44','000000195949035128',sysdate,15483,'CPO','USRST','APL IPHONE 15 512G YLW KIT','NEW PROMO R043 - CPO-15483 Orbit 23578 - Apple Retail Trade ID250078');
+Insert into PROMO_DEVICE_GROUPS (SKU_GROUP_ID,SKU,SYS_CREATION_DATE,OPERATOR_ID,APPLICATION_ID,DL_SERVICE_CODE,SKU_DESCRIPTION,SKU_GROUP_DESCRIPTION) values ('W44','000000195949035135',sysdate,15483,'CPO','USRST','APL IPHONE 15 512G BLU KIT','NEW PROMO R043 - CPO-15483 Orbit 23578 - Apple Retail Trade ID250078');
+Insert into PROMO_DEVICE_GROUPS (SKU_GROUP_ID,SKU,SYS_CREATION_DATE,OPERATOR_ID,APPLICATION_ID,DL_SERVICE_CODE,SKU_DESCRIPTION,SKU_GROUP_DESCRIPTION) values ('W44','000000195949035142',sysdate,15483,'CPO','USRST','APL IPHONE 15 512G GRN KIT','NEW PROMO R043 - CPO-15483 Orbit 23578 - Apple Retail Trade ID250078');
+
+-- Additional INSERT statements continue...
+-- (Truncated for demo - full file contains 100+ device records)
+
+END;`;
+                
+                // Display the SQL content
+                document.getElementById('insert-statements-content').textContent = demoSqlContent;
+                document.getElementById('insert-results').style.display = 'block';
+              }
+              
+              function copyToClipboard() {
+                const content = document.getElementById('insert-statements-content').textContent;
+                navigator.clipboard.writeText(content).then(function() {
+                  alert('INSERT statements copied to clipboard!');
+                });
+              }
+              
+              function downloadStatements() {
+                const content = document.getElementById('insert-statements-content').textContent;
+                const blob = new Blob([content], { type: 'text/plain' });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'PCR_CPO-15843-R043-NewPromo.sql';
+                a.click();
+                window.URL.revokeObjectURL(url);
+              }
+            </script>
+            
+            <!-- Enhanced CSS for button styling -->
+            <style>
+              label[for="sku-upload"]:hover {
+                background: var(--tmobile-magenta) !important;
+                color: white !important;
+                transform: translateY(-1px);
+                box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+              }
+              
+              /* Ensure tabs are responsive */
+              .tabs {
+                overflow-x: auto;
+                white-space: nowrap;
+                -webkit-overflow-scrolling: touch;
+              }
+              
+              .tabs::-webkit-scrollbar {
+                height: 4px;
+              }
+              
+              .tabs::-webkit-scrollbar-track {
+                background: #f1f1f1;
+              }
+              
+              .tabs::-webkit-scrollbar-thumb {
+                background: var(--tmobile-magenta);
+                border-radius: 2px;
+              }
+            </style>
           {% elif active_tab == 'Groupings' %}
             <!-- Groupings Tab Content -->
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem 0.7rem; align-items: start;">
@@ -424,10 +685,12 @@
               </div>
             </div>
           {% endif %}
+          {% if active_tab != 'Export to CSV' %}
           <div class="mt-4 d-flex justify-content-end gap-2">
             <button type="submit" class="btn btn-primary">Save {{ active_tab }}</button>
             <button type="button" class="btn btn-secondary">Cancel</button>
           </div>
+          {% endif %}
         </form>
       </div>
     </div>
