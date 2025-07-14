@@ -1,0 +1,218 @@
+/* edit_promo.css - Clean, modern, T-Mobile inspired styling for the Edit Promo page */
+
+:root {
+  --tmobile-magenta: #E20074;
+  --tmobile-magenta-dark: #b8005a;
+  --tmobile-gray: #f4f4f4;
+  --tmobile-border: #e0e0e0;
+}
+
+body {
+  background: var(--tmobile-gray);
+  color: #222;
+  font-family: 'Segoe UI', 'Arial', sans-serif;
+  margin: 0;
+  padding: 0;
+}
+
+.header {
+  background: var(--tmobile-magenta);
+  color: #fff;
+  padding: 1.2rem 2rem 1.2rem 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+}
+
+
+/* Two-panel layout for edit promo */
+.container {
+  max-width: 1300px;
+  margin: 0 auto;
+  padding: 2rem 1rem 3rem 1rem;
+  display: flex;
+  gap: 2rem;
+}
+
+/* Left panel: details */
+.edit-left {
+  flex: 1.1;
+  min-width: 340px;
+  max-width: 420px;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  padding: 2rem 1.5rem 2rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+/* Right panel: tabbed content */
+.edit-right {
+  flex: 2;
+  min-width: 0;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  padding: 2rem 1.5rem 2rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Tabs at the top of right panel */
+.tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 2px solid var(--tmobile-border);
+}
+.tab {
+  padding: 0.6rem 1.5rem;
+  border: none;
+  border-radius: 6px 6px 0 0;
+  background: #b0b0b0;
+  color: #fff;
+  font-weight: 500;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.tab.active {
+  background: var(--tmobile-magenta);
+  color: #fff;
+}
+
+/* Responsive: stack panels on mobile */
+@media (max-width: 900px) {
+  .container {
+    flex-direction: column;
+    gap: 1rem;
+    padding: 1rem 0.5rem 2rem 0.5rem;
+  }
+  .edit-left, .edit-right {
+    max-width: 100%;
+    padding: 1rem;
+  }
+}
+
+.tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 2rem;
+  border-bottom: 2px solid var(--tmobile-border);
+}
+
+.tab {
+  padding: 0.6rem 1.5rem;
+  border: none;
+  border-radius: 6px 6px 0 0;
+  background: #b0b0b0;
+  color: #fff;
+  font-weight: 500;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.tab.active {
+  background: var(--tmobile-magenta);
+  color: #fff;
+}
+
+.card {
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  padding: 2rem;
+  margin-bottom: 2rem;
+}
+
+h5 {
+  color: var(--tmobile-magenta);
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+.form-label {
+  font-weight: 500;
+  color: #333;
+}
+
+.form-control, .form-select {
+  border: 1px solid var(--tmobile-border);
+  border-radius: 5px;
+  padding: 0.5em 0.9em;
+  font-size: 1rem;
+  margin-bottom: 0.7em;
+  background: #fafafa;
+  color: #222;
+  width: 100%;
+  box-sizing: border-box;
+}
+.form-control:focus, .form-select:focus {
+  outline: none;
+  border-color: var(--tmobile-magenta);
+  box-shadow: 0 0 0 2px #e2007433;
+}
+
+.form-check-input[type="checkbox"] {
+  width: 2em;
+  height: 1.2em;
+  background: #ccc;
+  border-radius: 1em;
+  border: 1px solid var(--tmobile-border);
+  transition: background 0.2s;
+}
+.form-check-input:checked {
+  background: var(--tmobile-magenta);
+  border-color: var(--tmobile-magenta);
+}
+.form-check-label {
+  margin-left: 0.5em;
+  font-weight: 500;
+}
+
+.bg-light {
+  background: #f8f9fa !important;
+}
+
+.small {
+  font-size: 0.95em;
+  color: #555;
+}
+
+.btn {
+  background: var(--tmobile-magenta);
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  padding: 0.5em 1.5em;
+  font-weight: 500;
+  font-size: 1rem;
+  transition: background 0.2s;
+}
+.btn:hover {
+  background: var(--tmobile-magenta-dark);
+}
+.btn-secondary {
+  background: #b0b0b0;
+  color: #fff;
+}
+.btn-secondary:hover {
+  background: #888;
+}
+
+@media (max-width: 900px) {
+  .container {
+    padding: 1rem 0.5rem 2rem 0.5rem;
+  }
+  .card {
+    padding: 1rem;
+  }
+  .row.g-4 {
+    flex-direction: column;
+  }
+}
