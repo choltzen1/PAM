@@ -1,0 +1,435 @@
+{% extends "base.html" %}
+{% block title %}Edit Promotion – {{ promo.code }}{% endblock %}
+{% block content %}
+  <!-- Header -->
+  <header class="header">
+    <div class="header-title">Edit Promotion – {{ promo.code }}</div>
+    <div class="user-name">{{ user_name }}</div>
+  </header>
+  <div class="container" style="max-width: 1800px;">
+    <div style="display: flex; width: 100%; gap: 2.5rem;">
+      <!-- LEFT PANEL -->
+      <div style="flex: 1.25; min-width: 420px; max-width: 600px; background: #fff; border-right: 2px solid #ccc; padding: 0;">
+        <!-- General Info Box -->
+        <div style="border-bottom: 4px solid var(--tmobile-magenta); padding: 1rem;">
+          <div style="font-weight: bold; color: var(--tmobile-magenta); font-size: 1.1rem; margin-bottom: 0.5rem;">General Information</div>
+          <div><b>Promo Owner:</b> {{ promo.owner }}</div>
+          <div><b>Bill Facing Name:</b> {{ promo.bill_facing_name }}</div>
+          <div><b>Orbit ID:</b> {{ promo.orbit_id }}</div>
+          <div><b>PJ Code:</b> {{ promo.pj_code }}</div>
+          <div><b>Restricted:</b> Not Dark</div>
+        </div>
+        <!-- Description Box -->
+        <div style="border-bottom: 4px solid var(--tmobile-magenta); padding: 1rem;">
+          <div style="font-weight: bold; color: var(--tmobile-magenta); font-size: 1.1rem; margin-bottom: 0.5rem;">Description</div>
+          <div style="margin-bottom: 0.5rem;">{{ promo.description }}</div>
+          <div><b>Promo Notes:</b></div>
+          <div style="white-space: pre-line;">{{ promo.promo_notes }}</div>
+        </div>
+        <!-- Updates Box -->
+        <div style="border-bottom: 4px solid var(--tmobile-magenta); padding: 1rem;">
+          <div style="font-weight: bold; color: var(--tmobile-magenta); font-size: 1.1rem; margin-bottom: 0.5rem;">Updates</div>
+          <div><b>Promo % Discount:</b> {{ promo.discount }}</div>
+          <div><b>Promo Amount:</b> {{ promo.amount }}</div>
+          <div><b>DCD Web In-Cart:</b> {{ 'Y' if promo.dcd_web_cart == 'Y' else 'N' }}</div>
+          <div><b>Product Type:</b> {{ promo.product_type }}</div>
+          <div><b>BOGO:</b> {{ 'Yes' if promo.bogo == 'Y' else 'No' }}</div>
+          <div><b>Trade-in Group ID:</b> {{ promo.trade_in_group_id }}</div>
+        </div>
+        <!-- Version History Box -->
+        <div style="border-bottom: 4px solid var(--tmobile-magenta); padding: 1rem;">
+          <div style="font-weight: bold; color: var(--tmobile-magenta); font-size: 1.1rem; margin-bottom: 0.5rem;">Version History</div>
+          <div style="font-size: 0.97em; color: #444;">
+            {% for entry in promo.version_history %}
+              <div>{{ entry }}</div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+      <!-- RIGHT PANEL -->
+      <div style="flex: 2.2; min-width: 0; background: #fff; padding: 0;">
+        <div class="tabs" style="margin: 0 0 1rem 0;">
+          {% for tab in ['Details','Dates & Times','Requirements','Segmentation','Groupings','BPTCR'] %}
+            <a href="{{ url_for('edit_promo', promo_code=promo.code, tab=tab) }}"
+               class="tab {% if tab == active_tab %}active{% endif %}"
+               style="min-width: 120px; text-decoration: none; display: inline-block; margin-right: 0.3rem; font-size: 0.9rem;">
+              {{ tab }}
+            </a>
+          {% endfor %}
+        </div>
+        <form method="post" style="padding: 1.5rem 1.5rem 0 1.5rem;">
+          {# Tab state is preserved on POST by reading 'active_tab' from the form #}
+          <input type="hidden" name="active_tab" value="{{ active_tab }}">
+          {% if active_tab == 'Details' %}
+            <!-- Details Tab Content (Editable) -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 1.2rem 0.7rem; align-items: start;">
+              <div style="grid-column: 1 / 5; font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); margin-bottom: 0.5rem; padding-bottom: 0.2rem;">Bill Facing Name</div>
+              <input style="grid-column: 1 / 5; margin-bottom: 0.5rem;" class="form-control" name="bill_facing_name" value="{{ promo.bill_facing_name }}">
+
+              <div style="font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); margin-bottom: 0.5rem; padding-bottom: 0.2rem;">Promo % Discount</div>
+              <div style="font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); margin-bottom: 0.5rem; padding-bottom: 0.2rem;">Promo Amount ($)</div>
+              <div style="font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); margin-bottom: 0.5rem; padding-bottom: 0.2rem;">NSEIP Drop</div>
+              <div style="font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); margin-bottom: 0.5rem; padding-bottom: 0.2rem;">DCD Web Cart</div>
+              <input class="form-control" name="discount" value="{{ promo.discount }}" type="number" min="0" step="0.01" placeholder="%">
+              <input class="form-control" name="amount" value="{{ promo.amount }}" type="number" min="0" step="0.01" placeholder="$">
+              <select class="form-select" name="nseip_drop">
+                <option value="Y" {% if promo.nseip_drop == 'Y' %}selected{% endif %}>Yes</option>
+                <option value="N" {% if promo.nseip_drop == 'N' %}selected{% endif %}>No</option>
+              </select>
+              <select class="form-select" name="dcd_web_cart">
+                <option value="Y" {% if promo.dcd_web_cart == 'Y' %}selected{% endif %}>Yes</option>
+                <option value="N" {% if promo.dcd_web_cart == 'N' %}selected{% endif %}>No</option>
+              </select>
+
+              <div style="grid-column: 1 / 5; font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); margin-top: 1rem; margin-bottom: 0.5rem; padding-bottom: 0.2rem;">Product Type</div>
+              <input style="grid-column: 1 / 5; margin-bottom: 0.5rem;" class="form-control" name="product_type" value="{{ promo.product_type }}">
+
+              <div style="font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); margin-bottom: 0.5rem; padding-bottom: 0.2rem;">BOGO</div>
+              <div style="font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); margin-bottom: 0.5rem; padding-bottom: 0.2rem;">Bolt Trade-In Group ID</div>
+              <div style="font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); margin-bottom: 0.5rem; padding-bottom: 0.2rem;">FPD Display Promo</div>
+              <div style="font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); margin-bottom: 0.5rem; padding-bottom: 0.2rem;">On Menu</div>
+              <select class="form-select" name="bogo">
+                <option value="Y" {% if promo.bogo == 'Y' %}selected{% endif %}>Yes</option>
+                <option value="N" {% if promo.bogo == 'N' %}selected{% endif %}>No</option>
+              </select>
+              <input class="form-control" name="trade_in_group_id" value="{{ promo.trade_in_group_id }}">
+              <select class="form-select" name="fpd_display_promo">
+                <option value="Y" {% if promo.fpd_display_promo == 'Y' %}selected{% endif %}>Yes</option>
+                <option value="N" {% if promo.fpd_display_promo == 'N' %}selected{% endif %}>No</option>
+              </select>
+              <select class="form-select" name="on_menu">
+                <option value="Y" {% if promo.on_menu == 'Y' %}selected{% endif %}>Yes</option>
+                <option value="N" {% if promo.on_menu == 'N' %}selected{% endif %}>No</option>
+              </select>
+
+              <div style="grid-column: 1 / 3; font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); margin-top: 1rem; margin-bottom: 0.5rem; padding-bottom: 0.2rem;">Market Group</div>
+              <div style="grid-column: 3 / 5; font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); margin-top: 1rem; margin-bottom: 0.5rem; padding-bottom: 0.2rem;">Store Group</div>
+              <input style="grid-column: 1 / 3;" class="form-control" name="market_group" value="*">
+              <input style="grid-column: 3 / 5;" class="form-control" name="store_group" value="*">
+
+              <div style="grid-column: 1 / 5; font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); margin-top: 1rem; margin-bottom: 0.5rem; padding-bottom: 0.2rem;">SKU Link Address</div>
+              <input style="grid-column: 1 / 5;" class="form-control" name="sku_link" value="https://web.powerapps.com/webplayer/iframe...">
+              <div style="grid-column: 1 / 5; font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); margin-top: 1rem; margin-bottom: 0.5rem; padding-bottom: 0.2rem;">Trade-In Link Address</div>
+              <input style="grid-column: 1 / 5;" class="form-control" name="tradein_link" value="https://web.powerapps.com/webplayer/iframe...">
+            </div>
+          {% elif active_tab == 'Dates & Times' %}
+            <!-- Dates & Times Tab Content (Editable) -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 1.2rem 0.7rem; align-items: start;">
+
+              <!-- Promo Start Date, End Date, Comm End Date, Promo Duration (Legacy style) -->
+              <div style="font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); padding-bottom: 0.2rem;">Promo Start Date</div>
+              <div style="font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); padding-bottom: 0.2rem;">Promo End Date</div>
+              <div style="font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); padding-bottom: 0.2rem;">Comm End Date</div>
+              <div style="font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); padding-bottom: 0.2rem;">Promo Duration</div>
+              <input class="form-control" name="promo_start_date" type="date" value="{{ promo.promo_start_date }}">
+              <input class="form-control" name="promo_end_date" type="date" value="{{ promo.promo_end_date }}">
+              <input class="form-control" name="comm_end_date" type="date" value="{{ promo.comm_end_date }}">
+              <div style="display: flex; gap: 0.5rem; align-items: center; justify-content: flex-start; background: #f7f7f7; border-radius: 4px; padding: 0.3rem 0.7rem; border: 1px solid #ccc;">
+                <label style="margin-right: 1.2rem; font-weight: 500; color: #333;">Duration:</label>
+                <label style="margin-right: 0.7rem;">
+                  <input type="radio" name="promo_duration" value="24" {% if promo.promo_duration == 24 %}checked{% endif %}>
+                  <span style="margin-left: 0.2rem;">24</span>
+                </label>
+                <label style="margin-right: 0.7rem;">
+                  <input type="radio" name="promo_duration" value="30" {% if promo.promo_duration == 30 %}checked{% endif %}>
+                  <span style="margin-left: 0.2rem;">30</span>
+                </label>
+                <label>
+                  <input type="radio" name="promo_duration" value="36" {% if promo.promo_duration == 36 %}checked{% endif %}>
+                  <span style="margin-left: 0.2rem;">36</span>
+                </label>
+              </div>
+
+              <!-- Delay Time -->
+              <div style="font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); padding-bottom: 0.2rem;">Delay Time</div>
+              <div style="font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); padding-bottom: 0.2rem;">Application Grace Period</div>
+              <div style="font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); padding-bottom: 0.2rem;">Promo Grace</div>
+              <div style="font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); padding-bottom: 0.2rem;">Trade-In Grace</div>
+              <input class="form-control" name="delay_time" type="number" min="0" value="{{ promo.delay_time }}">
+              <div style="display: flex; gap: 0.5rem; align-items: center; justify-content: flex-start; background: #f7f7f7; border-radius: 4px; padding: 0.3rem 0.7rem; border: 1px solid #ccc;">
+                <label style="margin-right: 1.2rem; font-weight: 500; color: #333;">Grace:</label>
+                {% for grace in ['G11','G12','G13','G14','G15','G16','G17','NULL'] %}
+                  <label style="margin-right: 0.7rem;">
+                    <input type="radio" name="application_grace_period" value="{{ grace }}" {% if promo.application_grace_period == grace %}checked{% endif %}>
+                    <span style="margin-left: 0.2rem;">{{ grace }}</span>
+                  </label>
+                {% endfor %}
+              </div>
+              <input class="form-control" name="promo_grace" value="{{ promo.promo_grace }}">
+              <input class="form-control" name="trade_in_grace" value="{{ promo.trade_in_grace }}">
+
+              <!-- MPSS Lookback -->
+              <div style="grid-column: 1 / 5; font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); margin-top: 1rem; margin-bottom: 0.5rem; padding-bottom: 0.2rem;">MPSS Lookback</div>
+              <input style="grid-column: 1 / 5;" class="form-control" name="mpss_lookback" value="{{ promo.mpss_lookback }}">
+            </div>
+          {% elif active_tab == 'Requirements' %}
+            <!-- Requirements Tab Content (Modernized, Consistent Layout) -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 1.2rem 0.7rem; align-items: start;">
+              <!-- Device Sales Type -->
+              <div style="font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); padding-bottom: 0.2rem;">Device Sales Type</div>
+              <div style="font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); padding-bottom: 0.2rem;">Activation Type</div>
+              <div style="font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); padding-bottom: 0.2rem;">Maintain SOC</div>
+              <div style="font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); padding-bottom: 0.2rem;">Limit Per BAN</div>
+              <div>
+                <div style="display: flex; gap: 0.5rem; align-items: center; background: #f7f7f7; border-radius: 4px; padding: 0.3rem 0.7rem; border: 1px solid #ccc;">
+                  {% for type in ['J01','S01','*','NULL'] %}
+                    <label style="margin-right: 0.7rem; font-weight: 500; color: #333;">
+                      <input type="radio" name="device_sales_type" value="{{ type }}" {% if promo.device_sales_type == type %}checked{% endif %}>
+                      <span style="margin-left: 0.2rem;">{{ type }}</span>
+                    </label>
+                  {% endfor %}
+                </div>
+              </div>
+              <div>
+                <div style="display: flex; gap: 0.5rem; align-items: center; background: #f7f7f7; border-radius: 4px; padding: 0.3rem 0.7rem; border: 1px solid #ccc;">
+                  {% for type in ['AE1','E01','N01','NA1','*','NULL'] %}
+                    <label style="margin-right: 0.7rem; font-weight: 500; color: #333;">
+                      <input type="radio" name="activation_type" value="{{ type }}" {% if promo.activation_type == type %}checked{% endif %}>
+                      <span style="margin-left: 0.2rem;">{{ type }}</span>
+                    </label>
+                  {% endfor %}
+                </div>
+              </div>
+              <div>
+                <div style="display: flex; gap: 0.5rem; align-items: center; background: #f7f7f7; border-radius: 4px; padding: 0.3rem 0.7rem; border: 1px solid #ccc;">
+                  <label style="margin-right: 0.7rem; font-weight: 500; color: #333;">
+                    <input type="radio" name="maintain_soc" value="Y" {% if promo.maintain_soc == 'Y' %}checked{% endif %}> Y
+                  </label>
+                  <label style="margin-right: 0.7rem; font-weight: 500; color: #333;">
+                    <input type="radio" name="maintain_soc" value="N" {% if promo.maintain_soc == 'N' %}checked{% endif %}> N
+                  </label>
+                </div>
+              </div>
+              <div>
+                <input class="form-control" name="limit_per_ban" value="{{ promo.limit_per_ban }}">
+              </div>
+
+              <!-- Minimum GSM Count -->
+              <div style="font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); padding-bottom: 0.2rem;">Minimum GSM Count</div>
+              <div style="font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); padding-bottom: 0.2rem;">Maximum GSM Count</div>
+              <div style="font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); padding-bottom: 0.2rem; grid-column: 3 / 5;">Port-In Group ID</div>
+              <div>
+                <input class="form-control" name="min_gsm_count" value="{{ promo.min_gsm_count }}">
+              </div>
+              <div>
+                <input class="form-control" name="max_gsm_count" value="{{ promo.max_gsm_count }}">
+              </div>
+              <div style="grid-column: 3 / 5;">
+                <div style="display: flex; gap: 0.5rem; align-items: center; background: #f7f7f7; border-radius: 4px; padding: 0.3rem 0.7rem; border: 1px solid #ccc;">
+                  {% for group in ['G02','G03','G04','G05','G06','G07','NULL'] %}
+                    <label style="margin-right: 0.7rem; font-weight: 500; color: #333;">
+                      <input type="radio" name="port_in_group_id" value="{{ group }}" {% if promo.port_in_group_id == group %}checked{% endif %}>
+                      <span style="margin-left: 0.2rem;">{{ group }}</span>
+                    </label>
+                  {% endfor %}
+                </div>
+              </div>
+            </div>
+          {% elif active_tab == 'Segmentation' %}
+            <!-- Segmentation Tab Content (Modernized, Consistent Layout) -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 1.2rem 0.7rem; align-items: start;">
+              <!-- Segment Name -->
+              <div style="grid-column: 1 / 5; font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); margin-bottom: 0.5rem; padding-bottom: 0.2rem;">Segment Name</div>
+              <input style="grid-column: 1 / 5; margin-bottom: 0.5rem;" class="form-control" name="segment_name" value="{{ promo.segment_name }}">
+
+              <!-- Sub Segment -->
+              <div style="grid-column: 1 / 5; font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); margin-bottom: 0.5rem; padding-bottom: 0.2rem;">Sub Segment</div>
+              <div style="grid-column: 1 / 5; display: flex; gap: 1rem; align-items: center; background: #f7f7f7; border-radius: 4px; padding: 0.5rem 0.7rem; border: 1px solid #ccc; margin-bottom: 0.5rem;">
+                {% for segment in ['Active Military','Family','Reserve','Retired','Promo Code'] %}
+                  <label style="font-weight: 500; color: #333;">
+                    <input type="radio" name="sub_segment" value="{{ segment }}" {% if promo.sub_segment == segment %}checked{% endif %}>
+                    <span style="margin-left: 0.2rem;">{{ segment }}</span>
+                  </label>
+                {% endfor %}
+              </div>
+
+              <!-- Segment Group ID -->
+              <div style="font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); padding-bottom: 0.2rem; grid-column: 1 / 3;">Segment Group ID</div>
+              <div style="font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); padding-bottom: 0.2rem; grid-column: 3 / 5;">Segment Level</div>
+              <input style="grid-column: 1 / 3;" class="form-control" name="segment_group_id" value="{{ promo.segment_group_id }}">
+              <div style="grid-column: 3 / 5;">
+                <div style="display: flex; gap: 1rem; align-items: center; background: #f7f7f7; border-radius: 4px; padding: 0.3rem 0.7rem; border: 1px solid #ccc;">
+                  {% for level in ['BAN','LINE','NA'] %}
+                    <label style="font-weight: 500; color: #333;">
+                      <input type="radio" name="segment_level" value="{{ level }}" {% if promo.segment_level == level %}checked{% endif %}>
+                      <span style="margin-left: 0.2rem;">{{ level }}</span>
+                    </label>
+                  {% endfor %}
+                </div>
+              </div>
+            </div>
+          {% elif active_tab == 'Requirements' %}
+            <!-- Requirements Tab Content (Legacy/Modernized) -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem 0.7rem; align-items: start;">
+              <!-- Device Sales Type -->
+              <div style="grid-column: 1 / 3; background: var(--tmobile-magenta); color: #fff; font-weight: bold; padding: 0.4rem 0.7rem; border-radius: 4px 4px 0 0; border-bottom: 2px solid #fff;">Device Sales Type</div>
+              <div style="grid-column: 1 / 3; display: flex; gap: 1.2rem; align-items: center; background: #f7f7f7; border-radius: 0 0 4px 4px; padding: 0.5rem 0.7rem; border: 1px solid #ccc;">
+                {% for type in ['J01','S01','*','NULL'] %}
+                  <label style="margin-right: 1.2rem; font-weight: 500; color: #333;">
+                    <input type="radio" name="device_sales_type" value="{{ type }}" {% if promo.device_sales_type == type %}checked{% endif %}>
+                    <span style="margin-left: 0.2rem;">{{ type }}</span>
+                  </label>
+                {% endfor %}
+              </div>
+
+              <!-- Activation Type -->
+              <div style="grid-column: 1 / 3; background: var(--tmobile-magenta); color: #fff; font-weight: bold; padding: 0.4rem 0.7rem; border-radius: 4px 4px 0 0; border-bottom: 2px solid #fff;">Activation Type</div>
+              <div style="grid-column: 1 / 3; display: flex; gap: 1.2rem; align-items: center; background: #f7f7f7; border-radius: 0 0 4px 4px; padding: 0.5rem 0.7rem; border: 1px solid #ccc;">
+                {% for type in ['AE1','E01','N01','NA1','*','NULL'] %}
+                  <label style="margin-right: 1.2rem; font-weight: 500; color: #333;">
+                    <input type="radio" name="activation_type" value="{{ type }}" {% if promo.activation_type == type %}checked{% endif %}>
+                    <span style="margin-left: 0.2rem;">{{ type }}</span>
+                  </label>
+                {% endfor %}
+              </div>
+
+              <!-- Maintain SOC -->
+              <div style="background: var(--tmobile-magenta); color: #fff; font-weight: bold; padding: 0.4rem 0.7rem; border-radius: 4px 4px 0 0; border-bottom: 2px solid #fff;">Maintain SOC</div>
+              <div style="display: flex; gap: 1.2rem; align-items: center; background: #f7f7f7; border-radius: 0 0 4px 4px; padding: 0.5rem 0.7rem; border: 1px solid #ccc;">
+                <label style="margin-right: 1.2rem; font-weight: 500; color: #333;">
+                  <input type="radio" name="maintain_soc" value="Y" {% if promo.maintain_soc == 'Y' %}checked{% endif %}> Y
+                </label>
+                <label style="margin-right: 1.2rem; font-weight: 500; color: #333;">
+                  <input type="radio" name="maintain_soc" value="N" {% if promo.maintain_soc == 'N' %}checked{% endif %}> N
+                </label>
+              </div>
+
+              <!-- Limit Per BAN -->
+              <div style="background: var(--tmobile-magenta); color: #fff; font-weight: bold; padding: 0.4rem 0.7rem; border-radius: 4px 4px 0 0; border-bottom: 2px solid #fff;">Limit Per BAN</div>
+              <input class="form-control" name="limit_per_ban" value="{{ promo.limit_per_ban }}">
+
+              <!-- Minimum GSM Count -->
+              <div style="background: var(--tmobile-magenta); color: #fff; font-weight: bold; padding: 0.4rem 0.7rem; border-radius: 4px 4px 0 0; border-bottom: 2px solid #fff;">Minimum GSM Count</div>
+              <input class="form-control" name="min_gsm_count" value="{{ promo.min_gsm_count }}">
+
+              <!-- Maximum GSM Count -->
+              <div style="background: var(--tmobile-magenta); color: #fff; font-weight: bold; padding: 0.4rem 0.7rem; border-radius: 4px 4px 0 0; border-bottom: 2px solid #fff;">Maximum GSM Count</div>
+              <input class="form-control" name="max_gsm_count" value="{{ promo.max_gsm_count }}">
+
+              <!-- Port-In Group ID -->
+              <div style="grid-column: 1 / 3; background: var(--tmobile-magenta); color: #fff; font-weight: bold; padding: 0.4rem 0.7rem; border-radius: 4px 4px 0 0; border-bottom: 2px solid #fff;">Port-In Group ID</div>
+              <div style="grid-column: 1 / 3; display: flex; gap: 1.2rem; align-items: center; background: #f7f7f7; border-radius: 0 0 4px 4px; padding: 0.5rem 0.7rem; border: 1px solid #ccc;">
+                {% for group in ['G02','G03','G04','G05','G06','G07','NULL'] %}
+                  <label style="margin-right: 1.2rem; font-weight: 500; color: #333;">
+                    <input type="radio" name="port_in_group_id" value="{{ group }}" {% if promo.port_in_group_id == group %}checked{% endif %}>
+                    <span style="margin-left: 0.2rem;">{{ group }}</span>
+                  </label>
+                {% endfor %}
+              </div>
+            </div>
+          {% elif active_tab == 'BPTCR' %}
+            <!-- BPTCR Tab Content -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem 0.7rem; align-items: start;">
+              <!-- BPTCR Section -->
+              <div style="grid-column: 1 / 3; font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); margin-bottom: 0.5rem; padding-bottom: 0.2rem;">BPTCR Details</div>
+              <div style="grid-column: 1 / 3; background: #f7f7f7; border-radius: 4px; padding: 0.5rem 0.7rem; border: 1px solid #ccc;">
+                <ul style="margin: 0; padding: 0; list-style: none;">
+                  {% for detail in promo.bptcr_details %}
+                    <li style="margin-bottom: 0.5rem;">{{ detail }}</li>
+                  {% endfor %}
+                </ul>
+              </div>
+            </div>
+          {% elif active_tab == 'Groupings' %}
+            <!-- Groupings Tab Content -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem 0.7rem; align-items: start;">
+              <!-- SOC Grouping -->
+              <div style="grid-column: 1 / 3; font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); margin-bottom: 1rem; padding-bottom: 0.5rem; text-align: center;">SOC Grouping</div>
+              <div style="grid-column: 1 / 2; flex: 1; padding: 1rem; background: #e6e6e6; border-radius: 4px;">
+                <select class="form-select" name="soc_grouping" style="width: 100%; padding: 0.5rem; font-size: 1rem;">
+                  <option value="Group 1NS">Group 1NS</option>
+                  <option value="Group 3">Group 3</option>
+                  <option value="Group 4">Group 4</option>
+                  <option value="Group 5">Group 5</option>
+                  <option value="Group 6">Group 6</option>
+                </select>
+              </div>
+              <div style="grid-column: 2 / 3; flex: 3; padding: 1rem; background: #f7f7f7; border-radius: 4px; border: 1px solid #ccc; overflow-y: auto; max-height: 300px;">
+                <ul style="margin: 0; padding: 0; list-style: none; font-size: 0.9rem; line-height: 1.5;">
+                  <li style="margin-bottom: 0.5rem; font-weight: bold;">Group 1NS - GSM - Consumer & TFB</li>
+                  <li style="margin-bottom: 0.5rem;">T-Mobile ONE rate plans</li>
+                  <li style="margin-bottom: 0.5rem;">Magenta rate plans</li>
+                  <li style="margin-bottom: 0.5rem;">Essentials rate plans</li>
+                  <li style="margin-bottom: 0.5rem;">Bus/Gov Unlimited rate plans</li>
+                  <li style="margin-bottom: 0.5rem; font-weight: bold;">Group 3 - MI - Consumer & TFB</li>
+                  <li style="margin-bottom: 0.5rem;">10GB or higher Mobile Internet rate plans (limited buckets)</li>
+                  <li style="margin-bottom: 0.5rem;">Excludes unlimited highspeed data plans</li>
+                  <li style="margin-bottom: 0.5rem; font-weight: bold;">Group 4 - GSM - Consumer & TFB - excludes PlusUP & MAXUp line level upsell SOCs)</li>
+                  <li style="margin-bottom: 0.5rem; font-weight: bold;">Group 5 - MI - All MTME Eligible MI/BTS - Consumer & TFB</li>
+                  <li style="margin-bottom: 0.5rem; font-weight: bold;">Group 6 - GSM - Consumer & TFB</li>
+                  <li style="margin-bottom: 0.5rem;">TMO ONE Plus rate plans (Incl. 55+)</li>
+                  <li style="margin-bottom: 0.5rem;">Magenta Plus rate plans (Incl. First Responder & 55+)</li>
+                  <li style="margin-bottom: 0.5rem;">Magenta MAX rate plans (Incl. First responder & 55+)</li>
+                  <li style="margin-bottom: 0.5rem;">TMO ONE Plus Military rate plans</li>
+                  <li style="margin-bottom: 0.5rem;">Magenta Plus Military rate plans</li>
+                  <li style="margin-bottom: 0.5rem;">Magenta MAX Military rate plans</li>
+                  <li style="margin-bottom: 0.5rem;">Business Unlimited Plus plans</li>
+                  <li style="margin-bottom: 0.5rem;">Magenta Plus DHH plans</li>
+                  <li style="margin-bottom: 0.5rem;">Magenta MAX DHH plans</li>
+                  <li style="margin-bottom: 0.5rem;">Business Unlimited Ultimate plans</li>
+                  <li style="margin-bottom: 0.5rem;">Plus Up Upsell SOCs (Include Intl/Global Plus SOCs)</li>
+                  <li style="margin-bottom: 0.5rem;">MAXUp Upsell SOCs</li>
+                  <li style="margin-bottom: 0.5rem;">Business Unlimited Upsell SOCs (Ultimate)</li>
+                </ul>
+              </div>
+
+              <!-- Account Type -->
+              <div style="grid-column: 1 / 3; font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); margin-top: 1rem; margin-bottom: 0.5rem; padding-bottom: 0.2rem;">Account Type</div>
+              <div style="grid-column: 1 / 2;">
+                <select class="form-select">
+                  <option value="A01">A01</option>
+                  <option value="A02">A02</option>
+                  <option value="A03">A03</option>
+                  <option value="A04">A04</option>
+                  <option value="A05">A05</option>
+                  <option value="A06">A06</option>
+                  <option value="A07">A07</option>
+                  <option value="A08">A08</option>
+                  <option value="A09">A09</option>
+                  <option value="A10">A10</option>
+                </select>
+              </div>
+              <div style="grid-column: 2 / 3; background: #f7f7f7; border-radius: 4px; padding: 0.5rem 0.7rem; border: 1px solid #ccc; overflow-y: auto; max-height: 150px;">
+                <ul style="margin: 0; padding: 0; list-style: none;">
+                  <li style="margin-bottom: 0.5rem;">Regular (I/R); Association (I/A); GSA (I/F); Government (I/G); MCSA (I/M)</li>
+                  <li style="margin-bottom: 0.5rem;">Corporate (B/C); Retail (B/L); MCSA (B/M); National (B/N); MCSAGE (B/O)</li>
+                  <li style="margin-bottom: 0.5rem;">Non-Profit (B/P); Sole-Proprietorship (I/S)</li>
+                  <li style="margin-bottom: 0.5rem;">Employee (S/Y); Non TMO Employee (S/6)</li>
+                </ul>
+              </div>
+
+              <!-- Sales Applications -->
+              <div style="grid-column: 1 / 3; font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); margin-top: 1rem; margin-bottom: 0.5rem; padding-bottom: 0.2rem;">Sales Applications</div>
+              <div style="grid-column: 1 / 2;">
+                <select class="form-select">
+                  <option value="S01">S01</option>
+                  <option value="S02">S02</option>
+                  <option value="S03">S03</option>
+                  <option value="S04">S04</option>
+                  <option value="S05">S05</option>
+                  <option value="S06">S06</option>
+                  <option value="S07">S07</option>
+                  <option value="S08">S08</option>
+                  <option value="S09">S09</option>
+                  <option value="S10">S10</option>
+                </select>
+              </div>
+              <div style="grid-column: 2 / 3; background: #f7f7f7; border-radius: 4px; padding: 0.5rem 0.7rem; border: 1px solid #ccc; overflow-y: auto; max-height: 150px;">
+                <ul style="margin: 0; padding: 0; list-style: none;">
+                  <li style="margin-bottom: 0.5rem;">Care - QVXPC; Dash (TSL) - Virtual Retail</li>
+                  <li style="margin-bottom: 0.5rem;">QVXPR - Retail; POS - Retail; NAT - National Retail</li>
+                  <li style="margin-bottom: 0.5rem;">Web (TMO) - T-Mo.com; Web - MyT-Mo (cloud)</li>
+                  <li style="margin-bottom: 0.5rem;">Costco with EIP; BestBuy</li>
+                </ul>
+              </div>
+            </div>
+          {% endif %}
+          <div class="mt-4 d-flex justify-content-end gap-2">
+            <button type="submit" class="btn btn-primary">Save {{ active_tab }}</button>
+            <button type="button" class="btn btn-secondary">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+{% endblock %}
