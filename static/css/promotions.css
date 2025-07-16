@@ -122,3 +122,94 @@ body {
   color: var(--tmobile-magenta-dark);
   background: none !important;
 }
+
+/* promotions.css - modern, sleek, and readable table styles for the promotions page */
+:root {
+  --tmobile-magenta: #e20074;
+  --promo-row-bg: #dadada;
+  --promo-row-bg-alt: #f3f3f3;
+  --promo-header-bg: var(--tmobile-magenta);
+  --promo-header-color: #fff;
+  --promo-action-size: 1.5em;
+  --promo-table-radius: 12px;
+  --promo-table-shadow: 0 2px 16px #0001;
+}
+.promo-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-family: 'Inter', Arial, sans-serif;
+  margin: 0;
+  table-layout: auto;
+  border-radius: var(--promo-table-radius);
+  overflow: hidden;
+  box-shadow: var(--promo-table-shadow);
+  background: #fff;
+}
+.promo-table th {
+  background: var(--promo-header-bg);
+  color: var(--promo-header-color);
+  font-weight: 700;
+  text-align: center;
+  padding: 1em 0.5em;
+  font-size: 1.12em;
+  border: none;
+}
+.promo-table th:first-child {
+  border-top-left-radius: var(--promo-table-radius);
+}
+.promo-table th:last-child {
+  border-top-right-radius: var(--promo-table-radius);
+}
+.promo-table td {
+  background: #fff;
+  color: #111;
+  text-align: center;
+  padding: 1em 0.5em;
+  font-size: 1.08em;
+  border: none;
+  transition: background 0.2s;
+}
+.promo-table tbody tr:nth-child(even) td {
+  background: #dadada;
+}
+.promo-table tbody tr:hover td {
+  /* background: #ffe0f3; */
+}
+.promo-table td.promo-owner {
+  font-weight: 700;
+}
+.promo-table td.promo-actions {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.7em;
+  background: inherit;
+}
+.promo-table td.promo-actions .icon-button {
+  background: none;
+  border: none;
+  padding: 0.2em;
+  margin: 0 0.1em;
+  font-size: var(--promo-action-size);
+  color: #222;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: background 0.15s, color 0.15s;
+}
+.promo-table td.promo-actions .icon-button:hover {
+  background: #f8d6ec;
+  color: var(--tmobile-magenta);
+}
+.promo-table tr:not(:last-child) td {
+  border-bottom: 1.5px solid #eee;
+}
+@media (max-width: 900px) {
+  .promo-table th, .promo-table td {
+    font-size: 0.97em;
+    padding: 0.7em 0.2em;
+  }
+  .promo-table td.promo-actions {
+    gap: 0.3em;
+  }
+}
