@@ -6,13 +6,13 @@
     <div class="header-title">Edit Promotion – {{ promo.code }}</div>
     <div class="user-name">{{ user_name }}</div>
   </header>
-  <div class="container" style="max-width: 1800px;">
-    <div style="display: flex; width: 100%; gap: 2.5rem;">
+  <div class="container main-container">
+    <div class="layout-wrapper">
       <!-- LEFT PANEL -->
-      <div style="flex: 1.25; min-width: 420px; max-width: 600px; background: #fff; border-right: 2px solid #ccc; padding: 0;">
+      <div class="left-panel">
         <!-- General Info Box -->
-        <div style="border-bottom: 4px solid var(--tmobile-magenta); padding: 1rem;">
-          <div style="font-weight: bold; color: var(--tmobile-magenta); font-size: 1.1rem; margin-bottom: 0.5rem;">General Information</div>
+        <div class="info-section">
+          <div class="info-section-title">General Information</div>
           <div><b>Promo Owner:</b> {{ promo.owner }}</div>
           <div><b>Bill Facing Name:</b> {{ promo.bill_facing_name }}</div>
           <div><b>Orbit ID:</b> {{ promo.orbit_id }}</div>
@@ -20,15 +20,15 @@
           <div><b>Restricted:</b> Not Dark</div>
         </div>
         <!-- Description Box -->
-        <div style="border-bottom: 4px solid var(--tmobile-magenta); padding: 1rem;">
-          <div style="font-weight: bold; color: var(--tmobile-magenta); font-size: 1.1rem; margin-bottom: 0.5rem;">Description</div>
-          <div style="margin-bottom: 0.5rem;">{{ promo.description }}</div>
+        <div class="info-section">
+          <div class="info-section-title">Description</div>
+          <div class="info-section-content">{{ promo.description }}</div>
           <div><b>Promo Notes:</b></div>
-          <div style="white-space: pre-line;">{{ promo.promo_notes }}</div>
+          <div class="promo-notes">{{ promo.promo_notes }}</div>
         </div>
         <!-- Updates Box -->
-        <div style="border-bottom: 4px solid var(--tmobile-magenta); padding: 1rem;">
-          <div style="font-weight: bold; color: var(--tmobile-magenta); font-size: 1.1rem; margin-bottom: 0.5rem;">Updates</div>
+        <div class="info-section">
+          <div class="info-section-title">Updates</div>
           <div><b>Promo % Discount:</b> {{ promo.discount }}</div>
           <div><b>Promo Amount:</b> {{ promo.amount }}</div>
           <div><b>DCD Web In-Cart:</b> {{ 'Y' if promo.dcd_web_cart == 'Y' else 'N' }}</div>
@@ -37,9 +37,9 @@
           <div><b>Trade-in Group ID:</b> {{ promo.trade_in_group_id }}</div>
         </div>
         <!-- Version History Box -->
-        <div style="border-bottom: 4px solid var(--tmobile-magenta); padding: 1rem;">
-          <div style="font-weight: bold; color: var(--tmobile-magenta); font-size: 1.1rem; margin-bottom: 0.5rem;">Version History</div>
-          <div style="font-size: 0.97em; color: #444;">
+        <div class="info-section">
+          <div class="info-section-title">Version History</div>
+          <div class="version-history">
             {% for entry in promo.version_history %}
               <div>{{ entry }}</div>
             {% endfor %}
@@ -47,29 +47,28 @@
         </div>
       </div>
       <!-- RIGHT PANEL -->
-      <div style="flex: 2.2; min-width: 0; background: #fff; padding: 0;">
-        <div class="tabs" style="margin: 0 0 1rem 0; display: flex; flex-wrap: wrap; gap: 0.3rem;">
+      <div class="right-panel">
+        <div class="tabs">
           {% for tab in ['Details','Dates & Times','Requirements','Segmentation','Groupings','BPTCR','Export to CSV'] %}
             <a href="{{ url_for('edit_promo', promo_code=promo.code, tab=tab) }}"
-               class="tab {% if tab == active_tab %}active{% endif %}"
-               style="flex: 1; min-width: 100px; max-width: 140px; text-decoration: none; display: inline-block; font-size: 0.85rem; text-align: center; padding: 0.5rem 0.3rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+               class="tab {% if tab == active_tab %}active{% endif %}">
               {{ tab }}
             </a>
           {% endfor %}
         </div>
-        <form method="post" style="padding: 1.5rem 1.5rem 0 1.5rem;">
+        <form method="post" class="form-wrapper">
           {# Tab state is preserved on POST by reading 'active_tab' from the form #}
           <input type="hidden" name="active_tab" value="{{ active_tab }}">
           {% if active_tab == 'Details' %}
             <!-- Details Tab Content (Editable) -->
-            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 1.2rem 0.7rem; align-items: start;">
-              <div style="grid-column: 1 / 5; font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); margin-bottom: 0.5rem; padding-bottom: 0.2rem;">Bill Facing Name</div>
-              <input style="grid-column: 1 / 5; margin-bottom: 0.5rem;" class="form-control" name="bill_facing_name" value="{{ promo.bill_facing_name }}">
+            <div class="grid-4-col">
+              <div class="field-label col-span-full">Bill Facing Name</div>
+              <input class="form-control col-span-full form-control-mb" name="bill_facing_name" value="{{ promo.bill_facing_name }}">
 
-              <div style="font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); margin-bottom: 0.5rem; padding-bottom: 0.2rem;">Promo % Discount</div>
-              <div style="font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); margin-bottom: 0.5rem; padding-bottom: 0.2rem;">Promo Amount ($)</div>
-              <div style="font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); margin-bottom: 0.5rem; padding-bottom: 0.2rem;">NSEIP Drop</div>
-              <div style="font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); margin-bottom: 0.5rem; padding-bottom: 0.2rem;">DCD Web Cart</div>
+              <div class="field-label">Promo % Discount</div>
+              <div class="field-label">Promo Amount ($)</div>
+              <div class="field-label">NSEIP Drop</div>
+              <div class="field-label">DCD Web Cart</div>
               <input class="form-control" name="discount" value="{{ promo.discount }}" type="number" min="0" step="0.01" placeholder="%">
               <input class="form-control" name="amount" value="{{ promo.amount }}" type="number" min="0" step="0.01" placeholder="$">
               <select class="form-select" name="nseip_drop">
@@ -81,13 +80,13 @@
                 <option value="N" {% if promo.dcd_web_cart == 'N' %}selected{% endif %}>No</option>
               </select>
 
-              <div style="grid-column: 1 / 5; font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); margin-top: 1rem; margin-bottom: 0.5rem; padding-bottom: 0.2rem;">Product Type</div>
-              <input style="grid-column: 1 / 5; margin-bottom: 0.5rem;" class="form-control" name="product_type" value="{{ promo.product_type }}">
+              <div class="field-label-spaced col-span-full">Product Type</div>
+              <input class="form-control col-span-full form-control-mb" name="product_type" value="{{ promo.product_type }}">
 
-              <div style="font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); margin-bottom: 0.5rem; padding-bottom: 0.2rem;">BOGO</div>
-              <div style="font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); margin-bottom: 0.5rem; padding-bottom: 0.2rem;">Bolt Trade-In Group ID</div>
-              <div style="font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); margin-bottom: 0.5rem; padding-bottom: 0.2rem;">FPD Display Promo</div>
-              <div style="font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); margin-bottom: 0.5rem; padding-bottom: 0.2rem;">On Menu</div>
+              <div class="field-label">BOGO</div>
+              <div class="field-label">Bolt Trade-In Group ID</div>
+              <div class="field-label">FPD Display Promo</div>
+              <div class="field-label">On Menu</div>
               <select class="form-select" name="bogo">
                 <option value="Y" {% if promo.bogo == 'Y' %}selected{% endif %}>Yes</option>
                 <option value="N" {% if promo.bogo == 'N' %}selected{% endif %}>No</option>
@@ -102,56 +101,56 @@
                 <option value="N" {% if promo.on_menu == 'N' %}selected{% endif %}>No</option>
               </select>
 
-              <div style="grid-column: 1 / 3; font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); margin-top: 1rem; margin-bottom: 0.5rem; padding-bottom: 0.2rem;">Market Group</div>
-              <div style="grid-column: 3 / 5; font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); margin-top: 1rem; margin-bottom: 0.5rem; padding-bottom: 0.2rem;">Store Group</div>
-              <input style="grid-column: 1 / 3;" class="form-control" name="market_group" value="*">
-              <input style="grid-column: 3 / 5;" class="form-control" name="store_group" value="*">
+              <div class="field-label-spaced col-span-half">Market Group</div>
+              <div class="field-label-spaced col-span-half-right">Store Group</div>
+              <input class="form-control col-span-half" name="market_group" value="*">
+              <input class="form-control col-span-half-right" name="store_group" value="*">
 
-              <div style="grid-column: 1 / 5; font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); margin-top: 1rem; margin-bottom: 0.5rem; padding-bottom: 0.2rem;">SKU Link Address</div>
-              <input style="grid-column: 1 / 5;" class="form-control" name="sku_link" value="https://web.powerapps.com/webplayer/iframe...">
-              <div style="grid-column: 1 / 5; font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); margin-top: 1rem; margin-bottom: 0.5rem; padding-bottom: 0.2rem;">Trade-In Link Address</div>
-              <input style="grid-column: 1 / 5;" class="form-control" name="tradein_link" value="https://web.powerapps.com/webplayer/iframe...">
+              <div class="field-label-spaced col-span-full">SKU Link Address</div>
+              <input class="form-control col-span-full" name="sku_link" value="https://web.powerapps.com/webplayer/iframe...">
+              <div class="field-label-spaced col-span-full">Trade-In Link Address</div>
+              <input class="form-control col-span-full" name="tradein_link" value="https://web.powerapps.com/webplayer/iframe...">
             </div>
           {% elif active_tab == 'Dates & Times' %}
             <!-- Dates & Times Tab Content (Editable) -->
-            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 1.2rem 0.7rem; align-items: start; width: 100%; max-width: 100%; overflow-x: auto;">
+            <div class="grid-4-col-responsive">
 
               <!-- Promo Start Date, End Date, Comm End Date, Promo Duration (Legacy style) -->
-              <div style="font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); padding-bottom: 0.2rem;">Promo Start Date</div>
-              <div style="font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); padding-bottom: 0.2rem;">Promo End Date</div>
-              <div style="font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); padding-bottom: 0.2rem;">Comm End Date</div>
-              <div style="font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); padding-bottom: 0.2rem;">Promo Duration</div>
+              <div class="field-label-no-margin">Promo Start Date</div>
+              <div class="field-label-no-margin">Promo End Date</div>
+              <div class="field-label-no-margin">Comm End Date</div>
+              <div class="field-label-no-margin">Promo Duration</div>
               <input class="form-control" name="promo_start_date" type="date" value="{{ promo.promo_start_date }}">
               <input class="form-control" name="promo_end_date" type="date" value="{{ promo.promo_end_date }}">
               <input class="form-control" name="comm_end_date" type="date" value="{{ promo.comm_end_date }}">
-              <div style="display: flex; gap: 0.3rem; align-items: center; justify-content: flex-start; background: #f7f7f7; border-radius: 4px; padding: 0.3rem 0.5rem; border: 1px solid #ccc; flex-wrap: wrap; width: 100%; box-sizing: border-box;">
-                <label style="margin-right: 0.5rem; font-weight: 500; color: #333; font-size: 0.9rem;">Duration:</label>
-                <label style="margin-right: 0.5rem; font-size: 0.9rem;">
+              <div class="radio-group-wrap">
+                <label class="radio-label-sm">Duration:</label>
+                <label class="radio-label-xs">
                   <input type="radio" name="promo_duration" value="24" {% if promo.promo_duration == 24 %}checked{% endif %}>
-                  <span style="margin-left: 0.2rem;">24</span>
+                  <span class="radio-text">24</span>
                 </label>
-                <label style="margin-right: 0.5rem; font-size: 0.9rem;">
+                <label class="radio-label-xs">
                   <input type="radio" name="promo_duration" value="30" {% if promo.promo_duration == 30 %}checked{% endif %}>
-                  <span style="margin-left: 0.2rem;">30</span>
+                  <span class="radio-text">30</span>
                 </label>
-                <label style="font-size: 0.9rem;">
+                <label class="radio-label-xs">
                   <input type="radio" name="promo_duration" value="36" {% if promo.promo_duration == 36 %}checked{% endif %}>
-                  <span style="margin-left: 0.2rem;">36</span>
+                  <span class="radio-text">36</span>
                 </label>
               </div>
 
               <!-- Delay Time -->
-              <div style="font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); padding-bottom: 0.2rem;">Delay Time</div>
-              <div style="font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); padding-bottom: 0.2rem;">Application Grace Period</div>
-              <div style="font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); padding-bottom: 0.2rem;">Promo Grace</div>
-              <div style="font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); padding-bottom: 0.2rem;">Trade-In Grace</div>
+              <div class="field-label-no-margin">Delay Time</div>
+              <div class="field-label-no-margin">Application Grace Period</div>
+              <div class="field-label-no-margin">Promo Grace</div>
+              <div class="field-label-no-margin">Trade-In Grace</div>
               <input class="form-control" name="delay_time" type="number" min="0" value="{{ promo.delay_time }}">
-              <div style="display: flex; gap: 0.3rem; align-items: center; justify-content: flex-start; background: #f7f7f7; border-radius: 4px; padding: 0.3rem 0.5rem; border: 1px solid #ccc; flex-wrap: wrap; width: 100%; box-sizing: border-box;">
-                <label style="margin-right: 0.5rem; font-weight: 500; color: #333; font-size: 0.85rem;">Grace:</label>
+              <div class="radio-group-wrap">
+                <label class="radio-label-prefix">Grace:</label>
                 {% for grace in ['G11','G12','G13','G14','G15','G16','G17','NULL'] %}
-                  <label style="margin-right: 0.3rem; font-size: 0.85rem;">
+                  <label class="radio-label-prefix">
                     <input type="radio" name="application_grace_period" value="{{ grace }}" {% if promo.application_grace_period == grace %}checked{% endif %}>
-                    <span style="margin-left: 0.2rem;">{{ grace }}</span>
+                    <span class="radio-text">{{ grace }}</span>
                   </label>
                 {% endfor %}
               </div>
@@ -159,43 +158,43 @@
               <input class="form-control" name="trade_in_grace" value="{{ promo.trade_in_grace }}">
 
               <!-- MPSS Lookback -->
-              <div style="grid-column: 1 / 5; font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); margin-top: 1rem; margin-bottom: 0.5rem; padding-bottom: 0.2rem;">MPSS Lookback</div>
-              <input style="grid-column: 1 / 5;" class="form-control" name="mpss_lookback" value="{{ promo.mpss_lookback }}">
+              <div class="field-label-spaced col-span-full">MPSS Lookback</div>
+              <input class="form-control col-span-full" name="mpss_lookback" value="{{ promo.mpss_lookback }}">
             </div>
           {% elif active_tab == 'Requirements' %}
             <!-- Requirements Tab Content (Modernized, Consistent Layout) -->
-            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 1.2rem 0.7rem; align-items: start;">
+            <div class="grid-4-col">
               <!-- Device Sales Type -->
-              <div style="font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); padding-bottom: 0.2rem;">Device Sales Type</div>
-              <div style="font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); padding-bottom: 0.2rem;">Activation Type</div>
-              <div style="font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); padding-bottom: 0.2rem;">Maintain SOC</div>
-              <div style="font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); padding-bottom: 0.2rem;">Limit Per BAN</div>
+              <div class="field-label-no-margin">Device Sales Type</div>
+              <div class="field-label-no-margin">Activation Type</div>
+              <div class="field-label-no-margin">Maintain SOC</div>
+              <div class="field-label-no-margin">Limit Per BAN</div>
               <div>
-                <div style="display: flex; gap: 0.5rem; align-items: center; background: #f7f7f7; border-radius: 4px; padding: 0.3rem 0.7rem; border: 1px solid #ccc;">
+                <div class="radio-group">
                   {% for type in ['J01','S01','*','NULL'] %}
-                    <label style="margin-right: 0.7rem; font-weight: 500; color: #333;">
+                    <label class="radio-label">
                       <input type="radio" name="device_sales_type" value="{{ type }}" {% if promo.device_sales_type == type %}checked{% endif %}>
-                      <span style="margin-left: 0.2rem;">{{ type }}</span>
+                      <span class="radio-text">{{ type }}</span>
                     </label>
                   {% endfor %}
                 </div>
               </div>
               <div>
-                <div style="display: flex; gap: 0.5rem; align-items: center; background: #f7f7f7; border-radius: 4px; padding: 0.3rem 0.7rem; border: 1px solid #ccc;">
+                <div class="radio-group">
                   {% for type in ['AE1','E01','N01','NA1','*','NULL'] %}
-                    <label style="margin-right: 0.7rem; font-weight: 500; color: #333;">
+                    <label class="radio-label">
                       <input type="radio" name="activation_type" value="{{ type }}" {% if promo.activation_type == type %}checked{% endif %}>
-                      <span style="margin-left: 0.2rem;">{{ type }}</span>
+                      <span class="radio-text">{{ type }}</span>
                     </label>
                   {% endfor %}
                 </div>
               </div>
               <div>
-                <div style="display: flex; gap: 0.5rem; align-items: center; background: #f7f7f7; border-radius: 4px; padding: 0.3rem 0.7rem; border: 1px solid #ccc;">
-                  <label style="margin-right: 0.7rem; font-weight: 500; color: #333;">
+                <div class="radio-group">
+                  <label class="radio-label">
                     <input type="radio" name="maintain_soc" value="Y" {% if promo.maintain_soc == 'Y' %}checked{% endif %}> Y
                   </label>
-                  <label style="margin-right: 0.7rem; font-weight: 500; color: #333;">
+                  <label class="radio-label">
                     <input type="radio" name="maintain_soc" value="N" {% if promo.maintain_soc == 'N' %}checked{% endif %}> N
                   </label>
                 </div>
@@ -205,21 +204,21 @@
               </div>
 
               <!-- Minimum GSM Count -->
-              <div style="font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); padding-bottom: 0.2rem;">Minimum GSM Count</div>
-              <div style="font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); padding-bottom: 0.2rem;">Maximum GSM Count</div>
-              <div style="font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); padding-bottom: 0.2rem; grid-column: 3 / 5;">Port-In Group ID</div>
+              <div class="field-label-no-margin">Minimum GSM Count</div>
+              <div class="field-label-no-margin">Maximum GSM Count</div>
+              <div class="field-label-no-margin col-span-3-4">Port-In Group ID</div>
               <div>
                 <input class="form-control" name="min_gsm_count" value="{{ promo.min_gsm_count }}">
               </div>
               <div>
                 <input class="form-control" name="max_gsm_count" value="{{ promo.max_gsm_count }}">
               </div>
-              <div style="grid-column: 3 / 5;">
-                <div style="display: flex; gap: 0.5rem; align-items: center; background: #f7f7f7; border-radius: 4px; padding: 0.3rem 0.7rem; border: 1px solid #ccc;">
+              <div class="col-span-3-4">
+                <div class="radio-group">
                   {% for group in ['G02','G03','G04','G05','G06','G07','NULL'] %}
-                    <label style="margin-right: 0.7rem; font-weight: 500; color: #333;">
+                    <label class="radio-label">
                       <input type="radio" name="port_in_group_id" value="{{ group }}" {% if promo.port_in_group_id == group %}checked{% endif %}>
-                      <span style="margin-left: 0.2rem;">{{ group }}</span>
+                      <span class="radio-text">{{ group }}</span>
                     </label>
                   {% endfor %}
                 </div>
@@ -227,32 +226,32 @@
             </div>
           {% elif active_tab == 'Segmentation' %}
             <!-- Segmentation Tab Content (Modernized, Consistent Layout) -->
-            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 1.2rem 0.7rem; align-items: start;">
+            <div class="grid-4-col">
               <!-- Segment Name -->
-              <div style="grid-column: 1 / 5; font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); margin-bottom: 0.5rem; padding-bottom: 0.2rem;">Segment Name</div>
-              <input style="grid-column: 1 / 5; margin-bottom: 0.5rem;" class="form-control" name="segment_name" value="{{ promo.segment_name }}">
+              <div class="field-label col-span-full">Segment Name</div>
+              <input class="form-control col-span-full form-control-mb" name="segment_name" value="{{ promo.segment_name }}">
 
               <!-- Sub Segment -->
-              <div style="grid-column: 1 / 5; font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); margin-bottom: 0.5rem; padding-bottom: 0.2rem;">Sub Segment</div>
-              <div style="grid-column: 1 / 5; display: flex; gap: 1rem; align-items: center; background: #f7f7f7; border-radius: 4px; padding: 0.5rem 0.7rem; border: 1px solid #ccc; margin-bottom: 0.5rem;">
+              <div class="field-label col-span-full">Sub Segment</div>
+              <div class="radio-group-wide col-span-full">
                 {% for segment in ['Active Military','Family','Reserve','Retired','Promo Code'] %}
-                  <label style="font-weight: 500; color: #333;">
+                  <label class="radio-label">
                     <input type="radio" name="sub_segment" value="{{ segment }}" {% if promo.sub_segment == segment %}checked{% endif %}>
-                    <span style="margin-left: 0.2rem;">{{ segment }}</span>
+                    <span class="radio-text">{{ segment }}</span>
                   </label>
                 {% endfor %}
               </div>
 
               <!-- Segment Group ID -->
-              <div style="font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); padding-bottom: 0.2rem; grid-column: 1 / 3;">Segment Group ID</div>
-              <div style="font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); padding-bottom: 0.2rem; grid-column: 3 / 5;">Segment Level</div>
-              <input style="grid-column: 1 / 3;" class="form-control" name="segment_group_id" value="{{ promo.segment_group_id }}">
-              <div style="grid-column: 3 / 5;">
-                <div style="display: flex; gap: 1rem; align-items: center; background: #f7f7f7; border-radius: 4px; padding: 0.3rem 0.7rem; border: 1px solid #ccc;">
+              <div class="field-label-no-margin col-span-1-3">Segment Group ID</div>
+              <div class="field-label-no-margin col-span-3-4">Segment Level</div>
+              <input class="form-control col-span-1-3" name="segment_group_id" value="{{ promo.segment_group_id }}">
+              <div class="col-span-3-4">
+                <div class="radio-group-wide">
                   {% for level in ['BAN','LINE','NA'] %}
-                    <label style="font-weight: 500; color: #333;">
+                    <label class="radio-label">
                       <input type="radio" name="segment_level" value="{{ level }}" {% if promo.segment_level == level %}checked{% endif %}>
-                      <span style="margin-left: 0.2rem;">{{ level }}</span>
+                      <span class="radio-text">{{ level }}</span>
                     </label>
                   {% endfor %}
                 </div>
@@ -319,49 +318,49 @@
             </div>
           {% elif active_tab == 'BPTCR' %}
             <!-- BPTCR Tab Content -->
-            <div style="display: grid; grid-template-columns: 1fr; gap: 1.2rem; align-items: start; max-width: 100%;">
+            <div class="grid-1-col-max">
               <!-- C2 Link Section -->
-              <div style="font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); margin-bottom: 1rem; padding-bottom: 0.2rem;">C2 Link Configuration</div>
-              <div style="background: #f7f7f7; border-radius: 4px; padding: 1.5rem; border: 1px solid #ccc; margin-bottom: 2rem;">
-                <div style="display: grid; grid-template-columns: 1fr 3fr; gap: 1rem; align-items: center;">
-                  <label style="font-weight: 500; color: #333;">C2 Link URL:</label>
-                  <input class="form-control" name="c2_link" value="{{ promo.c2_link or 'https://c2.t-mobile.com/offers/' }}" style="width: 100%;" placeholder="Enter C2 link URL">
+              <div class="field-label">C2 Link Configuration</div>
+              <div class="content-section">
+                <div class="c2-link-grid">
+                  <label class="font-weight-500 color-333">C2 Link URL:</label>
+                  <input class="form-control c2-link-input" name="c2_link" value="{{ promo.c2_link or 'https://c2.t-mobile.com/offers/' }}" placeholder="Enter C2 link URL">
                 </div>
-                <div style="margin-top: 1rem; font-size: 0.85rem; color: #666;">
+                <div class="info-text">
                   <i class="fas fa-info-circle" style="margin-right: 0.5rem;"></i>
                   This link will be used in the promotion system to direct customers to the appropriate offer page.
                 </div>
               </div>
 
               <!-- Jira Ticket Section -->
-              <div style="font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); margin-bottom: 1rem; padding-bottom: 0.2rem;">Jira Ticket Management</div>
-              <div style="background: #f7f7f7; border-radius: 4px; padding: 1.5rem; border: 1px solid #ccc; margin-bottom: 2rem;">
-                <div style="display: flex; flex-direction: column; gap: 1rem;">
-                  <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <div>
-                      <div style="font-weight: 500; color: #333; margin-bottom: 0.5rem;">Generate BPTCR Jira Ticket</div>
-                      <div style="font-size: 0.85rem; color: #666;">Create a new Jira ticket for BPTCR approval process</div>
+              <div class="field-label">Jira Ticket Management</div>
+              <div class="content-section">
+                <div class="jira-ticket-wrapper">
+                  <div class="jira-ticket-header">
+                    <div class="jira-ticket-info">
+                      <h4>Generate BPTCR Jira Ticket</h4>
+                      <p>Create a new Jira ticket for BPTCR approval process</p>
                     </div>
-                    <button type="button" class="btn btn-primary" style="background: var(--tmobile-magenta); border: none; padding: 0.8rem 1.5rem; font-size: 1rem; border-radius: 4px; color: white; cursor: pointer; transition: all 0.2s; white-space: nowrap;" onclick="generateJiraTicket()">
+                    <button type="button" class="btn-primary-jira" onclick="generateJiraTicket()">
                       <i class="fas fa-ticket-alt" style="margin-right: 0.5rem;"></i>
                       Generate Jira Ticket
                     </button>
                   </div>
                   
                   <!-- Jira Ticket Status (Initially Hidden) -->
-                  <div id="jira-ticket-status" style="display: none; margin-top: 1rem;">
-                    <div style="background: #e8f5e8; border: 1px solid #4caf50; border-radius: 4px; padding: 1rem;">
-                      <div style="font-weight: 500; color: #2e7d32; margin-bottom: 0.5rem;">
+                  <div id="jira-ticket-status" class="jira-ticket-status">
+                    <div class="jira-success-box">
+                      <div class="jira-success-title">
                         <i class="fas fa-check-circle" style="margin-right: 0.5rem;"></i>
                         Jira Ticket Created Successfully
                       </div>
-                      <div style="font-size: 0.9rem; color: #2e7d32;">
+                      <div class="jira-success-text">
                         <strong>Ticket ID:</strong> <span id="jira-ticket-id">BPTCR-{{ promo.code }}-2025-07-14</span>
                       </div>
-                      <div style="font-size: 0.9rem; color: #2e7d32; margin-top: 0.5rem;">
+                      <div class="jira-success-text-spaced">
                         <strong>Status:</strong> Open - Pending BPTCR Review
                       </div>
-                      <div style="margin-top: 1rem; display: flex; gap: 1rem;">
+                      <div class="jira-actions">
                         <button type="button" class="btn btn-outline-secondary" onclick="viewJiraTicket()">
                           <i class="fas fa-external-link-alt" style="margin-right: 0.5rem;"></i>
                           View in Jira
@@ -377,131 +376,228 @@
               </div>
 
               <!-- BPTCR Approval Workflow -->
-              <div style="font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); margin-bottom: 1rem; padding-bottom: 0.2rem;">BPTCR Approval Workflow</div>
-              <div style="background: #f7f7f7; border-radius: 4px; padding: 1.5rem; border: 1px solid #ccc;">
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
-                  <div style="background: white; border-radius: 4px; padding: 1rem; border: 1px solid #ddd; text-align: center;">
-                    <div style="font-size: 2rem; color: var(--tmobile-magenta); margin-bottom: 0.5rem;">1</div>
-                    <div style="font-weight: 500; color: #333; margin-bottom: 0.5rem;">Submit Request</div>
-                    <div style="font-size: 0.85rem; color: #666;">Generate Jira ticket for BPTCR review</div>
+              <div class="field-label">BPTCR Approval Workflow</div>
+              <div class="content-section">
+                <div class="workflow-grid">
+                  <div class="workflow-card">
+                    <div class="workflow-number">1</div>
+                    <div class="workflow-title">Submit Request</div>
+                    <div class="workflow-description">Generate Jira ticket for BPTCR review</div>
                   </div>
-                  <div style="background: white; border-radius: 4px; padding: 1rem; border: 1px solid #ddd; text-align: center;">
-                    <div style="font-size: 2rem; color: var(--tmobile-magenta); margin-bottom: 0.5rem;">2</div>
-                    <div style="font-weight: 500; color: #333; margin-bottom: 0.5rem;">BPTCR Review</div>
-                    <div style="font-size: 0.85rem; color: #666;">Business team reviews promotion details</div>
+                  <div class="workflow-card">
+                    <div class="workflow-number">2</div>
+                    <div class="workflow-title">BPTCR Review</div>
+                    <div class="workflow-description">Business team reviews promotion details</div>
                   </div>
-                  <div style="background: white; border-radius: 4px; padding: 1rem; border: 1px solid #ddd; text-align: center;">
-                    <div style="font-size: 2rem; color: var(--tmobile-magenta); margin-bottom: 0.5rem;">3</div>
-                    <div style="font-weight: 500; color: #333; margin-bottom: 0.5rem;">Approval</div>
-                    <div style="font-size: 0.85rem; color: #666;">Final approval and implementation</div>
+                  <div class="workflow-card">
+                    <div class="workflow-number">3</div>
+                    <div class="workflow-title">Approval</div>
+                    <div class="workflow-description">Final approval and implementation</div>
                   </div>
                 </div>
               </div>
             </div>
-            
-            <!-- JavaScript for BPTCR functionality -->
-            <script>
-              function generateJiraTicket() {
-                // Simulate Jira ticket generation
-                const ticketId = 'BPTCR-{{ promo.code }}-' + new Date().toISOString().split('T')[0];
-                
-                // Show loading state
-                const button = event.target;
-                const originalText = button.innerHTML;
-                button.innerHTML = '<i class="fas fa-spinner fa-spin" style="margin-right: 0.5rem;"></i>Generating...';
-                button.disabled = true;
-                
-                // Simulate API call delay
-                setTimeout(() => {
-                  // Update ticket ID and show status
-                  document.getElementById('jira-ticket-id').textContent = ticketId;
-                  document.getElementById('jira-ticket-status').style.display = 'block';
-                  
-                  // Reset button
-                  button.innerHTML = originalText;
-                  button.disabled = false;
-                  
-                  // Show success message
-                  alert('Jira ticket created successfully: ' + ticketId);
-                }, 2000);
-              }
-              
-              function viewJiraTicket() {
-                const ticketId = document.getElementById('jira-ticket-id').textContent;
-                // In production, this would open the actual Jira ticket
-                alert('Opening Jira ticket: ' + ticketId + '\n(In production, this would open the actual Jira URL)');
-              }
-              
-              function copyJiraTicketId() {
-                const ticketId = document.getElementById('jira-ticket-id').textContent;
-                navigator.clipboard.writeText(ticketId).then(function() {
-                  alert('Ticket ID copied to clipboard: ' + ticketId);
-                });
-              }
-            </script>
           {% elif active_tab == 'Export to CSV' %}
             <!-- Export to CSV Tab Content -->
-            <div style="display: grid; grid-template-columns: 1fr; gap: 1.2rem; align-items: start;">
+            <div class="grid-1-col">
               <!-- CSV Upload Section -->
-              <div style="font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); margin-bottom: 1rem; padding-bottom: 0.2rem;">Upload SKU List</div>
+              <div class="field-label">Upload SKU List</div>
               
               <!-- File Upload Area -->
-              <div style="background: #f7f7f7; border: 2px dashed #ccc; border-radius: 8px; padding: 2rem; text-align: center; margin-bottom: 2rem;">
-                <div style="margin-bottom: 1rem;">
-                  <i class="fas fa-upload" style="font-size: 2rem; color: var(--tmobile-magenta); margin-bottom: 1rem;"></i>
-                  <div style="font-size: 1.1rem; color: #666; margin-bottom: 0.5rem;">Upload your SKU list Excel file</div>
-                  <div style="font-size: 0.9rem; color: #999;">Drag and drop or click to select a file</div>
+              <div class="file-upload-area">
+                <div class="file-upload-content">
+                  <div class="file-upload-icon">
+                    <i class="fas fa-upload"></i>
+                  </div>
+                  <div class="file-upload-title">Upload your SKU list Excel file</div>
+                  <div class="file-upload-subtitle">Drag and drop or click to select a file</div>
                 </div>
                 <input type="file" name="sku_excel" accept=".xlsx,.xls" style="display: none;" id="sku-upload">
-                <label for="sku-upload" class="btn btn-outline-primary" style="cursor: pointer; display: inline-block; padding: 0.5rem 1rem; border: 2px solid var(--tmobile-magenta); color: var(--tmobile-magenta); background: white; border-radius: 4px; text-decoration: none; transition: all 0.2s; font-weight: 500;">
+                <label for="sku-upload" class="file-upload-button">
                   Choose Excel File
                 </label>
-                <div id="file-name" style="margin-top: 1rem; font-size: 0.9rem; color: #333; display: none;">
+                <div id="file-name" class="file-name-display">
                   <strong>Selected file:</strong> <span id="selected-file-name"></span>
                 </div>
               </div>
               
               <!-- Generate Button -->
-              <div style="display: flex; justify-content: center; margin-top: 1rem;">
-                <button type="button" class="btn btn-primary" style="background: var(--tmobile-magenta); border: none; padding: 0.8rem 2rem; font-size: 1.1rem; border-radius: 4px; color: white; cursor: pointer; transition: all 0.2s;" onclick="generateInsertStatements()">
+              <div class="button-center">
+                <button type="button" class="btn-primary" onclick="generateInsertStatements()">
                   Generate INSERT Statements
                 </button>
               </div>
               
               <!-- Results Area (Initially Hidden) -->
-              <div id="insert-results" style="display: none; margin-top: 2rem;">
-                <div style="font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); margin-bottom: 1rem; padding-bottom: 0.2rem;">Generated INSERT Statements</div>
-                <div style="background: #f8f9fa; border: 1px solid #ddd; border-radius: 4px; padding: 1rem; max-height: 400px; overflow-y: auto; overflow-x: auto; width: 100%; box-sizing: border-box;">
-                  <pre id="insert-statements-content" style="margin: 0; font-family: 'Courier New', monospace; font-size: 0.85rem; line-height: 1.4; white-space: pre-wrap; word-wrap: break-word; overflow-wrap: anywhere; hyphens: auto; max-width: 100%; width: 100%; box-sizing: border-box;"></pre>
+              <div id="insert-results" class="results-section">
+                <div class="field-label">Generated INSERT Statements</div>
+                <div class="results-container">
+                  <pre id="insert-statements-content" class="results-content"></pre>
                 </div>
-                <div style="margin-top: 1rem; display: flex; gap: 1rem;">
+                <div class="results-actions">
                   <button type="button" class="btn btn-secondary" onclick="copyToClipboard()">Copy to Clipboard</button>
                   <button type="button" class="btn btn-success" onclick="downloadStatements()">Download SQL File</button>
                 </div>
               </div>
             </div>
-            
-            <!-- JavaScript for file upload handling -->
-            <script>
-              document.getElementById('sku-upload').addEventListener('change', function(e) {
-                const file = e.target.files[0];
-                if (file) {
-                  document.getElementById('selected-file-name').textContent = file.name;
-                  document.getElementById('file-name').style.display = 'block';
-                }
-              });
-              
-              function generateInsertStatements() {
-                const fileInput = document.getElementById('sku-upload');
-                const file = fileInput.files[0];
-                
-                if (!file) {
-                  alert('Please select an Excel file first.');
-                  return;
-                }
-                
-                // Demo SQL content - in production this would be generated from the Excel file
-                const demoSqlContent = `-- User Story No. 			= CPO-15843
+          {% elif active_tab == 'Groupings' %}
+            <!-- Groupings Tab Content -->
+            <div class="grid-2-col">
+              <!-- SOC Grouping -->
+              <div class="field-label col-span-2-full text-center">SOC Grouping</div>
+              <div class="form-select-wrapper">
+                <select class="form-select" name="soc_grouping">
+                  <option value="Group 1NS">Group 1NS</option>
+                  <option value="Group 3">Group 3</option>
+                  <option value="Group 4">Group 4</option>
+                  <option value="Group 5">Group 5</option>
+                  <option value="Group 6">Group 6</option>
+                </select>
+              </div>
+              <div class="content-section-info">
+                <ul class="info-list">
+                  <li class="bold">Group 1NS - GSM - Consumer & TFB</li>
+                  <li>T-Mobile ONE rate plans</li>
+                  <li>Magenta rate plans</li>
+                  <li>Essentials rate plans</li>
+                  <li>Bus/Gov Unlimited rate plans</li>
+                  <li class="bold">Group 3 - MI - Consumer & TFB</li>
+                  <li>10GB or higher Mobile Internet rate plans (limited buckets)</li>
+                  <li>Excludes unlimited highspeed data plans</li>
+                  <li class="bold">Group 4 - GSM - Consumer & TFB - excludes PlusUP & MAXUp line level upsell SOCs)</li>
+                  <li class="bold">Group 5 - MI - All MTME Eligible MI/BTS - Consumer & TFB</li>
+                  <li class="bold">Group 6 - GSM - Consumer & TFB</li>
+                  <li>TMO ONE Plus rate plans (Incl. 55+)</li>
+                  <li>Magenta Plus rate plans (Incl. First Responder & 55+)</li>
+                  <li>Magenta MAX rate plans (Incl. First responder & 55+)</li>
+                  <li>TMO ONE Plus Military rate plans</li>
+                  <li>Magenta Plus Military rate plans</li>
+                  <li>Magenta MAX Military rate plans</li>
+                  <li>Business Unlimited Plus plans</li>
+                  <li>Magenta Plus DHH plans</li>
+                  <li>Magenta MAX DHH plans</li>
+                  <li>Business Unlimited Ultimate plans</li>
+                  <li>Plus Up Upsell SOCs (Include Intl/Global Plus SOCs)</li>
+                  <li>MAXUp Upsell SOCs</li>
+                  <li>Business Unlimited Upsell SOCs (Ultimate)</li>
+                </ul>
+              </div>
+
+              <!-- Account Type -->
+              <div class="field-label-spaced col-span-2-full">Account Type</div>
+              <div>
+                <select class="form-select">
+                  <option value="A01">A01</option>
+                  <option value="A02">A02</option>
+                  <option value="A03">A03</option>
+                  <option value="A04">A04</option>
+                  <option value="A05">A05</option>
+                  <option value="A06">A06</option>
+                  <option value="A07">A07</option>
+                  <option value="A08">A08</option>
+                  <option value="A09">A09</option>
+                  <option value="A10">A10</option>
+                </select>
+              </div>
+              <div class="content-section-info-sm">
+                <ul class="info-list">
+                  <li>Regular (I/R); Association (I/A); GSA (I/F); Government (I/G); MCSA (I/M)</li>
+                  <li>Corporate (B/C); Retail (B/L); MCSA (B/M); National (B/N); MCSAGE (B/O)</li>
+                  <li>Non-Profit (B/P); Sole-Proprietorship (I/S)</li>
+                  <li>Employee (S/Y); Non TMO Employee (S/6)</li>
+                </ul>
+              </div>
+
+              <!-- Sales Applications -->
+              <div class="field-label-spaced col-span-2-full">Sales Applications</div>
+              <div>
+                <select class="form-select">
+                  <option value="S01">S01</option>
+                  <option value="S02">S02</option>
+                  <option value="S03">S03</option>
+                  <option value="S04">S04</option>
+                  <option value="S05">S05</option>
+                  <option value="S06">S06</option>
+                  <option value="S07">S07</option>
+                  <option value="S08">S08</option>
+                  <option value="S09">S09</option>
+                  <option value="S10">S10</option>
+                </select>
+              </div>
+              <div class="content-section-info-sm">
+                <ul class="info-list">
+                  <li>Care - QVXPC; Dash (TSL) - Virtual Retail</li>
+                  <li>QVXPR - Retail; POS - Retail; NAT - National Retail</li>
+                  <li>Web (TMO) - T-Mo.com; Web - MyT-Mo (cloud)</li>
+                  <li>Costco with EIP; BestBuy</li>
+                </ul>
+              </div>
+            </div>
+          {% endif %}
+          {% if active_tab != 'Export to CSV' %}
+          <div class="action-buttons mt-2">
+            <button type="submit" class="btn btn-primary">Save {{ active_tab }}</button>
+            <button type="button" class="btn btn-secondary">Cancel</button>
+          </div>
+          {% endif %}
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- JavaScript for all interactive functionality -->
+  <script>
+    // BPTCR functionality
+    function generateJiraTicket() {
+      const ticketId = 'BPTCR-{{ promo.code }}-' + new Date().toISOString().split('T')[0];
+      
+      const button = event.target;
+      const originalText = button.innerHTML;
+      button.innerHTML = '<i class="fas fa-spinner fa-spin" style="margin-right: 0.5rem;"></i>Generating...';
+      button.disabled = true;
+      
+      setTimeout(() => {
+        document.getElementById('jira-ticket-id').textContent = ticketId;
+        document.getElementById('jira-ticket-status').style.display = 'block';
+        
+        button.innerHTML = originalText;
+        button.disabled = false;
+        
+        alert('Jira ticket created successfully: ' + ticketId);
+      }, 2000);
+    }
+    
+    function viewJiraTicket() {
+      const ticketId = document.getElementById('jira-ticket-id').textContent;
+      alert('Opening Jira ticket: ' + ticketId + '\n(In production, this would open the actual Jira URL)');
+    }
+    
+    function copyJiraTicketId() {
+      const ticketId = document.getElementById('jira-ticket-id').textContent;
+      navigator.clipboard.writeText(ticketId).then(function() {
+        alert('Ticket ID copied to clipboard: ' + ticketId);
+      });
+    }
+
+    // Export to CSV functionality
+    document.getElementById('sku-upload').addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if (file) {
+        document.getElementById('selected-file-name').textContent = file.name;
+        document.getElementById('file-name').style.display = 'block';
+      }
+    });
+    
+    function generateInsertStatements() {
+      const fileInput = document.getElementById('sku-upload');
+      const file = fileInput.files[0];
+      
+      if (!file) {
+        alert('Please select an Excel file first.');
+        return;
+      }
+      
+      const demoSqlContent = `-- User Story No. 			= CPO-15843
 -- Requested By 			= Cade Holtzen
 -- Request Date(DD/MM/YYYY) = 04/02/2025 
 -- Project 					= EFPE Device - New Promo R043 - Orbit 23578 - NR x Apple: $800 off iPhone 16 w/Trade on Go5G Plus/Next - Launch 04/03/2025
@@ -537,162 +633,27 @@ Insert into PROMO_DEVICE_GROUPS (SKU_GROUP_ID,SKU,SYS_CREATION_DATE,OPERATOR_ID,
 -- (Truncated for demo - full file contains 100+ device records)
 
 END;`;
-                
-                // Display the SQL content
-                document.getElementById('insert-statements-content').textContent = demoSqlContent;
-                document.getElementById('insert-results').style.display = 'block';
-              }
-              
-              function copyToClipboard() {
-                const content = document.getElementById('insert-statements-content').textContent;
-                navigator.clipboard.writeText(content).then(function() {
-                  alert('INSERT statements copied to clipboard!');
-                });
-              }
-              
-              function downloadStatements() {
-                const content = document.getElementById('insert-statements-content').textContent;
-                const blob = new Blob([content], { type: 'text/plain' });
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = 'PCR_CPO-15843-R043-NewPromo.sql';
-                a.click();
-                window.URL.revokeObjectURL(url);
-              }
-            </script>
-            
-            <!-- Enhanced CSS for button styling -->
-            <style>
-              label[for="sku-upload"]:hover {
-                background: var(--tmobile-magenta) !important;
-                color: white !important;
-                transform: translateY(-1px);
-                box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-              }
-              
-              /* Ensure tabs are responsive */
-              .tabs {
-                overflow-x: auto;
-                white-space: nowrap;
-                -webkit-overflow-scrolling: touch;
-              }
-              
-              .tabs::-webkit-scrollbar {
-                height: 4px;
-              }
-              
-              .tabs::-webkit-scrollbar-track {
-                background: #f1f1f1;
-              }
-              
-              .tabs::-webkit-scrollbar-thumb {
-                background: var(--tmobile-magenta);
-                border-radius: 2px;
-              }
-            </style>
-          {% elif active_tab == 'Groupings' %}
-            <!-- Groupings Tab Content -->
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem 0.7rem; align-items: start;">
-              <!-- SOC Grouping -->
-              <div style="grid-column: 1 / 3; font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); margin-bottom: 1rem; padding-bottom: 0.5rem; text-align: center;">SOC Grouping</div>
-              <div style="grid-column: 1 / 2; flex: 1; padding: 1rem; background: #e6e6e6; border-radius: 4px;">
-                <select class="form-select" name="soc_grouping" style="width: 100%; padding: 0.5rem; font-size: 1rem;">
-                  <option value="Group 1NS">Group 1NS</option>
-                  <option value="Group 3">Group 3</option>
-                  <option value="Group 4">Group 4</option>
-                  <option value="Group 5">Group 5</option>
-                  <option value="Group 6">Group 6</option>
-                </select>
-              </div>
-              <div style="grid-column: 2 / 3; flex: 3; padding: 1rem; background: #f7f7f7; border-radius: 4px; border: 1px solid #ccc; overflow-y: auto; max-height: 300px;">
-                <ul style="margin: 0; padding: 0; list-style: none; font-size: 0.9rem; line-height: 1.5;">
-                  <li style="margin-bottom: 0.5rem; font-weight: bold;">Group 1NS - GSM - Consumer & TFB</li>
-                  <li style="margin-bottom: 0.5rem;">T-Mobile ONE rate plans</li>
-                  <li style="margin-bottom: 0.5rem;">Magenta rate plans</li>
-                  <li style="margin-bottom: 0.5rem;">Essentials rate plans</li>
-                  <li style="margin-bottom: 0.5rem;">Bus/Gov Unlimited rate plans</li>
-                  <li style="margin-bottom: 0.5rem; font-weight: bold;">Group 3 - MI - Consumer & TFB</li>
-                  <li style="margin-bottom: 0.5rem;">10GB or higher Mobile Internet rate plans (limited buckets)</li>
-                  <li style="margin-bottom: 0.5rem;">Excludes unlimited highspeed data plans</li>
-                  <li style="margin-bottom: 0.5rem; font-weight: bold;">Group 4 - GSM - Consumer & TFB - excludes PlusUP & MAXUp line level upsell SOCs)</li>
-                  <li style="margin-bottom: 0.5rem; font-weight: bold;">Group 5 - MI - All MTME Eligible MI/BTS - Consumer & TFB</li>
-                  <li style="margin-bottom: 0.5rem; font-weight: bold;">Group 6 - GSM - Consumer & TFB</li>
-                  <li style="margin-bottom: 0.5rem;">TMO ONE Plus rate plans (Incl. 55+)</li>
-                  <li style="margin-bottom: 0.5rem;">Magenta Plus rate plans (Incl. First Responder & 55+)</li>
-                  <li style="margin-bottom: 0.5rem;">Magenta MAX rate plans (Incl. First responder & 55+)</li>
-                  <li style="margin-bottom: 0.5rem;">TMO ONE Plus Military rate plans</li>
-                  <li style="margin-bottom: 0.5rem;">Magenta Plus Military rate plans</li>
-                  <li style="margin-bottom: 0.5rem;">Magenta MAX Military rate plans</li>
-                  <li style="margin-bottom: 0.5rem;">Business Unlimited Plus plans</li>
-                  <li style="margin-bottom: 0.5rem;">Magenta Plus DHH plans</li>
-                  <li style="margin-bottom: 0.5rem;">Magenta MAX DHH plans</li>
-                  <li style="margin-bottom: 0.5rem;">Business Unlimited Ultimate plans</li>
-                  <li style="margin-bottom: 0.5rem;">Plus Up Upsell SOCs (Include Intl/Global Plus SOCs)</li>
-                  <li style="margin-bottom: 0.5rem;">MAXUp Upsell SOCs</li>
-                  <li style="margin-bottom: 0.5rem;">Business Unlimited Upsell SOCs (Ultimate)</li>
-                </ul>
-              </div>
-
-              <!-- Account Type -->
-              <div style="grid-column: 1 / 3; font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); margin-top: 1rem; margin-bottom: 0.5rem; padding-bottom: 0.2rem;">Account Type</div>
-              <div style="grid-column: 1 / 2;">
-                <select class="form-select">
-                  <option value="A01">A01</option>
-                  <option value="A02">A02</option>
-                  <option value="A03">A03</option>
-                  <option value="A04">A04</option>
-                  <option value="A05">A05</option>
-                  <option value="A06">A06</option>
-                  <option value="A07">A07</option>
-                  <option value="A08">A08</option>
-                  <option value="A09">A09</option>
-                  <option value="A10">A10</option>
-                </select>
-              </div>
-              <div style="grid-column: 2 / 3; background: #f7f7f7; border-radius: 4px; padding: 0.5rem 0.7rem; border: 1px solid #ccc; overflow-y: auto; max-height: 150px;">
-                <ul style="margin: 0; padding: 0; list-style: none;">
-                  <li style="margin-bottom: 0.5rem;">Regular (I/R); Association (I/A); GSA (I/F); Government (I/G); MCSA (I/M)</li>
-                  <li style="margin-bottom: 0.5rem;">Corporate (B/C); Retail (B/L); MCSA (B/M); National (B/N); MCSAGE (B/O)</li>
-                  <li style="margin-bottom: 0.5rem;">Non-Profit (B/P); Sole-Proprietorship (I/S)</li>
-                  <li style="margin-bottom: 0.5rem;">Employee (S/Y); Non TMO Employee (S/6)</li>
-                </ul>
-              </div>
-
-              <!-- Sales Applications -->
-              <div style="grid-column: 1 / 3; font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); margin-top: 1rem; margin-bottom: 0.5rem; padding-bottom: 0.2rem;">Sales Applications</div>
-              <div style="grid-column: 1 / 2;">
-                <select class="form-select">
-                  <option value="S01">S01</option>
-                  <option value="S02">S02</option>
-                  <option value="S03">S03</option>
-                  <option value="S04">S04</option>
-                  <option value="S05">S05</option>
-                  <option value="S06">S06</option>
-                  <option value="S07">S07</option>
-                  <option value="S08">S08</option>
-                  <option value="S09">S09</option>
-                  <option value="S10">S10</option>
-                </select>
-              </div>
-              <div style="grid-column: 2 / 3; background: #f7f7f7; border-radius: 4px; padding: 0.5rem 0.7rem; border: 1px solid #ccc; overflow-y: auto; max-height: 150px;">
-                <ul style="margin: 0; padding: 0; list-style: none;">
-                  <li style="margin-bottom: 0.5rem;">Care - QVXPC; Dash (TSL) - Virtual Retail</li>
-                  <li style="margin-bottom: 0.5rem;">QVXPR - Retail; POS - Retail; NAT - National Retail</li>
-                  <li style="margin-bottom: 0.5rem;">Web (TMO) - T-Mo.com; Web - MyT-Mo (cloud)</li>
-                  <li style="margin-bottom: 0.5rem;">Costco with EIP; BestBuy</li>
-                </ul>
-              </div>
-            </div>
-          {% endif %}
-          {% if active_tab != 'Export to CSV' %}
-          <div class="mt-4 d-flex justify-content-end gap-2">
-            <button type="submit" class="btn btn-primary">Save {{ active_tab }}</button>
-            <button type="button" class="btn btn-secondary">Cancel</button>
-          </div>
-          {% endif %}
-        </form>
-      </div>
-    </div>
-  </div>
+    
+      document.getElementById('insert-statements-content').textContent = demoSqlContent;
+      document.getElementById('insert-results').style.display = 'block';
+    }
+    
+    function copyToClipboard() {
+      const content = document.getElementById('insert-statements-content').textContent;
+      navigator.clipboard.writeText(content).then(function() {
+        alert('INSERT statements copied to clipboard!');
+      });
+    }
+    
+    function downloadStatements() {
+      const content = document.getElementById('insert-statements-content').textContent;
+      const blob = new Blob([content], { type: 'text/plain' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'PCR_CPO-15843-R043-NewPromo.sql';
+      a.click();
+      window.URL.revokeObjectURL(url);
+    }
+  </script>
 {% endblock %}
