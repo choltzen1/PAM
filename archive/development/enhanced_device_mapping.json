@@ -1,0 +1,60 @@
+{
+    "Galaxy S24": {
+        "aliases": [
+            "GALAXY S24",
+            "S921",
+            "SM-S921U"
+        ],
+        "match_type": "partial",
+        "exclude_if_contains": [
+            "FE",
+            "FAN EDITION"
+        ],
+        "priority": 1,
+        "brand": "SAMSUNG"
+    },
+    "Galaxy Z Flip6": {
+        "aliases": [
+            "Z FLIP6",
+            "F741U"
+        ],
+        "match_type": "partial",
+        "exclude_if_contains": [],
+        "priority": 1,
+        "brand": "SAMSUNG"
+    },
+    "Moto Razr 2025": {
+        "aliases": [
+            "XT25",
+            "XT2523",
+            "XT2525",
+            "RAZR 2025"
+        ],
+        "match_type": "partial",
+        "exclude_if_contains": [],
+        "priority": 2,
+        "brand": "MOTOROLA"
+    },
+    "Pixel 9a": {
+        "aliases": [
+            "PIXEL 9A",
+            "G6G0E"
+        ],
+        "match_type": "exact",
+        "exclude_if_contains": [],
+        "priority": 2,
+        "brand": "GOOGLE"
+    },
+    "Samsung Galaxy S25 Ultra": {
+        "aliases": [
+            "S25 ULTRA",
+            "SM-S938U"
+        ],
+        "match_type": "partial",
+        "exclude_if_contains": [
+            "FE"
+        ],
+        "priority": 1,
+        "brand": "SAMSUNG"
+    }
+}
