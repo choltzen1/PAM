@@ -4,7 +4,11 @@
   <meta charset="UTF-8">
   <title>{% block title %}Promo App{% endblock %}</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/promotions.css') }}">
+  {% if request.path == '/promotions' %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/promotions.css') }}">
+  {% elif request.path == '/spe' %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/spe.css') }}">
+  {% endif %}
   <link rel="stylesheet" href="{{ url_for('static', filename='css/edit_promo.css') }}">
   <script defer src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
   {% block head %}{% endblock %}
@@ -17,6 +21,7 @@
       <a href="javascript:history.back()" style="color:#fff;text-decoration:none;font-size:1.2em;"><i class="fas fa-chevron-left"></i></a>
       <a href="{{ url_for('home') }}" style="color:#fff;text-decoration:none;font-size:1.2em;"><i class="fas fa-home"></i></a>
       <a href="{{ url_for('promotions') }}" style="color:#fff;text-decoration:none;font-size:1.2em;"><i class="fas fa-tags"></i></a>
+      <a href="{{ url_for('spe') }}" style="color:#fff;text-decoration:none;font-size:1.2em;"><i class="fas fa-bolt"></i></a>
     </nav>
   </footer>
   <script>

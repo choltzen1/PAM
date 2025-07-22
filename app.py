@@ -106,6 +106,131 @@ def promotions():
     )
 
 
+@app.route("/spe")
+def spe():
+    # SPE-specific promotions data
+    spe_promotions = [
+        {
+            "code": "SP005",
+            "orbit_id": "15600",
+            "status": "Active",
+            "description": "SPE Line On Us Promo",
+            "start_date": "2025-01-01",
+            "end_date": "2025-12-31",
+            "owner": "Hari Kariavula"
+        },
+        {
+            "code": "SP122",
+            "orbit_id": "23987",
+            "status": "Launched",
+            "description": "Internet ID250153",
+            "start_date": "3/27/2025",
+            "end_date": "4/2/2025",
+            "owner": "Rich Brakenhoff"
+        }
+    ]
+    
+    return render_template(
+        "spe.html",
+        promotion_code="SPE Promotions",
+        user_name="Daniel Zhang",
+        owners=["All", "Hari Kariavula", "Rich Brakenhoff", "Cade Holtzen"],
+        selected_owner="All",
+        search_query="",
+        active_tab="SPE",
+        promotions=spe_promotions,
+        current_datetime=datetime.now().strftime("%A, %B %d, %Y %I:%M:%S %p")
+    )
+
+
+@app.route("/edit_spe", methods=["GET", "POST"])
+def edit_spe():
+    # Simulate an SPE promo object with all needed fields for SPE tabs
+    fake_spe = {
+        "code": "SP005",
+        "owner": "Hari Kariavula",
+        "bill_facing_name": "2022 Line On Us P2",
+        "orbit_id": "15600",
+        "pj_code": "SPE",
+        "description": "SPE Line On Us Promo",
+        "promo_identifier": "B",  # B, F, I, U, Z, NULL
+        "pt_priority_indicator": "G",  # B, G, NULL
+        "account_type": "*",  # A01-A09, *
+        "sales_application": "*",  # *, NULL
+        "dcd_web_cart": "Y",  # Y, N
+        "on_menu": "N",  # Y, N
+        "service_priority": "2880",
+        "max_discount": "1",
+        "market_group": "*",
+        "store_group": "*",
+        "c2_content": "",
+        
+        # Dates & Times tab
+        "promo_start_date": "2025-01-01",
+        "promo_end_date": "2025-12-31",
+        "pr_date": "",
+        "ban_tenure_start": "",
+        "ban_tenure_end": "",
+        "channel_grace_period": "NULL",  # G01-G05, NULL
+        "maintain_line_count_days": "365",
+        "re_enroll_period": "",
+        "promo_duration": "",
+        "port_duration": "",
+        
+        # Requirements tab
+        "tfb_channel_group_ids": ["A01", "A02", "A03", "A04", "A05"],
+        "dealer_group_id": "NULL",  # G01, G02, G03, NULL
+        "updated_mrc_ranking": "NULL",  # GSM, MI, NULL
+        "suppress_discount_reorder": "No",  # Yes, No
+        "port_in_group_id": "NULL",  # G02-G07, NULL
+        "retro_ban_evaluation": "No",  # Yes, No
+        "adjustment_code": "EEDG74",
+        "discount_codes": "22Q12F, 22Q12P, 22Q12S",
+        
+        # Line Indicators tab
+        "total": "N",  # Y, N
+        "gsm": "Y",  # Y, N
+        "mi": "N",  # Y, N
+        "pure_mi": "N",  # Y, N
+        "virtual_mi": "N",  # Y, N
+        "duplicate": "N",  # Y, N
+        "auto_att": "N",  # Y, N
+        "fax_line": "N",  # Y, N
+        "conference": "N",  # Y, N
+        "iot": "N",  # Y, N
+        
+        # SOC Groupings tab
+        "go_soc_group_id": "A56",
+        "bo_soc_group_id": "A55",
+        "paid_soc_group_id": "A55",
+        "min_paid_line_mi_count": "",
+        "go_line_maintenance": "A57",
+        "bo_line_maintenance": "A57",
+        "paid_line_maintenance": "A57",
+        "min_paid_line_gsm_count": "1",
+        "go_line_count": "1",
+        "bo_line_count": "1",
+        "borrow_bo_lines": "N",  # Y, N
+        "lend_bo_lines": "Y",  # Y, N
+        "soc_discount_mapping": "https://web.powerapps.com/webplayer/iframe..."
+    }
+
+    # Determine active tab from GET or POST
+    active_tab = request.args.get('tab')
+    if request.method == 'POST':
+        active_tab = request.form.get('active_tab', active_tab)
+        # Here you would update fake_spe with form data and save to DB
+    if not active_tab:
+        active_tab = 'Details'
+
+    return render_template(
+        "edit_spe.html",
+        promo=fake_spe,
+        user_name="Daniel Zhang",
+        active_tab=active_tab
+    )
+
+
 
 if __name__ == "__main__":
     app.run(debug=True)
