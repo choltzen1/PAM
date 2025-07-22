@@ -209,6 +209,8 @@ html, body {
 .two-col { grid-template-columns: 1fr 1fr; }
 .grid-full { grid-column: 1 / -1; }
 .col-span-2 { grid-column: span 2; }
+.col-span-3 { grid-column: span 3; }
+.col-span-4 { grid-column: span 4; }
 .section-label {
   font-weight: bold;
   color: var(--tmobile-magenta);
@@ -361,6 +363,8 @@ h5 {
   font-weight: 600;
   margin-bottom: 1rem;
 }
+
+
 
 /* Responsive: Grid and Panels */
 @media (max-width: 1300px) {
@@ -619,40 +623,194 @@ h5 {
   font-size: inherit;
 }
 
-/* For group labels above radio groups, use grid-full or col-span-2 in HTML */
-.section-label.grid-full, .section-label.col-span-2 {
+/* For group labels above radio groups, use grid-full or col-span-* in HTML */
+.section-label.grid-full, .section-label.col-span-2, .section-label.col-span-3, .section-label.col-span-4 {
   text-align: center;
 }
 
-/* --- Vertical radio group: label above input, options in a row --- */
+/* --- Vertical radio group: label on the side of input, options in a row --- */
 .input-group.vertical-radio {
   display: flex;
   flex-direction: row;
-  justify-content: center;
-  align-items: flex-end;
-  gap: 1.2em;
-  width: auto;
+  justify-content: space-around;
+  align-items: center;
+  gap: 0.6em;
+  width: 100%;
   max-width: 100%;
+  margin: 0 auto;
+  font-size: 1rem;
+  box-sizing: border-box;
+  padding: 0 0.3em;
 }
 .input-group.vertical-radio label {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
-  gap: 0.2em;
+  gap: 0.3em;
   margin-bottom: 0;
   font-size: inherit;
+  flex: 0 1 auto;
+  justify-content: center;
+  white-space: nowrap;
+  min-width: 0;
+  text-align: center;
+  max-width: calc(100% / var(--items, 3) - 0.4em);
 }
 .input-group.vertical-radio input[type="radio"] {
   margin: 0;
+  flex-shrink: 0;
 }
-.input-group.vertical-radio > * {
-  width: auto;
-  min-width: 0;
-  flex: 0 0 auto;
-  justify-self: unset;
-}
-.input-group.vertical-radio.grid-full,
-.input-group.vertical-radio.col-span-2 {
+
+/* Multi-column radio groups need to stay within their grid boundaries */
+.input-group.vertical-radio.col-span-2,
+.input-group.vertical-radio.col-span-3,
+.input-group.vertical-radio.col-span-4 {
   width: 100%;
-  justify-content: space-between;
+  justify-content: space-around;
+  padding: 0 0.5em;
 }
+
+/* Grid-full can spread more evenly */
+.input-group.vertical-radio.grid-full {
+  width: 100%;
+  justify-content: space-around;
+  flex-wrap: wrap;
+  padding: 0 0.2em;
+}
+
+/* Special styling for Yes/No radio groups to match other radio buttons */
+.input-group.vertical-radio.yes-no {
+  gap: 0.6em;
+  justify-content: space-around !important;
+  max-width: none;
+  margin: 0 auto;
+  padding: 0 0.3em;
+}
+
+.input-group.vertical-radio.yes-no.col-span-2,
+.input-group.vertical-radio.yes-no.col-span-3,
+.input-group.vertical-radio.yes-no.col-span-4 {
+  justify-content: space-around !important;
+  max-width: none;
+  margin: 0 auto;
+  padding: 0 0.5em;
+}
+
+/* Responsive scaling for radio groups - keeps within boundaries */
+@media (max-width: 1200px) {
+  .input-group.vertical-radio {
+    font-size: 0.9rem;
+    gap: 0.5em;
+  }
+  .input-group.vertical-radio label {
+    gap: 0.25em;
+  }
+  .input-group.vertical-radio.yes-no {
+    gap: 0.5em;
+  }
+}
+
+@media (max-width: 1000px) {
+  .input-group.vertical-radio {
+    font-size: 0.85rem;
+    gap: 0.45em;
+  }
+  .input-group.vertical-radio label {
+    gap: 0.2em;
+  }
+  .input-group.vertical-radio.yes-no {
+    gap: 0.45em;
+  }
+}
+
+@media (max-width: 800px) {
+  .input-group.vertical-radio {
+    font-size: 0.8rem;
+    gap: 0.4em;
+  }
+  .input-group.vertical-radio label {
+    gap: 0.15em;
+  }
+  .input-group.vertical-radio.yes-no {
+    gap: 0.4em;
+  }
+}
+
+@media (max-width: 600px) {
+  .input-group.vertical-radio {
+    font-size: 0.75rem;
+    gap: 0.3em;
+  }
+  .input-group.vertical-radio label {
+    gap: 0.1em;
+  }
+  .input-group.vertical-radio.yes-no {
+    gap: 0.3em;
+  }
+}
+
+/* Special handling for radio groups with many options (5+ options) */
+.input-group.vertical-radio.grid-full {
+  flex-wrap: wrap;
+  justify-content: space-around;
+  gap: 0.3em;
+  padding: 0 0.1em;
+}
+
+.input-group.vertical-radio.grid-full label {
+  flex: 0 1 auto;
+  min-width: calc(100% / 9 - 0.6em);
+  max-width: calc(100% / 6 - 0.3em);
+}
+
+@media (max-width: 900px) {
+  .input-group.vertical-radio.grid-full {
+    gap: 0.25em;
+  }
+  .input-group.vertical-radio.grid-full label {
+    gap: 0.15em;
+    font-size: 0.8rem;
+    min-width: calc(100% / 6 - 0.5em);
+    max-width: calc(100% / 5 - 0.25em);
+  }
+}
+
+@media (max-width: 700px) {
+  .input-group.vertical-radio.grid-full {
+    gap: 0.2em;
+  }
+  .input-group.vertical-radio.grid-full label {
+    gap: 0.1em;
+    font-size: 0.75rem;
+    min-width: calc(100% / 5 - 0.4em);
+    max-width: calc(100% / 4 - 0.2em);
+  }
+}
+
+@media (max-width: 500px) {
+  .input-group.vertical-radio.grid-full {
+    gap: 0.15em;
+  }
+  .input-group.vertical-radio.grid-full label {
+    gap: 0.05em;
+    font-size: 0.7rem;
+    min-width: calc(100% / 4 - 0.3em);
+    max-width: calc(100% / 3 - 0.15em);
+  }
+}
+
+/* For very narrow screens, ensure wrapping works properly */
+@media (max-width: 400px) {
+  .input-group.vertical-radio.grid-full {
+    flex-wrap: wrap;
+    gap: 0.1em;
+  }
+  .input-group.vertical-radio.grid-full label {
+    font-size: 0.65rem;
+    min-width: calc(100% / 3 - 0.2em);
+    max-width: calc(100% / 3 - 0.1em);
+    flex: 0 0 calc(100% / 3 - 0.2em);
+  }
+}
+
+

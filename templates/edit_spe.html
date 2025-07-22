@@ -1,0 +1,388 @@
+
+{% extends "base.html" %}
+{% block title %}Edit SPE Promotion – {{ promo.code }}{% endblock %}
+{% block content %}
+  <!-- Header -->
+  <header class="header">
+    <div class="header-title">Edit SPE Promotion – {{ promo.code }}</div>
+    <div class="user-name">{{ user_name }}</div>
+  </header>
+
+  <div class="container wide-container">
+    <div class="layout-flex">
+      <!-- LEFT PANEL -->
+      <div class="left-panel">
+        <div class="info-box">
+          <div class="info-title">General Information</div>
+          <div><b>Promo Owner:</b> {{ promo.owner }}</div>
+          <div><b>Bill Facing Name:</b> {{ promo.bill_facing_name }}</div>
+          <div><b>Orbit ID:</b> {{ promo.orbit_id }}</div>
+          <div><b>PJ Code:</b> {{ promo.pj_code }}</div>
+          <div><b>Restricted:</b> Not Dark</div>
+        </div>
+        <div class="info-box">
+          <div class="info-title">Description</div>
+          <div class="mb-sm">{{ promo.description }}</div>
+          <div><b>Promo Notes:</b></div>
+          <div class="pre-line">{{ promo.promo_notes }}</div>
+        </div>
+        <div class="info-box">
+          <div class="info-title">Updates</div>
+          <div><b>Promo % Discount:</b> {{ promo.discount }}</div>
+          <div><b>Promo Amount:</b> {{ promo.amount }}</div>
+          <div><b>DCD Web In-Cart:</b> {{ 'Y' if promo.dcd_web_cart == 'Y' else 'N' }}</div>
+          <div><b>Product Type:</b> {{ promo.product_type }}</div>
+          <div><b>BOGO:</b> {{ 'Yes' if promo.bogo == 'Y' else 'No' }}</div>
+          <div><b>Trade-in Group ID:</b> {{ promo.trade_in_group_id }}</div>
+        </div>
+        <div class="info-box">
+          <div class="info-title">Version History</div>
+          <div class="version-history">
+            {% for entry in promo.version_history %}
+              <div>{{ entry }}</div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+      <!-- RIGHT PANEL -->
+      <div class="right-panel">
+        <div class="tabs">
+          {% for tab in ['Details','Dates & Times','Requirements','Line Indicators','SOC Groupings'] %}
+            <a href="{{ url_for('edit_spe', promo_code=promo.code, tab=tab) }}"
+               class="tab {% if tab == active_tab %}active{% endif %}">
+              {{ tab }}
+            </a>
+          {% endfor %}
+        </div>
+        <form method="post" enctype="multipart/form-data">
+          <input type="hidden" name="active_tab" value="{{ active_tab }}">          {% if active_tab == 'Details' %}
+            <div class="grid-form four-col">
+              <label class="section-label col-span-2">Promo Identifier</label>
+              <label class="section-label col-span-2">PT Priority Indicator</label>
+              <div class="input-group vertical-radio col-span-2">
+                {% for val in ['B','F','I','U','Z','NULL'] %}
+                  <label >
+                    {{ val }}
+                    <input type="radio" name="promo_identifier" value="{{ val }}" {% if promo.promo_identifier == val %}checked{% endif %}>
+                  </label>
+                {% endfor %}
+              </div>
+              <div class="input-group vertical-radio col-span-2">
+                {% for val in ['B','G','NULL'] %}
+                  <label >
+                    {{ val }}
+                    <input type="radio" name="pt_priority_indicator" value="{{ val }}" {% if promo.pt_priority_indicator == val %}checked{% endif %}>
+                  </label>
+                {% endfor %}
+              </div>
+
+              <label class="section-label col-span-4">Account Type</label>
+              <div class="input-group vertical-radio col-span-4">
+                {% for val in ['A01','A02','A03','A04','A05','A06','A08','A09','*'] %}
+                  <label >
+                    {{ val }}
+                    <input type="radio" name="account_type" value="{{ val }}" {% if promo.account_type == val %}checked{% endif %}>
+                  </label>
+                {% endfor %}
+              </div>
+
+              <label class="section-label">Sales Application</label>
+              <label class="section-label">DCD Web Cart</label>
+              <label class="section-label">On Menu</label>
+              <label class="section-label">Service Priority</label>
+              <div class="input-group vertical-radio">
+                {% for val in ['*','NULL'] %}
+                  <label >
+                    {{ val }}
+                    <input type="radio" name="sales_application" value="{{ val }}" {% if promo.sales_application == val %}checked{% endif %}>
+                  </label>
+                {% endfor %}
+              </div>
+              <div class="input-group vertical-radio yes-no">
+                {% for val in ['Y','N'] %}
+                  <label >
+                    {{ val }}
+                    <input type="radio" name="dcd_web_cart" value="{{ val }}" {% if promo.dcd_web_cart == val %}checked{% endif %}>
+                  </label>
+                {% endfor %}
+              </div>
+              <div class="input-group vertical-radio yes-no">
+                {% for val in ['Y','N'] %}
+                  <label >
+                    {{ val }}
+                    <input type="radio" name="on_menu" value="{{ val }}" {% if promo.on_menu == val %}checked{% endif %}>
+                  </label>
+                {% endfor %}
+              </div>
+              <input class="form-control" name="service_priority" value="{{ promo.service_priority or '2880' }}">
+
+              <label class="section-label">Max Discount</label>
+              <label class="section-label">Market Group</label>
+              <label class="section-label">Store Group</label>
+              <label class="section-label">C2 Content</label>
+              <input class="form-control" name="max_discount" value="{{ promo.max_discount or '1' }}">
+              <input class="form-control" name="market_group" value="{{ promo.market_group or '*' }}">
+              <input class="form-control" name="store_group" value="{{ promo.store_group or '*' }}">
+              <input class="form-control" name="c2_content" value="{{ promo.c2_content }}">
+            </div>{% elif active_tab == 'Dates & Times' %}
+            <div class="grid-form four-col">
+              <label class="section-label">Promo Start Date</label>
+              <label class="section-label">Promo End Date</label>
+              <label class="section-label">PR Date</label>
+              <label class="section-label">BAN Tenure Start</label>
+              <input class="form-control" name="promo_start_date" type="date" value="{{ promo.promo_start_date }}">
+              <input class="form-control" name="promo_end_date" type="date" value="{{ promo.promo_end_date }}">
+              <input class="form-control" name="pr_date" type="date" value="{{ promo.pr_date }}">
+              <input class="form-control" name="ban_tenure_start" type="date" value="{{ promo.ban_tenure_start }}">
+
+              <label class="section-label">BAN Tenure End</label>
+              <label class="section-label">Maintain Line Count Days</label>
+              <label class="section-label">Re-enroll Period</label>
+              <label class="section-label">Promo Duration</label>
+              <input class="form-control" name="ban_tenure_end" type="date" value="{{ promo.ban_tenure_end }}">
+              <input class="form-control" name="maintain_line_count_days" value="{{ promo.maintain_line_count_days or '365' }}">
+              <input class="form-control" name="re_enroll_period" placeholder="Re-enroll Period" value="{{ promo.re_enroll_period }}">
+              <input class="form-control" name="promo_duration" placeholder="Promo Duration" value="{{ promo.promo_duration }}">
+
+              <label class="section-label">Port Duration</label>
+              <label class="section-label col-span-3">Channel Grace Period</label>
+              <input class="form-control" name="port_duration" placeholder="Port Duration" value="{{ promo.port_duration }}">
+              <div class="input-group vertical-radio col-span-3">
+                {% for grace in ['G01','G02','G03','G04','G05','NULL'] %}
+                  <label >
+                    {{ grace }}
+                    <input type="radio" name="channel_grace_period" value="{{ grace }}" {% if promo.channel_grace_period == grace %}checked{% endif %}>
+                  </label>
+                {% endfor %}
+              </div>
+            </div>{% elif active_tab == 'Requirements' %}
+            <div class="grid-form four-col">              <label class="section-label col-span-4">TFB Channel Group ID</label>
+              <div class="input-group vertical-radio col-span-4 mb-1">
+                {% for group in ['NULL','A01','A02','A03','A04','A05'] %}
+                  <label >
+                    {{ group }}
+                    <input type="radio" name="tfb_channel_group_id" value="{{ group }}" {% if promo.tfb_channel_group_id == group %}checked{% endif %}>
+                  </label>
+                {% endfor %}
+              </div>
+
+              <label class="section-label col-span-2">Dealer Group ID</label>
+              <label class="section-label col-span-2">Updated MRC Ranking</label>
+              <div class="input-group vertical-radio col-span-2">
+                {% for group in ['G01','G02','G03','NULL'] %}
+                  <label >
+                    {{ group }}
+                    <input type="radio" name="dealer_group_id" value="{{ group }}" {% if promo.dealer_group_id == group %}checked{% endif %}>
+                  </label>
+                {% endfor %}
+              </div>
+              <div class="input-group vertical-radio col-span-2">
+                {% for ranking in ['GSM','MI','NULL'] %}
+                  <label >
+                    {{ ranking }}
+                    <input type="radio" name="updated_mrc_ranking" value="{{ ranking }}" {% if promo.updated_mrc_ranking == ranking %}checked{% endif %}>
+                  </label>
+                {% endfor %}
+              </div>              <label class="section-label col-span-2">Suppress Discount Reorder</label>
+              <label class="section-label col-span-2">Retro BAN Evaluation</label>              <div class="input-group vertical-radio yes-no col-span-2">
+                {% for val in ['Yes','No'] %}
+                  <label >
+                    {{ val }}
+                    <input type="radio" name="suppress_discount_reorder" value="{{ val }}" {% if promo.suppress_discount_reorder == val %}checked{% endif %}>
+                  </label>
+                {% endfor %}
+              </div>
+              <div class="input-group vertical-radio yes-no col-span-2">
+                {% for val in ['Yes','No'] %}
+                  <label >
+                    {{ val }}
+                    <input type="radio" name="retro_ban_evaluation" value="{{ val }}" {% if promo.retro_ban_evaluation == val %}checked{% endif %}>
+                  </label>
+                {% endfor %}
+              </div>
+
+              <label class="section-label col-span-4">Port-In Group ID</label>
+              <div class="input-group vertical-radio col-span-4">
+                {% for group in ['G02','G03','G04','G05','G06','G07','NULL'] %}
+                  <label >
+                    {{ group }}
+                    <input type="radio" name="port_in_group_id" value="{{ group }}" {% if promo.port_in_group_id == group %}checked{% endif %}>
+                  </label>
+                {% endfor %}
+              </div>
+
+              <label class="section-label col-span-2">Adjustment Code</label>
+              <label class="section-label col-span-2">Discount Codes</label>
+              <input class="form-control col-span-2" name="adjustment_code" value="{{ promo.adjustment_code or 'EEDG74' }}">
+              <input class="form-control col-span-2" name="discount_codes" value="{{ promo.discount_codes or '22Q12F, 22Q12P, 22Q12S' }}">
+            </div>
+
+          {% elif active_tab == 'Line Indicators' %}
+            <div class="grid-form four-col">
+              <label class="section-label">Total</label>
+              <label class="section-label">GSM</label>
+              <label class="section-label">MI</label>
+              <label class="section-label">Pure MI</label>              <div class="input-group vertical-radio yes-no">
+                {% for val in ['Y','N'] %}
+                  <label >
+                    {{ val }}
+                    <input type="radio" name="total_indicator" value="{{ val }}" {% if promo.total_indicator == val %}checked{% endif %}>
+                  </label>
+                {% endfor %}
+              </div>
+              <div class="input-group vertical-radio yes-no">
+                {% for val in ['Y','N'] %}
+                  <label >
+                    {{ val }}
+                    <input type="radio" name="gsm_indicator" value="{{ val }}" {% if promo.gsm_indicator == val %}checked{% endif %}>
+                  </label>
+                {% endfor %}
+              </div>
+              <div class="input-group vertical-radio yes-no">
+                {% for val in ['Y','N'] %}
+                  <label >
+                    {{ val }}
+                    <input type="radio" name="mi_indicator" value="{{ val }}" {% if promo.mi_indicator == val %}checked{% endif %}>
+                  </label>
+                {% endfor %}
+              </div>
+              <div class="input-group vertical-radio yes-no">
+                {% for val in ['Y','N'] %}
+                  <label >
+                    {{ val }}
+                    <input type="radio" name="pure_mi_indicator" value="{{ val }}" {% if promo.pure_mi_indicator == val %}checked{% endif %}>
+                  </label>
+                {% endfor %}
+              </div>
+
+              <label class="section-label">Virtual MI</label>
+              <label class="section-label">Duplicate</label>
+              <label class="section-label">Auto Att</label>
+              <label class="section-label">Fax Line</label>              <div class="input-group vertical-radio yes-no">
+                {% for val in ['Y','N'] %}
+                  <label >
+                    {{ val }}
+                    <input type="radio" name="virtual_mi_indicator" value="{{ val }}" {% if promo.virtual_mi_indicator == val %}checked{% endif %}>
+                  </label>
+                {% endfor %}
+              </div>
+              <div class="input-group vertical-radio yes-no">
+                {% for val in ['Y','N'] %}
+                  <label >
+                    {{ val }}
+                    <input type="radio" name="duplicate_indicator" value="{{ val }}" {% if promo.duplicate_indicator == val %}checked{% endif %}>
+                  </label>
+                {% endfor %}
+              </div>
+              <div class="input-group vertical-radio yes-no">
+                {% for val in ['Y','N'] %}
+                  <label >
+                    {{ val }}
+                    <input type="radio" name="auto_att_indicator" value="{{ val }}" {% if promo.auto_att_indicator == val %}checked{% endif %}>
+                  </label>
+                {% endfor %}
+              </div>
+              <div class="input-group vertical-radio yes-no">
+                {% for val in ['Y','N'] %}
+                  <label >
+                    {{ val }}
+                    <input type="radio" name="fax_line_indicator" value="{{ val }}" {% if promo.fax_line_indicator == val %}checked{% endif %}>
+                  </label>
+                {% endfor %}
+              </div><label class="section-label col-span-2">Conference</label>
+              <label class="section-label col-span-2">IOT</label>              <div class="input-group vertical-radio yes-no col-span-2">
+                {% for val in ['Y','N'] %}
+                  <label >
+                    {{ val }}
+                    <input type="radio" name="conference_indicator" value="{{ val }}" {% if promo.conference_indicator == val %}checked{% endif %}>
+                  </label>
+                {% endfor %}
+              </div>
+              <div class="input-group vertical-radio yes-no col-span-2">
+                {% for val in ['Y','N'] %}
+                  <label >
+                    {{ val }}
+                    <input type="radio" name="iot_indicator" value="{{ val }}" {% if promo.iot_indicator == val %}checked{% endif %}>
+                  </label>
+                {% endfor %}
+              </div>
+            </div>
+
+          {% elif active_tab == 'SOC Groupings' %}
+            <div class="grid-form four-col">
+              <label class="section-label">GO Soc Group ID</label>
+              <label class="section-label">BO Soc Group ID</label>
+              <label class="section-label">Paid Soc Group ID</label>
+              <label class="section-label">Min Paid Line MI Count</label>
+              <select class="form-select" name="go_soc_group_id">
+                <option value="A56" {% if promo.go_soc_group_id == 'A56' %}selected{% endif %}>A56</option>
+                <option value="A55">A55</option>
+                <option value="A54">A54</option>
+              </select>
+              <select class="form-select" name="bo_soc_group_id">
+                <option value="A55" {% if promo.bo_soc_group_id == 'A55' %}selected{% endif %}>A55</option>
+                <option value="A56">A56</option>
+                <option value="A54">A54</option>
+              </select>
+              <select class="form-select" name="paid_soc_group_id">
+                <option value="A55" {% if promo.paid_soc_group_id == 'A55' %}selected{% endif %}>A55</option>
+                <option value="A56">A56</option>
+                <option value="A54">A54</option>
+              </select>
+              <input class="form-control" name="min_paid_line_mi_count" placeholder="Minimum Paid Line MI Count" value="{{ promo.min_paid_line_mi_count }}">
+
+              <label class="section-label">GO Line Maintenance</label>
+              <label class="section-label">BO Line Maintenance</label>
+              <label class="section-label">Paid Line Maintenance</label>
+              <label class="section-label">Min Paid Line GSM Count</label>
+              <select class="form-select" name="go_line_maintenance">
+                <option value="A57" {% if promo.go_line_maintenance == 'A57' %}selected{% endif %}>A57</option>
+                <option value="A56">A56</option>
+                <option value="A55">A55</option>
+              </select>
+              <select class="form-select" name="bo_line_maintenance">
+                <option value="A57" {% if promo.bo_line_maintenance == 'A57' %}selected{% endif %}>A57</option>
+                <option value="A56">A56</option>
+                <option value="A55">A55</option>
+              </select>
+              <select class="form-select" name="paid_line_maintenance">
+                <option value="A57" {% if promo.paid_line_maintenance == 'A57' %}selected{% endif %}>A57</option>
+                <option value="A56">A56</option>
+                <option value="A55">A55</option>
+              </select>
+              <input class="form-control" name="min_paid_line_gsm_count" value="{{ promo.min_paid_line_gsm_count or '1' }}">
+
+              <label class="section-label">GO Line Count</label>
+              <label class="section-label">BO Line Count</label>
+              <label class="section-label">Borrow BO Lines</label>
+              <label class="section-label">Lend BO Lines</label>
+              <input class="form-control" name="go_line_count" value="{{ promo.go_line_count or '1' }}">
+              <input class="form-control" name="bo_line_count" value="{{ promo.bo_line_count or '1' }}">              <div class="input-group vertical-radio yes-no">
+                {% for val in ['Y','N'] %}
+                  <label >
+                    {{ val }}
+                    <input type="radio" name="borrow_bo_lines" value="{{ val }}" {% if promo.borrow_bo_lines == val %}checked{% endif %}>
+                  </label>
+                {% endfor %}
+              </div>
+              <div class="input-group vertical-radio yes-no">
+                {% for val in ['Y','N'] %}
+                  <label >
+                    {{ val }}
+                    <input type="radio" name="lend_bo_lines" value="{{ val }}" {% if promo.lend_bo_lines == val %}checked{% endif %}>
+                  </label>
+                {% endfor %}
+              </div>
+
+              <label class="section-label grid-full">Soc Discount Mapping</label>
+              <input class="form-control grid-full" name="soc_discount_mapping" value="{{ promo.soc_discount_mapping or 'https://web.powerapps.com/webplayer/iframeapp?source=iframe&tenantid=be0f980b-dd99-4b19-bd7b-bc71a09b026c&RecordID=a07b41b5-bff7-ec11-bb3d-000d3a69fe56' }}">
+            </div>
+          {% endif %}
+
+          <div class="save-footer">
+            <button type="submit" class="btn btn-primary">Save</button>
+          </div>
+        </form>
+      </div>    </div>
+  </div>
+{% endblock %}

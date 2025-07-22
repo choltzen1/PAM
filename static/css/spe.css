@@ -1,0 +1,194 @@
+/* spe.css - Modern styles for the SPE page */
+:root {
+  --spe-color: #e20074;  /* T-Mobile magenta as default */
+  --spe-row-bg: #dadada;
+  --spe-row-bg-alt: #f3f3f3;
+  --spe-header-bg: var(--spe-color);
+  --spe-header-color: #fff;
+  --spe-action-size: 1.5em;
+  --spe-table-radius: 12px;
+  --spe-table-shadow: 0 2px 16px #0001;
+}
+
+/* SPE Page Container */
+.spe-page {
+  width: 100%;
+  padding: 1rem 2rem;
+  margin: 0;
+}
+
+/* Tabs row - shared with promotions page but needed here too */
+.promotions-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+.tab {
+  flex: 1;
+  min-width: 60px;
+  text-align: center;
+  padding: 0.5rem;
+  border: 1px solid #ccc;
+  background: #f0f0f0;
+  border-radius: 4px 4px 0 0;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+  color: inherit;
+  text-decoration: none;
+  display: block;
+}
+.tab.active {
+  background: var(--spe-color);
+  color: #fff;
+  border-color: var(--spe-color);
+}
+
+.spe-page,
+.spe-page * {
+  box-sizing: border-box;
+}
+
+/* Header Bar */
+.spe-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--spe-color);
+  color: #fff;
+  padding: 1rem 1.5rem;
+  border-radius: 4px;
+}
+
+.spe-header-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.spe-user-name {
+  font-size: 1rem;
+}
+
+/* Controls row */
+.spe-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 1rem;
+  margin: 1.5rem 0;
+}
+
+.spe-filter-group,
+.spe-search-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.spe-filter-group select,
+.spe-search-group input {
+  min-width: 180px;
+  padding: 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.spe-action-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.spe-action-buttons .btn {
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+}
+
+/* SPE Table */
+.spe-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-family: 'Inter', Arial, sans-serif;
+  margin: 0;
+  table-layout: auto;
+  border-radius: var(--spe-table-radius);
+  overflow: hidden;
+  box-shadow: var(--spe-table-shadow);
+  background: #fff;
+}
+
+.spe-table th {
+  background: var(--spe-header-bg);
+  color: var(--spe-header-color);
+  font-weight: 700;
+  text-align: center;
+  padding: 1em 0.5em;
+  font-size: 1.12em;
+  border: none;
+}
+
+.spe-table th:first-child {
+  border-top-left-radius: var(--spe-table-radius);
+}
+
+.spe-table th:last-child {
+  border-top-right-radius: var(--spe-table-radius);
+}
+
+.spe-table td {
+  background: #fff;
+  color: #111;
+  text-align: center;
+  padding: 1em 0.5em;
+  font-size: 1.08em;
+  border: none;
+  transition: background 0.2s;
+}
+
+.spe-table tbody tr:nth-child(even) td {
+  background: #dadada;
+}
+
+.spe-table td.spe-owner {
+  font-weight: 700;
+}
+
+.spe-table td.spe-actions {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.7em;
+  background: inherit;
+}
+
+.spe-table td.spe-actions .icon-button {
+  background: none;
+  border: none;
+  padding: 0.2em;
+  margin: 0 0.1em;
+  font-size: var(--spe-action-size);
+  color: #222;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: background 0.15s, color 0.15s;
+}
+
+.spe-table td.spe-actions .icon-button:hover {
+  background: #f8d6ec;
+  color: var(--spe-color);
+}
+
+.spe-table tr:not(:last-child) td {
+  border-bottom: 1.5px solid #eee;
+}
+
+@media (max-width: 900px) {
+  .spe-table th, .spe-table td {
+    font-size: 0.97em;
+    padding: 0.7em 0.2em;
+  }
+  .spe-table td.spe-actions {
+    gap: 0.3em;
+  }
+}
