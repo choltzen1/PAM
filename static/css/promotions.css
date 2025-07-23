@@ -1,19 +1,59 @@
 /* promotions.css */
 
-/* 1. Box-sizing & overflow reset */
-.promotions-page,
-.promotions-page * {
-  box-sizing: border-box;
+:root {
+  --tmobile-magenta: #e20074;
+  --tmobile-magenta-dark: #b8005a;
+  --tmobile-gray: #f4f4f4;
+  --tmobile-border: #e0e0e0;
 }
-body {
+
+/* 1. Flex column page layout: header, content, footer */
+html, body {
+  min-height: 100vh;
+  height: 100%;
+  width: 100vw;
+  margin: 0;
+  padding: 0;
+  background: #f4f4f4;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  font-family: 'Inter', Arial, sans-serif;
   overflow-x: hidden;
 }
 
-/* 2. Page wrapper: full-width fluid with gutters */
+/* 2. Header (fixed) */
+.header-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--tmobile-magenta);
+  color: #fff;
+  padding: 1rem 1.5rem;
+  border-radius: 0;
+  flex-shrink: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.header-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.user-name {
+  font-size: 1rem;
+}
+
+/* 3. Main content area - scrollable between header and footer */
 .promotions-page {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
   width: 100%;
   padding: 1rem 2rem;
-  margin: 0;
+  box-sizing: border-box;
+  background: #fff;
 }
 
 /* 3. Header bar */
@@ -99,6 +139,7 @@ body {
 .table-container {
   width: 100%;
   overflow-x: auto;
+  margin-bottom: 1rem;
 }
 
 .actions {
@@ -206,11 +247,43 @@ body {
   border-bottom: 1.5px solid #eee;
 }
 @media (max-width: 900px) {
+  .promotions-page {
+    padding: 1rem;
+  }
+  .header-bar {
+    padding: 0.8rem 1rem;
+  }
+  .table-container {
+    margin-bottom: 1rem;
+  }
   .promo-table th, .promo-table td {
     font-size: 0.97em;
     padding: 0.7em 0.2em;
   }
   .promo-table td.promo-actions {
     gap: 0.3em;
+  }
+}
+
+@media (max-width: 600px) {
+  .promotions-page {
+    padding: 0.5rem;
+  }
+  .table-container {
+    margin-bottom: 0.5rem;
+  }
+  .header-bar {
+    padding: 0.8rem 1rem;
+    flex-direction: column;
+    gap: 0.5rem;
+    text-align: center;
+  }
+  .promotions-controls {
+    flex-direction: column;
+    gap: 0.8rem;
+  }
+  .promo-table th, .promo-table td {
+    font-size: 0.85em;
+    padding: 0.5em 0.1em;
   }
 }

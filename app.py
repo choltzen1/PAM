@@ -213,9 +213,7 @@ def edit_spe():
         "borrow_bo_lines": "N",  # Y, N
         "lend_bo_lines": "Y",  # Y, N
         "soc_discount_mapping": "https://web.powerapps.com/webplayer/iframe..."
-    }
-
-    # Determine active tab from GET or POST
+    }    # Determine active tab from GET or POST
     active_tab = request.args.get('tab')
     if request.method == 'POST':
         active_tab = request.form.get('active_tab', active_tab)
@@ -230,6 +228,14 @@ def edit_spe():
         active_tab=active_tab
     )
 
+
+@app.route("/date_mismatch")
+def date_mismatch():
+    return render_template(
+        "date_mismatch.html",
+        user_name="Daniel Zhang",
+        current_datetime=datetime.now().strftime("%A, %B %d, %Y %I:%M:%S %p")
+    )
 
 
 if __name__ == "__main__":
