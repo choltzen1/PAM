@@ -1,6 +1,10 @@
 /* spe.css - Modern styles for the SPE page */
 :root {
   --spe-color: #e20074;  /* T-Mobile magenta as default */
+  --tmobile-magenta: #e20074;
+  --tmobile-magenta-dark: #b8005a;
+  --tmobile-gray: #f4f4f4;
+  --tmobile-border: #e0e0e0;
   --spe-row-bg: #dadada;
   --spe-row-bg-alt: #f3f3f3;
   --spe-header-bg: var(--spe-color);
@@ -25,15 +29,71 @@ html, body {
   overflow-x: hidden;
 }
 
+/* 2. Header (fixed) */
+.header-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--tmobile-magenta);
+  color: #fff;
+  padding: 1rem 1.5rem;
+  border-radius: 0;
+  flex-shrink: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.header-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.user-name {
+  font-size: 1rem;
+}
+
 /* SPE Page Container - scrollable content area */
-.spe-page {
+.promotions-page {
   flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
   width: 100%;
   padding: 1rem 2rem;
-  box-sizing: border-box;
-  background: #fff;
+  box-sizing: border-box;  background: #fff;
+}
+
+/* Controls row */
+.promotions-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 1rem;
+  margin: 1.5rem 0;
+}
+
+.filter-group,
+.search-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.filter-group select,
+.search-group input {
+  min-width: 180px;
+  padding: 0.5rem;
+  border: 1px solid var(--tmobile-border);
+  border-radius: 4px;
+}
+
+.action-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.action-buttons .btn {
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
 }
 
 /* Tabs row - shared with promotions page but needed here too */
@@ -63,8 +123,8 @@ html, body {
   border-color: var(--spe-color);
 }
 
-.spe-page,
-.spe-page * {
+.promotions-page,
+.promotions-page * {
   box-sizing: border-box;
 }
 
@@ -118,13 +178,24 @@ html, body {
   gap: 0.5rem;
 }
 
-.spe-action-buttons .btn {
-  padding: 0.5rem 1rem;
-  font-size: 0.9rem;
+/* General button styles */
+.btn {
+  background: var(--tmobile-magenta);
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  padding: 0.5em 1.5em;
+  font-weight: 500;
+  font-size: 1rem;
+  transition: background 0.2s;
+  cursor: pointer;
+}
+.btn:hover {
+  background: var(--tmobile-magenta-dark);
 }
 
 /* SPE Table */
-.spe-table {
+.promo-table {
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
@@ -137,7 +208,7 @@ html, body {
   background: #fff;
 }
 
-.spe-table th {
+.promo-table th {
   background: var(--spe-header-bg);
   color: var(--spe-header-color);
   font-weight: 700;
@@ -147,15 +218,15 @@ html, body {
   border: none;
 }
 
-.spe-table th:first-child {
+.promo-table th:first-child {
   border-top-left-radius: var(--spe-table-radius);
 }
 
-.spe-table th:last-child {
+.promo-table th:last-child {
   border-top-right-radius: var(--spe-table-radius);
 }
 
-.spe-table td {
+.promo-table td {
   background: #fff;
   color: #111;
   text-align: center;
@@ -165,15 +236,15 @@ html, body {
   transition: background 0.2s;
 }
 
-.spe-table tbody tr:nth-child(even) td {
+.promo-table tbody tr:nth-child(even) td {
   background: #dadada;
 }
 
-.spe-table td.spe-owner {
+.promo-table td.promo-owner {
   font-weight: 700;
 }
 
-.spe-table td.spe-actions {
+.promo-table td.promo-actions {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -181,7 +252,7 @@ html, body {
   background: inherit;
 }
 
-.spe-table td.spe-actions .icon-button {
+.promo-table td.promo-actions .icon-button {
   background: none;
   border: none;
   padding: 0.2em;
@@ -193,33 +264,40 @@ html, body {
   transition: background 0.15s, color 0.15s;
 }
 
-.spe-table td.spe-actions .icon-button:hover {
+.promo-table td.promo-actions .icon-button:hover {
   background: #f8d6ec;
   color: var(--spe-color);
 }
 
-.spe-table tr:not(:last-child) td {
+.promo-table tr:not(:last-child) td {
   border-bottom: 1.5px solid #eee;
 }
 
 @media (max-width: 900px) {
-  .spe-page {
+  .promotions-page {
     padding: 1rem;
+  }  .header-bar {
+    padding: 0.8rem 1rem;
   }
-  .spe-table th, .spe-table td {
+  .promo-table th, .promo-table td {
     font-size: 0.97em;
     padding: 0.7em 0.2em;
   }
-  .spe-table td.spe-actions {
+  .promo-table td.promo-actions {
     gap: 0.3em;
   }
 }
 
 @media (max-width: 600px) {
-  .spe-page {
+  .promotions-page {
     padding: 0.5rem;
+  }  .header-bar {
+    padding: 0.8rem 1rem;
+    flex-direction: column;
+    gap: 0.5rem;
+    text-align: center;
   }
-  .spe-table th, .spe-table td {
+  .promo-table th, .promo-table td {
     font-size: 0.85em;
     padding: 0.5em 0.1em;
   }
