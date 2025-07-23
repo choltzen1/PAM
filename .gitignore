@@ -1,0 +1,25 @@
+# Batch search results
+results/
+*.csv
+*.xlsx
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Virtual environment
+venv/
+
+# Temporary files
+temp/
+*.tmp
+
+# Excel files (except the main data file)
+*batch_results*.xlsx
+*batch_summary*.csv
+*device_results*.csv
+
+# System files
+.DS_Store
+Thumbs.db

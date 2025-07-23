@@ -4,8 +4,11 @@ Daily Alert Checker - Run this to see if there are any devices needing manual at
 """
 
 import os
+import sys
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+
 from datetime import datetime
-from notification_system import NotificationSystem
+from core.notification_system import NotificationSystem
 
 def main():
     """Check for alerts and provide quick summary"""
@@ -22,29 +25,39 @@ def main():
     print()
     
     # Check for unmapped devices file
-    if os.path.exists('unmapped_devices.csv'):
+    unmapped_file = '../temp/alerts/unmapped_devices.csv'
+    if not os.path.exists(unmapped_file):
+        unmapped_file = '../data/unmapped_devices.csv'  # Fallback location
+    
+    if os.path.exists(unmapped_file):
         print("⚠️  Found unmapped_devices.csv - Manual attention needed!")
         
         # Count lines in file
-        with open('unmapped_devices.csv', 'r') as f:
+        with open(unmapped_file, 'r') as f:
             lines = f.readlines()
             device_count = len(lines) - 1  # Subtract header
             
         print(f"   📊 {device_count} devices need mapping rules")
-        print(f"   📁 Review: unmapped_devices.csv")
+        print(f"   📁 Review: {unmapped_file}")
     else:
         print("✅ No unmapped_devices.csv found")
     
     print()
     
     # Check for recent update reports
-    report_files = [f for f in os.listdir('.') if f.startswith('update_report_')]
+    report_dir = '../temp/reports'
+    if os.path.exists(report_dir):
+        report_files = [f for f in os.listdir(report_dir) if f.startswith('update_report_')]
+    else:
+        report_files = [f for f in os.listdir('.') if f.startswith('update_report_')]
+    
     if report_files:
         latest_report = sorted(report_files)[-1]
         print(f"📄 Latest report: {latest_report}")
         
         # Show file age
-        file_time = os.path.getmtime(latest_report)
+        report_path = os.path.join(report_dir, latest_report) if os.path.exists(report_dir) else latest_report
+        file_time = os.path.getmtime(report_path)
         file_age = datetime.now().timestamp() - file_time
         hours_old = file_age / 3600
         
@@ -58,9 +71,10 @@ def main():
     print()
     
     # Check state file
-    if os.path.exists('mapping_state.json'):
+    state_file = '../data/mapping_state.json'
+    if os.path.exists(state_file):
         import json
-        with open('mapping_state.json', 'r') as f:
+        with open(state_file, 'r') as f:
             state = json.load(f)
         
         print("📊 System Status:")
@@ -73,11 +87,11 @@ def main():
     
     print()
     print("🔄 Quick Commands:")
-    print("   python device_mapping_updater.py --check    # Manual check")
-    print("   python device_mapping_updater.py --detect   # Detect only")
-    print("   python setup_automation.py                  # Initial setup")
+    print("   python core/device_mapping_updater.py --check    # Manual check")
+    print("   python core/device_mapping_updater.py --detect   # Detect only")
+    print("   python core/setup_automation.py                  # Initial setup")
     
-    if has_alerts or os.path.exists('unmapped_devices.csv'):
+    if has_alerts or os.path.exists(unmapped_file):
         print()
         print("🚨 ACTION REQUIRED: Manual attention needed!")
         return False

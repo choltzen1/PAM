@@ -7,12 +7,32 @@ import time
 from pathlib import Path
 
 class DeviceMappingUpdater:
-    def __init__(self, excel_file='Z0MATERIAL_ATTRB_REP01_00000.xlsx'):
+    def __init__(self, excel_file=None):
+        if excel_file is None:
+            # Determine the correct path based on where the script is run from
+            if os.path.exists('data/Z0MATERIAL_ATTRB_REP01_00000.xlsx'):
+                excel_file = 'data/Z0MATERIAL_ATTRB_REP01_00000.xlsx'
+            elif os.path.exists('../data/Z0MATERIAL_ATTRB_REP01_00000.xlsx'):
+                excel_file = '../data/Z0MATERIAL_ATTRB_REP01_00000.xlsx'
+            else:
+                excel_file = 'Z0MATERIAL_ATTRB_REP01_00000.xlsx'  # fallback
+        
         self.excel_file = excel_file
-        self.mapping_file = 'device_alias_mapping.csv'
-        self.state_file = 'mapping_state.json'
-        self.new_devices_file = 'new_devices_detected.csv'
-        self.unmapped_devices_file = 'unmapped_devices.csv'
+        
+        # Set other file paths relative to Excel file location
+        excel_dir = os.path.dirname(excel_file)
+        if excel_dir:
+            data_dir = excel_dir
+        else:
+            data_dir = 'data' if os.path.exists('data') else '.'
+            
+        self.mapping_file = os.path.join(data_dir, 'device_alias_mapping.csv')
+        self.state_file = os.path.join(data_dir, 'mapping_state.json')
+        
+        # Output files go to temp directory
+        temp_dir = 'temp/alerts' if os.path.exists('temp/alerts') else '.'
+        self.new_devices_file = os.path.join(temp_dir, 'new_devices_detected.csv')
+        self.unmapped_devices_file = os.path.join(temp_dir, 'unmapped_devices.csv')
         
     def load_current_state(self):
         """Load the current state of device mapping"""

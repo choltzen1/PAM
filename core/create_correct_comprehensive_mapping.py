@@ -1,5 +1,14 @@
 import pandas as pd
 import re
+import os
+import sys
+from pathlib import Path
+
+# Add project root to path for imports
+PROJECT_ROOT = Path(__file__).parent.parent
+sys.path.insert(0, str(PROJECT_ROOT))
+
+from config import EXCEL_FILE, FILTER_CRITERIA, DATA_DIR
 
 def create_comprehensive_mapping():
     """
@@ -7,11 +16,15 @@ def create_comprehensive_mapping():
     For example, "iPhone 15" should map to ALL iPhone 15 variants (128GB, 256GB, 512GB).
     """
     
-    # Load Excel file
-    excel_df = pd.read_excel('Z0MATERIAL_ATTRB_REP01_00000.xlsx', header=7)
+    # Load Excel file using config path
+    excel_path = PROJECT_ROOT / EXCEL_FILE
+    if not excel_path.exists():
+        raise FileNotFoundError(f"Excel file not found: {excel_path}")
+    
+    excel_df = pd.read_excel(excel_path, header=7)
     filtered_df = excel_df[
-        (excel_df['SKU Type'].isin(['A-STOCK', 'WARRANTY', 'PRWARRANTY', 'REFURB SKU'])) &
-        (excel_df['Handset Brand'].isin(['T-MOBILE', 'SPRINT', 'UNIVERSAL']))
+        (excel_df['SKU Type'].isin(FILTER_CRITERIA['SKU Type'])) &
+        (excel_df['Handset Brand'].isin(FILTER_CRITERIA['Handset Brand']))
     ]
     
     print(f"Processing {len(filtered_df)} total devices...")
@@ -37,12 +50,16 @@ def create_comprehensive_mapping():
     # Remove duplicates
     df = df.drop_duplicates()
     
-    # Save the mapping
-    df.to_csv('device_alias_mapping.csv', index=False)
+    # Save the mapping to data folder
+    output_path = PROJECT_ROOT / 'data' / 'device_alias_mapping.csv'
+    df.to_csv(output_path, index=False)
     
     print(f"Created comprehensive mapping with {len(df)} aliases")
     print(f"Covering {len(device_groups)} device models")
     print(f"Total unique devices: {len(df['manufacturer_name'].unique())}")
+    print(f"Mapping saved to: {output_path}")
+    
+    return output_path
 
 def group_devices_by_model(filtered_df):
     """Group device rows by their base model, ignoring memory/storage variants"""
@@ -618,5 +635,16 @@ def generate_marketing_aliases(base_model):
     
     return list(aliases)
 
+def main(force_rebuild=False):
+    """Main function to create/update device mapping."""
+    try:
+        result_path = create_comprehensive_mapping()
+        print(f"✅ Device mapping completed successfully!")
+        print(f"📁 Output file: {result_path}")
+        return result_path
+    except Exception as e:
+        print(f"❌ Error creating device mapping: {e}")
+        raise
+
 if __name__ == "__main__":
-    create_comprehensive_mapping()
+    main()
