@@ -3,16 +3,17 @@
 {% block title %}SPE Promotions{% endblock %}
 
 {% block content %}
-<div class="spe-page">
-  <!-- Page header -->
-  <header class="spe-header">
-    <div class="spe-header-title">SPE Promotions</div>
-    <div class="spe-user-name">{{ user_name }}</div>
-  </header>
+<!-- Header (fixed) -->
+<header class="header-bar">
+  <div class="header-title">SPE Promotions</div>
+  <div class="user-name">{{ user_name }}</div>
+</header>
 
+<!-- Main content area (scrollable) -->
+<div class="promotions-page">
   <!-- Controls row: filter, search, actions -->
-  <div class="spe-controls">
-    <div class="spe-filter-group">
+  <div class="promotions-controls">
+    <div class="filter-group">
       <label for="owner-filter">Filter by Promotion Owner</label>
       <select id="owner-filter" name="owner">
         <option value="all">All</option>
@@ -24,7 +25,7 @@
       </select>
     </div>
 
-    <div class="spe-search-group">
+    <div class="search-group">
       <label class="visually-hidden" for="search-input">Search</label>
       <input
         type="text"
@@ -35,11 +36,9 @@
       />
     </div>
 
-    <div class="spe-action-buttons">
+    <div class="action-buttons">
       <button class="btn"><i class="fas fa-plus"></i> Create JIRA</button>
-      <button class="btn"><i class="fas fa-calendar-alt"></i> Date Mismatch</button>
       <button class="btn"><i class="fas fa-wrench"></i> Get Promo Code</button>
-      <button class="btn"><i class="fas fa-check-square"></i> DCD Validation</button>
     </div>
   </div>
 
@@ -49,12 +48,11 @@
     <a href="{{ url_for('spe') }}" class="tab {% if active_tab=='SPE' %}active{% endif %}">SPE</a>
     <button class="tab">Sprint</button>
     <button class="tab">Functional</button>
-    <button class="tab">Z-Lab</button>
-  </div>
+    <button class="tab">Z-Lab</button>  </div>
 
   <!-- Table -->
   <div class="table-container">
-    <table class="spe-table">
+    <table class="promo-table">
       <thead>
         <tr>
           <th>Promo Code</th>
@@ -75,9 +73,8 @@
           <td>{{ promo.status }}</td>
           <td>{{ promo.description }}</td>
           <td>{{ promo.start_date }}</td>
-          <td>{{ promo.end_date }}</td>
-          <td class="spe-owner">{{ promo.owner }}</td>
-          <td class="spe-actions">
+          <td>{{ promo.end_date }}</td>          <td class="promo-owner">{{ promo.owner }}</td>
+          <td class="promo-actions">
             <a href="{{ url_for('edit_spe', promo_code=promo.code) }}" class="icon-button" title="Edit"><i class="fas fa-edit"></i></a>
             <button class="icon-button" title="Team"><i class="fas fa-users"></i></button>
             <button class="icon-button" title="Export"><i class="fas fa-file-export"></i></button>
