@@ -320,17 +320,10 @@
               </div>
             </div>
             <div class="save-footer">
-              <button type="submit" class="btn btn-primary">Save Groupings</button>
-            </div>          {% elif active_tab == 'BPTCR' %}
-            <div class="grid-form two-col">
-              <label class="section-label grid-full mb-1">BPTCR Details</label>
-              <div class="details-box grid-full">
-                <ul class="plain-list">
-                  {% for detail in promo.bptcr_details %}
-                    <li class="mb-1">{{ detail }}</li>
-                  {% endfor %}
-                </ul>
-              </div>
+              <button type="submit" class="btn btn-primary">Save Groupings</button>            </div>          {% elif active_tab == 'BPTCR' %}
+            <div class="grid-form four-col">
+              <label class="grid-full section-label">BPTCR</label>
+              <input class="form-control grid-full mb-1" name="bptcr" value="{{ promo.bptcr or '' }}">
             </div>
             <div class="save-footer">
               <button type="submit" class="btn btn-primary">Save BPTCR</button>

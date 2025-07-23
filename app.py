@@ -65,11 +65,10 @@ def edit_promo(promo_code=None):
             "segment_name": "",
             "sub_segment": "",
             "segment_group_id": "",
-            "segment_level": "",
-            "soc_grouping": "",
+            "segment_level": "",            "soc_grouping": "",
             "account_type": "",
             "sales_application": "",
-            "bptcr_details": [],
+            "bptcr": "",
             "version_history": []
         }
 
@@ -128,8 +127,7 @@ def edit_promo(promo_code=None):
             promo_data.update({
                 'segment_name': request.form.get('segment_name', ''),
                 'sub_segment': request.form.get('sub_segment', ''),
-                'segment_group_id': request.form.get('segment_group_id', ''),
-                'segment_level': request.form.get('segment_level', '')
+                'segment_group_id': request.form.get('segment_group_id', ''),                'segment_level': request.form.get('segment_level', '')
             })
         
         elif active_tab == 'Groupings':
@@ -141,18 +139,13 @@ def edit_promo(promo_code=None):
             })
         
         elif active_tab == 'BPTCR':
-            # Update BPTCR tab fields
-            bptcr_details = []
-            for key, value in request.form.items():
-                if key.startswith('bptcr_detail_') and value.strip():
-                    bptcr_details.append(value.strip())
-            promo_data['bptcr_details'] = bptcr_details
+            # Update BPTCR tab field
+            promo_data['bptcr'] = request.form.get('bptcr', '')
         
         elif active_tab == 'SQL Generation':
             # Handle file uploads for SQL Generation tab
             uploaded_files = promo_data.get('uploaded_files', {})
-            
-            # Handle SKU Excel file upload
+              # Handle SKU Excel file upload
             if 'sku_excel' in request.files:
                 sku_file = request.files['sku_excel']
                 if sku_file and sku_file.filename:
@@ -162,7 +155,8 @@ def edit_promo(promo_code=None):
                         flash('SKU Excel file uploaded successfully!', 'success')
                     except Exception as e:
                         flash(f'Error uploading SKU file: {str(e)}', 'error')
-              # Handle Trade-In Excel file upload
+            
+            # Handle Trade-In Excel file upload
             if 'tradein_excel' in request.files:
                 tradein_file = request.files['tradein_excel']
                 if tradein_file and tradein_file.filename:
