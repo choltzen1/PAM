@@ -460,4 +460,6 @@ class PromoDataManager:
             "Group 6": {
                 "name": "Group 6 - GSM - Consumer & TFB",
                 "plans": [
-                    "TMO ONE Plus rate plans (Incl. 55+)",
+                    "TMO ONE Plus rate plans (Incl. 55+)"],
+            }
+        }

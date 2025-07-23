@@ -122,9 +122,13 @@
               <label class="section-label">C2 Content</label>
               <input class="form-control" name="max_discount" value="{{ promo.max_discount or '1' }}">
               <input class="form-control" name="market_group" value="{{ promo.market_group or '*' }}">
-              <input class="form-control" name="store_group" value="{{ promo.store_group or '*' }}">
-              <input class="form-control" name="c2_content" value="{{ promo.c2_content }}">
-            </div>{% elif active_tab == 'Dates & Times' %}
+              <input class="form-control" name="store_group" value="{{ promo.store_group or '*' }}">              <input class="form-control" name="c2_content" value="{{ promo.c2_content }}">
+            </div>
+            <div class="save-footer">
+              <button type="submit" class="btn btn-primary">Save Details</button>
+            </div>
+
+          {% elif active_tab == 'Dates & Times' %}
             <div class="grid-form four-col">
               <label class="section-label">Promo Start Date</label>
               <label class="section-label">Promo End Date</label>
@@ -152,10 +156,14 @@
                   <label >
                     {{ grace }}
                     <input type="radio" name="channel_grace_period" value="{{ grace }}" {% if promo.channel_grace_period == grace %}checked{% endif %}>
-                  </label>
-                {% endfor %}
+                  </label>                {% endfor %}
               </div>
-            </div>{% elif active_tab == 'Requirements' %}
+            </div>
+            <div class="save-footer">
+              <button type="submit" class="btn btn-primary">Save Dates & Times</button>
+            </div>
+
+          {% elif active_tab == 'Requirements' %}
             <div class="grid-form four-col">              <label class="section-label col-span-4">TFB Channel Group ID</label>
               <div class="input-group vertical-radio col-span-4 mb-1">
                 {% for group in ['NULL','A01','A02','A03','A04','A05'] %}
@@ -212,9 +220,11 @@
               </div>
 
               <label class="section-label col-span-2">Adjustment Code</label>
-              <label class="section-label col-span-2">Discount Codes</label>
-              <input class="form-control col-span-2" name="adjustment_code" value="{{ promo.adjustment_code or 'EEDG74' }}">
+              <label class="section-label col-span-2">Discount Codes</label>              <input class="form-control col-span-2" name="adjustment_code" value="{{ promo.adjustment_code or 'EEDG74' }}">
               <input class="form-control col-span-2" name="discount_codes" value="{{ promo.discount_codes or '22Q12F, 22Q12P, 22Q12S' }}">
+            </div>
+            <div class="save-footer">
+              <button type="submit" class="btn btn-primary">Save Requirements</button>
             </div>
 
           {% elif active_tab == 'Line Indicators' %}
@@ -303,9 +313,11 @@
                   <label >
                     {{ val }}
                     <input type="radio" name="iot_indicator" value="{{ val }}" {% if promo.iot_indicator == val %}checked{% endif %}>
-                  </label>
-                {% endfor %}
+                  </label>                {% endfor %}
               </div>
+            </div>
+            <div class="save-footer">
+              <button type="submit" class="btn btn-primary">Save Line Indicators</button>
             </div>
 
           {% elif active_tab == 'SOC Groupings' %}
@@ -372,16 +384,14 @@
                     <input type="radio" name="lend_bo_lines" value="{{ val }}" {% if promo.lend_bo_lines == val %}checked{% endif %}>
                   </label>
                 {% endfor %}
-              </div>
-
-              <label class="section-label grid-full">Soc Discount Mapping</label>
+              </div>              <label class="section-label grid-full">Soc Discount Mapping</label>
               <input class="form-control grid-full" name="soc_discount_mapping" value="{{ promo.soc_discount_mapping or 'https://web.powerapps.com/webplayer/iframeapp?source=iframe&tenantid=be0f980b-dd99-4b19-bd7b-bc71a09b026c&RecordID=a07b41b5-bff7-ec11-bb3d-000d3a69fe56' }}">
+            </div>
+            <div class="save-footer">
+              <button type="submit" class="btn btn-primary">Save SOC Groupings</button>
             </div>
           {% endif %}
 
-          <div class="save-footer">
-            <button type="submit" class="btn btn-primary">Save</button>
-          </div>
         </form>
       </div>    </div>
   </div>

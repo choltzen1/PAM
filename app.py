@@ -1,85 +1,174 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, request, redirect, url_for, flash
 from datetime import datetime
-
+from data.storage import PromoDataManager
 
 app = Flask(__name__)
+app.secret_key = 'your-secret-key-here'  # Required for flash messages
+
+# Initialize data manager
+data_manager = PromoDataManager()
 
 
 @app.route("/")
 def home():
     return render_template("index.html")
-from flask import request, redirect, url_for
-
 @app.route("/edit_promo", methods=["GET", "POST"])
-def edit_promo():
-    # Simulate a promo object with all needed fields for both tabs
-    fake_promo = {
-        "code": "P0472022",
-        "owner": "Alejandro Ferrer",
-        "bill_facing_name": "2022 Samsung Trade P30",
-        "orbit_id": "15233",
-        "pj_code": "P047",
-        "description": "Magenta Only: Customers can get up to $600 off GS22 Series when they trade in an eligible device (new and existing customers qualify) on a qualifying rate plan - TFB Retail Only.",
-        "promo_notes": "Two-tiered discount structure.\n1. $700: All iPhones EXCEPT the iPhone 14 and 15\n2. $730: iPhone 14 and 15 (including all memory variants) to have $730\nTier 1 $730: iPhone 15, iPhone 15 Plus, iPhone 15 Pro, iPhone 15 Pro Max, iPhone 14, iPhone 14 Plus, iPhone 14 Pro, iPhone 14 Pro Max\nTier 2 $700: iPhone 15 Plus, iPhone 15 Pro, iPhone 15 Pro Max, iPhone 14 Plus, iPhone 14 Pro, iPhone 14 Pro Max, iPhone 13 Mini, iPhone 13 Pro, iPhone 13 Pro Max",
-        "discount": 10,
-        "amount": 600,
-        "nseip_drop": "N",
-        "dcd_web_cart": "Y",
-        "product_type": "G",
-        "bogo": "N",
-        "trade_in_group_id": "TRD2025-001",
-        "fpd_display_promo": "N",
-        "on_menu": "Y",
-        "market_group": "*",
-        "store_group": "*",
-        "sku_link": "https://web.powerapps.com/webplayer/iframe...",
-        "tradein_link": "https://web.powerapps.com/webplayer/iframe...",
-        "promo_start_date": "2025-07-01",
-        "promo_end_date": "2025-08-01",
-        "comm_end_date": "2025-08-15",
-        "promo_duration": 24,
-        "delay_time": 0,
-        "application_grace_period": "G11",
-        "promo_grace": "",
-        "trade_in_grace": "",
-        "mpss_lookback": "",
-        # Requirements tab fields
-        "device_sales_type": "S01",
-        "activation_type": "*",
-        "maintain_soc": "Y",
-        "limit_per_ban": 4,
-        "min_gsm_count": "",
-        "max_gsm_count": 12,
-        "port_in_group_id": "G02",
-        "version_history": [
-            "11/6/2023 1:18 PM - Michael Pugh - Approval requested for Care-Medjo, Sue, Commissions - Sandbo, Stephany and Device Finance - Kanzler, Justin.",
-            "11/1/2023 10:00 AM - Daniel Zhang - Created promo."
-        ]
-    }
-
-    # Load SOC Grouping content from text file
-    soc_grouping_content = []
-    try:
-        with open("static/soc_grouping.txt", "r") as file:
-            soc_grouping_content = file.readlines()
-    except FileNotFoundError:
-        soc_grouping_content = ["Error: SOC Grouping file not found."]
+@app.route("/edit_promo/<promo_code>", methods=["GET", "POST"])
+def edit_promo(promo_code=None):
+    # Get promo code from URL or request args
+    if not promo_code:
+        promo_code = request.args.get('promo_code', 'P0472022')
+    
+    # Load promo data from storage
+    promo_data = data_manager.get_promo(promo_code)
+    
+    # If promo doesn't exist, create a new one with default values
+    if not promo_data:
+        promo_data = {
+            "code": promo_code,
+            "owner": "New Owner",
+            "bill_facing_name": "New Promotion",
+            "orbit_id": "",
+            "pj_code": "",
+            "description": "",
+            "promo_notes": "",
+            "discount": 0,
+            "amount": 0,
+            "nseip_drop": "N",
+            "dcd_web_cart": "N",
+            "product_type": "",
+            "bogo": "N",
+            "trade_in_group_id": "",
+            "fpd_display_promo": "N",
+            "on_menu": "N",
+            "market_group": "*",
+            "store_group": "*",
+            "sku_link": "",
+            "tradein_link": "",
+            "promo_start_date": "",
+            "promo_end_date": "",
+            "comm_end_date": "",
+            "promo_duration": 0,
+            "delay_time": 0,
+            "application_grace_period": "",
+            "promo_grace": "",
+            "trade_in_grace": "",
+            "mpss_lookback": "",
+            "device_sales_type": "",
+            "activation_type": "*",
+            "maintain_soc": "N",
+            "limit_per_ban": 0,
+            "min_gsm_count": "",
+            "max_gsm_count": "",
+            "port_in_group_id": "",
+            "segment_name": "",
+            "sub_segment": "",
+            "segment_group_id": "",
+            "segment_level": "",
+            "soc_grouping": "",
+            "account_type": "",
+            "sales_application": "",
+            "bptcr_details": [],
+            "version_history": []
+        }
 
     # Determine active tab from GET or POST
     active_tab = request.args.get('tab')
     if request.method == 'POST':
         active_tab = request.form.get('active_tab', active_tab)
-        # Here you would update fake_promo with form data and save to DB
-        # For now, just simulate a save and stay on the same tab
+        
+        # Handle form submission for each tab
+        if active_tab == 'Details':
+            # Update Details tab fields
+            promo_data.update({
+                'bill_facing_name': request.form.get('bill_facing_name', ''),
+                'discount': float(request.form.get('discount', 0) or 0),
+                'amount': float(request.form.get('amount', 0) or 0),
+                'nseip_drop': request.form.get('nseip_drop', 'N'),
+                'dcd_web_cart': request.form.get('dcd_web_cart', 'N'),
+                'product_type': request.form.get('product_type', ''),
+                'bogo': request.form.get('bogo', 'N'),
+                'trade_in_group_id': request.form.get('trade_in_group_id', ''),
+                'fpd_display_promo': request.form.get('fpd_display_promo', 'N'),
+                'on_menu': request.form.get('on_menu', 'N'),
+                'market_group': request.form.get('market_group', '*'),
+                'store_group': request.form.get('store_group', '*'),
+                'sku_link': request.form.get('sku_link', ''),
+                'tradein_link': request.form.get('tradein_link', '')
+            })
+        
+        elif active_tab == 'Dates & Times':
+            # Update Dates & Times tab fields
+            promo_data.update({
+                'promo_start_date': request.form.get('promo_start_date', ''),
+                'promo_end_date': request.form.get('promo_end_date', ''),
+                'comm_end_date': request.form.get('comm_end_date', ''),
+                'promo_duration': int(request.form.get('promo_duration', 0) or 0),
+                'delay_time': int(request.form.get('delay_time', 0) or 0),
+                'application_grace_period': request.form.get('application_grace_period', ''),
+                'promo_grace': request.form.get('promo_grace', ''),
+                'trade_in_grace': request.form.get('trade_in_grace', ''),
+                'mpss_lookback': request.form.get('mpss_lookback', '')
+            })
+        
+        elif active_tab == 'Requirements':
+            # Update Requirements tab fields
+            promo_data.update({
+                'device_sales_type': request.form.get('device_sales_type', ''),
+                'activation_type': request.form.get('activation_type', '*'),
+                'maintain_soc': request.form.get('maintain_soc', 'N'),
+                'limit_per_ban': int(request.form.get('limit_per_ban', 0) or 0),
+                'min_gsm_count': request.form.get('min_gsm_count', ''),
+                'max_gsm_count': int(request.form.get('max_gsm_count', 0) or 0),
+                'port_in_group_id': request.form.get('port_in_group_id', '')
+            })
+        
+        elif active_tab == 'Segmentation':
+            # Update Segmentation tab fields
+            promo_data.update({
+                'segment_name': request.form.get('segment_name', ''),
+                'sub_segment': request.form.get('sub_segment', ''),
+                'segment_group_id': request.form.get('segment_group_id', ''),
+                'segment_level': request.form.get('segment_level', '')
+            })
+        
+        elif active_tab == 'Groupings':
+            # Update Groupings tab fields
+            promo_data.update({
+                'soc_grouping': request.form.get('soc_grouping', ''),
+                'account_type': request.form.get('account_type', ''),
+                'sales_application': request.form.get('sales_application', '')
+            })
+        
+        elif active_tab == 'BPTCR':
+            # Update BPTCR tab fields
+            bptcr_details = []
+            for key, value in request.form.items():
+                if key.startswith('bptcr_detail_') and value.strip():
+                    bptcr_details.append(value.strip())
+            promo_data['bptcr_details'] = bptcr_details
+        
+        # Save updated promo data
+        try:
+            data_manager.save_promo(promo_code, promo_data, user_name="Daniel Zhang")
+            flash(f'{active_tab} tab saved successfully!', 'success')
+        except Exception as e:
+            flash(f'Error saving {active_tab} tab: {str(e)}', 'error')
+    
     if not active_tab:
-        active_tab = 'Details'
+        active_tab = 'Details'    # Load SOC Grouping content from storage
+    soc_groupings = data_manager.get_soc_groupings()
+    account_types = data_manager.get_account_types()
+    sales_applications = data_manager.get_sales_applications()
 
     return render_template(
         "edit_promo.html",
-        promo=fake_promo,
+        promo=promo_data,
         user_name="Daniel Zhang",
         active_tab=active_tab,
-        soc_grouping_content=soc_grouping_content
+        soc_groupings=soc_groupings,
+        account_types=account_types,
+        sales_applications=sales_applications
     )
 
 
@@ -145,85 +234,173 @@ def spe():
 
 @app.route("/edit_spe", methods=["GET", "POST"])
 def edit_spe():
-    # Simulate an SPE promo object with all needed fields for SPE tabs
-    fake_spe = {
-        "code": "SP005",
-        "owner": "Hari Kariavula",
-        "bill_facing_name": "2022 Line On Us P2",
-        "orbit_id": "15600",
-        "pj_code": "SPE",
-        "description": "SPE Line On Us Promo",
-        "promo_identifier": "B",  # B, F, I, U, Z, NULL
-        "pt_priority_indicator": "G",  # B, G, NULL
-        "account_type": "*",  # A01-A09, *
-        "sales_application": "*",  # *, NULL
-        "dcd_web_cart": "Y",  # Y, N
-        "on_menu": "N",  # Y, N
-        "service_priority": "2880",
-        "max_discount": "1",
-        "market_group": "*",
-        "store_group": "*",
-        "c2_content": "",
-        
-        # Dates & Times tab
-        "promo_start_date": "2025-01-01",
-        "promo_end_date": "2025-12-31",
-        "pr_date": "",
-        "ban_tenure_start": "",
-        "ban_tenure_end": "",
-        "channel_grace_period": "NULL",  # G01-G05, NULL
-        "maintain_line_count_days": "365",
-        "re_enroll_period": "",
-        "promo_duration": "",
-        "port_duration": "",
-        
-        # Requirements tab
-        "tfb_channel_group_ids": ["A01", "A02", "A03", "A04", "A05"],
-        "dealer_group_id": "NULL",  # G01, G02, G03, NULL
-        "updated_mrc_ranking": "NULL",  # GSM, MI, NULL
-        "suppress_discount_reorder": "No",  # Yes, No
-        "port_in_group_id": "NULL",  # G02-G07, NULL
-        "retro_ban_evaluation": "No",  # Yes, No
-        "adjustment_code": "EEDG74",
-        "discount_codes": "22Q12F, 22Q12P, 22Q12S",
-        
-        # Line Indicators tab
-        "total": "N",  # Y, N
-        "gsm": "Y",  # Y, N
-        "mi": "N",  # Y, N
-        "pure_mi": "N",  # Y, N
-        "virtual_mi": "N",  # Y, N
-        "duplicate": "N",  # Y, N
-        "auto_att": "N",  # Y, N
-        "fax_line": "N",  # Y, N
-        "conference": "N",  # Y, N
-        "iot": "N",  # Y, N
-        
-        # SOC Groupings tab
-        "go_soc_group_id": "A56",
-        "bo_soc_group_id": "A55",
-        "paid_soc_group_id": "A55",
-        "min_paid_line_mi_count": "",
-        "go_line_maintenance": "A57",
-        "bo_line_maintenance": "A57",
-        "paid_line_maintenance": "A57",
-        "min_paid_line_gsm_count": "1",
-        "go_line_count": "1",
-        "bo_line_count": "1",
-        "borrow_bo_lines": "N",  # Y, N
-        "lend_bo_lines": "Y",  # Y, N
-        "soc_discount_mapping": "https://web.powerapps.com/webplayer/iframe..."
-    }    # Determine active tab from GET or POST
+    # Get promo_code from URL parameters
+    promo_code = request.args.get('promo_code', 'SP005')
+    
+    # Load existing SPE promo data or create default
+    try:
+        spe_data = data_manager.get_spe_promo(promo_code)
+    except:
+        # Default SPE promo structure if not found
+        spe_data = {
+            "code": promo_code,
+            "owner": "Hari Kariavula",
+            "bill_facing_name": "2022 Line On Us P2",
+            "orbit_id": "15600",
+            "pj_code": "SPE",
+            "description": "SPE Line On Us Promo",
+            "promo_notes": "",
+            "promo_identifier": "B",
+            "pt_priority_indicator": "G",
+            "account_type": "*",
+            "sales_application": "*",
+            "dcd_web_cart": "Y",
+            "on_menu": "N",
+            "service_priority": "2880",
+            "max_discount": "1",
+            "market_group": "*",
+            "store_group": "*",
+            "c2_content": "",
+            "promo_start_date": "2025-01-01",
+            "promo_end_date": "2025-12-31",
+            "pr_date": "",
+            "ban_tenure_start": "",
+            "ban_tenure_end": "",
+            "channel_grace_period": "NULL",
+            "maintain_line_count_days": "365",
+            "re_enroll_period": "",
+            "promo_duration": "",
+            "port_duration": "",
+            "tfb_channel_group_id": "NULL",
+            "dealer_group_id": "NULL",
+            "updated_mrc_ranking": "NULL",
+            "suppress_discount_reorder": "No",
+            "retro_ban_evaluation": "No",
+            "port_in_group_id": "NULL",
+            "adjustment_code": "EEDG74",
+            "discount_codes": "22Q12F, 22Q12P, 22Q12S",
+            "total_indicator": "N",
+            "gsm_indicator": "Y",
+            "mi_indicator": "N",
+            "pure_mi_indicator": "N",
+            "virtual_mi_indicator": "N",
+            "duplicate_indicator": "N",
+            "auto_att_indicator": "N",
+            "fax_line_indicator": "N",
+            "conference_indicator": "N",
+            "iot_indicator": "N",
+            "go_soc_group_id": "A56",
+            "bo_soc_group_id": "A55",
+            "paid_soc_group_id": "A55",
+            "min_paid_line_mi_count": "",
+            "go_line_maintenance": "A57",
+            "bo_line_maintenance": "A57",
+            "paid_line_maintenance": "A57",
+            "min_paid_line_gsm_count": "1",
+            "go_line_count": "1",
+            "bo_line_count": "1",
+            "borrow_bo_lines": "N",
+            "lend_bo_lines": "Y",
+            "soc_discount_mapping": "https://web.powerapps.com/webplayer/iframe...",
+            "version_history": []
+        }
+
+    # Determine active tab from GET or POST
     active_tab = request.args.get('tab')
     if request.method == 'POST':
         active_tab = request.form.get('active_tab', active_tab)
-        # Here you would update fake_spe with form data and save to DB
+        
+        # Handle form submission for each tab
+        if active_tab == 'Details':
+            # Update Details tab fields
+            spe_data.update({
+                'promo_identifier': request.form.get('promo_identifier', 'B'),
+                'pt_priority_indicator': request.form.get('pt_priority_indicator', 'G'),
+                'account_type': request.form.get('account_type', '*'),
+                'sales_application': request.form.get('sales_application', '*'),
+                'dcd_web_cart': request.form.get('dcd_web_cart', 'N'),
+                'on_menu': request.form.get('on_menu', 'N'),
+                'service_priority': request.form.get('service_priority', '2880'),
+                'max_discount': request.form.get('max_discount', '1'),
+                'market_group': request.form.get('market_group', '*'),
+                'store_group': request.form.get('store_group', '*'),
+                'c2_content': request.form.get('c2_content', '')
+            })
+        
+        elif active_tab == 'Dates & Times':
+            # Update Dates & Times tab fields
+            spe_data.update({
+                'promo_start_date': request.form.get('promo_start_date', ''),
+                'promo_end_date': request.form.get('promo_end_date', ''),
+                'pr_date': request.form.get('pr_date', ''),
+                'ban_tenure_start': request.form.get('ban_tenure_start', ''),
+                'ban_tenure_end': request.form.get('ban_tenure_end', ''),
+                'channel_grace_period': request.form.get('channel_grace_period', 'NULL'),
+                'maintain_line_count_days': request.form.get('maintain_line_count_days', '365'),
+                're_enroll_period': request.form.get('re_enroll_period', ''),
+                'promo_duration': request.form.get('promo_duration', ''),
+                'port_duration': request.form.get('port_duration', '')
+            })
+        
+        elif active_tab == 'Requirements':
+            # Update Requirements tab fields
+            spe_data.update({
+                'tfb_channel_group_id': request.form.get('tfb_channel_group_id', 'NULL'),
+                'dealer_group_id': request.form.get('dealer_group_id', 'NULL'),
+                'updated_mrc_ranking': request.form.get('updated_mrc_ranking', 'NULL'),
+                'suppress_discount_reorder': request.form.get('suppress_discount_reorder', 'No'),
+                'retro_ban_evaluation': request.form.get('retro_ban_evaluation', 'No'),
+                'port_in_group_id': request.form.get('port_in_group_id', 'NULL'),
+                'adjustment_code': request.form.get('adjustment_code', 'EEDG74'),
+                'discount_codes': request.form.get('discount_codes', '')
+            })
+        
+        elif active_tab == 'Line Indicators':
+            # Update Line Indicators tab fields
+            spe_data.update({
+                'total_indicator': request.form.get('total_indicator', 'N'),
+                'gsm_indicator': request.form.get('gsm_indicator', 'N'),
+                'mi_indicator': request.form.get('mi_indicator', 'N'),
+                'pure_mi_indicator': request.form.get('pure_mi_indicator', 'N'),
+                'virtual_mi_indicator': request.form.get('virtual_mi_indicator', 'N'),
+                'duplicate_indicator': request.form.get('duplicate_indicator', 'N'),
+                'auto_att_indicator': request.form.get('auto_att_indicator', 'N'),
+                'fax_line_indicator': request.form.get('fax_line_indicator', 'N'),
+                'conference_indicator': request.form.get('conference_indicator', 'N'),
+                'iot_indicator': request.form.get('iot_indicator', 'N')
+            })
+        
+        elif active_tab == 'SOC Groupings':
+            # Update SOC Groupings tab fields
+            spe_data.update({
+                'go_soc_group_id': request.form.get('go_soc_group_id', ''),
+                'bo_soc_group_id': request.form.get('bo_soc_group_id', ''),
+                'paid_soc_group_id': request.form.get('paid_soc_group_id', ''),
+                'min_paid_line_mi_count': request.form.get('min_paid_line_mi_count', ''),
+                'go_line_maintenance': request.form.get('go_line_maintenance', ''),
+                'bo_line_maintenance': request.form.get('bo_line_maintenance', ''),
+                'paid_line_maintenance': request.form.get('paid_line_maintenance', ''),
+                'min_paid_line_gsm_count': request.form.get('min_paid_line_gsm_count', '1'),
+                'go_line_count': request.form.get('go_line_count', '1'),
+                'bo_line_count': request.form.get('bo_line_count', '1'),
+                'borrow_bo_lines': request.form.get('borrow_bo_lines', 'N'),
+                'lend_bo_lines': request.form.get('lend_bo_lines', 'N'),
+                'soc_discount_mapping': request.form.get('soc_discount_mapping', '')
+            })
+        
+        # Save updated SPE promo data
+        try:
+            data_manager.save_spe_promo(promo_code, spe_data, user_name="Daniel Zhang")
+            flash(f'{active_tab} tab saved successfully!', 'success')
+        except Exception as e:
+            flash(f'Error saving {active_tab} tab: {str(e)}', 'error')
+    
     if not active_tab:
         active_tab = 'Details'
 
     return render_template(
         "edit_spe.html",
-        promo=fake_spe,
+        promo=spe_data,
         user_name="Daniel Zhang",
         active_tab=active_tab
     )
