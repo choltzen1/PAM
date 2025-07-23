@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Data Mismatch - PAM{% endblock %}
+{% block head %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/date_mismatch.css') }}">
+{% endblock %}
+{% block content %}
+<div class="data-mismatch-page">
+  <!-- Header -->
+  <div class="header-container">
+    <div class="header-left">
+      <i class="fas fa-calendar-check header-icon"></i>
+      <div>
+        <h1>Data Mismatch</h1>
+        <p class="subtitle">Identify and resolve promotion data discrepancies</p>
+      </div>
+    </div>
+    <div class="header-right">
+      <span class="user-info">{{ user_name }}</span>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-header">
+            <h3><i class="fas fa-calendar-check me-2"></i>Date Mismatch Analysis</h3>
+          </div>
+          <div class="card-body text-center">
+            <div class="placeholder-content">
+              <i class="fas fa-calendar-check display-1 text-muted mb-3"></i>
+              <h4 class="text-muted">Date Mismatch Tool</h4>
+              <p class="text-muted">This page will contain tools to identify and resolve promotion date discrepancies.</p>
+              <p class="text-muted mt-4">Coming soon...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>  </div>
+</div>
+{% endblock %}

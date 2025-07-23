@@ -3,13 +3,14 @@
 {% block title %}Promotions – {{ promotion_code }}{% endblock %}
 
 {% block content %}
-<div class="promotions-page">
-  <!-- Page header -->
-  <header class="header-bar">
-    <div class="header-title">Promotions – {{ promotion_code }}</div>
-    <div class="user-name">{{ user_name }}</div>
-  </header>
+<!-- Header (fixed) -->
+<header class="header-bar">
+  <div class="header-title">Promotions – {{ promotion_code }}</div>
+  <div class="user-name">{{ user_name }}</div>
+</header>
 
+<!-- Main content area (scrollable) -->
+<div class="promotions-page">
   <!-- Controls row: filter, search, actions -->
   <div class="promotions-controls">
     <div class="filter-group">

@@ -4,10 +4,14 @@
   <meta charset="UTF-8">
   <title>{% block title %}Promo App{% endblock %}</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
-  {% if request.path == '/promotions' %}
+  {% if request.path == '/' %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/frontpage.css') }}">
+  {% elif request.path == '/promotions' %}
     <link rel="stylesheet" href="{{ url_for('static', filename='css/promotions.css') }}">
   {% elif request.path == '/spe' %}
     <link rel="stylesheet" href="{{ url_for('static', filename='css/spe.css') }}">
+  {% elif request.path == '/data_mismatch' %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/date_mismatch.css') }}">
   {% endif %}
   <link rel="stylesheet" href="{{ url_for('static', filename='css/edit_promo.css') }}">
   <script defer src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
@@ -15,7 +19,8 @@
 </head>
 <body>
   {% block content %}{% endblock %}
-  <footer class="footer-nav" style="position:fixed;left:0;bottom:0;width:100%;background:var(--tmobile-magenta);color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0.5em 2em;z-index:200;font-size:1rem;">
+  
+  <footer class="footer-nav" style="background:var(--tmobile-magenta);color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0.5em 2em;font-size:1rem;flex-shrink:0;">
     <div id="footer-time">{{ current_datetime }}</div>
     <nav class="footer-links" style="display:flex;gap:1.5em;align-items:center;">
       <a href="javascript:history.back()" style="color:#fff;text-decoration:none;font-size:1.2em;"><i class="fas fa-chevron-left"></i></a>

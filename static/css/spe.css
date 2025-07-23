@@ -10,11 +10,30 @@
   --spe-table-shadow: 0 2px 16px #0001;
 }
 
-/* SPE Page Container */
+/* 1. Flex column page layout: header, content, footer */
+html, body {
+  min-height: 100vh;
+  height: 100%;
+  width: 100vw;
+  margin: 0;
+  padding: 0;
+  background: #f4f4f4;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  font-family: 'Inter', Arial, sans-serif;
+  overflow-x: hidden;
+}
+
+/* SPE Page Container - scrollable content area */
 .spe-page {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
   width: 100%;
   padding: 1rem 2rem;
-  margin: 0;
+  box-sizing: border-box;
+  background: #fff;
 }
 
 /* Tabs row - shared with promotions page but needed here too */
@@ -184,11 +203,24 @@
 }
 
 @media (max-width: 900px) {
+  .spe-page {
+    padding: 1rem;
+  }
   .spe-table th, .spe-table td {
     font-size: 0.97em;
     padding: 0.7em 0.2em;
   }
   .spe-table td.spe-actions {
     gap: 0.3em;
+  }
+}
+
+@media (max-width: 600px) {
+  .spe-page {
+    padding: 0.5rem;
+  }
+  .spe-table th, .spe-table td {
+    font-size: 0.85em;
+    padding: 0.5em 0.1em;
   }
 }
