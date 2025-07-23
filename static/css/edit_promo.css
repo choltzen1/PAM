@@ -813,4 +813,128 @@ h5 {
   }
 }
 
+/* File Upload Cards */
+.file-info-card {
+  background: #f8f9fa;
+  border: 1px solid var(--tmobile-border);
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  transition: box-shadow 0.2s ease;
+}
+
+.file-info-card:hover {
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.file-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.file-details {
+  flex: 1;
+}
+
+.file-name {
+  font-weight: 600;
+  color: #333;
+  font-size: 1rem;
+  margin-bottom: 0.25rem;
+}
+
+.file-meta {
+  font-size: 0.85rem;
+  color: #666;
+  display: flex;
+  gap: 1rem;
+}
+
+.file-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.file-actions a {
+  color: var(--tmobile-magenta);
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 500;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+}
+
+.file-actions a:hover {
+  background-color: rgba(226, 0, 116, 0.1);
+}
+
+.file-upload-section {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--tmobile-border);
+}
+
+.file-upload-section h4 {
+  color: var(--tmobile-magenta);
+  margin-bottom: 1rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.upload-group {
+  margin-bottom: 1.5rem;
+}
+
+.upload-label {
+  display: block;
+  font-weight: 500;
+  color: #333;
+  margin-bottom: 0.5rem;
+}
+
+.file-input {
+  border: 1px solid var(--tmobile-border);
+  border-radius: 5px;
+  padding: 0.5rem;
+  background: #fafafa;
+  width: 100%;
+  box-sizing: border-box;
+  font-size: 0.95rem;
+}
+
+.file-input:focus {
+  outline: none;
+  border-color: var(--tmobile-magenta);
+  box-shadow: 0 0 0 2px rgba(226, 0, 116, 0.2);
+}
+
+.upload-guidance {
+  background: #e8f4f8;
+  border: 1px solid #b3d9e6;
+  border-radius: 6px;
+  padding: 1rem;
+  margin-top: 1rem;
+  font-size: 0.9rem;
+  color: #2c6e7a;
+}
+
+.upload-guidance h5 {
+  margin: 0 0 0.5rem 0;
+  color: #1e4a52;
+  font-weight: 600;
+}
+
+.upload-guidance ul {
+  margin: 0.5rem 0 0 1.2rem;
+  padding: 0;
+}
+
+.upload-guidance li {
+  margin-bottom: 0.25rem;
+}
+
 
