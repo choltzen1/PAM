@@ -1,4 +1,5 @@
 from flask import Flask, render_template, request, redirect, url_for, flash
+import os
 from datetime import datetime
 from data.storage import PromoDataManager
 
@@ -113,8 +114,7 @@ def edit_promo(promo_code=None):
         
         elif active_tab == 'Requirements':
             # Update Requirements tab fields
-            promo_data.update({
-                'device_sales_type': request.form.get('device_sales_type', ''),
+            promo_data.update({'device_sales_type': request.form.get('device_sales_type', ''),
                 'activation_type': request.form.get('activation_type', '*'),
                 'maintain_soc': request.form.get('maintain_soc', 'N'),
                 'limit_per_ban': int(request.form.get('limit_per_ban', 0) or 0),
@@ -148,6 +148,33 @@ def edit_promo(promo_code=None):
                     bptcr_details.append(value.strip())
             promo_data['bptcr_details'] = bptcr_details
         
+        elif active_tab == 'SQL Generation':
+            # Handle file uploads for SQL Generation tab
+            uploaded_files = promo_data.get('uploaded_files', {})
+            
+            # Handle SKU Excel file upload
+            if 'sku_excel' in request.files:
+                sku_file = request.files['sku_excel']
+                if sku_file and sku_file.filename:
+                    try:
+                        file_metadata = data_manager.save_excel_file(promo_code, sku_file, 'sku_excel')
+                        uploaded_files['sku_excel'] = file_metadata
+                        flash('SKU Excel file uploaded successfully!', 'success')
+                    except Exception as e:
+                        flash(f'Error uploading SKU file: {str(e)}', 'error')
+              # Handle Trade-In Excel file upload
+            if 'tradein_excel' in request.files:
+                tradein_file = request.files['tradein_excel']
+                if tradein_file and tradein_file.filename:
+                    try:
+                        file_metadata = data_manager.save_excel_file(promo_code, tradein_file, 'tradein_excel')
+                        uploaded_files['tradein_excel'] = file_metadata
+                        flash('Trade-In Excel file uploaded successfully!', 'success')
+                    except Exception as e:
+                        flash(f'Error uploading Trade-In file: {str(e)}', 'error')
+            
+            promo_data['uploaded_files'] = uploaded_files
+        
         # Save updated promo data
         try:
             data_manager.save_promo(promo_code, promo_data, user_name="Daniel Zhang")
@@ -156,7 +183,9 @@ def edit_promo(promo_code=None):
             flash(f'Error saving {active_tab} tab: {str(e)}', 'error')
     
     if not active_tab:
-        active_tab = 'Details'    # Load SOC Grouping content from storage
+        active_tab = 'Details'
+    
+    # Load SOC Grouping content from storage
     soc_groupings = data_manager.get_soc_groupings()
     account_types = data_manager.get_account_types()
     sales_applications = data_manager.get_sales_applications()
@@ -413,6 +442,23 @@ def date_mismatch():
         user_name="Daniel Zhang",
         current_datetime=datetime.now().strftime("%A, %B %d, %Y %I:%M:%S %p")
     )
+
+
+@app.route("/download_file/<promo_code>/<file_type>")
+def download_file(promo_code, file_type):
+    """Download uploaded Excel files"""
+    from flask import send_file, abort
+    
+    try:
+        file_path = data_manager.get_file_path(promo_code, file_type)
+        if file_path and os.path.exists(file_path):
+            file_info = data_manager.get_uploaded_file_info(promo_code, file_type)
+            original_name = file_info.get('original_name', 'download.xlsx') if file_info else 'download.xlsx'
+            return send_file(file_path, as_attachment=True, download_name=original_name)
+        else:
+            abort(404)
+    except Exception:
+        abort(404)
 
 
 if __name__ == "__main__":

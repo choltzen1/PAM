@@ -51,9 +51,21 @@
     "version_history": [
       "11/6/2023 1:18 PM - Michael Pugh - Approval requested for Care-Medjo, Sue, Commissions - Sandbo, Stephany and Device Finance - Kanzler, Justin.",
       "11/1/2023 10:00 AM - Daniel Zhang - Created promo.",
-      "07/23/2025 02:27 PM - Daniel Zhang - Updated promo."
+      "07/23/2025 02:27 PM - Daniel Zhang - Updated promo.",
+      "07/23/2025 03:04 PM - Daniel Zhang - Updated promo.",
+      "07/23/2025 03:04 PM - Daniel Zhang - Updated promo.",
+      "07/23/2025 03:54 PM - Daniel Zhang - Updated promo."
     ],
     "created_at": "2025-07-23T14:26:32.936171",
-    "updated_at": "2025-07-23T14:27:06.215747"
+    "updated_at": "2025-07-23T15:54:46.572669",
+    "uploaded_files": {
+      "sku_excel": {
+        "filename": "sku_list.xlsx",
+        "original_name": "Orbit_24639_SKU_List.xlsx",
+        "upload_date": "2025-07-23T15:54:46.570924",
+        "file_size": 10275,
+        "file_path": "data\\uploads\\promotions\\P0472022\\sku_list.xlsx"
+      }
+    }
   }
 }

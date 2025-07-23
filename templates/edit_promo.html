@@ -336,11 +336,57 @@
               <button type="submit" class="btn btn-primary">Save BPTCR</button>
             </div>          {% elif active_tab == 'SQL Generation' %}
             <div class="grid-form two-col">
-              <label class="section-label col-span-2">SQL Generation</label>
-              <label>SKU List (Excel)</label>
-              <label>Trade-In List (Excel)</label>
-              <input class="form-control" type="file" name="sku_excel" accept=".xlsx,.xls">
-              <input class="form-control" type="file" name="tradein_excel" accept=".xlsx,.xls">
+              <label class="section-label col-span-2">SQL Generation Files</label>
+              
+              <!-- SKU List Section -->
+              <div class="col-span-1">
+                <label class="section-label">SKU List (Excel)</label>
+                {% if promo.uploaded_files and promo.uploaded_files.get('sku_excel') %}
+                  <div class="file-info-card">
+                    <div class="file-info">
+                      <i class="fas fa-file-excel"></i>
+                      <div>
+                        <div class="file-name">{{ promo.uploaded_files.sku_excel.original_name }}</div>
+                        <div class="file-meta">
+                          {{ (promo.uploaded_files.sku_excel.file_size / 1024) | round(1) }} KB • 
+                          {{ promo.uploaded_files.sku_excel.upload_date[:10] }}
+                        </div>
+                      </div>
+                    </div>
+                    <div class="file-actions">
+                      <a href="{{ url_for('download_file', promo_code=promo.code, file_type='sku_excel') }}" 
+                         class="btn btn-sm btn-outline">Download</a>
+                    </div>
+                  </div>
+                {% endif %}
+                <input class="form-control" type="file" name="sku_excel" accept=".xlsx,.xls">
+                <small class="form-text">Upload new file to replace existing</small>
+              </div>
+              
+              <!-- Trade-In List Section -->
+              <div class="col-span-1">
+                <label class="section-label">Trade-In List (Excel)</label>
+                {% if promo.uploaded_files and promo.uploaded_files.get('tradein_excel') %}
+                  <div class="file-info-card">
+                    <div class="file-info">
+                      <i class="fas fa-file-excel"></i>
+                      <div>
+                        <div class="file-name">{{ promo.uploaded_files.tradein_excel.original_name }}</div>
+                        <div class="file-meta">
+                          {{ (promo.uploaded_files.tradein_excel.file_size / 1024) | round(1) }} KB • 
+                          {{ promo.uploaded_files.tradein_excel.upload_date[:10] }}
+                        </div>
+                      </div>
+                    </div>
+                    <div class="file-actions">
+                      <a href="{{ url_for('download_file', promo_code=promo.code, file_type='tradein_excel') }}" 
+                         class="btn btn-sm btn-outline">Download</a>
+                    </div>
+                  </div>
+                {% endif %}
+                <input class="form-control" type="file" name="tradein_excel" accept=".xlsx,.xls">
+                <small class="form-text">Upload new file to replace existing</small>
+              </div>
             </div>
             <div class="save-footer">
               <button type="submit" class="btn btn-primary">Save SQL Generation</button>

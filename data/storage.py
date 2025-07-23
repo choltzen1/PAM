@@ -1,19 +1,25 @@
 import json
 import os
-from typing import Dict, Any, List
+import shutil
+from typing import Dict, Any, List, Optional
 from datetime import datetime
+from werkzeug.datastructures import FileStorage
+from werkzeug.utils import secure_filename
 
 
 class PromoDataManager:
     """Manages persistent storage for promotion data using JSON files"""
-    
     def __init__(self, data_dir: str = "data"):
         self.data_dir = data_dir
         self.promo_file = os.path.join(data_dir, "promotions.json")
         self.spe_file = os.path.join(data_dir, "spe_promotions.json")
+        self.uploads_dir = os.path.join(data_dir, "uploads")
+        self.promo_uploads_dir = os.path.join(self.uploads_dir, "promotions")
         
-        # Ensure data directory exists
+        # Ensure directories exist
         os.makedirs(data_dir, exist_ok=True)
+        os.makedirs(self.uploads_dir, exist_ok=True)
+        os.makedirs(self.promo_uploads_dir, exist_ok=True)
         
         # Initialize files if they don't exist
         self._initialize_files()
@@ -456,10 +462,142 @@ class PromoDataManager:
             "Group 5": {
                 "name": "Group 5 - MI - All MTME Eligible MI/BTS - Consumer & TFB",
                 "plans": []
-            },
-            "Group 6": {
+            },            "Group 6": {
                 "name": "Group 6 - GSM - Consumer & TFB",
                 "plans": [
-                    "TMO ONE Plus rate plans (Incl. 55+)"],
+                    "TMO ONE Plus rate plans (Incl. 55+)",
+                    "Magenta Plus rate plans (Incl. First Responder & 55+)",
+                    "Magenta MAX rate plans (Incl. First responder & 55+)",
+                    "TMO ONE Plus Military rate plans",
+                    "Magenta Plus Military rate plans",
+                    "Magenta MAX Military rate plans",
+                    "Business Unlimited Plus plans",
+                    "Magenta Plus DHH plans",
+                    "Magenta MAX DHH plans",
+                    "Business Unlimited Ultimate plans",
+                    "Plus Up Upsell SOCs (Include Intl/Global Plus SOCs)",
+                    "MAXUp Upsell SOCs",
+                    "Business Unlimited Upsell SOCs (Ultimate)"
+                ]
             }
         }
+
+    # File Upload Methods
+    
+    def _get_promo_upload_dir(self, promo_code: str) -> str:
+        """Get upload directory for a specific promotion"""
+        promo_dir = os.path.join(self.promo_uploads_dir, promo_code)
+        os.makedirs(promo_dir, exist_ok=True)
+        return promo_dir
+    
+    def _validate_excel_file(self, file: FileStorage) -> bool:
+        """Validate uploaded file is an Excel file"""
+        if not file or not file.filename:
+            return False
+        
+        filename = file.filename.lower()
+        allowed_extensions = {'.xlsx', '.xls'}
+        return any(filename.endswith(ext) for ext in allowed_extensions)
+    
+    def save_excel_file(self, promo_code: str, file: FileStorage, file_type: str) -> Optional[Dict[str, Any]]:
+        """
+        Save uploaded Excel file for a promotion
+        
+        Args:
+            promo_code: The promotion code
+            file: The uploaded file
+            file_type: Either 'sku_excel' or 'tradein_excel'
+            
+        Returns:
+            File metadata dict or None if save failed
+        """
+        if not self._validate_excel_file(file):
+            raise ValueError("Invalid file type. Only .xlsx and .xls files are allowed.")
+        
+        # Get upload directory for this promotion
+        upload_dir = self._get_promo_upload_dir(promo_code)
+        
+        # Create secure filename
+        original_filename = file.filename
+        secure_name = secure_filename(original_filename)
+        
+        # Set standard filename based on type
+        if file_type == 'sku_excel':
+            filename = 'sku_list.xlsx'
+        elif file_type == 'tradein_excel':
+            filename = 'tradein_list.xlsx'
+        else:
+            raise ValueError("Invalid file type. Must be 'sku_excel' or 'tradein_excel'")
+        
+        file_path = os.path.join(upload_dir, filename)
+        
+        # Save the file
+        try:
+            file.save(file_path)
+            
+            # Get file size
+            file_size = os.path.getsize(file_path)
+            
+            # Create metadata
+            file_metadata = {
+                "filename": filename,
+                "original_name": original_filename,
+                "upload_date": datetime.now().isoformat(),
+                "file_size": file_size,
+                "file_path": file_path
+            }
+            
+            return file_metadata
+            
+        except Exception as e:
+            # Clean up file if save failed
+            if os.path.exists(file_path):
+                os.remove(file_path)
+            raise Exception(f"Failed to save file: {str(e)}")
+    
+    def get_uploaded_file_info(self, promo_code: str, file_type: str) -> Optional[Dict[str, Any]]:
+        """Get information about an uploaded file"""
+        promo_data = self.get_promo(promo_code)
+        if not promo_data:
+            return None
+        
+        uploaded_files = promo_data.get('uploaded_files', {})
+        file_info = uploaded_files.get(file_type)
+        
+        if file_info and os.path.exists(file_info.get('file_path', '')):
+            return file_info
+        
+        return None
+    
+    def delete_uploaded_file(self, promo_code: str, file_type: str) -> bool:
+        """Delete an uploaded file"""
+        try:
+            promo_data = self.get_promo(promo_code)
+            if not promo_data:
+                return False
+            
+            uploaded_files = promo_data.get('uploaded_files', {})
+            file_info = uploaded_files.get(file_type)
+            
+            if file_info and 'file_path' in file_info:
+                file_path = file_info['file_path']
+                if os.path.exists(file_path):
+                    os.remove(file_path)
+                
+                # Remove from metadata
+                del uploaded_files[file_type]
+                promo_data['uploaded_files'] = uploaded_files
+                
+                # Save updated promo data
+                self.save_promo(promo_code, promo_data)
+                
+            return True
+        except Exception:
+            return False
+    
+    def get_file_path(self, promo_code: str, file_type: str) -> Optional[str]:
+        """Get the file path for an uploaded file"""
+        file_info = self.get_uploaded_file_info(promo_code, file_type)
+        if file_info:
+            return file_info.get('file_path')
+        return None
