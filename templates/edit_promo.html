@@ -102,9 +102,11 @@
               <input class="form-control col-span-2" name="store_group" value="*">
 
               <label class="grid-full section-label">SKU Link Address</label>
-              <input class="form-control grid-full" name="sku_link" value="https://web.powerapps.com/webplayer/iframe...">
-              <label class="grid-full section-label">Trade-In Link Address</label>
+              <input class="form-control grid-full" name="sku_link" value="https://web.powerapps.com/webplayer/iframe...">              <label class="grid-full section-label">Trade-In Link Address</label>
               <input class="form-control grid-full" name="tradein_link" value="https://web.powerapps.com/webplayer/iframe...">
+            </div>
+            <div class="save-footer">
+              <button type="submit" class="btn btn-primary">Save Details</button>
             </div>
 
           {% elif active_tab == 'Dates & Times' %}
@@ -138,8 +140,7 @@
               <input class="form-control" name="delay_time" type="number" min="0" value="{{ promo.delay_time }}">
               <input class="form-control" name="mpss_lookback" value="{{ promo.mpss_lookback }}">
               <input class="form-control" name="promo_grace" value="{{ promo.promo_grace }}">
-              <input class="form-control" name="trade_in_grace" value="{{ promo.trade_in_grace }}">
-              <label class="section-label grid-full">Application Grace Period</label>
+              <input class="form-control" name="trade_in_grace" value="{{ promo.trade_in_grace }}">              <label class="section-label grid-full">Application Grace Period</label>
               <div class="input-group vertical-radio grid-full">
                 {% for grace in ['G11','G12','G13','G14','G15','G16','G17','NULL'] %}
                   <label class="radio-vertical">
@@ -148,6 +149,9 @@
                   </label>
                 {% endfor %}
               </div>
+            </div>
+            <div class="save-footer">
+              <button type="submit" class="btn btn-primary">Save Dates & Times</button>
             </div>
 
           {% elif active_tab == 'Requirements' %}
@@ -188,8 +192,7 @@
               <label class="section-label">Maximum GSM Count</label>
               <label class="section-label col-span-2">Port-In Group ID</label>
               <input class="form-control" name="min_gsm_count" value="{{ promo.min_gsm_count }}">
-              <input class="form-control" name="max_gsm_count" value="{{ promo.max_gsm_count }}">
-              <div class="input-group vertical-radio col-span-2">
+              <input class="form-control" name="max_gsm_count" value="{{ promo.max_gsm_count }}">              <div class="input-group vertical-radio col-span-2">
                 {% for group in ['G02','G03','G04','G05','G06','G07','NULL'] %}
                   <label class="radio-vertical">
                     {{ group }}
@@ -197,6 +200,9 @@
                   </label>
                 {% endfor %}
               </div>
+            </div>
+            <div class="save-footer">
+              <button type="submit" class="btn btn-primary">Save Requirements</button>
             </div>
 
           {% elif active_tab == 'Segmentation' %}
@@ -216,8 +222,7 @@
 
               <label class="section-label col-span-2">Segment Group ID</label>
               <label class="section-label col-span-2">Segment Level</label>
-              <input class="form-control col-span-2" name="segment_group_id" value="{{ promo.segment_group_id }}">
-              <div class="input-group vertical-radio col-span-2">
+              <input class="form-control col-span-2" name="segment_group_id" value="{{ promo.segment_group_id }}">              <div class="input-group vertical-radio col-span-2">
                 {% for level in ['BAN','LINE','NA'] %}
                   <label class="radio-vertical">
                     {{ level }}
@@ -225,6 +230,9 @@
                   </label>
                 {% endfor %}
               </div>
+            </div>
+            <div class="save-footer">
+              <button type="submit" class="btn btn-primary">Save Segmentation</button>
             </div>
 
           {% elif active_tab == 'Groupings' %}
@@ -303,8 +311,7 @@
                   <option value="S10">S10</option>
                 </select>
               </div>
-              <div class="details-box scrollable small-height">
-                <ul class="plain-list">
+              <div class="details-box scrollable small-height">                <ul class="plain-list">
                   <li class="mb-1">Care - QVXPC; Dash (TSL) - Virtual Retail</li>
                   <li class="mb-1">QVXPR - Retail; POS - Retail; NAT - National Retail</li>
                   <li class="mb-1">Web (TMO) - T-Mo.com; Web - MyT-Mo (cloud)</li>
@@ -312,8 +319,9 @@
                 </ul>
               </div>
             </div>
-
-          {% elif active_tab == 'BPTCR' %}
+            <div class="save-footer">
+              <button type="submit" class="btn btn-primary">Save Groupings</button>
+            </div>          {% elif active_tab == 'BPTCR' %}
             <div class="grid-form two-col">
               <label class="section-label grid-full mb-1">BPTCR Details</label>
               <div class="details-box grid-full">
@@ -324,8 +332,9 @@
                 </ul>
               </div>
             </div>
-
-          {% elif active_tab == 'SQL Generation' %}
+            <div class="save-footer">
+              <button type="submit" class="btn btn-primary">Save BPTCR</button>
+            </div>          {% elif active_tab == 'SQL Generation' %}
             <div class="grid-form two-col">
               <label class="section-label col-span-2">SQL Generation</label>
               <label>SKU List (Excel)</label>
@@ -333,14 +342,12 @@
               <input class="form-control" type="file" name="sku_excel" accept=".xlsx,.xls">
               <input class="form-control" type="file" name="tradein_excel" accept=".xlsx,.xls">
             </div>
+            <div class="save-footer">
+              <button type="submit" class="btn btn-primary">Save SQL Generation</button>
+              <button type="submit" name="generate_sql" value="1" class="btn btn-secondary" style="margin-left:1em;">Generate SQL</button>
+            </div>
           {% endif %}
 
-          <div class="save-footer">
-            <button type="submit" class="btn btn-primary">Save</button>
-            {% if active_tab == 'SQL Generation' %}
-              <button type="submit" name="generate_sql" value="1" class="btn btn-secondary" style="margin-left:1em;">Generate SQL</button>
-            {% endif %}
-          </div>
         </form>
       </div>
     </div>
