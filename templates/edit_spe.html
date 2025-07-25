@@ -17,7 +17,7 @@
           <div><b>Promo Owner:</b> {{ promo.owner }}</div>
           <div><b>Bill Facing Name:</b> {{ promo.bill_facing_name }}</div>
           <div><b>Orbit ID:</b> {{ promo.orbit_id }}</div>
-          <div><b>PJ Code:</b> {{ promo.pj_code }}</div>
+          <div><b>Promo Code:</b> {{ promo.code }}</div>
           <div><b>Restricted:</b> Not Dark</div>
         </div>
         <div class="info-box">
@@ -27,9 +27,8 @@
           <div class="pre-line">{{ promo.promo_notes }}</div>
         </div>
         <div class="info-box">
-          <div class="info-title">Updates</div>
-          <div><b>Promo % Discount:</b> {{ promo.discount }}</div>
-          <div><b>Promo Amount:</b> {{ promo.amount }}</div>
+          <div class="info-title">Updates</div>          <div><b>Promo % Discount:</b> {{ promo.discount if promo.discount is not none else '' }}</div>
+          <div><b>Promo Amount:</b> {{ promo.amount if promo.amount is not none else '' }}</div>
           <div><b>DCD Web In-Cart:</b> {{ 'Y' if promo.dcd_web_cart == 'Y' else 'N' }}</div>
           <div><b>Product Type:</b> {{ promo.product_type }}</div>
           <div><b>BOGO:</b> {{ 'Yes' if promo.bogo == 'Y' else 'No' }}</div>

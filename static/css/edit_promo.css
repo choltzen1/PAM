@@ -350,6 +350,30 @@ input[type="radio"]:focus {
   color: #fff;
 }
 
+/* Outline button for download actions - more subtle appearance */
+.btn-outline {
+  background: #f8f9fa;
+  color: var(--tmobile-magenta);
+  border: 1px solid var(--tmobile-magenta);
+  border-radius: 5px;
+  padding: 0.5em 1.5em;
+  font-weight: 500;
+  font-size: 1rem;
+  transition: background 0.2s, color 0.2s;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.btn-outline:hover {
+  background: var(--tmobile-magenta);
+  color: #fff;
+}
+
+.btn-sm {
+  padding: 0.35em 1em;
+  font-size: 0.875rem;
+}
+
 /* Card */
 .card {
   background: #fff;
@@ -815,27 +839,75 @@ h5 {
 
 /* File Upload Cards */
 .file-info-card {
-  background: #f8f9fa;
-  border: 1px solid var(--tmobile-border);
+  background: #ffffff;
+  border: 1px solid #ddd;
   border-radius: 8px;
   padding: 1rem;
   margin-bottom: 1rem;
-  transition: box-shadow 0.2s ease;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
 
 .file-info-card:hover {
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  box-shadow: 0 3px 12px rgba(0,0,0,0.15);
+  border-color: #bbb;
+}
+
+/* Upload Section Styling */
+.upload-section {
+  margin-bottom: 1.5rem;
+}
+
+.upload-section .section-label {
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid var(--tmobile-magenta);
+  display: block;
+}
+
+.upload-area {
+  background: #f8f9fa;
+  border: 2px dashed #ddd;
+  border-radius: 8px;
+  padding: 1.5rem;
+  text-align: center;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.upload-area:hover {
+  border-color: var(--tmobile-magenta);
+  background: #f0f8ff;
+}
+
+.upload-area .form-control {
+  margin-bottom: 0.5rem;
+  background: transparent;
+  border: none;
+  text-align: center;
+}
+
+.upload-area .form-text {
+  color: #666;
+  font-size: 0.85rem;
+  margin: 0;
 }
 
 .file-info {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: 0.5rem;
+  gap: 1rem;
+}
+
+.file-info i {
+  font-size: 1.5rem;
+  color: var(--tmobile-magenta);
+  min-width: 24px;
+  flex-shrink: 0;
 }
 
 .file-details {
   flex: 1;
+  min-width: 0;
 }
 
 .file-name {
@@ -843,6 +915,7 @@ h5 {
   color: #333;
   font-size: 1rem;
   margin-bottom: 0.25rem;
+  word-break: break-word;
 }
 
 .file-meta {
@@ -850,6 +923,7 @@ h5 {
   color: #666;
   display: flex;
   gap: 1rem;
+  flex-wrap: wrap;
 }
 
 .file-actions {
@@ -863,13 +937,19 @@ h5 {
   text-decoration: none;
   font-size: 0.9rem;
   font-weight: 500;
-  padding: 0.25rem 0.5rem;
+  padding: 0.4rem 0.8rem;
   border-radius: 4px;
-  transition: background-color 0.2s ease;
+  border: 1px solid var(--tmobile-magenta);
+  background: #ffffff;
+  transition: background-color 0.2s ease, color 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
 }
 
 .file-actions a:hover {
-  background-color: rgba(226, 0, 116, 0.1);
+  background-color: var(--tmobile-magenta);
+  color: #ffffff;
 }
 
 .file-upload-section {

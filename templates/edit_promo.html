@@ -16,7 +16,7 @@
           <div><b>Promo Owner:</b> {{ promo.owner }}</div>
           <div><b>Bill Facing Name:</b> {{ promo.bill_facing_name }}</div>
           <div><b>Orbit ID:</b> {{ promo.orbit_id }}</div>
-          <div><b>PJ Code:</b> {{ promo.pj_code }}</div>
+          <div><b>Promo Code:</b> {{ promo.code }}</div>
           <div><b>Restricted:</b> Not Dark</div>
         </div>
         <div class="info-box">
@@ -26,9 +26,8 @@
           <div class="pre-line">{{ promo.promo_notes }}</div>
         </div>
         <div class="info-box">
-          <div class="info-title">Updates</div>
-          <div><b>Promo % Discount:</b> {{ promo.discount }}</div>
-          <div><b>Promo Amount:</b> {{ promo.amount }}</div>
+          <div class="info-title">Updates</div>          <div><b>Promo % Discount:</b> {{ promo.discount if promo.discount is not none else '' }}</div>
+          <div><b>Promo Amount:</b> {{ promo.amount if promo.amount is not none else '' }}</div>
           <div><b>DCD Web In-Cart:</b> {{ 'Y' if promo.dcd_web_cart == 'Y' else 'N' }}</div>
           <div><b>Product Type:</b> {{ promo.product_type }}</div>
           <div><b>BOGO:</b> {{ 'Yes' if promo.bogo == 'Y' else 'No' }}</div>
@@ -58,14 +57,11 @@
           {% if active_tab == 'Details' %}
             <div class="grid-form four-col">
               <label class="grid-full section-label">Bill Facing Name</label>
-              <input class="form-control grid-full mb-1" name="bill_facing_name" value="{{ promo.bill_facing_name }}">
-
-              <label class="section-label">Promo % Discount</label>
+              <input class="form-control grid-full mb-1" name="bill_facing_name" value="{{ promo.bill_facing_name }}">              <label class="section-label">Promo % Discount</label>
               <label class="section-label">Promo Amount ($)</label>
               <label class="section-label">NSEIP Drop</label>
-              <label class="section-label">DCD Web Cart</label>
-              <input class="form-control" name="discount" value="{{ promo.discount }}" type="number" min="0" step="0.01" placeholder="%">
-              <input class="form-control" name="amount" value="{{ promo.amount }}" type="number" min="0" step="0.01" placeholder="$">
+              <label class="section-label">DCD Web Cart</label>              <input class="form-control" name="discount" value="{{ promo.discount if promo.discount is not none else '' }}" type="number" min="0" step="1" placeholder="%">
+              <input class="form-control" name="amount" value="{{ promo.amount if promo.amount is not none else '' }}" type="number" min="0" step="1" placeholder="$">
               <select class="form-select" name="nseip_drop">
                 <option value="Y" {% if promo.nseip_drop == 'Y' %}selected{% endif %}>Yes</option>
                 <option value="N" {% if promo.nseip_drop == 'N' %}selected{% endif %}>No</option>
@@ -73,10 +69,21 @@
               <select class="form-select" name="dcd_web_cart">
                 <option value="Y" {% if promo.dcd_web_cart == 'Y' %}selected{% endif %}>Yes</option>
                 <option value="N" {% if promo.dcd_web_cart == 'N' %}selected{% endif %}>No</option>
-              </select>
-
-              <label class="grid-full section-label">Product Type</label>
-              <input class="form-control grid-full mb-1" name="product_type" value="{{ promo.product_type }}">
+              </select>              <label class="grid-full section-label">Product Type</label>
+              <div class="input-group vertical-radio grid-full mb-1">
+                <label class="radio-vertical">
+                  B
+                  <input type="radio" name="product_type" value="B" {% if promo.product_type == 'B' %}checked{% endif %}>
+                </label>
+                <label class="radio-vertical">
+                  G
+                  <input type="radio" name="product_type" value="G" {% if promo.product_type == 'G' %}checked{% endif %}>
+                </label>
+                <label class="radio-vertical">
+                  *
+                  <input type="radio" name="product_type" value="*" {% if promo.product_type == '*' %}checked{% endif %}>
+                </label>
+              </div>
 
               <label class="section-label">BOGO</label>
               <label class="section-label">Bolt Trade-In Group ID</label>
@@ -99,11 +106,11 @@
               <label class="section-label col-span-2">Market Group</label>
               <label class="section-label col-span-2">Store Group</label>
               <input class="form-control col-span-2" name="market_group" value="*">
-              <input class="form-control col-span-2" name="store_group" value="*">
+              <input class="form-control col-span-2" name="store_group" value="*">              <label class="grid-full section-label">SKU Link Address</label>
+              <input class="form-control grid-full" name="sku_link" value="{{ promo.sku_link }}">
 
-              <label class="grid-full section-label">SKU Link Address</label>
-              <input class="form-control grid-full" name="sku_link" value="https://web.powerapps.com/webplayer/iframe...">              <label class="grid-full section-label">Trade-In Link Address</label>
-              <input class="form-control grid-full" name="tradein_link" value="https://web.powerapps.com/webplayer/iframe...">
+              <label class="grid-full section-label">Trade-In Link Address</label>
+              <input class="form-control grid-full" name="tradein_link" value="{{ promo.tradein_link }}">
             </div>
             <div class="save-footer">
               <button type="submit" class="btn btn-primary">Save Details</button>
@@ -154,12 +161,11 @@
               <button type="submit" class="btn btn-primary">Save Dates & Times</button>
             </div>
 
-          {% elif active_tab == 'Requirements' %}
-            <div class="grid-form four-col">
+          {% elif active_tab == 'Requirements' %}            <div class="grid-form four-col">
               <label class="section-label">Device Sales Type</label>
               <label class="section-label">Activation Type</label>
+              <label class="section-label">Active Line Required</label>
               <label class="section-label">Maintain SOC</label>
-              <label class="section-label">Limit Per BAN</label>
               <div class="input-group vertical-radio">
                 {% for type in ['J01','S01','*','NULL'] %}
                   <label class="radio-vertical">
@@ -179,6 +185,16 @@
               <div class="input-group vertical-radio">
                 <label class="radio-vertical">
                   Y
+                  <input type="radio" name="active_line_required" value="Y" {% if promo.active_line_required == 'Y' %}checked{% endif %}>
+                </label>
+                <label class="radio-vertical">
+                  N
+                  <input type="radio" name="active_line_required" value="N" {% if promo.active_line_required == 'N' %}checked{% endif %}>
+                </label>
+              </div>
+              <div class="input-group vertical-radio">
+                <label class="radio-vertical">
+                  Y
                   <input type="radio" name="maintain_soc" value="Y" {% if promo.maintain_soc == 'Y' %}checked{% endif %}>
                 </label>
                 <label class="radio-vertical">
@@ -186,17 +202,54 @@
                   <input type="radio" name="maintain_soc" value="N" {% if promo.maintain_soc == 'N' %}checked{% endif %}>
                 </label>
               </div>
-              <input class="form-control" name="limit_per_ban" value="{{ promo.limit_per_ban }}">
 
+              <label class="section-label">Maintain Active Line</label>
+              <label class="section-label">Limit Per BAN</label>
               <label class="section-label">Minimum GSM Count</label>
               <label class="section-label">Maximum GSM Count</label>
-              <label class="section-label col-span-2">Port-In Group ID</label>
+              <div class="input-group vertical-radio">
+                <label class="radio-vertical">
+                  Y
+                  <input type="radio" name="maintain_active_line" value="Y" {% if promo.maintain_active_line == 'Y' %}checked{% endif %}>
+                </label>
+                <label class="radio-vertical">
+                  N
+                  <input type="radio" name="maintain_active_line" value="N" {% if promo.maintain_active_line == 'N' %}checked{% endif %}>
+                </label>
+              </div>              <input class="form-control" name="limit_per_ban" value="{{ promo.limit_per_ban }}">
               <input class="form-control" name="min_gsm_count" value="{{ promo.min_gsm_count }}">
-              <input class="form-control" name="max_gsm_count" value="{{ promo.max_gsm_count }}">              <div class="input-group vertical-radio col-span-2">
+              <input class="form-control" name="max_gsm_count" value="{{ promo.max_gsm_count if promo.max_gsm_count is not none else '' }}">
+
+              <label class="section-label col-span-4">Port-In Group ID</label>
+              <div class="input-group vertical-radio col-span-4">
                 {% for group in ['G02','G03','G04','G05','G06','G07','NULL'] %}
                   <label class="radio-vertical">
                     {{ group }}
                     <input type="radio" name="port_in_group_id" value="{{ group }}" {% if promo.port_in_group_id == group %}checked{% endif %}>
+                  </label>
+                {% endfor %}
+              </div><label class="section-label">Operator ID</label>
+              <label class="section-label">SKU Group ID</label>
+              <label class="section-label">Device Status Group ID</label>
+              <label class="section-label">Clawback Indicator</label>
+              <input class="form-control" name="operator_id" value="{{ promo.operator_id or '16085' }}">
+              <input class="form-control" name="sku_group_id" value="{{ promo.sku_group_id }}">
+              <input class="form-control" name="device_status_group_id" value="{{ promo.device_status_group_id }}">
+              <div class="input-group vertical-radio">
+                <label class="radio-vertical">
+                  Y
+                  <input type="radio" name="clawback_indicator" value="Y" {% if promo.clawback_indicator == 'Y' %}checked{% endif %}>
+                </label>
+                <label class="radio-vertical">
+                  N
+                  <input type="radio" name="clawback_indicator" value="N" {% if promo.clawback_indicator == 'N' %}checked{% endif %}>
+                </label>
+              </div>              <label class="section-label col-span-4">Flow Indicator</label>
+              <div class="input-group vertical-radio col-span-4">
+                {% for indicator in ['NULL','100RDC'] %}
+                  <label class="radio-vertical">
+                    {{ indicator }}
+                    <input type="radio" name="flow_indicator" value="{{ indicator }}" {% if promo.flow_indicator == indicator %}checked{% endif %}>
                   </label>
                 {% endfor %}
               </div>
@@ -326,64 +379,98 @@
               <input class="form-control grid-full mb-1" name="bptcr" value="{{ promo.bptcr or '' }}">
             </div>
             <div class="save-footer">
-              <button type="submit" class="btn btn-primary">Save BPTCR</button>
-            </div>          {% elif active_tab == 'SQL Generation' %}
+              <button type="submit" class="btn btn-primary">Save BPTCR</button>            </div>          {% elif active_tab == 'SQL Generation' %}
             <div class="grid-form two-col">
-              <label class="section-label col-span-2">SQL Generation Files</label>
-              
               <!-- SKU List Section -->
               <div class="col-span-1">
-                <label class="section-label">SKU List (Excel)</label>
-                {% if promo.uploaded_files and promo.uploaded_files.get('sku_excel') %}
-                  <div class="file-info-card">
-                    <div class="file-info">
-                      <i class="fas fa-file-excel"></i>
-                      <div>
-                        <div class="file-name">{{ promo.uploaded_files.sku_excel.original_name }}</div>
-                        <div class="file-meta">
-                          {{ (promo.uploaded_files.sku_excel.file_size / 1024) | round(1) }} KB • 
-                          {{ promo.uploaded_files.sku_excel.upload_date[:10] }}
+                <div class="upload-section">
+                  <label class="section-label">SKU List (Excel)</label>
+                  {% if promo.uploaded_files and promo.uploaded_files.get('sku_excel') %}
+                    <div class="file-info-card">
+                      <div class="file-info">
+                        <i class="fas fa-file-excel"></i>
+                        <div class="file-details">
+                          <div class="file-name">{{ promo.uploaded_files.sku_excel.original_name }}</div>
+                          <div class="file-meta">
+                            {{ (promo.uploaded_files.sku_excel.file_size / 1024) | round(1) }} KB • 
+                            {{ promo.uploaded_files.sku_excel.upload_date[:10] }}
+                          </div>
                         </div>
                       </div>
+                      <div class="file-actions">
+                        <a href="{{ url_for('download_file', promo_code=promo.code, file_type='sku_excel') }}" 
+                           class="btn btn-sm btn-outline">Download</a>
+                      </div>
                     </div>
-                    <div class="file-actions">
-                      <a href="{{ url_for('download_file', promo_code=promo.code, file_type='sku_excel') }}" 
-                         class="btn btn-sm btn-outline">Download</a>
+                  {% else %}
+                    <div class="upload-area">
+                      <input class="form-control" type="file" name="sku_excel" accept=".xlsx,.xls">
+                      <small class="form-text">Upload Excel file with SKU list</small>
                     </div>
-                  </div>
-                {% endif %}
-                <input class="form-control" type="file" name="sku_excel" accept=".xlsx,.xls">
-                <small class="form-text">Upload new file to replace existing</small>
+                  {% endif %}
+                </div>
               </div>
-              
-              <!-- Trade-In List Section -->
+                <!-- Trade-In List Section -->
               <div class="col-span-1">
-                <label class="section-label">Trade-In List (Excel)</label>
-                {% if promo.uploaded_files and promo.uploaded_files.get('tradein_excel') %}
-                  <div class="file-info-card">
-                    <div class="file-info">
-                      <i class="fas fa-file-excel"></i>
-                      <div>
-                        <div class="file-name">{{ promo.uploaded_files.tradein_excel.original_name }}</div>
-                        <div class="file-meta">
-                          {{ (promo.uploaded_files.tradein_excel.file_size / 1024) | round(1) }} KB • 
-                          {{ promo.uploaded_files.tradein_excel.upload_date[:10] }}
+                <div class="upload-section">
+                  <label class="section-label">Trade-In List (Excel)</label>
+                  {% if promo.uploaded_files and promo.uploaded_files.get('tradein_excel') %}
+                    <div class="file-info-card">
+                      <div class="file-info">
+                        <i class="fas fa-file-excel"></i>
+                        <div class="file-details">
+                          <div class="file-name">{{ promo.uploaded_files.tradein_excel.original_name }}</div>
+                          <div class="file-meta">
+                            {{ (promo.uploaded_files.tradein_excel.file_size / 1024) | round(1) }} KB • 
+                            {{ promo.uploaded_files.tradein_excel.upload_date[:10] }}
+                          </div>
                         </div>
                       </div>
+                      <div class="file-actions">
+                        <a href="{{ url_for('download_file', promo_code=promo.code, file_type='tradein_excel') }}" 
+                           class="btn btn-sm btn-outline">Download</a>
+                      </div>
                     </div>
-                    <div class="file-actions">
-                      <a href="{{ url_for('download_file', promo_code=promo.code, file_type='tradein_excel') }}" 
-                         class="btn btn-sm btn-outline">Download</a>
+                  {% else %}
+                    <div class="upload-area">
+                      <input class="form-control" type="file" name="tradein_excel" accept=".xlsx,.xls">
+                      <small class="form-text">Upload Excel file with trade-in list</small>
                     </div>
-                  </div>
-                {% endif %}
-                <input class="form-control" type="file" name="tradein_excel" accept=".xlsx,.xls">
-                <small class="form-text">Upload new file to replace existing</small>
+                  {% endif %}
+                </div>
               </div>
             </div>
+              <!-- Display Generated SQL -->
+            {% if promo.generated_sql %}
+            <div class="grid-form one-col" style="margin-top: 2rem;">
+              <label class="section-label">Generated SQL Statement</label>
+              <div class="file-info-card" style="margin-bottom: 1rem;">
+                <div class="file-info">
+                  <i class="fas fa-database"></i>
+                  <div>
+                    <div class="file-name">{{ promo.sql_file.filename if promo.sql_file else promo.code + '_promo_eligibility_rules.sql' }}</div>
+                    <div class="file-meta">
+                      Generated on {{ promo.sql_file.generated_at if promo.sql_file else 'Unknown' }}
+                    </div>
+                  </div>
+                </div>
+                <div class="file-actions">
+                  <a href="{{ url_for('download_sql', promo_code=promo.code) }}" 
+                     class="btn btn-sm btn-outline">
+                    <i class="fas fa-download"></i> Download SQL
+                  </a>
+                </div>
+              </div>
+              <textarea class="form-control" rows="8" readonly style="font-family: monospace; font-size: 12px; background-color: #f8f9fa;">{{ promo.generated_sql }}</textarea>
+              <small class="form-text">SQL file has been generated and saved. Use the download button above to get the file.</small>
+            </div>
+            {% endif %}
+            
             <div class="save-footer">
               <button type="submit" class="btn btn-primary">Save SQL Generation</button>
-              <button type="submit" name="generate_sql" value="1" class="btn btn-secondary" style="margin-left:1em;">Generate SQL</button>
+              <button type="submit" name="generate_sql" value="1" class="btn btn-secondary" style="margin-left:1em;">
+                <i class="fas fa-cog"></i> Generate SQL
+              </button>
             </div>
           {% endif %}
 

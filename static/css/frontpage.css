@@ -3,32 +3,29 @@
   --tmobile-magenta: #e20074;
 }
 
-/* 1. Flex column page layout: header, content, footer */
+/* 1. Fixed layout: prevent any scrolling of the main page */
 html, body {
-  min-height: 100vh;
-  height: 100%;
+  height: 100vh;
   width: 100vw;
   margin: 0;
   padding: 0;
   background: #fff;
-  display: flex;
-  flex-direction: column;
   box-sizing: border-box;
   font-family: 'Inter', Arial, sans-serif;
-  overflow-x: hidden;
+  overflow: hidden; /* Prevent all scrolling on the main page */
 }
 
 .sidebar {
   position: fixed;
   left: 0;
   top: 0;
-  bottom: 0;
+  bottom: 45px; /* Account for footer height */
   width: 200px;
   background: var(--tmobile-magenta);
   color: #fff;
   z-index: 100;
   padding-top: 46px;
-  padding-bottom: 20px; /* Reduce bottom padding */
+  padding-bottom: 20px;
   overflow-y: auto;
   box-shadow: 2px 0 8px #e2007420;
 }
@@ -107,17 +104,18 @@ html, body {
 }
 
 .main {
-  flex: 1 1 auto;
-  min-height: 0;
+  position: fixed;
+  top: 44px; /* Height of topbar */
+  bottom: 90px; /* Height of footer + disclaimer */
+  left: 200px;
+  right: 0;
   overflow-y: auto;
-  margin-left: 200px;
   padding: 2.5rem 1.5rem 2rem 1.5rem;
   background: #fff;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  position: relative;
   box-sizing: border-box;
 }
 
@@ -137,11 +135,16 @@ html, body {
 }
 
 .footer-nav {
+  position: fixed !important;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 45px;
   background: var(--tmobile-magenta) !important;
   color: #fff !important;
   font-size: 1rem;
   border-top: 2px solid #fff2;
-  flex-shrink: 0;
+  z-index: 150;
 }
 
 .footer-nav #footer-time {
@@ -169,21 +172,22 @@ html, body {
 }
 
 /* Update main content area positioning for responsive */
-@media (max-width: 900px) {
-  .sidebar {
+@media (max-width: 900px) {  .sidebar {
     width: 140px; /* Reduce width for better space usage */
+    bottom: 45px;
     padding-bottom: 20px;
-  }  .topbar {
+  }.topbar {
     padding: 0 0.5rem;
     font-size: 1rem;
     justify-content: center; /* Keep centered */
   }
   .topbar > div:first-child {
     font-size: 1.2em; /* Slightly smaller but still readable */
-  }
-  .main {
-    margin-left: 140px;
-    padding: 1.5rem 1rem 1.5rem 1rem; /* Remove bottom padding */
+  }  .main {
+    top: 44px;
+    bottom: 90px;
+    left: 140px;
+    padding: 1.5rem 1rem 1.5rem 1rem;
   }
   .main h1 {
     font-size: 1.8rem; /* Scale down title */
@@ -209,20 +213,21 @@ html, body {
   }
 }
 
-@media (max-width: 600px) {
-  .sidebar {
+@media (max-width: 600px) {  .sidebar {
     width: 120px;
+    bottom: 45px;
     padding-bottom: 15px;
-  }  .topbar {
+  }.topbar {
     padding: 0 0.3rem;
     font-size: 0.9rem;
     justify-content: center; /* Keep centered */
   }
   .topbar > div:first-child {
     font-size: 1.1em; /* Reasonable size for tablets */
-  }
-  .main {
-    margin-left: 120px;
+  }  .main {
+    top: 44px;
+    bottom: 90px;
+    left: 120px;
     padding: 1rem 0.5rem 1rem 0.5rem;
   }
   .main h1 {
@@ -252,19 +257,20 @@ html, body {
   }
 }
 
-@media (max-width: 400px) {
-  .sidebar {
+@media (max-width: 400px) {  .sidebar {
     width: 100px;
-  }  .topbar {
+    bottom: 45px;
+  }.topbar {
     padding: 0 0.2rem;
     font-size: 0.8rem;
     justify-content: center; /* Keep centered */
   }
   .topbar > div:first-child {
     font-size: 1em; /* Good size for mobile */
-  }
-  .main {
-    margin-left: 100px;
+  }  .main {
+    top: 44px;
+    bottom: 90px;
+    left: 100px;
     padding: 0.8rem 0.3rem 0.8rem 0.3rem;
   }
   .main h1 {
@@ -291,9 +297,9 @@ html, body {
 }
 
 /* Extra small screens */
-@media (max-width: 320px) {
-  .sidebar {
+@media (max-width: 320px) {  .sidebar {
     width: 80px;
+    bottom: 45px;
   }
   .topbar {
     padding: 0 0.1rem;
@@ -303,9 +309,10 @@ html, body {
   .topbar > div:first-child {
     font-size: 0.9em; /* Still readable on very small screens */
     letter-spacing: 0.3px; /* Slightly less letter spacing */
-  }
-  .main {
-    margin-left: 80px;
+  }  .main {
+    top: 44px;
+    bottom: 90px;
+    left: 80px;
     padding: 0.5rem 0.2rem 0.5rem 0.2rem;
   }
   .disclaimer {

@@ -498,7 +498,6 @@ class PromoDataManager:
         filename = file.filename.lower()
         allowed_extensions = {'.xlsx', '.xls'}
         return any(filename.endswith(ext) for ext in allowed_extensions)
-    
     def save_excel_file(self, promo_code: str, file: FileStorage, file_type: str) -> Optional[Dict[str, Any]]:
         """
         Save uploaded Excel file for a promotion
@@ -554,6 +553,41 @@ class PromoDataManager:
             if os.path.exists(file_path):
                 os.remove(file_path)
             raise Exception(f"Failed to save file: {str(e)}")
+
+    def save_sql_file(self, promo_code: str, sql_content: str, filename: str) -> str:
+        """
+        Save generated SQL file for a promotion
+        
+        Args:
+            promo_code: The promotion code
+            sql_content: The SQL statement content
+            filename: The filename for the SQL file
+            
+        Returns:
+            File path of the saved SQL file
+        """
+        # Get upload directory for this promotion
+        upload_dir = self._get_promo_upload_dir(promo_code)
+        
+        # Create secure filename
+        secure_name = secure_filename(filename)
+        if not secure_name.endswith('.sql'):
+            secure_name += '.sql'
+        
+        file_path = os.path.join(upload_dir, secure_name)
+        
+        # Save the SQL content to file
+        try:
+            with open(file_path, 'w', encoding='utf-8') as f:
+                f.write(sql_content)
+            
+            return file_path
+            
+        except Exception as e:
+            # Clean up file if save failed
+            if os.path.exists(file_path):
+                os.remove(file_path)
+            raise Exception(f"Failed to save SQL file: {str(e)}")
     
     def get_uploaded_file_info(self, promo_code: str, file_type: str) -> Optional[Dict[str, Any]]:
         """Get information about an uploaded file"""

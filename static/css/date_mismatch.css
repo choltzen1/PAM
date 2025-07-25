@@ -21,7 +21,7 @@ html, body {
 }
 
 /* Data Mismatch Page Container - scrollable content area */
-.data-mismatch-page {
+.date-mismatch-page {
   flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
