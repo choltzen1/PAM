@@ -258,7 +258,7 @@ class PromoDataManager:
         return self._load_json(self.spe_file)
     
     def save_promo(self, promo_code: str, promo_data: Dict[str, Any], user_name: str = "System"):
-        """Save or update a promotion"""
+        """Save or update a promotion with change tracking"""
         data = self._load_json(self.promo_file)
         
         # Add metadata
@@ -271,19 +271,33 @@ class PromoDataManager:
             promo_data['version_history'] = [
                 f"{datetime.now().strftime('%m/%d/%Y %I:%M %p')} - {user_name} - Created promo."
             ]
+            promo_data['last_changes'] = None
         else:
-            # Preserve creation timestamp and add to version history
-            promo_data['created_at'] = data[promo_code].get('created_at', datetime.now().isoformat())
-            promo_data['version_history'] = data[promo_code].get('version_history', [])
-            promo_data['version_history'].append(
-                f"{datetime.now().strftime('%m/%d/%Y %I:%M %p')} - {user_name} - Updated promo."
-            )
+            # Preserve creation timestamp and existing permanent version history
+            old_data = data[promo_code]
+            promo_data['created_at'] = old_data.get('created_at', datetime.now().isoformat())
+            
+            # Keep permanent version history (anything that doesn't start with "Last save:")
+            permanent_history = [entry for entry in old_data.get('version_history', []) 
+                               if not entry.startswith('Last save:')]
+            promo_data['version_history'] = permanent_history
+            
+            # Track field changes
+            changes = self._get_field_changes(old_data, promo_data)
+            if changes:
+                # Update last_changes with current change summary
+                timestamp = datetime.now().strftime('%m/%d/%Y %I:%M %p')
+                change_summary = f"Last save: {timestamp} - {user_name} - Changed: {', '.join(changes)}"
+                promo_data['last_changes'] = change_summary
+            else:
+                # Keep existing last_changes if no actual field changes
+                promo_data['last_changes'] = old_data.get('last_changes')
         
         data[promo_code] = promo_data
         self._save_json(self.promo_file, data)
     
     def save_spe_promo(self, promo_code: str, promo_data: Dict[str, Any], user_name: str = "System"):
-        """Save or update an SPE promotion"""
+        """Save or update an SPE promotion with change tracking"""
         data = self._load_json(self.spe_file)
         
         # Add metadata
@@ -296,16 +310,168 @@ class PromoDataManager:
             promo_data['version_history'] = [
                 f"{datetime.now().strftime('%m/%d/%Y %I:%M %p')} - {user_name} - Created SPE promo."
             ]
+            promo_data['last_changes'] = None
         else:
-            # Preserve creation timestamp and add to version history
-            promo_data['created_at'] = data[promo_code].get('created_at', datetime.now().isoformat())
-            promo_data['version_history'] = data[promo_code].get('version_history', [])
-            promo_data['version_history'].append(
-                f"{datetime.now().strftime('%m/%d/%Y %I:%M %p')} - {user_name} - Updated SPE promo."
-            )
+            # Preserve creation timestamp and existing permanent version history
+            old_data = data[promo_code]
+            promo_data['created_at'] = old_data.get('created_at', datetime.now().isoformat())
+            
+            # Keep permanent version history (anything that doesn't start with "Last save:")
+            permanent_history = [entry for entry in old_data.get('version_history', []) 
+                               if not entry.startswith('Last save:')]
+            promo_data['version_history'] = permanent_history
+            
+            # Track field changes
+            changes = self._get_field_changes(old_data, promo_data)
+            if changes:
+                # Update last_changes with current change summary
+                timestamp = datetime.now().strftime('%m/%d/%Y %I:%M %p')
+                change_summary = f"Last save: {timestamp} - {user_name} - Changed: {', '.join(changes)}"
+                promo_data['last_changes'] = change_summary
+            else:
+                # Keep existing last_changes if no actual field changes
+                promo_data['last_changes'] = old_data.get('last_changes')
         
         data[promo_code] = promo_data
         self._save_json(self.spe_file, data)
+    
+    def _get_field_changes(self, old_data: Dict[str, Any], new_data: Dict[str, Any]) -> List[str]:
+        """Compare old and new data to find changed fields"""
+        changes = []
+        
+        # Fields to track for changes (excluding metadata and system fields)
+        tracked_fields = {
+            'bill_facing_name': 'Bill Facing Name',
+            'discount': 'Promo % Discount', 
+            'amount': 'Promo Amount',
+            'nseip_drop': 'NSEIP Drop',
+            'dcd_web_cart': 'DCD Web Cart',
+            'product_type': 'Product Type',
+            'bogo': 'BOGO',
+            'trade_in_group_id': 'Trade-In Group ID',
+            'fpd_display_promo': 'FPD Display Promo',
+            'on_menu': 'On Menu',
+            'market_group': 'Market Group',
+            'store_group': 'Store Group',
+            'sku_link': 'SKU Link',
+            'tradein_link': 'Trade-In Link',
+            'promo_start_date': 'Promo Start Date',
+            'promo_end_date': 'Promo End Date',
+            'comm_end_date': 'Comm End Date',
+            'promo_duration': 'Promo Duration',
+            'delay_time': 'Delay Time',
+            'application_grace_period': 'Application Grace Period',
+            'promo_grace': 'Promo Grace',
+            'trade_in_grace': 'Trade-In Grace',
+            'mpss_lookback': 'MPSS Lookback',
+            'device_sales_type': 'Device Sales Type',
+            'activation_type': 'Activation Type',
+            'maintain_soc': 'Maintain SOC',
+            'limit_per_ban': 'Limit Per BAN',
+            'min_gsm_count': 'Min GSM Count',
+            'max_gsm_count': 'Max GSM Count',
+            'port_in_group_id': 'Port-In Group ID',
+            'segment_name': 'Segment Name',
+            'sub_segment': 'Sub Segment',
+            'segment_group_id': 'Segment Group ID',
+            'segment_level': 'Segment Level',
+            'soc_grouping': 'SOC Grouping',
+            'account_type': 'Account Type',
+            'sales_application': 'Sales Application',
+            'bptcr': 'BPTCR',
+            # SPE specific fields
+            'promo_identifier': 'Promo Identifier',
+            'pt_priority_indicator': 'PT Priority Indicator',
+            'service_priority': 'Service Priority',
+            'max_discount': 'Max Discount',
+            'c2_content': 'C2 Content',
+            'pr_date': 'PR Date',
+            'ban_tenure_start': 'BAN Tenure Start',
+            'ban_tenure_end': 'BAN Tenure End',
+            'maintain_line_count_days': 'Maintain Line Count Days',
+            're_enroll_period': 'Re-enroll Period',
+            'port_duration': 'Port Duration',
+            'channel_grace_period': 'Channel Grace Period',
+            'tfb_channel_group_id': 'TFB Channel Group ID',
+            'dealer_group_id': 'Dealer Group ID',
+            'updated_mrc_ranking': 'Updated MRC Ranking',
+            'suppress_discount_reorder': 'Suppress Discount Reorder',
+            'retro_ban_evaluation': 'Retro BAN Evaluation',
+            'adjustment_code': 'Adjustment Code',
+            'discount_codes': 'Discount Codes',
+            'total_indicator': 'Total Indicator',
+            'gsm_indicator': 'GSM Indicator',
+            'mi_indicator': 'MI Indicator',
+            'pure_mi_indicator': 'Pure MI Indicator',
+            'virtual_mi_indicator': 'Virtual MI Indicator',
+            'duplicate_indicator': 'Duplicate Indicator',
+            'auto_att_indicator': 'Auto Att Indicator',
+            'fax_line_indicator': 'Fax Line Indicator',
+            'conference_indicator': 'Conference Indicator',
+            'iot_indicator': 'IOT Indicator',
+            'go_soc_group_id': 'GO SOC Group ID',
+            'bo_soc_group_id': 'BO SOC Group ID',
+            'paid_soc_group_id': 'Paid SOC Group ID',
+            'min_paid_line_mi_count': 'Min Paid Line MI Count',
+            'go_line_maintenance': 'GO Line Maintenance',
+            'bo_line_maintenance': 'BO Line Maintenance',
+            'paid_line_maintenance': 'Paid Line Maintenance',
+            'min_paid_line_gsm_count': 'Min Paid Line GSM Count',
+            'go_line_count': 'GO Line Count',
+            'bo_line_count': 'BO Line Count',
+            'borrow_bo_lines': 'Borrow BO Lines',
+            'lend_bo_lines': 'Lend BO Lines',
+            'soc_discount_mapping': 'SOC Discount Mapping'
+        }
+        
+        for field, display_name in tracked_fields.items():
+            old_value = old_data.get(field)
+            new_value = new_data.get(field)
+            
+            # Normalize values for comparison (handle None, empty strings, etc.)
+            old_normalized = self._normalize_value(old_value)
+            new_normalized = self._normalize_value(new_value)
+            
+            if old_normalized != new_normalized:
+                # Format the change description
+                if new_normalized == '':
+                    changes.append(f"{display_name} (cleared)")
+                else:
+                    changes.append(f"{display_name} (→ {new_normalized})")
+        
+        return changes
+    
+    def _normalize_value(self, value: Any) -> str:
+        """Normalize a value for comparison"""
+        if value is None:
+            return ''
+        if isinstance(value, str):
+            return value.strip()
+        return str(value)
+    
+    def add_permanent_version_entry(self, promo_code: str, entry: str, is_spe: bool = False):
+        """Add a permanent entry to version history (for approvals, PCR versions, etc.)"""
+        file_path = self.spe_file if is_spe else self.promo_file
+        data = self._load_json(file_path)
+        
+        if promo_code in data:
+            if 'version_history' not in data[promo_code]:
+                data[promo_code]['version_history'] = []
+            data[promo_code]['version_history'].append(entry)
+            data[promo_code]['updated_at'] = datetime.now().isoformat()
+            self._save_json(file_path, data)
+    
+    def add_approval_version(self, promo_code: str, version_number: int, approver: str, is_spe: bool = False):
+        """Add an approval version entry"""
+        timestamp = datetime.now().strftime('%m/%d/%Y %I:%M %p')
+        entry = f"{timestamp} - {approver} - Approval sent out (version #{version_number})"
+        self.add_permanent_version_entry(promo_code, entry, is_spe)
+    
+    def add_pcr_version(self, promo_code: str, version_number: int, user_name: str, is_spe: bool = False):
+        """Add a PCR version entry"""
+        timestamp = datetime.now().strftime('%m/%d/%Y %I:%M %p')
+        entry = f"{timestamp} - {user_name} - PCR version #{version_number}"
+        self.add_permanent_version_entry(promo_code, entry, is_spe)
     
     def delete_promo(self, promo_code: str):
         """Delete a promotion"""

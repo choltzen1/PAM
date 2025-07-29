@@ -7,8 +7,8 @@
     "pj_code": "P047",
     "description": "Magenta Only: Customers can get up to $600 off GS22 Series when they trade in an eligible device (new and existing customers qualify) on a qualifying rate plan - TFB Retail Only.",
     "promo_notes": "Two-tiered discount structure.\n1. $700: All iPhones EXCEPT the iPhone 14 and 15\n2. $730: iPhone 14 and 15 (including all memory variants) to have $730\nTier 1 $730: iPhone 15, iPhone 15 Plus, iPhone 15 Pro, iPhone 15 Pro Max, iPhone 14, iPhone 14 Plus, iPhone 14 Pro, iPhone 14 Pro Max\nTier 2 $700: iPhone 15 Plus, iPhone 15 Pro, iPhone 15 Pro Max, iPhone 14 Plus, iPhone 14 Pro, iPhone 14 Pro Max, iPhone 13 Mini, iPhone 13 Pro, iPhone 13 Pro Max",
-    "discount": 0,
-    "amount": 700,
+    "discount": "0",
+    "amount": "700",
     "nseip_drop": "N",
     "dcd_web_cart": "Y",
     "product_type": "G",
@@ -66,7 +66,7 @@
       "07/24/2025 05:28 PM - Daniel Zhang - Updated promo."
     ],
     "created_at": "2025-07-23T14:26:32.936171",
-    "updated_at": "2025-07-24T17:28:31.861059",
+    "updated_at": "2025-07-29T10:39:29.778764",
     "uploaded_files": {
       "sku_excel": {
         "filename": "sku_list.xlsx",
@@ -82,7 +82,8 @@
       "filename": "P0472022_promo_eligibility_rules.sql",
       "path": "data\\uploads\\promotions\\P0472022\\P0472022_promo_eligibility_rules.sql",
       "generated_at": "2025-07-24 17:28:31"
-    }
+    },
+    "last_changes": null
   },
   "R223": {
     "code": "R223",
@@ -143,16 +144,20 @@
       "07/24/2025 06:00 PM - Daniel Zhang - Updated promo.",
       "07/25/2025 10:02 AM - Daniel Zhang - Updated promo.",
       "07/25/2025 10:06 AM - Daniel Zhang - Updated promo.",
-      "07/25/2025 10:07 AM - Daniel Zhang - Updated promo."
+      "07/25/2025 10:07 AM - Daniel Zhang - Updated promo.",
+      "07/25/2025 11:05 AM - Daniel Zhang - Updated promo.",
+      "07/25/2025 11:06 AM - Daniel Zhang - Updated promo.",
+      "07/25/2025 11:07 AM - Daniel Zhang - Updated promo."
     ],
-    "updated_at": "2025-07-25T10:07:21.154363",
+    "updated_at": "2025-07-29T10:40:41.018522",
     "created_at": "2025-07-24T16:07:32.491773",
     "uploaded_files": {},
     "generated_sql": "INSERT INTO PROMO_ELIGIBILITY_RULES (RULE_ID,PROMO_CODE,PROMO_START_DATE,PROMO_END_DATE,SYS_CREATION_DATE,OPERATOR_ID,APPLICATION_ID,DL_SERVICE_CODE,PROMO_DESCRIPTION,PROMO_DURATION,PROMO_AMOUNT,EFFECTIVE_DATE,EXPIRATION_DATE,SKU_GROUP_ID,PRIM_SKU_GROUP_ID,SOC_GROUP_ID,ATST_GROUP_ID,APPL_GROUP_ID,DEVICE_ST_GROUP_ID,FINANCE_TYPE,ACT_LINE_REQ_IND,APP_GRACE_GROUP_ID,TRADE_IN_GRP_ID,TRADE_IN_GRACE_PERIOD,MAINT_ACT_LINE_CHK_IND,MAINT_SOC_CHK_IND,STORE_GRP_ID,MARKET_GRP_ID,LIMIT_PER_BAN,TENURE_GROUP_ID,PORTIN_GROUP_ID,PROMO_PERC_DISC,C2_LINK,MIN_GSM_COUNT,MAX_GSM_COUNT,DISPLAY_PROMO,TIERED_GRP_ID,SEGMENT_GRP_ID,BOLTON_TRADE_IN_GRP_ID,PRODUCT_TYPE,PR_DATE,PROMO_GRACE_PERIOD,LINE_ST_GROUP_ID,NSEIP_DROP_IND,DELAY_TIME,DISPLAY_PROMO_START_DATE,DISPLAY_PROMO_END_DATE,MPSS_LOOKBACK,FLOW_INDICATOR,DOCUMENT_ID,DVC_STS_GRP_ID,CLAWBACK_IND) VALUES (PROMO_ELIGIBILITY_RULES_1SQ.NEXTVAL,'R223',to_date('2025-07-16 20:00:00','YYYY-MM-DD HH24:MI:SS'),to_date('2026-01-15 05:00:00','YYYY-MM-DD HH24:MI:SS'),sysdate,'16085','CPO','USRST','Mobile Internet ID250396',NULL,NULL,to_date('2025-07-16 20:00:00','YYYY-MM-DD HH24:MI:SS'),to_date('2026-01-15 05:00:00','YYYY-MM-DD HH24:MI:SS'),'Y28',NULL,NULL,NULL,NULL,NULL,NULL,'Y','G14',NULL,NULL,'Y','Y','*','*',NULL,NULL,NULL,100,'https://c2.t-mobile.com/offers/25616',NULL,NULL,'Y',NULL,NULL,NULL,'B',NULL,NULL,'*','Y',NULL,to_date('2025-07-17 20:00:00','YYYY-MM-DD HH24:MI:SS'),to_date('2026-01-14 20:00:00','YYYY-MM-DD HH24:MI:SS'),14,NULL,'25616','DS1','N');",
     "sql_file": {
       "filename": "R223_promo_eligibility_rules.sql",
       "path": "data\\uploads\\promotions\\R223\\R223_promo_eligibility_rules.sql",
-      "generated_at": "2025-07-25 10:07:21"
-    }
+      "generated_at": "2025-07-25 11:07:02"
+    },
+    "last_changes": "Last save: 07/29/2025 10:40 AM - Daniel Zhang - Changed: BOGO (→ N)"
   }
 }

@@ -26,13 +26,22 @@
           <div class="pre-line">{{ promo.promo_notes }}</div>
         </div>
         <div class="info-box">
-          <div class="info-title">Updates</div>          <div><b>Promo % Discount:</b> {{ promo.discount if promo.discount is not none else '' }}</div>
+          <div class="info-title">Updates</div>
+          <div><b>Promo % Discount:</b> {{ promo.discount if promo.discount is not none else '' }}</div>
           <div><b>Promo Amount:</b> {{ promo.amount if promo.amount is not none else '' }}</div>
           <div><b>DCD Web In-Cart:</b> {{ 'Y' if promo.dcd_web_cart == 'Y' else 'N' }}</div>
           <div><b>Product Type:</b> {{ promo.product_type }}</div>
           <div><b>BOGO:</b> {{ 'Yes' if promo.bogo == 'Y' else 'No' }}</div>
           <div><b>Trade-in Group ID:</b> {{ promo.trade_in_group_id }}</div>
         </div>
+        {% if promo.last_changes %}
+        <div class="info-box">
+          <div class="info-title">Recent Changes</div>
+          <div class="last-changes">
+            <div style="color: #666; font-size: 0.9em;">{{ promo.last_changes }}</div>
+          </div>
+        </div>
+        {% endif %}
         <div class="info-box">
           <div class="info-title">Version History</div>
           <div class="version-history">
