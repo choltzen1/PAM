@@ -379,6 +379,7 @@ class PromoDataManager:
             'account_type': 'Account Type',
             'sales_application': 'Sales Application',
             'bptcr': 'BPTCR',
+            'jira_ticket': 'JIRA Ticket',
             # SPE specific fields
             'promo_identifier': 'Promo Identifier',
             'pt_priority_indicator': 'PT Priority Indicator',
