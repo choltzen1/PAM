@@ -1,7 +1,12 @@
-from flask import Flask, render_template, request, redirect, url_for, flash
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
 import os
+import requests
+import urllib3
 from datetime import datetime
 from data.storage import PromoDataManager
+
+# Disable SSL warnings for JIRA requests
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 app = Flask(__name__)
 app.secret_key = 'your-secret-key-here'  # Required for flash messages
@@ -223,6 +228,7 @@ def edit_promo(promo_code=None):
             "code": promo_code,
             "owner": "New Owner",
             "bill_facing_name": "New Promotion",
+            "initiative_name": "",
             "orbit_id": "",
             "pj_code": "",
             "description": "",
@@ -311,6 +317,7 @@ def edit_promo(promo_code=None):
         if active_tab == 'Details':            # Update Details tab fields
             promo_data.update({
                 'bill_facing_name': request.form.get('bill_facing_name', ''),
+                'initiative_name': request.form.get('initiative_name', ''),
                 'discount': request.form.get('discount', ''),
                 'amount': request.form.get('amount', ''),
                 'nseip_drop': request.form.get('nseip_drop', 'N'),
@@ -374,7 +381,7 @@ def edit_promo(promo_code=None):
             })
         
         elif active_tab == 'BPTCR':
-            # Update BPTCR tab field
+            # Update BPTCR tab fields
             promo_data['bptcr'] = request.form.get('bptcr', '')
         
         elif active_tab == 'SQL Generation':
@@ -747,6 +754,135 @@ def download_sql(promo_code):
             abort(404)
     except Exception:
         abort(404)
+
+
+def format_adf_description(text):
+    """Format text into Atlassian Document Format (ADF) for JIRA description"""
+    lines = str(text).strip().splitlines()
+    adf_blocks = []
+
+    for line in lines:
+        line = line.strip()
+        if not line:
+            adf_blocks.append({"type": "paragraph", "content": []})
+            continue
+        if ":" in line:
+            key, value = line.split(":", 1)
+            adf_blocks.append({
+                "type": "paragraph",
+                "content": [
+                    {
+                        "type": "text",
+                        "text": key.strip() + ":",
+                        "marks": [{"type": "strong"}]
+                    },
+                    {
+                        "type": "text",
+                        "text": " " + value.strip()
+                    }
+                ]
+            })
+        else:
+            adf_blocks.append({
+                "type": "paragraph",
+                "content": [
+                    {"type": "text", "text": line}
+                ]
+            })
+
+    return {"type": "doc", "version": 1, "content": adf_blocks}
+
+
+@app.route("/create_jira_ticket", methods=["POST"])
+def create_jira_ticket():
+    """Create a JIRA ticket and update the operator_id with the ticket number"""
+    try:
+        data = request.get_json()
+        
+        # JIRA configuration
+        JIRA_URL = "https://t-mobile-stage.atlassian.net"
+        PROJECT_KEY = "CPO"
+        CUSTOM_FIELD_TEAM_ID = "customfield_10048"
+        TEAM_VALUE = "Promo Ops T1"
+        # R2D2_TEAM_ID_FIELD = "customfield_10059"  # R2D2 Team ID field - disabled, field not available in CPO project
+        # R2D2_TEAM_VALUE = "2730"
+        
+        # Extract form data
+        summary = data.get('summary', '')[:2000]  # Limit to 2000 chars
+        description_text = data.get('description', '')
+        priority = data.get('priority', 'High')
+        issue_type = data.get('issue_type', 'Task')
+        parent_key = data.get('parent', '')
+        user_email = data.get('email', '')
+        api_token = data.get('token', '')
+        promo_code = data.get('promo_code', '')
+        
+        if not all([summary, description_text, user_email, api_token, promo_code]):
+            return jsonify({"success": False, "error": "Missing required fields"})
+        
+        # Prepare JIRA ticket fields (with assignee matching reporter)
+        fields = {
+            "project": {"key": PROJECT_KEY},
+            "summary": summary,
+            "description": format_adf_description(description_text),
+            "priority": {"name": priority},
+            "issuetype": {"name": issue_type},
+            "labels": ["New_Promo"],
+            "assignee": {"emailAddress": user_email},  # Set assignee same as reporter
+            CUSTOM_FIELD_TEAM_ID: {"value": TEAM_VALUE}
+            # R2D2_TEAM_ID_FIELD: R2D2_TEAM_VALUE  # Disabled - field not available in CPO project
+        }
+        
+        # Add parent if specified
+        if parent_key:
+            fields["parent"] = {"key": parent_key}
+        
+        # Prepare request
+        payload = {"fields": fields}
+        url = f"{JIRA_URL}/rest/api/3/issue"
+        headers = {
+            "Accept": "application/json",
+            "Content-Type": "application/json"
+        }
+        auth = (user_email, api_token)
+        
+        # Make JIRA API request
+        response = requests.post(url, json=payload, headers=headers, auth=auth, verify=False)
+        
+        if response.status_code == 201:
+            # Extract ticket key from response
+            ticket_data = response.json()
+            ticket_key = ticket_data["key"]
+            
+            # Update the promo with the JIRA ticket information
+            promo_data = data_manager.get_promo(promo_code)
+            if promo_data:
+                # Store the JIRA ticket key
+                promo_data['jira_ticket'] = ticket_key
+                
+                # Extract just the number from the ticket key (e.g., "CPO-123" -> "123")
+                ticket_number = ticket_key.split('-')[-1]
+                
+                # Update the operator_id with the ticket number
+                promo_data['operator_id'] = ticket_number
+                
+                # Save the updated promo data
+                data_manager.save_promo(promo_code, promo_data, user_name=user_email.split('@')[0])
+                
+                return jsonify({
+                    "success": True, 
+                    "ticket_key": ticket_key,
+                    "ticket_url": f"{JIRA_URL}/browse/{ticket_key}",
+                    "operator_id": ticket_number
+                })
+            else:
+                return jsonify({"success": False, "error": "Promo not found"})
+        else:
+            error_msg = f"JIRA API Error: {response.status_code} - {response.text}"
+            return jsonify({"success": False, "error": error_msg})
+            
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)})
 
 
 if __name__ == "__main__":

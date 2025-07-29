@@ -1,5 +1,10 @@
 {% extends "base.html" %}
 {% block title %}Edit Promotion{{ promo.code }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/jira_modal.css') }}">
+{% endblock %}
+
 {% block content %}
   <!-- Header -->
   <header class="header">
@@ -65,8 +70,10 @@
           <input type="hidden" name="active_tab" value="{{ active_tab }}">
           {% if active_tab == 'Details' %}
             <div class="grid-form four-col">
-              <label class="grid-full section-label">Bill Facing Name</label>
-              <input class="form-control grid-full mb-1" name="bill_facing_name" value="{{ promo.bill_facing_name }}">              <label class="section-label">Promo % Discount</label>
+              <label class="section-label col-span-2">Bill Facing Name</label>
+              <label class="section-label col-span-2">Initiative Name</label>
+              <input class="form-control col-span-2 mb-1" name="bill_facing_name" value="{{ promo.bill_facing_name }}">
+              <input class="form-control col-span-2 mb-1" name="initiative_name" value="{{ promo.initiative_name or '' }}">              <label class="section-label">Promo % Discount</label>
               <label class="section-label">Promo Amount ($)</label>
               <label class="section-label">NSEIP Drop</label>
               <label class="section-label">DCD Web Cart</label>              <input class="form-control" name="discount" value="{{ promo.discount if promo.discount is not none else '' }}" type="number" min="0" step="1" placeholder="%">
@@ -387,6 +394,31 @@
               <label class="grid-full section-label">BPTCR</label>
               <input class="form-control grid-full mb-1" name="bptcr" value="{{ promo.bptcr or '' }}">
             </div>
+            
+            <!-- JIRA Ticket Management Card -->
+            <div class="jira-management-card">
+              <h3 class="jira-card-title">Jira Ticket Management</h3>
+              
+              <div class="jira-card-content">
+                <div class="jira-card-info">
+                  <h4>Generate BPTCR Jira Ticket</h4>
+                  <p>Create a new Jira ticket for BPTCR approval process</p>
+                </div>
+                <button type="button" onclick="openJiraModal()" class="jira-generate-btn">
+                  <i class="fas fa-ticket-alt"></i>
+                  Generate Jira Ticket
+                </button>
+              </div>
+              
+              {% if promo.jira_ticket %}
+              <div class="jira-ticket-status">
+                <i class="fas fa-check-circle"></i>
+                <strong>JIRA Ticket Created:</strong> 
+                <a href="https://t-mobile-stage.atlassian.net/browse/{{ promo.jira_ticket }}" target="_blank">{{ promo.jira_ticket }}</a>
+              </div>
+              {% endif %}
+            </div>
+            
             <div class="save-footer">
               <button type="submit" class="btn btn-primary">Save BPTCR</button>            </div>          {% elif active_tab == 'SQL Generation' %}
             <div class="grid-form two-col">
@@ -487,4 +519,93 @@
       </div>
     </div>
   </div>
+
+<!-- JIRA Creation Modal -->
+<div id="jiraModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>Create JIRA Ticket</h3>
+      <span class="close" onclick="closeJiraModal()">&times;</span>
+    </div>
+    
+    <form id="jiraForm">
+      <div class="form-group">
+        <label>Summary:</label>
+        <input type="text" id="jiraSummary" class="form-control" placeholder="Brief description of the task" required>
+      </div>
+      
+      <div class="form-group">
+        <label>Description:</label>
+        <textarea id="jiraDescription" class="form-control" rows="4" placeholder="Detailed description..." required></textarea>
+      </div>
+      
+      <div class="form-group">
+        <label>Priority:</label>
+        <select id="jiraPriority" class="form-select">
+          <option value="High" selected>High</option>
+          <option value="Medium">Medium</option>
+          <option value="Low">Low</option>
+          <option value="Highest">Highest</option>
+          <option value="Lowest">Lowest</option>
+        </select>
+      </div>
+      
+      <div class="form-group">
+        <label>Issue Type:</label>
+        <select id="jiraIssueType" class="form-select">
+          <option value="Task">Task</option>
+          <option value="Bug">Bug</option>
+          <option value="Story">Story</option>
+          <option value="Epic">Epic</option>
+        </select>
+      </div>
+      
+      <div class="form-group">
+        <label>Parent (optional):</label>
+        <select id="jiraParent" class="form-select">
+          <option value="">None</option>
+          <option value="CPO-2">CPO-2 - Device</option>
+          <option value="CPO-3">CPO-3 - Service</option>
+          <option value="DCOMM-13037">DCD-Request</option>
+        </select>
+      </div>
+      
+      <div class="form-group">
+        <label>Your JIRA Email:</label>
+        <input type="email" id="jiraEmail" class="form-control" placeholder="your.email@t-mobile.com" required>
+      </div>
+      
+      <div class="form-group">
+        <label>API Token:</label>
+        <input type="password" id="jiraToken" class="form-control" placeholder="Your JIRA API token" required>
+        <small>Get your API token from <a href="https://id.atlassian.com/manage-profile/security/api-tokens" target="_blank">Atlassian Account Settings</a></small>
+      </div>
+      
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeJiraModal()">Cancel</button>
+        <button type="button" class="btn btn-primary" onclick="createJiraTicket()">
+          <i class="fas fa-ticket-alt"></i> Create Ticket
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/jira_modal.js') }}"></script>
+<script>
+// Initialize promo data for JavaScript access
+function initPromoData() {
+  window.promoData = {
+    code: "{{ promo.code }}",
+    orbit_id: "{{ promo.orbit_id }}",
+    initiative_name: {{ (promo.initiative_name or '') | tojson }},
+    promo_start_date: "{{ promo.promo_start_date }}"
+  };
+}
+
+// Call initialization when page loads
+document.addEventListener('DOMContentLoaded', initPromoData);
+</script>
+{% endblock %}
 {% endblock %}

@@ -15,6 +15,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/date_mismatch.css') }}">
   {% endif %}
   <link rel="stylesheet" href="{{ url_for('static', filename='css/edit_promo.css') }}">
+  {% block extra_css %}{% endblock %}
   <script defer src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
   {% block head %}{% endblock %}
 </head>
@@ -41,6 +42,7 @@
     setInterval(updateFooterTime, 1000);
     updateFooterTime();
   </script>
+  {% block extra_js %}{% endblock %}
   {% block scripts %}{% endblock %}
 </body>
 </html>
