@@ -55,16 +55,7 @@
       "BPTCR Detail 2",
       "BPTCR Detail 3"
     ],
-    "version_history": [
-      "11/6/2023 1:18 PM - Michael Pugh - Approval requested for Care-Medjo, Sue, Commissions - Sandbo, Stephany and Device Finance - Kanzler, Justin.",
-      "11/1/2023 10:00 AM - Daniel Zhang - Created promo.",
-      "07/23/2025 02:27 PM - Daniel Zhang - Updated promo.",
-      "07/23/2025 03:04 PM - Daniel Zhang - Updated promo.",
-      "07/23/2025 03:04 PM - Daniel Zhang - Updated promo.",
-      "07/24/2025 01:22 PM - Daniel Zhang - Updated promo.",
-      "07/24/2025 03:36 PM - Daniel Zhang - Updated promo.",
-      "07/24/2025 05:28 PM - Daniel Zhang - Updated promo."
-    ],
+    "version_history": [],
     "created_at": "2025-07-23T14:26:32.936171",
     "updated_at": "2025-07-29T10:58:27.148032",
     "uploaded_files": {
@@ -132,35 +123,24 @@
     "soc_grouping": "",
     "account_type": "",
     "sales_application": "",
-    "operator_id": "15986",
+    "operator_id": "15988",
     "sku_group_id": "Y28",
     "device_status_group_id": "DS1",
     "clawback_indicator": "N",
     "flow_indicator": "NULL",
     "bptcr": "25616",
-    "version_history": [
-      "07/24/2025 04:07 PM - Daniel Zhang - Updated promo.",
-      "07/24/2025 04:57 PM - Daniel Zhang - Updated promo.",
-      "07/24/2025 05:10 PM - Daniel Zhang - Updated promo.",
-      "07/24/2025 06:00 PM - Daniel Zhang - Updated promo.",
-      "07/25/2025 10:02 AM - Daniel Zhang - Updated promo.",
-      "07/25/2025 10:06 AM - Daniel Zhang - Updated promo.",
-      "07/25/2025 10:07 AM - Daniel Zhang - Updated promo.",
-      "07/25/2025 11:05 AM - Daniel Zhang - Updated promo.",
-      "07/25/2025 11:06 AM - Daniel Zhang - Updated promo.",
-      "07/25/2025 11:07 AM - Daniel Zhang - Updated promo."
-    ],
-    "updated_at": "2025-07-29T12:04:08.735263",
+    "version_history": [],
+    "updated_at": "2025-07-30T11:14:09.967852",
     "created_at": "2025-07-24T16:07:32.491773",
     "uploaded_files": {},
-    "generated_sql": "INSERT INTO PROMO_ELIGIBILITY_RULES (RULE_ID,PROMO_CODE,PROMO_START_DATE,PROMO_END_DATE,SYS_CREATION_DATE,OPERATOR_ID,APPLICATION_ID,DL_SERVICE_CODE,PROMO_DESCRIPTION,PROMO_DURATION,PROMO_AMOUNT,EFFECTIVE_DATE,EXPIRATION_DATE,SKU_GROUP_ID,PRIM_SKU_GROUP_ID,SOC_GROUP_ID,ATST_GROUP_ID,APPL_GROUP_ID,DEVICE_ST_GROUP_ID,FINANCE_TYPE,ACT_LINE_REQ_IND,APP_GRACE_GROUP_ID,TRADE_IN_GRP_ID,TRADE_IN_GRACE_PERIOD,MAINT_ACT_LINE_CHK_IND,MAINT_SOC_CHK_IND,STORE_GRP_ID,MARKET_GRP_ID,LIMIT_PER_BAN,TENURE_GROUP_ID,PORTIN_GROUP_ID,PROMO_PERC_DISC,C2_LINK,MIN_GSM_COUNT,MAX_GSM_COUNT,DISPLAY_PROMO,TIERED_GRP_ID,SEGMENT_GRP_ID,BOLTON_TRADE_IN_GRP_ID,PRODUCT_TYPE,PR_DATE,PROMO_GRACE_PERIOD,LINE_ST_GROUP_ID,NSEIP_DROP_IND,DELAY_TIME,DISPLAY_PROMO_START_DATE,DISPLAY_PROMO_END_DATE,MPSS_LOOKBACK,FLOW_INDICATOR,DOCUMENT_ID,DVC_STS_GRP_ID,CLAWBACK_IND) VALUES (PROMO_ELIGIBILITY_RULES_1SQ.NEXTVAL,'R223',to_date('2025-07-16 20:00:00','YYYY-MM-DD HH24:MI:SS'),to_date('2026-01-15 05:00:00','YYYY-MM-DD HH24:MI:SS'),sysdate,'16085','CPO','USRST','Mobile Internet ID250396',NULL,NULL,to_date('2025-07-16 20:00:00','YYYY-MM-DD HH24:MI:SS'),to_date('2026-01-15 05:00:00','YYYY-MM-DD HH24:MI:SS'),'Y28',NULL,NULL,NULL,NULL,NULL,NULL,'Y','G14',NULL,NULL,'Y','Y','*','*',NULL,NULL,NULL,100,'https://c2.t-mobile.com/offers/25616',NULL,NULL,'Y',NULL,NULL,NULL,'B',NULL,NULL,'*','Y',NULL,to_date('2025-07-17 20:00:00','YYYY-MM-DD HH24:MI:SS'),to_date('2026-01-14 20:00:00','YYYY-MM-DD HH24:MI:SS'),14,NULL,'25616','DS1','N');",
+    "generated_sql": "INSERT INTO PROMO_ELIGIBILITY_RULES (RULE_ID,PROMO_CODE,PROMO_START_DATE,PROMO_END_DATE,SYS_CREATION_DATE,OPERATOR_ID,APPLICATION_ID,DL_SERVICE_CODE,PROMO_DESCRIPTION,PROMO_DURATION,PROMO_AMOUNT,EFFECTIVE_DATE,EXPIRATION_DATE,SKU_GROUP_ID,PRIM_SKU_GROUP_ID,SOC_GROUP_ID,ATST_GROUP_ID,APPL_GROUP_ID,DEVICE_ST_GROUP_ID,FINANCE_TYPE,ACT_LINE_REQ_IND,APP_GRACE_GROUP_ID,TRADE_IN_GRP_ID,TRADE_IN_GRACE_PERIOD,MAINT_ACT_LINE_CHK_IND,MAINT_SOC_CHK_IND,STORE_GRP_ID,MARKET_GRP_ID,LIMIT_PER_BAN,TENURE_GROUP_ID,PORTIN_GROUP_ID,PROMO_PERC_DISC,C2_LINK,MIN_GSM_COUNT,MAX_GSM_COUNT,DISPLAY_PROMO,TIERED_GRP_ID,SEGMENT_GRP_ID,BOLTON_TRADE_IN_GRP_ID,PRODUCT_TYPE,PR_DATE,PROMO_GRACE_PERIOD,LINE_ST_GROUP_ID,NSEIP_DROP_IND,DELAY_TIME,DISPLAY_PROMO_START_DATE,DISPLAY_PROMO_END_DATE,MPSS_LOOKBACK,FLOW_INDICATOR,DOCUMENT_ID,DVC_STS_GRP_ID,CLAWBACK_IND) VALUES (PROMO_ELIGIBILITY_RULES_1SQ.NEXTVAL,'R223',to_date('2025-07-16 20:00:00','YYYY-MM-DD HH24:MI:SS'),to_date('2026-01-15 05:00:00','YYYY-MM-DD HH24:MI:SS'),sysdate,'15988','CPO','USRST','Mobile Internet ID250396',NULL,NULL,to_date('2025-07-16 20:00:00','YYYY-MM-DD HH24:MI:SS'),to_date('2026-01-15 05:00:00','YYYY-MM-DD HH24:MI:SS'),'Y28',NULL,NULL,NULL,NULL,NULL,NULL,'Y','G14',NULL,NULL,'Y','Y','*','*',NULL,NULL,NULL,100,'https://c2.t-mobile.com/offers/25616',NULL,NULL,'Y',NULL,NULL,NULL,'B',NULL,NULL,'*','Y',NULL,to_date('2025-07-17 20:00:00','YYYY-MM-DD HH24:MI:SS'),to_date('2026-01-14 20:00:00','YYYY-MM-DD HH24:MI:SS'),14,NULL,'25616','DS1','N');",
     "sql_file": {
       "filename": "R223_promo_eligibility_rules.sql",
       "path": "data\\uploads\\promotions\\R223\\R223_promo_eligibility_rules.sql",
-      "generated_at": "2025-07-25 11:07:02"
+      "generated_at": "2025-07-30 11:14:09"
     },
-    "last_changes": "Last save: 07/29/2025 12:04 PM - cade.holtzen1 - Changed: JIRA Ticket (→ CPO-15986)",
-    "initiative_name": "BTS H2'25: LINKPORT IK511 - On Us with Go5G Next /Beyond",
-    "jira_ticket": "CPO-15986"
+    "last_changes": "Last save: 07/29/2025 03:19 PM - cade.holtzen1 - Changed: JIRA Ticket (→ CPO-15988)",
+    "initiative_name": "BTS H2'25",
+    "jira_ticket": "CPO-15988"
   }
 }

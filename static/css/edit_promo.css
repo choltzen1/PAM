@@ -149,21 +149,23 @@ html, body {
   border-bottom: 2px solid var(--tmobile-border);
   margin-bottom: 2.2rem;
   background: transparent;
-  gap: 0.6rem;
+  gap: 0.5rem;
   overflow: visible;
+  /* Force tabs into two rows with 6 tabs per row for better width utilization */
+  max-height: 140px; /* Approximately 2 rows height */
 }
 .tab {
-  flex: 1 1 120px;
+  flex: 1 1 calc(16.66% - 0.42rem); /* 6 tabs per row to fill width better */
   min-width: 100px;
-  max-width: 100%;
-  padding: 0.7rem 1rem;
+  max-width: none;
+  padding: 0.7rem 0.5rem;
   text-align: center;
   text-decoration: none;
   background: #b0b0b0;
   color: #fff;
   border-radius: 8px 8px 0 0;
   font-weight: 600;
-  font-size: 1.08rem;
+  font-size: 0.9rem; /* Slightly smaller font for better fit */
   cursor: pointer;
   transition: background 0.17s;
   border: none;
@@ -171,10 +173,53 @@ html, body {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  height: 60px; /* Fixed height for consistency */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
 }
 .tab.active {
   background: var(--tmobile-magenta);
   color: #fff;
+}
+
+/* Responsive tabs for smaller screens */
+@media (max-width: 1400px) {
+  .tab {
+    flex: 1 1 calc(20% - 0.4rem); /* 5 tabs per row on medium screens */
+    font-size: 0.85rem;
+    padding: 0.6rem 0.4rem;
+  }
+}
+
+@media (max-width: 1000px) {
+  .tab {
+    flex: 1 1 calc(25% - 0.4rem); /* 4 tabs per row on smaller screens */
+    font-size: 0.8rem;
+    padding: 0.6rem 0.3rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .tab {
+    flex: 1 1 calc(33.333% - 0.4rem); /* 3 tabs per row on mobile */
+    font-size: 0.75rem;
+    min-width: 90px;
+    max-width: none;
+  }
+  .tabs {
+    max-height: 200px; /* Allow more height for mobile */
+  }
+}
+
+@media (max-width: 500px) {
+  .tab {
+    flex: 1 1 calc(50% - 0.4rem); /* 2 tabs per row on small mobile */
+    font-size: 0.7rem;
+    height: 50px;
+    padding: 0.5rem 0.2rem;
+  }
 }
 
 /* Forms, Grid Layout, Section Titles */

@@ -81,7 +81,7 @@ class PromoDataManager:
                     ],
                     "version_history": [
                         "11/6/2023 1:18 PM - Michael Pugh - Approval requested for Care-Medjo, Sue, Commissions - Sandbo, Stephany and Device Finance - Kanzler, Justin.",
-                        "11/1/2023 10:00 AM - Daniel Zhang - Created promo."
+                        "11/1/2023 10:00 AM - Cade Holtzen - Created promo."
                     ],
                     "created_at": datetime.now().isoformat(),
                     "updated_at": datetime.now().isoformat()
@@ -152,7 +152,7 @@ class PromoDataManager:
                     "lend_bo_lines": "Y",
                     "soc_discount_mapping": "https://web.powerapps.com/webplayer/iframe...",
                     "version_history": [
-                        f"{datetime.now().strftime('%m/%d/%Y %I:%M %p')} - Daniel Zhang - Created SPE promo."
+                        f"{datetime.now().strftime('%m/%d/%Y %I:%M %p')} - Cade Holtzen - Created SPE promo."
                     ],
                     "created_at": datetime.now().isoformat(),
                     "updated_at": datetime.now().isoformat()

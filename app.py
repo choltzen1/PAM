@@ -97,7 +97,7 @@ def generate_promo_eligibility_sql(promo_data):
         'c2_link': f"https://c2.t-mobile.com/offers/{promo_data.get('bptcr', '')}" if promo_data.get('bptcr') else 'NULL',
         'min_gsm_count': safe_get_int(promo_data, 'min_gsm_count') if promo_data.get('min_gsm_count') else 'NULL',
         'max_gsm_count': safe_get_int(promo_data, 'max_gsm_count') if promo_data.get('max_gsm_count') else 'NULL',        'display_promo': promo_data.get('fpd_display_promo') if promo_data.get('fpd_display_promo') else 'NULL',
-        'tiered_grp_id': 'NULL',  # Not used in current form
+        'tiered_grp_id': promo_data.get('tiered_group_id') if promo_data.get('tiered_group_id') else 'NULL',
         'segment_grp_id': promo_data.get('segment_group_id') if promo_data.get('segment_group_id') else 'NULL',
         'bolton_trade_in_grp_id': promo_data.get('bolton_trade_in_grp_id') if promo_data.get('bolton_trade_in_grp_id') else 'NULL',
         'product_type': promo_data.get('product_type') if promo_data.get('product_type') else 'NULL',
@@ -275,6 +275,43 @@ def edit_promo(promo_code=None):
             "device_status_group_id": "",
             "clawback_indicator": "N",
             "flow_indicator": "NULL",
+            # Trade tab fields
+            "trade_in_group_id": "",
+            "broken_trade": "N",
+            "trade_tier_1_amount": "",
+            "trade_tier_1_cond_id": "",
+            "trade_tier_1_min_fmv": "",
+            "trade_tier_1_max_fmv": "",
+            "trade_tier_1_make_model": "",
+            "trade_tier_2_amount": "",
+            "trade_tier_2_cond_id": "",
+            "trade_tier_2_min_fmv": "",
+            "trade_tier_2_max_fmv": "",
+            "trade_tier_2_make_model": "",
+            "trade_tier_3_amount": "",
+            "trade_tier_3_cond_id": "",
+            "trade_tier_3_min_fmv": "",
+            "trade_tier_3_max_fmv": "",
+            "trade_tier_3_make_model": "",
+            "trade_tier_4_amount": "",
+            "trade_tier_4_cond_id": "",
+            "trade_tier_4_min_fmv": "",
+            "trade_tier_4_max_fmv": "",
+            "trade_tier_4_make_model": "",
+            # Tiers tab fields
+            "tiered_group_id": "",
+            "tier_1_amount": "",
+            "tier_1_sku_group_id": "",
+            "tier_1_devices": "",
+            "tier_2_amount": "",
+            "tier_2_sku_group_id": "",
+            "tier_2_devices": "",
+            "tier_3_amount": "",
+            "tier_3_sku_group_id": "",
+            "tier_3_devices": "",
+            "tier_4_amount": "",
+            "tier_4_sku_group_id": "",
+            "tier_4_devices": "",
             "version_history": []
         }
 
@@ -363,6 +400,51 @@ def edit_promo(promo_code=None):
                 'flow_indicator': request.form.get('flow_indicator', 'NULL')
             })
         
+        elif active_tab == 'Trade':
+            # Update Trade tab fields
+            promo_data.update({
+                'trade_in_group_id': request.form.get('trade_in_group_id', ''),
+                'broken_trade': request.form.get('broken_trade', 'N'),
+                'trade_tier_1_amount': request.form.get('trade_tier_1_amount', ''),
+                'trade_tier_1_cond_id': request.form.get('trade_tier_1_cond_id', ''),
+                'trade_tier_1_min_fmv': request.form.get('trade_tier_1_min_fmv', ''),
+                'trade_tier_1_max_fmv': request.form.get('trade_tier_1_max_fmv', ''),
+                'trade_tier_1_make_model': request.form.get('trade_tier_1_make_model', ''),
+                'trade_tier_2_amount': request.form.get('trade_tier_2_amount', ''),
+                'trade_tier_2_cond_id': request.form.get('trade_tier_2_cond_id', ''),
+                'trade_tier_2_min_fmv': request.form.get('trade_tier_2_min_fmv', ''),
+                'trade_tier_2_max_fmv': request.form.get('trade_tier_2_max_fmv', ''),
+                'trade_tier_2_make_model': request.form.get('trade_tier_2_make_model', ''),
+                'trade_tier_3_amount': request.form.get('trade_tier_3_amount', ''),
+                'trade_tier_3_cond_id': request.form.get('trade_tier_3_cond_id', ''),
+                'trade_tier_3_min_fmv': request.form.get('trade_tier_3_min_fmv', ''),
+                'trade_tier_3_max_fmv': request.form.get('trade_tier_3_max_fmv', ''),
+                'trade_tier_3_make_model': request.form.get('trade_tier_3_make_model', ''),
+                'trade_tier_4_amount': request.form.get('trade_tier_4_amount', ''),
+                'trade_tier_4_cond_id': request.form.get('trade_tier_4_cond_id', ''),
+                'trade_tier_4_min_fmv': request.form.get('trade_tier_4_min_fmv', ''),
+                'trade_tier_4_max_fmv': request.form.get('trade_tier_4_max_fmv', ''),
+                'trade_tier_4_make_model': request.form.get('trade_tier_4_make_model', '')
+            })
+        
+        elif active_tab == 'Tiers':
+            # Update Tiers tab fields
+            promo_data.update({
+                'tiered_group_id': request.form.get('tiered_group_id', ''),
+                'tier_1_amount': request.form.get('tier_1_amount', ''),
+                'tier_1_sku_group_id': request.form.get('tier_1_sku_group_id', ''),
+                'tier_1_devices': request.form.get('tier_1_devices', ''),
+                'tier_2_amount': request.form.get('tier_2_amount', ''),
+                'tier_2_sku_group_id': request.form.get('tier_2_sku_group_id', ''),
+                'tier_2_devices': request.form.get('tier_2_devices', ''),
+                'tier_3_amount': request.form.get('tier_3_amount', ''),
+                'tier_3_sku_group_id': request.form.get('tier_3_sku_group_id', ''),
+                'tier_3_devices': request.form.get('tier_3_devices', ''),
+                'tier_4_amount': request.form.get('tier_4_amount', ''),
+                'tier_4_sku_group_id': request.form.get('tier_4_sku_group_id', ''),
+                'tier_4_devices': request.form.get('tier_4_devices', '')
+            })
+        
         elif active_tab == 'Segmentation':
             # Update Segmentation tab fields
             promo_data.update({
@@ -430,7 +512,7 @@ def edit_promo(promo_code=None):
                     }
                     
                     # Redirect to the same page with SQL Generation tab active to show the result
-                    data_manager.save_promo(promo_code, promo_data, user_name="Daniel Zhang")
+                    data_manager.save_promo(promo_code, promo_data, user_name="Cade Holtzen")
                     return redirect(url_for('edit_promo', promo_code=promo_code, tab='SQL Generation'))
                     
                 except Exception as e:
@@ -438,7 +520,7 @@ def edit_promo(promo_code=None):
         
         # Save updated promo data
         try:
-            data_manager.save_promo(promo_code, promo_data, user_name="Daniel Zhang")
+            data_manager.save_promo(promo_code, promo_data, user_name="Cade Holtzen")
             flash(f'{active_tab} tab saved successfully!', 'success')
         except Exception as e:
             flash(f'Error saving {active_tab} tab: {str(e)}', 'error')
@@ -454,7 +536,7 @@ def edit_promo(promo_code=None):
     return render_template(
         "edit_promo.html",
         promo=promo_data,
-        user_name="Daniel Zhang",
+        user_name="Cade Holtzen",
         active_tab=active_tab,
         soc_groupings=soc_groupings,
         account_types=account_types,
@@ -486,7 +568,7 @@ def promotions():
     return render_template(
         "promotions.html",
         promotion_code="All Promotions",
-        user_name="Daniel Zhang",
+        user_name="Cade Holtzen",
         owners=owners,
         selected_owner="All",
         search_query="",
@@ -523,7 +605,7 @@ def spe():
     return render_template(
         "spe.html",
         promotion_code="SPE Promotions",
-        user_name="Daniel Zhang",
+        user_name="Cade Holtzen",
         owners=["All", "Hari Kariavula", "Rich Brakenhoff", "Cade Holtzen"],
         selected_owner="All",
         search_query="",
@@ -691,7 +773,7 @@ def edit_spe():
         
         # Save updated SPE promo data
         try:
-            data_manager.save_spe_promo(promo_code, spe_data, user_name="Daniel Zhang")
+            data_manager.save_spe_promo(promo_code, spe_data, user_name="Cade Holtzen")
             flash(f'{active_tab} tab saved successfully!', 'success')
         except Exception as e:
             flash(f'Error saving {active_tab} tab: {str(e)}', 'error')
@@ -702,7 +784,7 @@ def edit_spe():
     return render_template(
         "edit_spe.html",
         promo=spe_data,
-        user_name="Daniel Zhang",
+        user_name="Cade Holtzen",
         active_tab=active_tab
     )
 
@@ -711,7 +793,7 @@ def edit_spe():
 def date_mismatch():
     return render_template(
         "date_mismatch.html",
-        user_name="Daniel Zhang",
+        user_name="Cade Holtzen",
         current_datetime=datetime.now().strftime("%A, %B %d, %Y %I:%M:%S %p")
     )
 
@@ -802,10 +884,8 @@ def create_jira_ticket():
         # JIRA configuration
         JIRA_URL = "https://t-mobile-stage.atlassian.net"
         PROJECT_KEY = "CPO"
-        CUSTOM_FIELD_TEAM_ID = "customfield_10048"
-        TEAM_VALUE = "Promo Ops T1"
-        # R2D2_TEAM_ID_FIELD = "customfield_10059"  # R2D2 Team ID field - disabled, field not available in CPO project
-        # R2D2_TEAM_VALUE = "2730"
+        CUSTOM_FIELD_TEAM_ID = "customfield_10048"  # R2D2 Team (required field in CPO)
+        TEAM_VALUE = "Promo Ops T1"  # Available value for R2D2 Team field
         
         # Extract form data
         summary = data.get('summary', '')[:2000]  # Limit to 2000 chars
@@ -829,8 +909,7 @@ def create_jira_ticket():
             "issuetype": {"name": issue_type},
             "labels": ["New_Promo"],
             "assignee": {"emailAddress": user_email},  # Set assignee same as reporter
-            CUSTOM_FIELD_TEAM_ID: {"value": TEAM_VALUE}
-            # R2D2_TEAM_ID_FIELD: R2D2_TEAM_VALUE  # Disabled - field not available in CPO project
+            CUSTOM_FIELD_TEAM_ID: {"value": TEAM_VALUE}  # R2D2 Team field (required in CPO project)
         }
         
         # Add parent if specified
