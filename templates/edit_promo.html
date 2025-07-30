@@ -50,7 +50,7 @@
         <div class="info-box">
           <div class="info-title">Version History</div>
           <div class="version-history">
-            {% for entry in promo.version_history %}
+            {% for entry in promo.get('version_history', []) %}
               <div>{{ entry }}</div>
             {% endfor %}
           </div>
@@ -60,7 +60,7 @@
       <div class="right-panel">
         <div class="tabs">
           {% for tab in ['Details','Dates & Times','Requirements','Trade','Tiers','Segmentation','Groupings','BPTCR','SQL Generation'] %}
-            <a href="{{ url_for('edit_promo', promo_code=promo.code, tab=tab) }}"
+            <a href="{{ url_for('promo.edit_promo', promo_code=promo.code, tab=tab) }}"
                class="tab {% if tab == active_tab %}active{% endif %}">
               {{ tab }}
             </a>
@@ -557,7 +557,7 @@
                         </div>
                       </div>
                       <div class="file-actions">
-                        <a href="{{ url_for('download_file', promo_code=promo.code, file_type='sku_excel') }}" 
+                        <a href="{{ url_for('promo.download_file', promo_code=promo.code, file_type='sku_excel') }}" 
                            class="btn btn-sm btn-outline">Download</a>
                       </div>
                     </div>
@@ -586,7 +586,7 @@
                         </div>
                       </div>
                       <div class="file-actions">
-                        <a href="{{ url_for('download_file', promo_code=promo.code, file_type='tradein_excel') }}" 
+                        <a href="{{ url_for('promo.download_file', promo_code=promo.code, file_type='tradein_excel') }}" 
                            class="btn btn-sm btn-outline">Download</a>
                       </div>
                     </div>
@@ -607,14 +607,14 @@
                 <div class="file-info">
                   <i class="fas fa-database"></i>
                   <div>
-                    <div class="file-name">{{ promo.sql_file.filename if promo.sql_file else promo.code + '_promo_eligibility_rules.sql' }}</div>
+                    <div class="file-name">{{ promo.code }}_promo_eligibility_rules.sql</div>
                     <div class="file-meta">
-                      Generated on {{ promo.sql_file.generated_at if promo.sql_file else 'Unknown' }}
+                      Generated on {{ promo.sql_generated_at if promo.sql_generated_at else 'Unknown' }}
                     </div>
                   </div>
                 </div>
                 <div class="file-actions">
-                  <a href="{{ url_for('download_sql', promo_code=promo.code) }}" 
+                  <a href="{{ url_for('promo.download_sql', promo_code=promo.code) }}" 
                      class="btn btn-sm btn-outline">
                     <i class="fas fa-download"></i> Download SQL
                   </a>
