@@ -357,7 +357,7 @@ input[type="radio"]:focus {
 }
 .scrollable {
   overflow-y: auto;
-  max-height: 300px;
+  max-height: 150px;
 }
 .small-height { max-height: 150px; }
 .small-text { font-size: 0.9rem; line-height: 1.5; }

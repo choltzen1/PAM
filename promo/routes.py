@@ -80,6 +80,12 @@ def edit_promo(promo_code):
     return render_template('edit_promo.html', 
                          promo=promo_data, 
                          active_tab=tab,
+                         soc_groupings=data_manager.get_soc_groupings(),
+                         soc_grouping_details=data_manager.get_soc_grouping_details(),
+                         account_types=data_manager.get_account_types(),
+                         account_type_details=data_manager.get_account_type_details(),
+                         sales_applications=data_manager.get_sales_applications(),
+                         sales_application_details=data_manager.get_sales_application_details(),
                          user_name="Cade Holtzen")
 
 @promo_bp.route('/clear_trade_data/<promo_code>', methods=['POST'])

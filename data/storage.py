@@ -532,123 +532,183 @@ class PromoDataManager:
         
         return ["All"] + sorted(list(owners))
     
-    def get_soc_groupings(self) -> Dict[str, Dict[str, Any]]:
-        """Get SOC grouping definitions"""
-        return {
-            "Group 1NS": {
-                "name": "Group 1NS - GSM - Consumer & TFB",
-                "plans": [
-                    "T-Mobile ONE rate plans",
-                    "Magenta rate plans", 
-                    "Essentials rate plans",
-                    "Bus/Gov Unlimited rate plans"
-                ]
-            },
-            "Group 3": {
-                "name": "Group 3 - MI - Consumer & TFB",
-                "plans": [
-                    "10GB or higher Mobile Internet rate plans (limited buckets)",
-                    "Excludes unlimited highspeed data plans"
-                ]
-            },
-            "Group 4": {
-                "name": "Group 4 - GSM - Consumer & TFB - excludes PlusUP & MAXUp line level upsell SOCs",
-                "plans": []
-            },
-            "Group 5": {
-                "name": "Group 5 - MI - All MTME Eligible MI/BTS - Consumer & TFB",
-                "plans": []
-            },
-            "Group 6": {
-                "name": "Group 6 - GSM - Consumer & TFB",
-                "plans": [
-                    "TMO ONE Plus rate plans (Incl. 55+)",
-                    "Magenta Plus rate plans (Incl. First Responder & 55+)",
-                    "Magenta MAX rate plans (Incl. First responder & 55+)",
-                    "TMO ONE Plus Military rate plans",
-                    "Magenta Plus Military rate plans",
-                    "Magenta MAX Military rate plans",
-                    "Business Unlimited Plus plans",
-                    "Magenta Plus DHH plans",
-                    "Magenta MAX DHH plans",
-                    "Business Unlimited Ultimate plans",
-                    "Plus Up Upsell SOCs (Include Intl/Global Plus SOCs)",
-                    "MAXUp Upsell SOCs",
-                    "Business Unlimited Upsell SOCs (Ultimate)"
-                ]
-            }
-        }
+    def get_soc_groupings(self) -> list:
+        """Return the exact list of SOC grouping codes for the dropdown."""
+        return [
+            "10B", "10C", "15A", "15N", "15S", "17D", "1AS", "1NS", "2AS", "2NS",
+            "69N", "69S", "A3N", "A6N", "A6S", "A7N", "A7S", "A8N", "A8R", "A8S",
+            "ALL", "AN8", "AR3", "AR6", "AR7", "AR8", "AT1", "AT2", "AT3", "AT4",
+            "AT5", "AT6", "AT7", "B1", "B10", "B11", "B2", "B3", "B4", "B5",
+            "B6", "B7", "B8", "B9", "G03", "G04", "G05", "G06", "G07", "G08",
+            "G09", "G10", "G11", "G12", "G13", "G14", "G15", "G16", "G17", "G18",
+            "G19", "G20", "G21", "G22", "G23", "G24", "G25", "G26", "G27", "G28",
+            "G29", "G30", "G31", "G32", "G33", "G34", "G35", "G36", "G37", "G38",
+            "G39", "G40", "G41", "G42", "G43", "G44", "G45", "G46", "G47", "G48",
+            "G49", "G50", "G51", "G52", "G53", "G54", "G55", "G56", "G57", "G58",
+            "G59", "G60", "G61", "G62", "G63", "G64", "G65", "G66", "G67", "G68",
+            "G69", "G70", "G71", "G72", "G73", "G74", "G75", "G76", "G77", "G78",
+            "G79", "G7A", "G80", "G81", "G82", "G99", "G9A", "TB1", "W1", "W10",
+            "W12", "W13", "W1N", "W1S", "W2", "W3", "W3N", "W4", "W5", "W6",
+            "W7", "W7N", "W7S", "W8", "W8N", "W8S", "W9", "WN8", "WR8"
+        ]
     
-    def get_account_types(self) -> Dict[str, List[str]]:
-        """Get account type definitions"""
-        return {
-            "options": ["A01", "A02", "A03", "A04", "A05", "A06", "A07", "A08", "A09", "A10"],
-            "descriptions": [
-                "Regular (I/R); Association (I/A); GSA (I/F); Government (I/G); MCSA (I/M)",
-                "Corporate (B/C); Retail (B/L); MCSA (B/M); National (B/N); MCSAGE (B/O)",
-                "Non-Profit (B/P); Sole-Proprietorship (I/S)",
-                "Employee (S/Y); Non TMO Employee (S/6)"
-            ]
-        }
+    def get_soc_grouping_details(self) -> str:
+        """Return the full SOC grouping details as formatted text."""
+        soc_file_path = os.path.join(os.path.dirname(__file__), '..', 'static', 'soc_grouping.txt')
+        details = []
+        
+        try:
+            with open(soc_file_path, 'r', encoding='utf-8') as file:
+                for line in file:
+                    line = line.strip()
+                    if line and '|' in line:
+                        # Split on the first | to separate group info from details
+                        group_part, details_part = line.split('|', 1)
+                        
+                        # Format the group part
+                        details.append(f"<strong>{group_part.strip()}</strong>")
+                        
+                        # Format the details part if it exists
+                        if details_part.strip():
+                            # Split details by comma and format as bullet points
+                            detail_items = [item.strip() for item in details_part.split(',') if item.strip()]
+                            for item in detail_items:
+                                details.append(f"• {item}")
+                        
+                        details.append("")  # Add blank line between groups
+                    elif line:
+                        # Handle lines without | separator
+                        details.append(f"<strong>{line}</strong>")
+                        details.append("")
+            
+            return "<br>".join(details)
+        
+        except FileNotFoundError:
+            return "SOC Grouping file not found."
+        except Exception as e:
+            return f"Error reading SOC groupings: {str(e)}"
     
-    def get_sales_applications(self) -> Dict[str, List[str]]:
-        """Get sales application definitions"""
-        return {
-            "options": ["S01", "S02", "S03", "S04", "S05", "S06", "S07", "S08", "S09", "S10"],
-            "descriptions": [
-                "Care - QVXPC; Dash (TSL) - Virtual Retail",
-                "QVXPR - Retail; POS - Retail; NAT - National Retail", 
-                "Web (TMO) - T-Mo.com; Web - MyT-Mo (cloud)",
-                "Costco with EIP; BestBuy"
-            ]
-        }
+    def get_account_types(self) -> List[str]:
+        """Get list of account type codes from account_types.txt"""
+        return [
+            "A01", "A02", "A03", "A04", "A05", "A06", "A07", "A08", "A09", "A10",
+            "A11", "A12", "A13", "A14", "A15", "A16", "A17", "ALL", "AT1", "AT2",
+            "AT3", "AT4", "AT5", "AT6", "AT7", "GST"
+        ]
     
-    def get_soc_groupings(self) -> Dict[str, Dict[str, Any]]:
-        """Get SOC grouping definitions"""
-        return {
-            "Group 1NS": {
-                "name": "Group 1NS - GSM - Consumer & TFB",
-                "plans": [
-                    "T-Mobile ONE rate plans",
-                    "Magenta rate plans", 
-                    "Essentials rate plans",
-                    "Bus/Gov Unlimited rate plans"
-                ]
-            },
-            "Group 3": {
-                "name": "Group 3 - MI - Consumer & TFB",
-                "plans": [
-                    "10GB or higher Mobile Internet rate plans (limited buckets)",
-                    "Excludes unlimited highspeed data plans"
-                ]
-            },
-            "Group 4": {
-                "name": "Group 4 - GSM - Consumer & TFB - excludes PlusUP & MAXUp line level upsell SOCs",
-                "plans": []
-            },
-            "Group 5": {
-                "name": "Group 5 - MI - All MTME Eligible MI/BTS - Consumer & TFB",
-                "plans": []
-            },            "Group 6": {
-                "name": "Group 6 - GSM - Consumer & TFB",
-                "plans": [
-                    "TMO ONE Plus rate plans (Incl. 55+)",
-                    "Magenta Plus rate plans (Incl. First Responder & 55+)",
-                    "Magenta MAX rate plans (Incl. First responder & 55+)",
-                    "TMO ONE Plus Military rate plans",
-                    "Magenta Plus Military rate plans",
-                    "Magenta MAX Military rate plans",
-                    "Business Unlimited Plus plans",
-                    "Magenta Plus DHH plans",
-                    "Magenta MAX DHH plans",
-                    "Business Unlimited Ultimate plans",
-                    "Plus Up Upsell SOCs (Include Intl/Global Plus SOCs)",
-                    "MAXUp Upsell SOCs",
-                    "Business Unlimited Upsell SOCs (Ultimate)"
-                ]
-            }
-        }
-
+    def get_account_type_details(self) -> str:
+        """Get detailed account type information from account_types.txt"""
+        try:
+            account_types_file = os.path.join(os.path.dirname(__file__), '..', 'static', 'account_types.txt')
+            
+            with open(account_types_file, 'r', encoding='utf-8') as file:
+                content = file.read().strip()
+            
+            if not content:
+                return "No account type information found."
+            
+            details = []
+            lines = content.split('\n')
+            
+            for line in lines:
+                line = line.strip()
+                if not line:
+                    continue
+                    
+                if '|' in line:
+                    parts = line.split('|')
+                    if len(parts) >= 2:
+                        account_type = parts[0].strip()
+                        description = parts[1].strip()
+                        
+                        details.append(f"<strong>{account_type}</strong>")
+                        if description:
+                            details.append(description)
+                        details.append("")
+                else:
+                    if line:
+                        # Handle lines without | separator
+                        details.append(f"<strong>{line}</strong>")
+                        details.append("")
+            
+            return "<br>".join(details)
+        
+        except FileNotFoundError:
+            return "Account Types file not found."
+        except Exception as e:
+            return f"Error reading account types: {str(e)}"
+    
+    def get_sales_applications(self) -> List[str]:
+        """Get list of sales application codes from sales_apps.txt"""
+        try:
+            sales_apps_file = os.path.join(os.path.dirname(__file__), '..', 'static', 'sales_apps.txt')
+            
+            with open(sales_apps_file, 'r', encoding='utf-8') as file:
+                content = file.read().strip()
+            
+            if not content:
+                return []
+            
+            sales_apps = []
+            lines = content.split('\n')
+            
+            for line in lines:
+                line = line.strip()
+                if line and ' - ' in line:
+                    code = line.split(' - ')[0].strip()
+                    if code:
+                        sales_apps.append(code)
+            
+            return sales_apps
+        except FileNotFoundError:
+            print(f"Warning: sales_apps.txt file not found.")
+            return []
+        except Exception as e:
+            print(f"Error reading sales applications: {e}")
+            return []
+    
+    def get_sales_application_details(self) -> str:
+        """Get detailed sales application information from sales_apps.txt"""
+        try:
+            sales_apps_file = os.path.join(os.path.dirname(__file__), '..', 'static', 'sales_apps.txt')
+            
+            with open(sales_apps_file, 'r', encoding='utf-8') as file:
+                content = file.read().strip()
+            
+            if not content:
+                return "No sales application information found."
+            
+            details = []
+            lines = content.split('\n')
+            
+            for line in lines:
+                line = line.strip()
+                if not line:
+                    continue
+                    
+                if ' - ' in line:
+                    parts = line.split(' - ', 1)
+                    if len(parts) >= 2:
+                        sales_app = parts[0].strip()
+                        description = parts[1].strip()
+                        
+                        details.append(f"<strong>{sales_app}</strong>")
+                        if description:
+                            details.append(description)
+                        details.append("")
+                else:
+                    if line:
+                        # Handle lines without - separator
+                        details.append(f"<strong>{line}</strong>")
+                        details.append("")
+            
+            return "<br>".join(details)
+        
+        except FileNotFoundError:
+            return "Sales Applications file not found."
+        except Exception as e:
+            return f"Error reading sales applications: {str(e)}"
+    
     # File Upload Methods
     
     def _get_promo_upload_dir(self, promo_code: str) -> str:
