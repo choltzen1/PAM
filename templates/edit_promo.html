@@ -872,6 +872,42 @@ function showValidationAlert(message) {
   }
 }
 
+// Function to show clear message at bottom of tab
+function showClearMessage(message) {
+  // Remove any existing clear messages
+  document.querySelectorAll('.clear-message').forEach(el => {
+    el.remove();
+  });
+  
+  // Create the message element
+  const messageEl = document.createElement('div');
+  messageEl.className = 'clear-message';
+  messageEl.textContent = message;
+  messageEl.style.cssText = 'color: #e20074; font-size: 14px; font-weight: 500; margin-right: 15px;';
+  
+  // Find the active tab's save footer and insert the message
+  const saveFooter = document.querySelector('.save-footer');
+  if (saveFooter) {
+    const buttonContainer = saveFooter.querySelector('div[style*="display: flex"]');
+    if (buttonContainer) {
+      buttonContainer.insertBefore(messageEl, buttonContainer.firstChild);
+    } else {
+      // If no button container, insert before the save button
+      const saveButton = saveFooter.querySelector('button[type="submit"]');
+      if (saveButton) {
+        saveFooter.insertBefore(messageEl, saveButton);
+      }
+    }
+  }
+  
+  // Auto-remove the message after 3 seconds
+  setTimeout(() => {
+    if (messageEl.parentNode) {
+      messageEl.remove();
+    }
+  }, 3000);
+}
+
 // Clear data functions for each tab
 function clearTradeData() {
   // Send request to backend to clear trade data
@@ -914,7 +950,7 @@ function clearTradeData() {
       checkTierCompatibility();
       
       // Show success message
-      alert('Trade data cleared successfully!');
+      showClearMessage('Trade data cleared');
     } else {
       alert('Error clearing trade data: ' + data.error);
     }
@@ -955,7 +991,7 @@ function clearTiersData() {
       checkTierCompatibility();
       
       // Show success message
-      alert('Tiers data cleared successfully!');
+      showClearMessage('Tiers data cleared');
     } else {
       alert('Error clearing tiers data: ' + data.error);
     }
@@ -996,7 +1032,7 @@ function clearSegmentData() {
       });
       
       // Show success message
-      alert('Segmentation data cleared successfully!');
+      showClearMessage('Segmentation data cleared');
     } else {
       alert('Error clearing segmentation data: ' + data.error);
     }
