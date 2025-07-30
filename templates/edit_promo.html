@@ -337,7 +337,12 @@
               <input class="form-control" name="trade_tier_4_max_fmv" value="{{ promo.trade_tier_4_max_fmv }}" title="Maximum Fair Market Value">
             </div>
             <div class="save-footer">
-              <button type="submit" class="btn btn-primary">Save Trade</button>
+              <div style="display: flex; justify-content: flex-end; align-items: center; gap: 15px;">
+                <button type="button" onclick="clearTradeData()" class="btn btn-outline" style="background-color: #fff; border: 1px solid #dc3545; color: #dc3545;">
+                  <i class="fas fa-trash"></i> Clear Trade Data
+                </button>
+                <button type="submit" class="btn btn-primary">Save Trade</button>
+              </div>
             </div>
 
           {% elif active_tab == 'Tiers' %}
@@ -350,7 +355,7 @@
               <label class="section-label col-span-2">Tier 1 Devices</label>
               <input class="form-control" name="tier_1_amount" value="{{ promo.tier_1_amount }}">
               <input class="form-control" name="tier_1_sku_group_id" value="{{ promo.tier_1_sku_group_id }}">
-              <textarea class="form-control col-span-2" name="tier_1_devices" rows="2">{{ promo.tier_1_devices }}</textarea>
+              <textarea class="form-control col-span-2" name="tier_1_devices" rows="2" style="resize: none; height: 60px; overflow-y: auto;">{{ promo.tier_1_devices }}</textarea>
 
               <label class="section-label">Tier 2 Amount $</label>
               <label class="section-label">Tier 2 SKU Group ID</label>
@@ -374,7 +379,12 @@
               <textarea class="form-control col-span-2" name="tier_4_devices" rows="2">{{ promo.tier_4_devices }}</textarea>
             </div>
             <div class="save-footer">
-              <button type="submit" class="btn btn-primary">Save Tiers</button>
+              <div style="display: flex; justify-content: flex-end; align-items: center; gap: 15px;">
+                <button type="button" onclick="clearTiersData()" class="btn btn-outline" style="background-color: #fff; border: 1px solid #dc3545; color: #dc3545;">
+                  <i class="fas fa-trash"></i> Clear Tiers Data
+                </button>
+                <button type="submit" class="btn btn-primary">Save Tiers</button>
+              </div>
             </div>
 
           {% elif active_tab == 'Segmentation' %}
@@ -404,7 +414,12 @@
               </div>
             </div>
             <div class="save-footer">
-              <button type="submit" class="btn btn-primary">Save Segmentation</button>
+              <div style="display: flex; justify-content: flex-end; align-items: center; gap: 15px;">
+                <button type="button" onclick="clearSegmentData()" class="btn btn-outline" style="background-color: #fff; border: 1px solid #dc3545; color: #dc3545;">
+                  <i class="fas fa-trash"></i> Clear Segment Data
+                </button>
+                <button type="submit" class="btn btn-primary">Save Segmentation</button>
+              </div>
             </div>
 
           {% elif active_tab == 'Groupings' %}
@@ -605,7 +620,7 @@
                   </a>
                 </div>
               </div>
-              <textarea class="form-control" rows="8" readonly style="font-family: monospace; font-size: 12px; background-color: #f8f9fa;">{{ promo.generated_sql }}</textarea>
+              <textarea class="form-control" rows="25" readonly style="font-family: monospace; font-size: 12px; background-color: #f8f9fa; resize: none; overflow-y: auto;">{{ promo.generated_sql }}</textarea>
               <small class="form-text">SQL file has been generated and saved. Use the download button above to get the file.</small>
             </div>
             {% endif %}
@@ -709,6 +724,344 @@ function initPromoData() {
 
 // Call initialization when page loads
 document.addEventListener('DOMContentLoaded', initPromoData);
+
+// Trade validation functions
+function validateTradeFields() {
+  const brokenTradeY = document.querySelector('input[name="broken_trade"][value="Y"]');
+  const brokenTradeChecked = brokenTradeY && brokenTradeY.checked;
+  
+  // Clear existing validation errors first
+  document.querySelectorAll('.validation-error').forEach(el => {
+    el.classList.remove('validation-error');
+  });
+  document.querySelectorAll('.validation-message').forEach(el => {
+    el.remove();
+  });
+  
+  if (brokenTradeChecked) {
+    let hasErrors = false;
+    // Check all trade tier condition IDs
+    for (let tier = 1; tier <= 4; tier++) {
+      const condInput = document.querySelector(`input[name="trade_tier_${tier}_cond_id"]`);
+      if (condInput && condInput.value === 'ST1') {
+        // Add error styling
+        condInput.classList.add('validation-error');
+        
+        // Add error message
+        const errorMsg = document.createElement('small');
+        errorMsg.className = 'validation-message';
+        errorMsg.textContent = 'Must be BT1 when Broken Trade is Yes';
+        condInput.parentNode.appendChild(errorMsg);
+        
+        hasErrors = true;
+      }
+    }
+    
+    if (hasErrors) {
+      // Show alert at top of Trade tab
+      showValidationAlert('When Broken Trade is Yes, all Trade In Condition IDs must be BT1, not ST1.');
+    }
+  }
+}
+
+function showCompatibilityWarning(tabType, message) {
+  const tabSelector = tabType === 'trade' ? 
+    'div[style*="grid-template-columns: repeat(5, 1fr)"]' : 
+    '.grid-form.four-col';
+  
+  const targetElement = document.querySelector(tabSelector);
+  if (targetElement) {
+    const warning = document.createElement('div');
+    warning.className = 'compatibility-warning';
+    warning.style.cssText = 'background-color: #fff3cd; border: 1px solid #ffeaa7; color: #856404; padding: 10px; margin-bottom: 15px; border-radius: 4px; font-size: 14px;';
+    warning.innerHTML = `<strong>⚠️ Configuration Conflict:</strong> ${message}`;
+    targetElement.insertBefore(warning, targetElement.firstChild);
+  }
+  
+  // Add warning indicators to tab navigation
+  updateTabWarnings(hasTradeData, hasTieredData);
+}
+
+function updateTabWarnings(hasTradeData, hasTieredData) {
+  // Remove existing warning indicators
+  document.querySelectorAll('.tab-warning').forEach(el => el.remove());
+  
+  if (hasTradeData && hasTieredData) {
+    // Add warning to Trade tab
+    const tradeTab = document.querySelector('a[href*="tab=Trade"]');
+    if (tradeTab) {
+      const warning = document.createElement('span');
+      warning.className = 'tab-warning';
+      warning.innerHTML = ' ⚠️';
+      warning.style.color = '#856404';
+      tradeTab.appendChild(warning);
+    }
+    
+    // Add warning to Tiers tab
+    const tiersTab = document.querySelector('a[href*="tab=Tiers"]');
+    if (tiersTab) {
+      const warning = document.createElement('span');
+      warning.className = 'tab-warning';
+      warning.innerHTML = ' ⚠️';
+      warning.style.color = '#856404';
+      tiersTab.appendChild(warning);
+    }
+  }
+}
+
+// Update the checkTierCompatibility function to track the data state
+function checkTierCompatibility() {
+  // Check if trade tiers have data
+  let hasTradeData = false;
+  for (let tier = 1; tier <= 4; tier++) {
+    const amount = document.querySelector(`input[name="trade_tier_${tier}_amount"]`);
+    const model = document.querySelector(`input[name="trade_tier_${tier}_make_model"]`);
+    if ((amount && amount.value.trim()) || (model && model.value.trim())) {
+      hasTradeData = true;
+      break;
+    }
+  }
+  
+  // Check if tiered groups have data
+  let hasTieredData = false;
+  const tieredGroupId = document.querySelector('input[name="tiered_group_id"]');
+  for (let tier = 1; tier <= 4; tier++) {
+    const amount = document.querySelector(`input[name="tier_${tier}_amount"]`);
+    const skuGroup = document.querySelector(`input[name="tier_${tier}_sku_group_id"]`);
+    if ((amount && amount.value.trim()) || (skuGroup && skuGroup.value.trim()) || (tieredGroupId && tieredGroupId.value.trim())) {
+      hasTieredData = true;
+      break;
+    }
+  }
+  
+  // Store the state for use in other functions
+  window.hasTradeData = hasTradeData;
+  window.hasTieredData = hasTieredData;
+  
+  // Clear existing compatibility warnings
+  document.querySelectorAll('.compatibility-warning').forEach(el => {
+    el.remove();
+  });
+  
+  // Update tab warnings
+  updateTabWarnings(hasTradeData, hasTieredData);
+  
+  // If both have data, show warnings
+  if (hasTradeData && hasTieredData) {
+    showCompatibilityWarning('trade', 'Trade-in tiers and tiered groups cannot be used together. Please clear one of the configurations before proceeding.');
+    showCompatibilityWarning('tiers', 'Trade-in tiers and tiered groups cannot be used together. Please clear one of the configurations before proceeding.');
+  }
+}
+
+function showValidationAlert(message) {
+  // Remove existing alert if any
+  const existingAlert = document.querySelector('.alert-validation');
+  if (existingAlert) {
+    existingAlert.remove();
+  }
+  
+  // Create new alert
+  const alert = document.createElement('div');
+  alert.className = 'alert-validation';
+  alert.innerHTML = `<strong>Validation Error:</strong> ${message}`;
+  
+  // Insert at top of the active tab content
+  const activeTabContent = document.querySelector('.tab-content');
+  if (activeTabContent) {
+    activeTabContent.insertBefore(alert, activeTabContent.firstChild);
+  }
+}
+
+// Clear data functions for each tab
+function clearTradeData() {
+  // Send request to backend to clear trade data
+  fetch(`/clear_trade_data/${window.promoData.code}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      // Clear the form fields in the UI
+      const tradeGroupInput = document.querySelector('input[name="trade_in_group_id"]');
+      if (tradeGroupInput) tradeGroupInput.value = '';
+      
+      // Clear broken trade radio buttons
+      document.querySelectorAll('input[name="broken_trade"]').forEach(radio => {
+        radio.checked = false;
+      });
+      
+      // Clear all trade tier fields
+      for (let tier = 1; tier <= 4; tier++) {
+        const fields = [
+          `trade_tier_${tier}_make_model`,
+          `trade_tier_${tier}_amount`,
+          `trade_tier_${tier}_cond_id`,
+          `trade_tier_${tier}_min_fmv`,
+          `trade_tier_${tier}_max_fmv`
+        ];
+        
+        fields.forEach(fieldName => {
+          const input = document.querySelector(`input[name="${fieldName}"]`);
+          if (input) input.value = '';
+        });
+      }
+      
+      // Re-run validation after clearing
+      validateTradeFields();
+      checkTierCompatibility();
+      
+      // Show success message
+      alert('Trade data cleared successfully!');
+    } else {
+      alert('Error clearing trade data: ' + data.error);
+    }
+  })
+  .catch(error => {
+    console.error('Error:', error);
+    alert('Error clearing trade data. Please try again.');
+  });
+}
+
+function clearTiersData() {
+  // Send request to backend to clear tiers data
+  fetch(`/clear_tiers_data/${window.promoData.code}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      // Clear the form fields in the UI
+      const tieredGroupInput = document.querySelector('input[name="tiered_group_id"]');
+      if (tieredGroupInput) tieredGroupInput.value = '';
+      
+      // Clear all tier fields
+      for (let tier = 1; tier <= 4; tier++) {
+        const amountInput = document.querySelector(`input[name="tier_${tier}_amount"]`);
+        const skuGroupInput = document.querySelector(`input[name="tier_${tier}_sku_group_id"]`);
+        const devicesTextarea = document.querySelector(`textarea[name="tier_${tier}_devices"]`);
+        
+        if (amountInput) amountInput.value = '';
+        if (skuGroupInput) skuGroupInput.value = '';
+        if (devicesTextarea) devicesTextarea.value = '';
+      }
+      
+      // Re-run validation after clearing
+      checkTierCompatibility();
+      
+      // Show success message
+      alert('Tiers data cleared successfully!');
+    } else {
+      alert('Error clearing tiers data: ' + data.error);
+    }
+  })
+  .catch(error => {
+    console.error('Error:', error);
+    alert('Error clearing tiers data. Please try again.');
+  });
+}
+
+function clearSegmentData() {
+  // Send request to backend to clear segment data
+  fetch(`/clear_segment_data/${window.promoData.code}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      // Clear the form fields in the UI
+      const segmentNameInput = document.querySelector('input[name="segment_name"]');
+      if (segmentNameInput) segmentNameInput.value = '';
+      
+      // Clear sub segment radio buttons
+      document.querySelectorAll('input[name="sub_segment"]').forEach(radio => {
+        radio.checked = false;
+      });
+      
+      // Clear segment group ID
+      const segmentGroupInput = document.querySelector('input[name="segment_group_id"]');
+      if (segmentGroupInput) segmentGroupInput.value = '';
+      
+      // Clear segment level radio buttons
+      document.querySelectorAll('input[name="segment_level"]').forEach(radio => {
+        radio.checked = false;
+      });
+      
+      // Show success message
+      alert('Segmentation data cleared successfully!');
+    } else {
+      alert('Error clearing segmentation data: ' + data.error);
+    }
+  })
+  .catch(error => {
+    console.error('Error:', error);
+    alert('Error clearing segmentation data. Please try again.');
+  });
+}
+
+// Add event listeners when DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+  // Listen for changes to broken trade radio buttons
+  document.querySelectorAll('input[name="broken_trade"]').forEach(radio => {
+    radio.addEventListener('change', validateTradeFields);
+  });
+  
+  // Listen for changes to condition ID inputs
+  for (let tier = 1; tier <= 4; tier++) {
+    const condInput = document.querySelector(`input[name="trade_tier_${tier}_cond_id"]`);
+    if (condInput) {
+      condInput.addEventListener('input', validateTradeFields);
+      condInput.addEventListener('blur', validateTradeFields);
+    }
+  }
+  
+  // Add tier compatibility validation listeners
+  // Trade tier inputs
+  for (let tier = 1; tier <= 4; tier++) {
+    const amountInput = document.querySelector(`input[name="trade_tier_${tier}_amount"]`);
+    const modelInput = document.querySelector(`input[name="trade_tier_${tier}_make_model"]`);
+    if (amountInput) {
+      amountInput.addEventListener('input', checkTierCompatibility);
+      amountInput.addEventListener('blur', checkTierCompatibility);
+    }
+    if (modelInput) {
+      modelInput.addEventListener('input', checkTierCompatibility);
+      modelInput.addEventListener('blur', checkTierCompatibility);
+    }
+  }
+  
+  // Tiered group inputs
+  const tieredGroupIdInput = document.querySelector('input[name="tiered_group_id"]');
+  if (tieredGroupIdInput) {
+    tieredGroupIdInput.addEventListener('input', checkTierCompatibility);
+    tieredGroupIdInput.addEventListener('blur', checkTierCompatibility);
+  }
+  
+  for (let tier = 1; tier <= 4; tier++) {
+    const tierAmountInput = document.querySelector(`input[name="tier_${tier}_amount"]`);
+    const tierSkuInput = document.querySelector(`input[name="tier_${tier}_sku_group_id"]`);
+    if (tierAmountInput) {
+      tierAmountInput.addEventListener('input', checkTierCompatibility);
+      tierAmountInput.addEventListener('blur', checkTierCompatibility);
+    }
+    if (tierSkuInput) {
+      tierSkuInput.addEventListener('input', checkTierCompatibility);
+      tierSkuInput.addEventListener('blur', checkTierCompatibility);
+    }
+  }
+  
+  // Validate on page load
+  validateTradeFields();
+  checkTierCompatibility();
+});
 </script>
 {% endblock %}
 {% endblock %}
