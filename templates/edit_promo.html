@@ -59,7 +59,7 @@
       <!-- RIGHT PANEL -->
       <div class="right-panel">
         <div class="tabs">
-          {% for tab in ['Details','Dates & Times','Requirements','Segmentation','Groupings','BPTCR','SQL Generation'] %}
+          {% for tab in ['Details','Dates & Times','Requirements','Trade','Tiers','Segmentation','Groupings','BPTCR','SQL Generation'] %}
             <a href="{{ url_for('edit_promo', promo_code=promo.code, tab=tab) }}"
                class="tab {% if tab == active_tab %}active{% endif %}">
               {{ tab }}
@@ -272,6 +272,109 @@
             </div>
             <div class="save-footer">
               <button type="submit" class="btn btn-primary">Save Requirements</button>
+            </div>
+
+          {% elif active_tab == 'Trade' %}
+            <div class="grid-form four-col">
+              <label class="section-label col-span-3">Trade-In Group ID</label>
+              <label class="section-label">Broken Trade</label>
+              <input class="form-control col-span-3" name="trade_in_group_id" value="{{ promo.trade_in_group_id }}">
+              <div class="input-group vertical-radio">
+                <label class="radio-vertical">
+                  Y
+                  <input type="radio" name="broken_trade" value="Y" {% if promo.broken_trade == 'Y' %}checked{% endif %}>
+                </label>
+                <label class="radio-vertical">
+                  N
+                  <input type="radio" name="broken_trade" value="N" {% if promo.broken_trade == 'N' %}checked{% endif %}>
+                </label>
+              </div>
+            </div>
+
+            <div class="grid-form" style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.5rem;">
+              <label class="section-label">Tier 1 Make Model Group</label>
+              <label class="section-label">Tier 1 Amount $</label>
+              <label class="section-label">Tier 1 Trade In Cond ID</label>
+              <label class="section-label">Tier 1 Min FMV</label>
+              <label class="section-label">Tier 1 Max FMV</label>
+              <input class="form-control" name="trade_tier_1_make_model" value="{{ promo.trade_tier_1_make_model }}">
+              <input class="form-control" name="trade_tier_1_amount" value="{{ promo.trade_tier_1_amount }}">
+              <input class="form-control" name="trade_tier_1_cond_id" value="{{ promo.trade_tier_1_cond_id }}" title="Trade-In Condition ID - ST1 for Good Condition">
+              <input class="form-control" name="trade_tier_1_min_fmv" value="{{ promo.trade_tier_1_min_fmv }}" title="Minimum Fair Market Value">
+              <input class="form-control" name="trade_tier_1_max_fmv" value="{{ promo.trade_tier_1_max_fmv }}" title="Maximum Fair Market Value">
+
+              <label class="section-label">Tier 2 Make Model Group</label>
+              <label class="section-label">Tier 2 Amount $</label>
+              <label class="section-label">Tier 2 Trade In Cond ID</label>
+              <label class="section-label">Tier 2 Min FMV</label>
+              <label class="section-label">Tier 2 Max FMV</label>
+              <input class="form-control" name="trade_tier_2_make_model" value="{{ promo.trade_tier_2_make_model }}">
+              <input class="form-control" name="trade_tier_2_amount" value="{{ promo.trade_tier_2_amount }}">
+              <input class="form-control" name="trade_tier_2_cond_id" value="{{ promo.trade_tier_2_cond_id }}" title="Trade-In Condition ID - ST1 for Good Condition">
+              <input class="form-control" name="trade_tier_2_min_fmv" value="{{ promo.trade_tier_2_min_fmv }}" title="Minimum Fair Market Value">
+              <input class="form-control" name="trade_tier_2_max_fmv" value="{{ promo.trade_tier_2_max_fmv }}" title="Maximum Fair Market Value">
+
+              <label class="section-label">Tier 3 Make Model Group</label>
+              <label class="section-label">Tier 3 Amount $</label>
+              <label class="section-label">Tier 3 Trade In Cond ID</label>
+              <label class="section-label">Tier 3 Min FMV</label>
+              <label class="section-label">Tier 3 Max FMV</label>
+              <input class="form-control" name="trade_tier_3_make_model" value="{{ promo.trade_tier_3_make_model }}">
+              <input class="form-control" name="trade_tier_3_amount" value="{{ promo.trade_tier_3_amount }}">
+              <input class="form-control" name="trade_tier_3_cond_id" value="{{ promo.trade_tier_3_cond_id }}" title="Trade-In Condition ID - ST1 for Good Condition">
+              <input class="form-control" name="trade_tier_3_min_fmv" value="{{ promo.trade_tier_3_min_fmv }}" title="Minimum Fair Market Value">
+              <input class="form-control" name="trade_tier_3_max_fmv" value="{{ promo.trade_tier_3_max_fmv }}" title="Maximum Fair Market Value">
+
+              <label class="section-label">Tier 4 Make Model Group</label>
+              <label class="section-label">Tier 4 Amount $</label>
+              <label class="section-label">Tier 4 Trade In Cond ID</label>
+              <label class="section-label">Tier 4 Min FMV</label>
+              <label class="section-label">Tier 4 Max FMV</label>
+              <input class="form-control" name="trade_tier_4_make_model" value="{{ promo.trade_tier_4_make_model }}">
+              <input class="form-control" name="trade_tier_4_amount" value="{{ promo.trade_tier_4_amount }}">
+              <input class="form-control" name="trade_tier_4_cond_id" value="{{ promo.trade_tier_4_cond_id }}" title="Trade-In Condition ID - ST1 for Good Condition">
+              <input class="form-control" name="trade_tier_4_min_fmv" value="{{ promo.trade_tier_4_min_fmv }}" title="Minimum Fair Market Value">
+              <input class="form-control" name="trade_tier_4_max_fmv" value="{{ promo.trade_tier_4_max_fmv }}" title="Maximum Fair Market Value">
+            </div>
+            <div class="save-footer">
+              <button type="submit" class="btn btn-primary">Save Trade</button>
+            </div>
+
+          {% elif active_tab == 'Tiers' %}
+            <div class="grid-form four-col">
+              <label class="section-label col-span-4">Tiered Group ID</label>
+              <input class="form-control col-span-4" name="tiered_group_id" value="{{ promo.tiered_group_id }}">
+
+              <label class="section-label">Tier 1 Amount $</label>
+              <label class="section-label">Tier 1 SKU Group ID</label>
+              <label class="section-label col-span-2">Tier 1 Devices</label>
+              <input class="form-control" name="tier_1_amount" value="{{ promo.tier_1_amount }}">
+              <input class="form-control" name="tier_1_sku_group_id" value="{{ promo.tier_1_sku_group_id }}">
+              <textarea class="form-control col-span-2" name="tier_1_devices" rows="2">{{ promo.tier_1_devices }}</textarea>
+
+              <label class="section-label">Tier 2 Amount $</label>
+              <label class="section-label">Tier 2 SKU Group ID</label>
+              <label class="section-label col-span-2">Tier 2 Devices</label>
+              <input class="form-control" name="tier_2_amount" value="{{ promo.tier_2_amount }}">
+              <input class="form-control" name="tier_2_sku_group_id" value="{{ promo.tier_2_sku_group_id }}">
+              <textarea class="form-control col-span-2" name="tier_2_devices" rows="2">{{ promo.tier_2_devices }}</textarea>
+
+              <label class="section-label">Tier 3 Amount $</label>
+              <label class="section-label">Tier 3 SKU Group ID</label>
+              <label class="section-label col-span-2">Tier 3 Devices</label>
+              <input class="form-control" name="tier_3_amount" value="{{ promo.tier_3_amount }}">
+              <input class="form-control" name="tier_3_sku_group_id" value="{{ promo.tier_3_sku_group_id }}">
+              <textarea class="form-control col-span-2" name="tier_3_devices" rows="2">{{ promo.tier_3_devices }}</textarea>
+
+              <label class="section-label">Tier 4 Amount $</label>
+              <label class="section-label">Tier 4 SKU Group ID</label>
+              <label class="section-label col-span-2">Tier 4 Devices</label>
+              <input class="form-control" name="tier_4_amount" value="{{ promo.tier_4_amount }}">
+              <input class="form-control" name="tier_4_sku_group_id" value="{{ promo.tier_4_sku_group_id }}">
+              <textarea class="form-control col-span-2" name="tier_4_devices" rows="2">{{ promo.tier_4_devices }}</textarea>
+            </div>
+            <div class="save-footer">
+              <button type="submit" class="btn btn-primary">Save Tiers</button>
             </div>
 
           {% elif active_tab == 'Segmentation' %}
