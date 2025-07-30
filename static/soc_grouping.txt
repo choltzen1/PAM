@@ -1,3 +1,125 @@
-SOC Grouping Content Line 1
-SOC Grouping Content Line 2
-SOC Grouping Content Line 3
+Group 1NS - GSM - Consumer & TFB|T-Mobile ONE rate plans,Magenta rate plans,Essentials rate plans,Bus/Gov Unlimited rate plans
+Group 3 - MI - Consumer & TFB|10GB or higher Mobile Internet rate plans (limited buckets),Excludes unlimited highspeed data plans
+Group 4 - GSM - Consumer & TFB - excludes PlusUP & MAXUp line level upsell SOCs|
+Group 5 - MI - All MTME Eligible MI/BTS - Consumer & TFB|
+Group 6 - GSM - Consumer & TFB|TMO ONE Plus rate plans (Incl. 55+),Magenta Plus rate plans (Incl. First Responder & 55+),Magenta MAX rate plans (Incl. First responder & 55+),TMO ONE Plus Military rate plans,Magenta Plus Military rate plans,Magenta MAX Military rate plans,Business Unlimited Plus plans,Magenta Plus DHH plans,Magenta MAX DHH plans,Business Unlimited Ultimate plans,Plus Up Upsell SOCs (Include Intl/Global Plus SOCs),MAXUp Upsell SOCs,Business Unlimited Upsell SOCs (Ultimate)
+Group 7 - GSM - TFB All Plans excludes Value Essentials, PlusUP & MAX Upsell SOCs|T-Mobile ONE rate plans (Include Plus),TMO ONE DHH plans,Magenta rate plans (Incl. Plus First Responder 1.0 & MAX),Magenta DHH plans (Incl. 1.0 Plus & MAX),Essentials rate plans,Bus/Gov Unlimited rate plans (Include First Responder),Gov Unlimited DHH plans,Military rate plans (Incl. Plus 1.0 & MAX),Business Unlimited (Select Advanced Ultimate),GPO Member Benefit Plan,Simple Choice rate plans (Includes DHH plans)
+Group 8 - GSM - TFB|TFB all plans excl. Promo Essential 55+ Connecting Heroes and Government First Responder
+Group 9 - MI Tablet - Consumer & TFB|2GB or higher Mobile Internet Rate Plans
+Group 9A - MI Tablet - TFB|2GB or higher Mobile Internet Rate Plans
+Group 10 - MI Tablet - Consumer & TFB|5GB or higher Mobile Internet Rate Plans
+Group 10B - MI Tablet - TFB|5GB or higher Mobile Internet Rate Plans
+Group 11 - MI Wearable - Consumer & TFB|All Wearable & Data w/ Paired DIGITS MI Rate Plans
+Group 13 - GSM - 1/12 Lines - Consumer & TFB|T-Mobile ONE rate plans,Simple Choice rate plans with Unlimited LTE Data,7GB/$50 or higher Data Only Plans,Magenta rate plans,Essentials rate plans,Bus/Gov Unlimited rate plans
+Group 14 - MI SyncUP - Only TFB|SyncUP Fleet rate plans only
+Group 16 - Apple Data w/Paired DIGITS - Consumer & TFB|Charged Apple Watch DIGITS plans
+Group 17 - GSM - Consumer & TFB|T-Mobile ONE Military,Magenta Military rate plans
+Group 17D - GSM - Consumer & TFB|T-Mobile ONE Fidelis 'Active' indicator SOC only
+Group 18 - GSM - Consumer & TFB|All plans excluding Group 6 plans
+Group 19 - GSM - 2+ Line* - Only TFB|T-Mobile ONE rate plans,Includes GTM1PS100 GTMONE100 GTMONP100 Z100TM1TE & ZTMUNL100,Magenta rate plans,Essentials rate plans,Business Unlimited rate plans
+Group 20 - MI SyncUP - Consumer & TFB|SyncUp Drive rate plans only
+Group 22 - MI SyncUP & MI Tablet - Consumer & TFB|SyncUP Drive rate plans,2GB or higher Mobile Internet rate plans
+Group 23 - GSM - Consumer & TFB|T-Mobile ONE,Simple Choice rate plans with Unlimited LTE Data,7GB/$50 or higher Data Only Plans,Magenta rate plans,Essentials rate plans,Bus/Gov Unlimited rate plans
+Group 25 - GSM - Excludes Essentials - Consumer & TFB|T-Mobile ONE rate plans,Magenta rate plans,Bus/Gov Unlimited rate plans
+Group 27 - GSM - Excludes Essentials - Consumer & TFB|T-Mobile ONE,Simple Choice rate plans with Unlimited LTE Data,7GB/$50 or higher Data Only Plans,Magenta rate plans,Essentials rate plans,Bus/Gov Unlimited rate plans
+Group 28 - GSM - Excludes Essentials - Only TFB|T-Mobile ONE,Simple Choice rate plans with Unlimited LTE Data,7GB/$50 or higher Data Only Plans,Magenta rate plans,Essentials rate plans,Bus/Gov Unlimited rate plans
+Group 29 - GSM - Excludes Essentials - 2+ Line* - Only TFB|T-Mobile ONE rate plans,Includes GTM1PS100 GTMONE100 GTMONP100 Z100TM1TE & ZTMUNL100,Simple Choice rate plans with Unlimited LTE Data,Magenta rate plans,Essentials rate plans,Business Unlimited rate plans
+Group 30 - MI Wearable - Excludes Apple Watch Plans - Consumer & TFB|All Data w/Paired DIGITS rate plans
+Group 31 - GSM - Consumer & TFB|Netflix Eligible T-Mobile ONE rate plans,Business Unlimited rate plans
+Group 32 - MI Tablet & Data w/ Paired DIGITS - Consumer|6GB or higher Mobile Internet rate plans,Data w/Paired DIGITS MI rate plans
+Group 33 - GSM - 2+ Line - Consumer|2+ line consumer eligible rate plans
+Group 34 - MI SyncUP, MI Tablet & Data w/ Paired DIGITS - Consumer & TFB|2GB or higher Mobile Internet rate plans,Data w/Paired DIGITS MI rate plans,Apple Watch Digits Plans,SyncUp Drive
+Group 35 - GSM - Consumer & TFB|Magenta Plus and Magenta MAX rate plans
+Group 36 - MI Moxee - Consumer & TFB|Moxee Plans
+Group 37 - MI DIGITS Talk & Text - Consumer & TFB|DIGITS Talk & Text ONLY plans
+Group 38 - GSM - 2+ Line - Consumer & TFB|Magenta Plus plans,T-Mobile One w/ ONE+ Plans,Bus/Gov Unlimited Plus rate plans
+Group 40 - GSM - Consumer & TFB|Magenta rate plans,Essential rate plans,Bus/Gov Unlimited Plus rate plans
+Group 41 - MI Tablet & Timex Kids - Consumer & TFB|2GB or higher Mobile Internet rate plans,Timex Kids rate plans
+Group 42 - GSM - Consumer & TFB|1st Responder Plans
+Group 44 - GSM & MI Tablet - Consumer & TFB|Scam Block Add-on SOCs
+Group 45 - SyncUp Pets Plans|Scam Block Add-on SOCs
+Group 47 - All GSM Plans|
+Group 48 - Exclude Select Choice|
+Group 50 - TFB Only|Magenta Plus rate plans (Incl. First Responder),Magenta Plus Military rate plans,Business Unlimited Plus plans,Magenta Plus DHH plans,Gov Unlimited Plus plan
+Group 52 - MI SyncUp - Consumer & TFB|6GB+ SyncUP Drive rate plans only
+Group 54|GSM - ALL Plans
+Group 55|GSM - Connecting Hero Plans - GSM - GOV only
+Group 56 - MI Tablet/Hotspot – Consumer & TFB|10GB+ limited bucket MI,Plus Tablet plans,Essential 10GB Upsell
+Group 57 - GSM - Consumer and TFB|Current Plus plans w/Upsell (Magenta MAX TMO One Plus Magenta MAX Military rate plans TMO One Plus Military rate plans Magenta Plus rate plans Magenta Plus Military rate plans Business Unlimited Plus plans Magenta Plus DHH plans Gov Unlimited Plus plan Plus Up Upsell SOCs )
+Group 58 - MI Hotspot – Consumer & TFB|$50 for 50GB & $50 for 100GB Mobile Internet Hotspot rate plans
+Group 59 - MI Hotspot – Consumer & TFB|Excludes $50|100GB MI plans
+Group 60 - GSM – TFB|GPO Member Benefit Plan
+Group 63 - SyncUP Tracker Plans|(SUTRKTE SUTRKTI ZSUTRKTE ZSUTRKTI)
+Group 64|Magenta MAX rate plans (Incl. First Responder),Magenta MAX Military rate plans,Magenta MAX DHH plans,Business Unlimited Ultimate
+Group 65|T-Mobile ONE rate plans (Incl. Plus),TMO ONE DHH plans,Magenta rate plans (Incl. Plus First Responder 1.0 & MAX),Magenta DHH plans (Incl. 1.0 Plus & MAX),Essentials rate plans,Bus/Gov Unlimited rate plans (Incl. First Responder),Gov Unl DHH plans,Unlimited 55+ plans (Incl. Plus 1.0 & MAX),Military rate plans (Incl. Plus 1.0 & MAX),Business Unlimited (Select Advanced Ultimate)
+Group 66|T-Mobile ONE rate plans,TMO ONE DHH plans,Magenta rate plans (Incl. Plus First Responder 1.0 & MAX),Magenta DHH plans (Incl. 1.0 Plus & MAX),Essentials rate plans,Bus/Gov Unlimited rate plans (Incl. First Responder),Gov Unl DHH plans,Military rate plans (Incl. Plus 1.0 & MAX),Business Unlimited (Select Advanced Ultimate)
+Group 67 - 5GB or higher Mobile Internet rate plans|
+Group 68 - All plans (Excludes 4/$100 Essentials)|
+Group 69 - All plans (Excludes Select Choice & Excludes 4/$100 Essentials)|
+Group 69N - All plans (Non-Segment)|
+Group 69S - All plans (Segment)|
+Group 7A - GSM - TFB|Simple Choice rate plans (Includes DHH plans),Business Unlimited Select Advanced & Ultimate
+Group 70 - GSM - Consumer & TFB - All Plans excludes Essentials Promotional Plan|
+Group 71 - GSM - TFB - Business Unlimited Select, Advanced & Ultimate|
+Group 72 - GSM - TFB - Business Unlimited Advanced & Ultimate|
+Group 73 - GSM - TFB - Business Unlimited Ultimate|
+Group 74 - GSM - Consumer & TFB|TMO ONE Plus rate plans (Incl. 55+),Magenta Plus rate plans (Incl. First Responder & 55+),Magenta MAX rate plans (Incl. First responder & 55+),TMO ONE Plus Military rate plans,Magenta Plus Military rate plans,Magenta MAX Military rate plans,Business Unlimited Plus plans; Magenta Plus DHH plans,Magenta MAX DHH plans; Business Unlimited Ultimate plans,Plus Up Upsell SOCs (Incl Intl/Global Plus SOCs),MAXUp Upsell SOCs,Business Unlimited Upsell SOCs
+Group 75 - GSM - Consumer & TFB - All Plans|
+Group 76 - MI - Consumer & TFB - 15GB Camera Plans|
+Group 77 - GSM - TFB - Apple Business Essentials plans & upsells|
+Group 78 - MI - Consumer & TFB - 5GB or higher MI Excl $10 TFB Tab plans|
+Group 79 - MI - Consumer & TFB - 2GB or higher, Data w/Paired Digits, APL Digits, SyncUP Drv, Pet, Tracker & Kids Watch|
+Group 80 - GSM - TFB - Bus Unlimited Promo Plan ($650)|
+Group 81 - GSM - Base Essentials|
+Group 82 - GSM - Consumer & TFB|T-Mobile ONE rate plans,TMO ONE DHH plans,Magenta rate plans (Incl. First Responder 1.0),Magenta DHH plans (Incl.1.0),Bus/Gov Unlimited rate plans (Incl First Responder),Gov Unl DHH plans,Military rate plans (Incl.1.0),Business Unlimited (Advanced)
+Group 83 - GSM - Consumer & TFB|TMO ONE Plus rate plans (Incl. 55+),Magenta Plus rate plans (Incl. First Responder & 55+),Magenta MAX rate plans (Incl. First responder & 55+),TMO ONE Plus Military rate plans,Magenta Plus Military rate plans,Magenta MAX Military rate plans,Business Unlimited Plus plans,Magenta Plus DHH plans,Magenta MAX DHH plans,Business Unlimited Ultimate plans,Plus Up Upsell SOCs (Incl Intl/Global Plus SOCs),MAXUp Upsell SOCs,Business Unlimited Upsell SOCs
+Group W1 - GSM - Consumer & TFB - TMO ONE/Plus, Magenta/Max & Go5G/Plus|TMO ONE,TMO ONE Plus rate plans - including upsell SOCs,Magenta,Magenta MAX - including upsell SOCs,Business Unlimited Advanced - including upsell SOCs,Business Unlimited Ultimate- including upsell SOCs,Business Unlimited Ultimate+ - including upsell SOCs,Go5G Plans,Go5G Plus Plans,Go5G Plus Upsell SOCs
+Group W1N - GSM - Consumer & TFB|
+Group W1S - GSM - Consumer & TFB - Exclude Non-segment Plans|
+Group W2 - GSM - Consumer & TFB - Go5G Plus|Business Unlimited Ultimate - including upsell SO0Cs,Business Unlimited Ultimate+ - including upsell SOCs,Sprint MAX,Go5G Plus Plans,Go5G Plus Upsell SOCs
+Group W3 - GSM - Consumer & TFB - Go5G Plus + Max|Magenta MAX – including upsell SOCs,Business Unlimited Ultimate - including upsell SO0Cs,Business Unlimited Ultimate+ - including upsell SOCs,Go5G Plus Plans,Go5G Plus Upsell SOCs
+Group W3N - GSM - Consumer & TFB - Magenta MAX – including upsell SOCs (Non-Segment)|Business Unlimited Ultimate Plans- including upsell SOCs,Business Unlimited Ult+ Plans - including upsell SOCs,Go5G Plus Plans (Non-Segment),Go5G Next Plans (Non-Segment),Go5G Plus Upsell SOCs,Business Unlimited Edge Plans,Business Unlimited Edge Upsells,Experience More Plans (Non-Segment),Experience Beyond Plans (Non-Segment)
+Group W4 - GSM - Consumer & TFB - Go5G & Go5G Plus|Business Unlimited Advanced - including upsell SOCs,Business Unlimited Ultimate - including upsell SOCs,Business Unlimited Ultimate+ - including upsell SOCs,Go5G Plans,Go5G Plus Plans,Go5G Plus Upsell SOCs
+Group W5 - MI - Consumer & TFB - All Premium Wearable & Data w/paid DIGITS|All Wearable Plus & Data w/ Paired DIGITS Plus MI rate plans
+Group W6 - MI - Consumer & TFB - Premium Apple Watch Wearable Plans|Apple Watch DIGITS Plus plans
+Group W7 - GSM - Consumer & TFB - Business Unlimited Ultimate, Business Unlimited Ultimate+, Go5G, Go5G Plus, Go5G Next|Business Unlimited Ultimate - including upsell SOCs,Business Unlimited Ultimate+ - including upsell SOCs,Go5G Plus Plans,Go5G Next Plans,Go5G Plus Upsell SOCs
+Group W7N - GSM - Consumer & TFB - Exclude Business Unlimited Ultimate Plans (Under 13+)|
+Group W7S - GSM - Consumer & TFB - Go5G Segment Plans|
+Group W8 - GSM - Consumer & TFB - Go5G Next Plans|Go5G Next Plans
+Group W8N - GSM - Consumer & TFB - Go5G Next Plans (Non-Segment)|
+Group W8S - GSM - Consumer & TFB - Go5G Next Plans (Segment)|
+Group W9 - MI - Consumer & TFB - Apple Watch DIGITS Plus & Standalone|Apple Watch DIGITS Plus Plans,Apple Watch Standalone DIGITS Plans ($25)
+Group W10 - GSM - TFB - Business Unlimited $45 Portfolio|
+Group W11 - MI - Consumer & TFB - $30+ BTS Plans|
+Group W12 - MI - Consumer - Fairryspores Plans|
+Group A6N - GSM - Consumer & TFB|Essentials Magenta & Go5G (Non-Segment),Experience More Plans (Non-Segment),Experience Beyond Plans (Non-Segment)
+Group A6S - GSM - Consumer & TFB|Essentials Magenta & Go5G (Segment),Experience More Plans (Segment),Experience Beyond Plans (Segment)
+Group AR6 - GSM - Consumer & TFB|Essentials Magenta & Go5G,Experience More Plans,Experience Beyond Plans
+Group A7N - GSM - Consumer & TFB|Go5G Plus/Next (Non-Segment),Experience More Plans (Non-Segment),Experience Beyond Plans (Non-Segment)
+Group A7S - GSM - Consumer & TFB|Go5G Plus/Next (Segment),Experience More Plans (Segment),Experience Beyond Plans (Segment)
+Group AR7 - GSM - Consumer & TFB|Go5G Plus/Next,Experience More Plans,Experience Beyond Plans
+Group A8N - GSM - Consumer & TFB|Go5G Next (Non-Segment),Experience Beyond Plans (Non-Segment
+Group A8S - GSM - Consumer & TFB|Go5G Next (Segment),Experience Beyond Plans (Segment)
+Group AR8 - GSM - Consumer & TFB|Go5G Next,Experience Beyond Plans
+Group TB1 - MI - Consumer & TFB - Unlimited Tablet Plans $25+ after AP+HBD|
+Group AR3 - GSM - Consumer|Magenta MAX – including upsell SOCs,Go5G Plus Plans,Go5G Next Plans,Go5G Plus Upsell SOCs,Experience More Plans,Experience Beyond Plans
+Group A3N - GSM - Consumer|Magenta MAX – including upsell SOCs (Non-Segment),Go5G Plus Plans (Non-Segment),Go5G Next Plans (Non-Segment),Go5G Plus Upsell SOCs,Experience More Plans (Non-Segment),Experience Beyond Plans (Non-Segment)
+Group W13 - MI - Consumer & TFB|Mobile Internet 15GB,Mobile Internet 50GB
+Group 15A - GSM - Consumer & TFB - Experience Beyond Plans|
+Group 15N - GSM - Consumer & TFB - Experience Beyond Plans (Non-Segment)|
+Group 15S - GSM - Consumer & TFB - Experience Beyond Plans (Segment)|
+Group WR8 - GSM - Consumer & TFB|Go5G Next Plans,Experience Beyond Plans
+Group WN8 - GSM - Consumer & TFB|Go5G Next Plans (Non-Segment),Experience Beyond Plans (Non-Segment)
+Group A8R - GSM - Consumer & TFB|Go5G Next,Experience Beyond Plans
+Group AN8 - GSM - Consumer & TFB|Go5G Next (Non-Segment),Experience Beyond Plans (Non-Segment)
+Group B1 - MI - Consumer & TFB - Standard+ Apple ($10+ TE)|
+Group B2 - MI - Consumer & TFB - Premium Apple ($15 TE)|
+Group B3 - MI - Consumer & TFB - Standard+ Android ($10+* TE)|
+Group B4 - MI - Consumer & TFB - Premium Android ($15 TE)|
+Group B5 - MI - Consumer & TFB - SyncUP Kids Watch ($10 TE)|
+Group B6 - MI - Consumer & TFB - Limited Tablet ($10+TE)|
+Group B7 - MI - Consumer & TFB - Unlimited Tablet ($20+ TE)|
+Group B8 - MI - Consumer & TFB - Unlimited Premium Tablet ($25+ TE)|
+Group B9 - MI - Consumer & TFB - Linkport (MI Hotspot Plans)|
+Group B10 - MI - TFB - TFB Hotspot|
+Group B11 - MI - Consumer & TFB - All Up Watches, MI and Tablet Plans|

@@ -426,84 +426,34 @@
             <div class="grid-form two-col">
               <label class="section-label center grid-full mb-2">SOC Grouping</label>
                 <select class="form-select full-width" name="soc_grouping">
-                  <option value="Group 1NS">Group 1NS</option>
-                  <option value="Group 3">Group 3</option>
-                  <option value="Group 4">Group 4</option>
-                  <option value="Group 5">Group 5</option>
-                  <option value="Group 6">Group 6</option>
+                  {% for group_code in soc_groupings %}
+                    <option value="{{ group_code }}" {% if promo.soc_grouping == group_code %}selected{% endif %}>{{ group_code }}</option>
+                  {% endfor %}
                 </select>
               <div class="details-box scrollable">
-                <ul class="plain-list small-text">
-                  <li class="bold mb-1">Group 1NS - GSM - Consumer & TFB</li>
-                  <li class="mb-1">T-Mobile ONE rate plans</li>
-                  <li class="mb-1">Magenta rate plans</li>
-                  <li class="mb-1">Essentials rate plans</li>
-                  <li class="mb-1">Bus/Gov Unlimited rate plans</li>
-                  <li class="bold mb-1">Group 3 - MI - Consumer & TFB</li>
-                  <li class="mb-1">10GB or higher Mobile Internet rate plans (limited buckets)</li>
-                  <li class="mb-1">Excludes unlimited highspeed data plans</li>
-                  <li class="bold mb-1">Group 4 - GSM - Consumer & TFB - excludes PlusUP & MAXUp line level upsell SOCs)</li>
-                  <li class="bold mb-1">Group 5 - MI - All MTME Eligible MI/BTS - Consumer & TFB</li>
-                  <li class="bold mb-1">Group 6 - GSM - Consumer & TFB</li>
-                  <li class="mb-1">TMO ONE Plus rate plans (Incl. 55+)</li>
-                  <li class="mb-1">Magenta Plus rate plans (Incl. First Responder & 55+)</li>
-                  <li class="mb-1">Magenta MAX rate plans (Incl. First responder & 55+)</li>
-                  <li class="mb-1">TMO ONE Plus Military rate plans</li>
-                  <li class="mb-1">Magenta Plus Military rate plans</li>
-                  <li class="mb-1">Magenta MAX Military rate plans</li>
-                  <li class="mb-1">Business Unlimited Plus plans</li>
-                  <li class="mb-1">Magenta Plus DHH plans</li>
-                  <li class="mb-1">Magenta MAX DHH plans</li>
-                  <li class="mb-1">Business Unlimited Ultimate plans</li>
-                  <li class="mb-1">Plus Up Upsell SOCs (Include Intl/Global Plus SOCs)</li>
-                  <li class="mb-1">MAXUp Upsell SOCs</li>
-                  <li class="mb-1">Business Unlimited Upsell SOCs (Ultimate)</li>
-                </ul>
+                {{ soc_grouping_details|safe }}
               </div>
               <label class="section-label grid-full mt-1">Account Type</label>
               <div>
-                <select class="form-select">
-                  <option value="A01">A01</option>
-                  <option value="A02">A02</option>
-                  <option value="A03">A03</option>
-                  <option value="A04">A04</option>
-                  <option value="A05">A05</option>
-                  <option value="A06">A06</option>
-                  <option value="A07">A07</option>
-                  <option value="A08">A08</option>
-                  <option value="A09">A09</option>
-                  <option value="A10">A10</option>
+                <select class="form-select" name="account_type">
+                  {% for account_type in account_types %}
+                    <option value="{{ account_type }}" {% if promo.account_type == account_type %}selected{% endif %}>{{ account_type }}</option>
+                  {% endfor %}
                 </select>
               </div>
-              <div class="details-box scrollable small-height">
-                <ul class="plain-list">
-                  <li class="mb-1">Regular (I/R); Association (I/A); GSA (I/F); Government (I/G); MCSA (I/M)</li>
-                  <li class="mb-1">Corporate (B/C); Retail (B/L); MCSA (B/M); National (B/N); MCSAGE (B/O)</li>
-                  <li class="mb-1">Non-Profit (B/P); Sole-Proprietorship (I/S)</li>
-                  <li class="mb-1">Employee (S/Y); Non TMO Employee (S/6)</li>
-                </ul>
+              <div class="details-box scrollable">
+                {{ account_type_details|safe }}
               </div>
               <label class="section-label grid-full mt-1">Sales Applications</label>
               <div>
-                <select class="form-select">
-                  <option value="S01">S01</option>
-                  <option value="S02">S02</option>
-                  <option value="S03">S03</option>
-                  <option value="S04">S04</option>
-                  <option value="S05">S05</option>
-                  <option value="S06">S06</option>
-                  <option value="S07">S07</option>
-                  <option value="S08">S08</option>
-                  <option value="S09">S09</option>
-                  <option value="S10">S10</option>
+                <select class="form-select" name="sales_application">
+                  {% for sales_app in sales_applications %}
+                    <option value="{{ sales_app }}" {% if promo.sales_application == sales_app %}selected{% endif %}>{{ sales_app }}</option>
+                  {% endfor %}
                 </select>
               </div>
-              <div class="details-box scrollable small-height">                <ul class="plain-list">
-                  <li class="mb-1">Care - QVXPC; Dash (TSL) - Virtual Retail</li>
-                  <li class="mb-1">QVXPR - Retail; POS - Retail; NAT - National Retail</li>
-                  <li class="mb-1">Web (TMO) - T-Mo.com; Web - MyT-Mo (cloud)</li>
-                  <li class="mb-1">Costco with EIP; BestBuy</li>
-                </ul>
+              <div class="details-box scrollable">
+                {{ sales_application_details|safe }}
               </div>
             </div>
             <div class="save-footer">
