@@ -16,7 +16,27 @@ data_manager = PromoDataManager()
 
 
 def generate_promo_eligibility_sql(promo_data):
-    """Generate PROMO_ELIGIBILITY_RULES INSERT statement from promo data"""
+    """Generate PROMO_ELIGIBILITY_RULES INSERT statement from promo data with template header"""
+    from datetime import datetime, timedelta
+    
+    # Check for tier compatibility conflicts before generating SQL
+    has_trade_data = any([
+        promo_data.get(f'trade_tier_{tier}_amount', '').strip() or 
+        promo_data.get(f'trade_tier_{tier}_make_model', '').strip()
+        for tier in range(1, 5)
+    ])
+    
+    has_tiered_data = (
+        promo_data.get('tiered_group_id', '').strip() or
+        any([
+            promo_data.get(f'tier_{tier}_amount', '').strip() or 
+            promo_data.get(f'tier_{tier}_sku_group_id', '').strip()
+            for tier in range(1, 5)
+        ])
+    )
+    
+    if has_trade_data and has_tiered_data:
+        return "-- ERROR: Cannot generate SQL - Trade-in tiers and tiered groups cannot be used together.\n-- Please clear one of the configurations before generating SQL."
     
     # Helper function to safely get integer values
     def safe_get_int(data, key, default=None):
@@ -205,9 +225,171 @@ def generate_promo_eligibility_sql(promo_data):
         formatted_values[46], # dvc_sts_grp_id
         formatted_values[47]  # clawback_ind
     ]
-    sql = f"INSERT INTO PROMO_ELIGIBILITY_RULES ({','.join(columns)}) VALUES ({','.join(values_list)});"
     
-    return sql
+    # Generate the base SQL statement
+    base_sql = f"INSERT INTO PROMO_ELIGIBILITY_RULES ({','.join(columns)}) VALUES ({','.join(values_list)});"
+    
+    # Create template header
+    operator_id = promo_data.get('operator_id', '')
+    current_user = "Cade Holtzen"  # This should be dynamic based on logged-in user
+    
+    # Calculate day before launch date (promo_start_date - 1 day)
+    launch_date = "DAY BEFORE LAUNCH DATE"
+    if promo_data.get('promo_start_date'):
+        try:
+            start_date = datetime.strptime(promo_data.get('promo_start_date'), '%Y-%m-%d')
+            day_before = start_date - timedelta(days=1)
+            launch_date = day_before.strftime('%d/%m/%Y')
+        except ValueError:
+            pass
+    
+    # Build JIRA ticket summary format: EFPE Promo Device - New Promo - Promo {code} - {orbit_id} - {initiative_name} - Launch Date {launch_date_formatted}
+    promo_code = promo_data.get('code', '')
+    orbit_id = promo_data.get('orbit_id', '')
+    initiative_name = promo_data.get('initiative_name', 'TBD')
+    
+    # Format launch date for JIRA title (M/D/YYYY format with time)
+    launch_date_formatted = "TBD"
+    if promo_data.get('promo_start_date'):
+        try:
+            start_date = datetime.strptime(promo_data.get('promo_start_date'), '%Y-%m-%d')
+            # Format without leading zeros (Windows compatible)
+            month = str(start_date.month)
+            day = str(start_date.day)
+            year = start_date.year
+            launch_date_formatted = f"{month}/{day}/{year} 12:00 AM"
+        except ValueError:
+            pass
+    
+    jira_summary = f"EFPE Promo Device - New Promo - Promo {promo_code} - {orbit_id} - {initiative_name} - Launch Date {launch_date_formatted}"
+    
+    # Generate PROMO_TRADEIN_GROUPS INSERT statements
+    def generate_tradein_groups_sql():
+        tradein_sql_statements = []
+        if promo_data.get('trade_in_group_id'):  # Only generate if trade_in_group_id exists
+            for tier in range(1, 5):  # Tiers 1-4
+                amount = promo_data.get(f'trade_tier_{tier}_amount')
+                make_model = promo_data.get(f'trade_tier_{tier}_make_model')
+                cond_id = promo_data.get(f'trade_tier_{tier}_cond_id')
+                min_fmv = promo_data.get(f'trade_tier_{tier}_min_fmv')
+                max_fmv = promo_data.get(f'trade_tier_{tier}_max_fmv')
+                
+                # Only create INSERT if we have required data
+                if amount and make_model:
+                    # Format values for SQL
+                    trade_grp_id = fmt_sql_value(promo_data.get('trade_in_group_id'))
+                    loan_sku_grp = "'SKU'"  # Default value as shown in example
+                    mk_mdl_grp_id = fmt_sql_value(make_model)
+                    tradein_amount = amount if amount else 'NULL'
+                    desc = f"'NEW PROMO - {promo_code} TIER {tier} - ${amount}'"
+                    # If broken_trade is Y, force BT1; otherwise use provided cond_id or default to ST1
+                    if promo_data.get('broken_trade') == 'Y':
+                        trade_cond_id = "'BT1'"
+                    else:
+                        trade_cond_id = fmt_sql_value(cond_id) if cond_id else "'ST1'"  # Default to ST1
+                    min_fmv_val = min_fmv if min_fmv else 'NULL'
+                    max_fmv_val = max_fmv if max_fmv else 'NULL'
+                    
+                    sql = f"Insert into PROMO_TRADEIN_GROUPS (TRADE_IN_GRP_ID, LOAN_SKU_GRP, MK_MDL_GRP_ID, SYS_CREATION_DATE,OPERATOR_ID,APPLICATION_ID,DL_SERVICE_CODE, TRADEIN_AMOUNT, TRADEIN_GROUP_DESC, TRADE_IN_COND_ID, MIN_FMV, MAX_FMV) Values ({trade_grp_id},{loan_sku_grp},{mk_mdl_grp_id},sysdate,{operator_id},'CPO','USRST',{tradein_amount},{desc},{trade_cond_id},{min_fmv_val},{max_fmv_val});"
+                    tradein_sql_statements.append(sql)
+        
+        return '\n'.join(tradein_sql_statements) if tradein_sql_statements else ''
+    
+    # Generate PROMO_TRADEIN_GROUPS INSERT statements
+    tradein_groups_sql = generate_tradein_groups_sql()
+    
+    # Generate PROMO_TIERED_GROUPS INSERT statements
+    def generate_tiered_groups_sql():
+        tiered_sql_statements = []
+        tiered_group_id = promo_data.get('tiered_group_id', '').strip()
+        
+        if tiered_group_id:
+            # Generate INSERT for each tier that has both amount and sku_group_id
+            for tier in range(1, 5):  # Tiers 1-4
+                amount = promo_data.get(f'tier_{tier}_amount', '').strip()
+                sku_group_id = promo_data.get(f'tier_{tier}_sku_group_id', '').strip()
+                devices = promo_data.get(f'tier_{tier}_devices', '').strip()
+                
+                if amount and sku_group_id:
+                    # Format the description with devices info
+                    desc = f"'Tier ${amount}"
+                    if devices:
+                        # Clean up devices text for description (limit length)
+                        devices_clean = devices.replace('\n', ', ').replace('\r', '')[:100]
+                        desc += f" - {devices_clean}"
+                    desc += f" - {promo_code}'"
+                    
+                    sql = f"Insert into PROMO_TIERED_GROUPS (TIERED_GRP_ID,SKU_GRP_ID,SYS_CREATION_DATE,OPERATOR_ID,APPLICATION_ID,DL_SERVICE_CODE,TIERED_AMOUNT,TIERED_GROUP_DESC) values ('{tiered_group_id}','{sku_group_id}',sysdate,{operator_id},'CPO',NULL,{amount},{desc});"
+                    tiered_sql_statements.append(sql)
+        
+        return '\n'.join(tiered_sql_statements) if tiered_sql_statements else ''
+    
+    # Generate PROMO_TIERED_GROUPS INSERT statements
+    tiered_groups_sql = generate_tiered_groups_sql()
+    
+    # Generate PROMO_SEGMENT_GROUPS INSERT statements
+    def generate_segment_groups_sql():
+        segment_sql_statements = []
+        segment_group_id = promo_data.get('segment_group_id', '').strip()
+        segment_name = promo_data.get('segment_name', '').strip()
+        sub_segment = promo_data.get('sub_segment', '').strip()
+        segment_level = promo_data.get('segment_level', '').strip()
+        
+        if segment_group_id and segment_name:
+            # Format values for SQL
+            group_id = fmt_sql_value(segment_group_id)
+            segment_name_val = fmt_sql_value(segment_name)
+            sub_segment_val = fmt_sql_value(sub_segment) if sub_segment else "'NULL'"
+            segment_level_val = fmt_sql_value(segment_level) if segment_level else "'BAN'"  # Default to BAN
+            
+            sql = f"Insert into PROMO_SEGMENT_GROUPS (GROUP_ID,SEGMENT_NAME,SYS_CREATION_DATE,OPERATOR_ID,APPLICATION_ID,DL_SERVICE_CODE,SUB_SEGMENT_NAME,SEGMENT_LEVEL) values ({group_id},{segment_name_val},sysdate,{operator_id},'CPO','USRST',{sub_segment_val},{segment_level_val});"
+            segment_sql_statements.append(sql)
+        
+        return '\n'.join(segment_sql_statements) if segment_sql_statements else ''
+    
+    # Generate PROMO_SEGMENT_GROUPS INSERT statements
+    segment_groups_sql = generate_segment_groups_sql()
+    
+    # Generate efpe_generic_params update statement if broken_trade is Y
+    efpe_update_sql = ""
+    if promo_data.get('broken_trade') == 'Y':
+        efpe_update_sql = f"\n\nupdate efpe_generic_params set GEN_K3 = concat(GEN_K3,',{promo_code}'), SYS_UPDATE_DATE = sysdate where gen_k1 = 'BROKEN_TRD_PROMO_IND';"
+    
+    # Build the complete SQL with template
+    template_sql = f"""-- User Story No. 			= CPO-{operator_id}
+-- Requested By 			= {current_user}
+-- Request Date(DD/MM/YYYY) = {launch_date}
+-- Project 					= {jira_summary}
+-------------------------------------------------------------------------
+
+--PROD / ZLAB
+BEGIN
+
+--PROMO_ELIGIBILITY_RULES 
+{base_sql}
+
+--PROMO_DEVICE_GROUPS
+
+
+--PROMO_TRADEIN_GROUPS
+{tradein_groups_sql}
+
+--PROMO_TIERED_GROUPS
+{tiered_groups_sql}
+
+--PROMO_MK_MDL_GROUPS TIER 1
+
+--PROMO_MK_MDL_GROUPS TIER 2
+
+--PROMO_MK_MDL_GROUPS TIER 3
+
+
+--Promo Segment 
+{segment_groups_sql}
+
+END;{efpe_update_sql}"""
+    
+    return template_sql
 
 
 @app.route("/")
@@ -426,6 +608,39 @@ def edit_promo(promo_code=None):
                 'trade_tier_4_max_fmv': request.form.get('trade_tier_4_max_fmv', ''),
                 'trade_tier_4_make_model': request.form.get('trade_tier_4_make_model', '')
             })
+            
+            # Check for tier compatibility conflicts
+            def check_tier_compatibility_conflict():
+                # Check if trade tiers have data
+                has_trade_data = any([
+                    promo_data.get(f'trade_tier_{tier}_amount', '').strip() or 
+                    promo_data.get(f'trade_tier_{tier}_make_model', '').strip()
+                    for tier in range(1, 5)
+                ])
+                
+                # Check if tiered groups have data
+                has_tiered_data = (
+                    promo_data.get('tiered_group_id', '').strip() or
+                    any([
+                        promo_data.get(f'tier_{tier}_amount', '').strip() or 
+                        promo_data.get(f'tier_{tier}_sku_group_id', '').strip()
+                        for tier in range(1, 5)
+                    ])
+                )
+                
+                if has_trade_data and has_tiered_data:
+                    flash('Configuration Error: Trade-in tiers and tiered groups cannot be used together. Please clear one of the configurations before proceeding.', 'error')
+                    return True
+                return False
+            
+            # Run compatibility check after Trade or Tiers tab updates
+            if active_tab in ['Trade', 'Tiers']:
+                compatibility_conflict = check_tier_compatibility_conflict()
+                if compatibility_conflict:
+                    # Don't proceed with save if there's a conflict
+                    pass
+            
+            # Note: Client-side validation handles broken trade validation warnings
         
         elif active_tab == 'Tiers':
             # Update Tiers tab fields
@@ -960,6 +1175,96 @@ def create_jira_ticket():
             error_msg = f"JIRA API Error: {response.status_code} - {response.text}"
             return jsonify({"success": False, "error": error_msg})
             
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)})
+
+
+@app.route("/clear_trade_data/<promo_code>", methods=["POST"])
+def clear_trade_data(promo_code):
+    """Clear all Trade tab data for a promotion"""
+    try:
+        promo_data = data_manager.get_promo(promo_code)
+        if not promo_data:
+            return jsonify({"success": False, "error": "Promotion not found"})
+        
+        # Clear trade-related fields
+        trade_fields_to_clear = [
+            'trade_in_group_id', 'broken_trade',
+            'trade_tier_1_amount', 'trade_tier_1_cond_id', 'trade_tier_1_min_fmv', 
+            'trade_tier_1_max_fmv', 'trade_tier_1_make_model',
+            'trade_tier_2_amount', 'trade_tier_2_cond_id', 'trade_tier_2_min_fmv', 
+            'trade_tier_2_max_fmv', 'trade_tier_2_make_model',
+            'trade_tier_3_amount', 'trade_tier_3_cond_id', 'trade_tier_3_min_fmv', 
+            'trade_tier_3_max_fmv', 'trade_tier_3_make_model',
+            'trade_tier_4_amount', 'trade_tier_4_cond_id', 'trade_tier_4_min_fmv', 
+            'trade_tier_4_max_fmv', 'trade_tier_4_make_model'
+        ]
+        
+        for field in trade_fields_to_clear:
+            promo_data[field] = ''
+        
+        # Reset broken_trade to default
+        promo_data['broken_trade'] = 'N'
+        
+        # Save the updated promo data
+        data_manager.save_promo(promo_code, promo_data, user_name="Cade Holtzen")
+        
+        return jsonify({"success": True, "message": "Trade data cleared successfully"})
+        
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)})
+
+
+@app.route("/clear_tiers_data/<promo_code>", methods=["POST"])
+def clear_tiers_data(promo_code):
+    """Clear all Tiers tab data for a promotion"""
+    try:
+        promo_data = data_manager.get_promo(promo_code)
+        if not promo_data:
+            return jsonify({"success": False, "error": "Promotion not found"})
+        
+        # Clear tiers-related fields
+        tiers_fields_to_clear = [
+            'tiered_group_id',
+            'tier_1_amount', 'tier_1_sku_group_id', 'tier_1_devices',
+            'tier_2_amount', 'tier_2_sku_group_id', 'tier_2_devices',
+            'tier_3_amount', 'tier_3_sku_group_id', 'tier_3_devices',
+            'tier_4_amount', 'tier_4_sku_group_id', 'tier_4_devices'
+        ]
+        
+        for field in tiers_fields_to_clear:
+            promo_data[field] = ''
+        
+        # Save the updated promo data
+        data_manager.save_promo(promo_code, promo_data, user_name="Cade Holtzen")
+        
+        return jsonify({"success": True, "message": "Tiers data cleared successfully"})
+        
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)})
+
+
+@app.route("/clear_segment_data/<promo_code>", methods=["POST"])
+def clear_segment_data(promo_code):
+    """Clear all Segmentation tab data for a promotion"""
+    try:
+        promo_data = data_manager.get_promo(promo_code)
+        if not promo_data:
+            return jsonify({"success": False, "error": "Promotion not found"})
+        
+        # Clear segmentation-related fields
+        segment_fields_to_clear = [
+            'segment_name', 'sub_segment', 'segment_group_id', 'segment_level'
+        ]
+        
+        for field in segment_fields_to_clear:
+            promo_data[field] = ''
+        
+        # Save the updated promo data
+        data_manager.save_promo(promo_code, promo_data, user_name="Cade Holtzen")
+        
+        return jsonify({"success": True, "message": "Segmentation data cleared successfully"})
+        
     except Exception as e:
         return jsonify({"success": False, "error": str(e)})
 
