@@ -278,7 +278,9 @@ def generate_promo_eligibility_sql(promo_data):
                 if amount and make_model:
                     # Format values for SQL
                     trade_grp_id = fmt_sql_value(promo_data.get('trade_in_group_id'))
-                    loan_sku_grp = "'SKU'"  # Default value as shown in example
+                    # Use SKU Group ID from Requirements tab instead of hardcoded 'SKU'
+                    sku_group_id = promo_data.get('sku_group_id')
+                    loan_sku_grp = fmt_sql_value(sku_group_id) if sku_group_id else "'SKU'"  # Fallback to 'SKU' if not provided
                     mk_mdl_grp_id = fmt_sql_value(make_model)
                     tradein_amount = amount if amount else 'NULL'
                     desc = f"'NEW PROMO - {promo_code} TIER {tier} - ${amount}'"
