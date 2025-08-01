@@ -45,8 +45,62 @@ def edit_promo(promo_code):
                 file = request.files[file_key]
                 if file and file.filename:
                     try:
-                        data_manager.save_uploaded_file(promo_code, file_key, file)
-                        flash(f"{file_key.replace('_', ' ').title()} uploaded successfully", "success")
+                        file_metadata = data_manager.save_excel_file(promo_code, file, file_key)
+                        if file_metadata:
+                            # Update the promo data with file metadata
+                            if 'uploaded_files' not in promo_data:
+                                promo_data['uploaded_files'] = {}
+                            promo_data['uploaded_files'][file_key] = file_metadata
+                            
+                            # Process trade-in Excel file to populate trade tier data
+                            if file_key == 'tradein_excel':
+                                from promo.parsers import parse_tradein_excel
+                                try:
+                                    sql_statements = parse_tradein_excel(file_metadata['file_path'], promo_data)
+                                    
+                                    # Parse the SQL statements to extract tier information and populate form fields
+                                    tier_data = {}
+                                    for sql in sql_statements:
+                                        # Extract tier and model information from SQL
+                                        if 'TIER' in sql:
+                                            # Find tier number in the SQL statement
+                                            import re
+                                            tier_match = re.search(r'TIER (\d+)', sql)
+                                            make_match = re.search(r",'([^']+)','([^']+)',", sql)
+                                            grp_id_match = re.search(r"Values \('([^']+)'", sql)
+                                            
+                                            if tier_match and make_match and grp_id_match:
+                                                tier_num = tier_match.group(1)
+                                                make = make_match.group(1)
+                                                model = make_match.group(2)
+                                                grp_id = grp_id_match.group(1)
+                                                
+                                                if tier_num not in tier_data:
+                                                    tier_data[tier_num] = {
+                                                        'make_model': grp_id,
+                                                        'devices': []
+                                                    }
+                                                tier_data[tier_num]['devices'].append(f"{make} - {model}")
+                                    
+                                    # Update promo data with tier information
+                                    for tier_num, data in tier_data.items():
+                                        promo_data[f'trade_tier_{tier_num}_make_model'] = data['make_model']
+                                        # You can also set default amounts, conditions, etc. based on your business logic
+                                        if not promo_data.get(f'trade_tier_{tier_num}_cond_id'):
+                                            promo_data[f'trade_tier_{tier_num}_cond_id'] = 'ST1'  # Default condition
+                                    
+                                    # Store the generated SQL statements for later use
+                                    promo_data['tradein_sql_statements'] = sql_statements  
+                                    
+                                    flash(f"Trade-in Excel processed successfully. {len(sql_statements)} SQL statements generated.", "success")
+                                    
+                                except Exception as e:
+                                    flash(f"Error processing trade-in Excel: {str(e)}", "warning")
+                            
+                            data_manager.save_promo(promo_code, promo_data)
+                            flash(f"{file_key.replace('_', ' ').title()} uploaded successfully", "success")
+                        else:
+                            flash(f"Failed to save {file_key.replace('_', ' ')}", "error")
                     except Exception as e:
                         flash(f"Error uploading {file_key}: {str(e)}", "error")
         
@@ -170,6 +224,18 @@ def clear_segment_data(promo_code):
         data_manager.save_promo(promo_code, promo_data, user_name="Cade Holtzen")
         
         return jsonify({'success': True, 'message': 'Segmentation data cleared successfully'})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@promo_bp.route('/delete_file/<promo_code>/<file_type>', methods=['POST'])
+def delete_file(promo_code, file_type):
+    """Delete an uploaded file for a promotion"""
+    try:
+        success = data_manager.delete_uploaded_file(promo_code, file_type)
+        if success:
+            return jsonify({'success': True, 'message': f'{file_type.replace("_", " ").title()} file deleted successfully'})
+        else:
+            return jsonify({'success': False, 'error': 'Failed to delete file'})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
 

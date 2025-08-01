@@ -321,7 +321,7 @@ def generate_promo_eligibility_sql(promo_data):
                         desc += f" - {devices_clean}"
                     desc += f" - {promo_code}'"
                     
-                    sql = f"Insert into PROMO_TIERED_GROUPS (TIERED_GRP_ID,SKU_GRP_ID,SYS_CREATION_DATE,OPERATOR_ID,APPLICATION_ID,DL_SERVICE_CODE,TIERED_AMOUNT,TIERED_GROUP_DESC) values ('{tiered_group_id}','{sku_group_id}',sysdate,{operator_id},'CPO',NULL,{amount},{desc});"
+                    sql = f"Insert into PROMO_TIERED_GROUPS (TIERED_GRP_ID,SKU_GRP_ID,SYS_CREATION_DATE,OPERATOR_ID,APPLICATION_ID,DL_SERVICE_CODE,TIERED_AMOUNT,TIERED_GROUP_DESC) values ('{tiered_group_id}','{sku_group_id}',sysdate,{operator_id},'CPO','USRST',{amount},{desc});"
                     tiered_sql_statements.append(sql)
         
         return '\n'.join(tiered_sql_statements) if tiered_sql_statements else ''
@@ -329,6 +329,83 @@ def generate_promo_eligibility_sql(promo_data):
     # Generate PROMO_TIERED_GROUPS INSERT statements
     tiered_groups_sql = generate_tiered_groups_sql()
     
+    # Generate PROMO_DEVICE_GROUPS INSERT statements
+    def generate_device_groups_sql():
+        import pandas as pd
+        import os
+        
+        device_sql_statements = []
+        sku_group_id = promo_data.get('sku_group_id', '').strip()
+        
+        if not sku_group_id:
+            return ''
+        
+        # Check if SKU Excel file exists
+        promo_code = promo_data.get('code', '')
+        if not promo_code:
+            return ''
+            
+        # Construct path to the uploaded SKU file
+        upload_dir = os.path.join('data', 'uploads', 'promotions', promo_code)
+        sku_file_path = os.path.join(upload_dir, 'sku_list.xlsx')
+        
+        if not os.path.exists(sku_file_path):
+            return ''
+        
+        try:
+            # Read the Excel file, only first two columns
+            # Try with and without headers to be more robust
+            df = pd.read_excel(sku_file_path, usecols=[0, 1], header=None)
+            
+            # Find the first row with actual SKU data (non-empty in both columns)
+            start_row = 0
+            for i in range(len(df)):
+                col1_val = str(df.iloc[i, 0]).strip()
+                col2_val = str(df.iloc[i, 1]).strip() if len(df.columns) > 1 else ''
+                
+                # Skip if either column is empty, NaN, or looks like a header
+                if (col1_val and col1_val.lower() not in ['nan', 'none', ''] and 
+                    col2_val and col2_val.lower() not in ['nan', 'none', ''] and
+                    not any(header_word in col1_val.lower() for header_word in ['material', 'last data', 'attribute', 'report'])):
+                    start_row = i
+                    break
+            
+            # Create SKU group description
+            orbit_id = promo_data.get('orbit_id', '')
+            bill_facing_name = promo_data.get('bill_facing_name', '')
+            sku_group_desc = f"'NEW PROMO {promo_code} - CPO-{operator_id} Orbit {orbit_id} - {bill_facing_name}'"
+            
+            # Process each row starting from the determined start row
+            for i in range(start_row, len(df)):
+                sku = str(df.iloc[i, 0]).strip()
+                description = str(df.iloc[i, 1]).strip() if len(df.columns) > 1 else ''
+                
+                # Skip empty rows or rows with invalid data
+                if not sku or sku.lower() in ['nan', 'none', ''] or not description or description.lower() in ['nan', 'none', '']:
+                    continue
+                
+                # Clean up description for SQL (escape quotes and limit length)
+                description_clean = description.replace("'", "''")[:100]
+                
+                # Generate base INSERT statement
+                base_insert = f"Insert into PROMO_DEVICE_GROUPS (SKU_GROUP_ID,SKU,SYS_CREATION_DATE,OPERATOR_ID,APPLICATION_ID,DL_SERVICE_CODE,SKU_DESCRIPTION,SKU_GROUP_DESCRIPTION) values ('{sku_group_id}','{sku}',sysdate,{operator_id},'CPO','USRST','{description_clean}',{sku_group_desc});"
+                device_sql_statements.append(base_insert)
+                
+                # For numeric SKUs, also generate insert with "000000" prefix
+                if sku.isdigit():
+                    prefixed_sku = f"000000{sku}"
+                    prefixed_insert = f"Insert into PROMO_DEVICE_GROUPS (SKU_GROUP_ID,SKU,SYS_CREATION_DATE,OPERATOR_ID,APPLICATION_ID,DL_SERVICE_CODE,SKU_DESCRIPTION,SKU_GROUP_DESCRIPTION) values ('{sku_group_id}','{prefixed_sku}',sysdate,{operator_id},'CPO','USRST','{description_clean}',{sku_group_desc});"
+                    device_sql_statements.append(prefixed_insert)
+        
+        except Exception as e:
+            # If there's an error reading the file, return empty (don't break SQL generation)
+            return f"-- Error reading SKU file: {str(e)}"
+        
+        return '\n'.join(device_sql_statements) if device_sql_statements else ''
+    
+    # Generate PROMO_DEVICE_GROUPS INSERT statements
+    device_groups_sql = generate_device_groups_sql()
+
     # Generate PROMO_SEGMENT_GROUPS INSERT statements
     def generate_segment_groups_sql():
         segment_sql_statements = []
@@ -352,6 +429,20 @@ def generate_promo_eligibility_sql(promo_data):
     # Generate PROMO_SEGMENT_GROUPS INSERT statements
     segment_groups_sql = generate_segment_groups_sql()
     
+    # Generate trade-in device SQL from uploaded Excel file
+    def generate_tradein_device_sql():
+        """Generate PROMO_MK_MDL_GROUPS SQL statements from uploaded trade-in Excel file"""
+        tradein_device_sql = []
+        
+        # Check if trade-in SQL statements were generated from Excel upload
+        if promo_data.get('tradein_sql_statements'):
+            tradein_device_sql.extend(promo_data['tradein_sql_statements'])
+        
+        return '\n'.join(tradein_device_sql) if tradein_device_sql else ''
+
+    # Generate trade-in device SQL statements
+    tradein_device_sql = generate_tradein_device_sql()
+    
     # Generate efpe_generic_params update statement if broken_trade is Y
     efpe_update_sql = ""
     if promo_data.get('broken_trade') == 'Y':
@@ -371,7 +462,7 @@ BEGIN
 {base_sql}
 
 --PROMO_DEVICE_GROUPS
-
+{device_groups_sql}
 
 --PROMO_TRADEIN_GROUPS
 {tradein_groups_sql}
@@ -379,12 +470,8 @@ BEGIN
 --PROMO_TIERED_GROUPS
 {tiered_groups_sql}
 
---PROMO_MK_MDL_GROUPS TIER 1
-
---PROMO_MK_MDL_GROUPS TIER 2
-
---PROMO_MK_MDL_GROUPS TIER 3
-
+--PROMO_MK_MDL_GROUPS 
+{tradein_device_sql}
 
 --Promo Segment 
 {segment_groups_sql}
