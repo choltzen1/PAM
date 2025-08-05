@@ -26,16 +26,37 @@ def edit_promo(promo_code):
         if request.form.get('generate_sql'):
             from promo.builders import generate_promo_eligibility_sql
             from datetime import datetime
+            import time
             try:
+                # Start timing SQL generation
+                start_time = time.time()
+                
                 # Generate SQL using the dictionary data
                 sql_content = generate_promo_eligibility_sql(promo_data)
                 
-                # Save SQL to promo with timestamp
+                # End timing
+                end_time = time.time()
+                generation_time = end_time - start_time
+                
+                # Save SQL to promo with timestamp and performance data
+                # Store full SQL - remove truncation to allow complete output
                 promo_data['generated_sql'] = sql_content
+                promo_data['sql_truncated'] = False
+                    
                 promo_data['sql_generated_at'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                promo_data['sql_generation_time'] = f"{generation_time:.4f}"
+                promo_data['sql_length'] = len(sql_content)
                 data_manager.save_promo(promo_code, promo_data, user_name="Cade Holtzen")
                 
-                flash("SQL generated successfully", "success")
+                # Flash message with performance info
+                flash(f"SQL generated successfully in {generation_time:.2f} seconds ({len(sql_content):,} characters)", "success")
+                
+                # Log performance warning if slow
+                if generation_time > 5.0:
+                    print(f"⚠️  WARNING: SQL generation for {promo_code} took {generation_time:.2f} seconds!")
+                elif generation_time > 2.0:
+                    print(f"⚠️  NOTICE: SQL generation for {promo_code} took {generation_time:.2f} seconds")
+                    
             except Exception as e:
                 flash(f"Error generating SQL: {str(e)}", "error")
         
@@ -296,3 +317,24 @@ def download_sql(promo_code):
     except Exception as e:
         flash(f"Error downloading SQL: {str(e)}", "error")
         return redirect(url_for('promo.edit_promo', promo_code=promo_code))
+
+@promo_bp.route('/get_full_sql/<promo_code>')
+def get_full_sql(promo_code):
+    """Get the full SQL for a promotion via AJAX"""
+    try:
+        promo_data = data_manager.get_promo(promo_code)
+        if not promo_data:
+            return jsonify({'success': False, 'error': 'Promotion not found'})
+        
+        sql = promo_data.get('generated_sql', '')
+        if not sql:
+            return jsonify({'success': False, 'error': 'No SQL found for this promotion'})
+        
+        return jsonify({
+            'success': True, 
+            'sql': sql,
+            'length': len(sql)
+        })
+    
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})

@@ -113,8 +113,18 @@ def parse_tradein_excel(file_path: str, promo_data: Dict[str, Any]) -> List[str]
         List of SQL INSERT statements
     """
     try:
-        # Read the Excel file
-        df = pd.read_excel(file_path)
+        # Check file size before processing - warn but don't block for large files
+        import os
+        file_size = os.path.getsize(file_path)
+        if file_size > 50 * 1024 * 1024:  # 50MB limit
+            print(f"Warning: Trade-in file is very large ({file_size:,} bytes). Processing may take time.")
+        
+        # Read the Excel file with optimizations for large files
+        df = pd.read_excel(
+            file_path,
+            engine='openpyxl',  # Specify engine for better performance
+            nrows=50000         # Limit to 50k rows to prevent memory issues
+        )
         
         # Expected columns: MAXVALUE_MFG, MAXVALUE_MODEL, MAXVALUE_DEVICE_TIER
         required_columns = ['MAXVALUE_MFG', 'MAXVALUE_MODEL', 'MAXVALUE_DEVICE_TIER'] 

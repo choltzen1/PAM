@@ -7,6 +7,13 @@ from data.storage import PromoDataManager
 from promo.builders import generate_promo_eligibility_sql
 from promo.routes import promo_bp
 
+# Pre-import pandas to avoid delays during SQL generation
+try:
+    import pandas as pd
+    print("✅ Pandas pre-loaded for faster SQL generation")
+except ImportError:
+    print("⚠️  Pandas not available - Excel processing will be slower")
+
 # Disable SSL warnings for JIRA requests
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -27,11 +34,29 @@ def home():
 
 @app.route("/promotions")
 def promotions():
-    # Load all promotions from data manager
-    promo_dict = data_manager.get_all_promos()
-    # Convert dictionary to list of promo objects for the template
-    promo_list = list(promo_dict.values()) if promo_dict else []
-    return render_template("promotions.html", promotions=promo_list)
+    # Get pagination parameters from query string
+    page = request.args.get('page', 1, type=int)
+    per_page = request.args.get('per_page', 25, type=int)
+    search = request.args.get('search', '', type=str)
+    owner_filter = request.args.get('owner', 'all', type=str)
+    
+    # Load paginated promotions from data manager
+    promo_data = data_manager.get_paginated_promos(
+        page=page, 
+        per_page=per_page, 
+        search=search, 
+        owner_filter=owner_filter
+    )
+    
+    return render_template(
+        "promotions.html", 
+        promotions=promo_data['promotions'],
+        pagination=promo_data['pagination'],
+        owners=promo_data['owners'],
+        search_query=search,
+        selected_owner=owner_filter,
+        active_tab='RDC'
+    )
 
 
 @app.route("/spe")
@@ -47,10 +72,10 @@ def spe():
             item['key'] = key  # Add the key to the item for template use
             spe_data.append(item)
         
-        return render_template("spe.html", spe_data=spe_data)
+        return render_template("spe.html", spe_data=spe_data, active_tab='SPE')
     except Exception as e:
         flash(f'Error loading SPE data: {str(e)}', 'error')
-        return render_template("spe.html", spe_data=[])
+        return render_template("spe.html", spe_data=[], active_tab='SPE')
 
 
 @app.route("/edit_spe", methods=["GET", "POST"])
@@ -95,10 +120,10 @@ def edit_spe():
 def date_mismatch():
     try:
         mismatched_promos = data_manager.get_date_mismatched_promos()
-        return render_template("date_mismatch.html", promos=mismatched_promos)
+        return render_template("date_mismatch.html", promos=mismatched_promos, user_name="Cade Holtzen")
     except Exception as e:
         flash(f'Error loading date mismatch data: {str(e)}', 'error')
-        return render_template("date_mismatch.html", promos=[])
+        return render_template("date_mismatch.html", promos=[], user_name="Cade Holtzen")
 
 
 @app.route("/download_file/<promo_code>/<file_type>")

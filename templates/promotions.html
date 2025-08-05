@@ -31,13 +31,13 @@
         type="text"
         id="search-input"
         name="search"
-        placeholder="Promo Code or Owner"
+        placeholder="Promo Code, Owner, or Name"
         value="{{ search_query }}"
+        onkeyup="debounceSearch()"
       />
     </div>
 
     <div class="action-buttons">
-      <button class="btn"><i class="fas fa-plus"></i> Create JIRA</button>
       <button class="btn"><i class="fas fa-wrench"></i> Get Promo Code</button>
     </div>
   </div>
@@ -88,5 +88,63 @@
       </tbody>
     </table>
   </div>
+
+  <!-- Pagination Controls -->
+  {% if pagination.total_pages > 1 %}
+  <div class="pagination-container">
+    <div class="pagination-info">
+      Showing {{ ((pagination.page - 1) * pagination.per_page + 1) }} to {{ 
+        pagination.page * pagination.per_page if pagination.page * pagination.per_page <= pagination.total_items 
+        else pagination.total_items 
+      }} of {{ pagination.total_items }} promotions
+    </div>
+    
+    <div class="pagination-controls">
+      {% if pagination.has_prev %}
+        <a href="{{ url_for('promotions', page=1, search=search_query, owner=selected_owner) }}" class="pagination-btn">First</a>
+        <a href="{{ url_for('promotions', page=pagination.prev_num, search=search_query, owner=selected_owner) }}" class="pagination-btn">‹ Prev</a>
+      {% endif %}
+      
+      {% for page_num in range(
+        [pagination.page - 2, 1]|max, 
+        [pagination.page + 2, pagination.total_pages]|min + 1
+      ) %}
+        {% if page_num == pagination.page %}
+          <span class="pagination-btn active">{{ page_num }}</span>
+        {% else %}
+          <a href="{{ url_for('promotions', page=page_num, search=search_query, owner=selected_owner) }}" class="pagination-btn">{{ page_num }}</a>
+        {% endif %}
+      {% endfor %}
+      
+      {% if pagination.has_next %}
+        <a href="{{ url_for('promotions', page=pagination.next_num, search=search_query, owner=selected_owner) }}" class="pagination-btn">Next ›</a>
+        <a href="{{ url_for('promotions', page=pagination.total_pages, search=search_query, owner=selected_owner) }}" class="pagination-btn">Last</a>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
 </div>
+
+<script>
+let searchTimeout;
+
+function debounceSearch() {
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(() => {
+    const search = document.getElementById('search-input').value;
+    const owner = document.getElementById('owner-filter').value;
+    const url = new URL(window.location);
+    url.searchParams.set('search', search);
+    url.searchParams.set('owner', owner);
+    url.searchParams.set('page', '1'); // Reset to first page
+    window.location.href = url.toString();
+  }, 500); // Wait 500ms after user stops typing
+}
+
+// Handle owner filter change
+document.getElementById('owner-filter').addEventListener('change', function() {
+  debounceSearch();
+});
+</script>
+
 {% endblock %}

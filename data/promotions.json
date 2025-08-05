@@ -130,7 +130,7 @@
     "flow_indicator": "NULL",
     "bptcr": "25616",
     "version_history": [],
-    "updated_at": "2025-08-01T12:46:11.471688",
+    "updated_at": "2025-08-05T12:22:02.563473",
     "created_at": "2025-07-24T16:07:32.491773",
     "uploaded_files": {
       "sku_excel": {
@@ -193,7 +193,7 @@
     "tier_4_devices": "",
     "omit_tiers": "Y",
     "omit_trade": "N",
-    "sql_generated_at": "2025-08-01 12:46:11",
+    "sql_generated_at": "2025-08-05 12:22:02",
     "tradein_sql_statements": [
       "Insert into PROMO_MK_MDL_GROUPS (MK_MDL_GRP_ID, MAKE, MODEL, SYS_CREATION_DATE, OPERATOR_ID, APPLICATION_ID, DL_SERVICE_CODE, MK_MDL_GROUP_DESC) Values ('L89','APPLE','iPhone 13 Pro Max 128GB Gold - ATT (A2643)',sysdate,15988,'CPO','USRST','NEW PROMO - R223 CPO-15988 - TIER 1');",
       "Insert into PROMO_MK_MDL_GROUPS (MK_MDL_GRP_ID, MAKE, MODEL, SYS_CREATION_DATE, OPERATOR_ID, APPLICATION_ID, DL_SERVICE_CODE, MK_MDL_GROUP_DESC) Values ('L89','APPLE','iPhone 12 128GB Purple - Xfinity',sysdate,15988,'CPO','USRST','NEW PROMO - R223 CPO-15988 - TIER 1');",
@@ -34552,6 +34552,9 @@
       "Insert into PROMO_MK_MDL_GROUPS (MK_MDL_GRP_ID, MAKE, MODEL, SYS_CREATION_DATE, OPERATOR_ID, APPLICATION_ID, DL_SERVICE_CODE, MK_MDL_GROUP_DESC) Values ('L90','SAMSUNG','SM-N950U Galaxy Note 8 64GB Grey - Brazil GSM Unlo',sysdate,15988,'CPO','USRST','NEW PROMO - R223 CPO-15988 - TIER 2');",
       "Insert into PROMO_MK_MDL_GROUPS (MK_MDL_GRP_ID, MAKE, MODEL, SYS_CREATION_DATE, OPERATOR_ID, APPLICATION_ID, DL_SERVICE_CODE, MK_MDL_GROUP_DESC) Values ('L90','SAMSUNG','SM-N950U Galaxy Note 8 64GB Blue - Brazil GSM Unlo',sysdate,15988,'CPO','USRST','NEW PROMO - R223 CPO-15988 - TIER 2');",
       "Insert into PROMO_MK_MDL_GROUPS (MK_MDL_GRP_ID, MAKE, MODEL, SYS_CREATION_DATE, OPERATOR_ID, APPLICATION_ID, DL_SERVICE_CODE, MK_MDL_GROUP_DESC) Values ('L90','SAMSUNG','SM-G965U1 Galaxy S9 Plus 256GB Purple - XAA Generi',sysdate,15988,'CPO','USRST','NEW PROMO - R223 CPO-15988 - TIER 2');"
-    ]
+    ],
+    "sql_truncated": false,
+    "sql_generation_time": "0.3992",
+    "sql_length": 10007389
   }
 }
