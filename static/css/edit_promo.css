@@ -1146,3 +1146,36 @@ h5 {
 .btn-close:hover {
   opacity: 0.8;
 }
+
+/* SQL Preview Styling */
+.sql-preview-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+  padding: 0.5rem;
+  background: #e9ecef;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.sql-preview-header .btn-link {
+  padding: 0.25rem 0.5rem;
+  color: var(--tmobile-magenta);
+  text-decoration: none;
+  font-size: 0.8rem;
+  border: none;
+  background: none;
+  cursor: pointer;
+}
+
+.sql-preview-header .btn-link:hover {
+  text-decoration: underline;
+  color: var(--tmobile-magenta-dark);
+}
+
+#sqlPreviewArea {
+  max-height: 400px;
+  min-height: 200px;
+}

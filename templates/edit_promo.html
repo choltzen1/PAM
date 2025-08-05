@@ -568,6 +568,12 @@
                     <div class="file-name">{{ promo.code }}_promo_eligibility_rules.sql</div>
                     <div class="file-meta">
                       Generated on {{ promo.sql_generated_at if promo.sql_generated_at else 'Unknown' }}
+                      {% if promo.sql_length %}
+                        • {{ "{:,}".format(promo.sql_length) }} characters
+                      {% endif %}
+                      {% if promo.sql_generation_time %}
+                        • Generated in {{ promo.sql_generation_time }}s
+                      {% endif %}
                     </div>
                   </div>
                 </div>
@@ -576,10 +582,34 @@
                      class="btn btn-sm btn-outline">
                     <i class="fas fa-download"></i> Download SQL
                   </a>
+                  <button type="button" onclick="toggleSqlPreview()" id="sqlPreviewBtn"
+                          class="btn btn-sm btn-outline" style="margin-left: 0.5rem;">
+                    <i class="fas fa-eye"></i> Preview
+                  </button>
                 </div>
               </div>
-              <textarea class="form-control" rows="20" readonly style="font-family: monospace; font-size: 12px; background-color: #f8f9fa; resize: none; overflow-y: auto;">{{ promo.generated_sql }}</textarea>
-              <small class="form-text">SQL file has been generated and saved. Use the download button above to get the file.</small>
+              
+              <!-- SQL Preview (initially hidden) -->
+              <div id="sqlPreviewContainer" style="display: none;">
+                <div class="sql-preview-header">
+                  <span>SQL Preview (first 1000 characters)</span>
+                  <button type="button" onclick="loadFullSql()" id="loadFullBtn" class="btn btn-sm btn-link">
+                    Load Full SQL
+                  </button>
+                </div>
+                <textarea class="form-control" id="sqlPreviewArea" rows="15" readonly 
+                          style="font-family: monospace; font-size: 12px; background-color: #f8f9fa; resize: vertical; overflow-y: auto;">
+                  {%- if promo.generated_sql|length > 1000 -%}
+                    {{ promo.generated_sql[:1000] }}...
+                    
+[SQL truncated for performance - use "Load Full SQL" button or download to see complete statement]
+                  {%- else -%}
+                    {{ promo.generated_sql }}
+                  {%- endif -%}
+                </textarea>
+              </div>
+              
+              <small class="form-text">SQL file has been generated and saved. Use the download button above to get the complete file.</small>
             </div>
             {% endif %}
             
@@ -1345,6 +1375,51 @@ function showAutoSaveSuccess() {
       document.body.removeChild(successIndicator);
     }
   }, 2000);
+}
+
+// SQL Preview Functions
+function toggleSqlPreview() {
+  const container = document.getElementById('sqlPreviewContainer');
+  const btn = document.getElementById('sqlPreviewBtn');
+  
+  if (container.style.display === 'none') {
+    container.style.display = 'block';
+    btn.innerHTML = '<i class="fas fa-eye-slash"></i> Hide';
+  } else {
+    container.style.display = 'none';
+    btn.innerHTML = '<i class="fas fa-eye"></i> Preview';
+  }
+}
+
+function loadFullSql() {
+  const promoCode = '{{ promo.code }}';
+  const loadBtn = document.getElementById('loadFullBtn');
+  const textarea = document.getElementById('sqlPreviewArea');
+  
+  // Show loading state
+  loadBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading...';
+  loadBtn.disabled = true;
+  
+  // Fetch full SQL via AJAX
+  fetch(`/get_full_sql/${promoCode}`)
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        textarea.value = data.sql;
+        textarea.rows = 25; // Expand to show more
+        loadBtn.style.display = 'none'; // Hide the button
+      } else {
+        alert('Error loading SQL: ' + data.error);
+        loadBtn.innerHTML = 'Load Full SQL';
+        loadBtn.disabled = false;
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      alert('Error loading SQL');
+      loadBtn.innerHTML = 'Load Full SQL';
+      loadBtn.disabled = false;
+    });
 }
 
 function showAutoSaveError(message) {

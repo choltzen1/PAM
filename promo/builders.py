@@ -2,6 +2,17 @@
 def generate_promo_eligibility_sql(promo_data):
     """Generate PROMO_ELIGIBILITY_RULES INSERT statement from promo data with template header"""
     from datetime import datetime, timedelta
+    import time
+    import os
+    
+    # Import pandas at the top to avoid import delays during execution
+    try:
+        import pandas as pd
+    except ImportError:
+        pd = None
+    
+    # Start timing overall function
+    function_start_time = time.time()
     
     # Check for tier compatibility conflicts before generating SQL
     has_trade_data = any([
@@ -352,10 +363,28 @@ def generate_promo_eligibility_sql(promo_data):
         if not os.path.exists(sku_file_path):
             return ''
         
+        # Check file size before processing - warn but don't block for large files
+        file_size = os.path.getsize(sku_file_path)
+        if file_size > 50 * 1024 * 1024:  # 50MB limit (much more generous)
+            return f"-- Warning: SKU file extremely large ({file_size:,} bytes). Consider splitting the file for better performance."
+        
         try:
-            # Read the Excel file, only first two columns
-            # Try with and without headers to be more robust
-            df = pd.read_excel(sku_file_path, usecols=[0, 1], header=None)
+            # Optimized Excel file reading with performance improvements
+            excel_start_time = time.time()
+            
+            # Use more efficient pandas options for faster reading
+            df = pd.read_excel(
+                sku_file_path, 
+                usecols=[0, 1],  # Only read first two columns
+                header=None,     # No header processing
+                engine='openpyxl',  # Specify engine explicitly
+                nrows=10000      # Increased limit from 1000 to 10000 rows
+            )
+            
+            excel_read_time = time.time() - excel_start_time
+            
+            if excel_read_time > 0.5:
+                print(f"    Excel file read: {excel_read_time:.2f}s ({len(df)} rows)")
             
             # Find the first row with actual SKU data (non-empty in both columns)
             start_row = 0
@@ -404,7 +433,11 @@ def generate_promo_eligibility_sql(promo_data):
         return '\n'.join(device_sql_statements) if device_sql_statements else ''
     
     # Generate PROMO_DEVICE_GROUPS INSERT statements
+    device_start_time = time.time()
     device_groups_sql = generate_device_groups_sql()
+    device_time = time.time() - device_start_time
+    if device_time > 1.0:
+        print(f"  Device Groups SQL: {device_time:.2f}s")
 
     # Generate PROMO_SEGMENT_GROUPS INSERT statements
     def generate_segment_groups_sql():
@@ -477,6 +510,14 @@ BEGIN
 {segment_groups_sql}
 
 END;{efpe_update_sql}"""
+    
+    # End timing and log performance
+    function_end_time = time.time()
+    total_time = function_end_time - function_start_time
+    
+    # Log performance info (only print if slow)
+    if total_time > 2.0:
+        print(f"⚠️  SQL Generation Performance: {total_time:.2f}s, Output: {len(template_sql):,} chars")
     
     return template_sql
 

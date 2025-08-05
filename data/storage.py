@@ -253,6 +253,53 @@ class PromoDataManager:
         """Get all promotions"""
         return self._load_json(self.promo_file)
     
+    def get_paginated_promos(self, page: int = 1, per_page: int = 25, search: str = "", owner_filter: str = "all") -> Dict[str, Any]:
+        """Get paginated promotions with optional filtering"""
+        all_promos = self._load_json(self.promo_file)
+        promo_list = list(all_promos.values())
+        
+        # Apply filters
+        if search:
+            search_lower = search.lower()
+            promo_list = [
+                promo for promo in promo_list 
+                if (search_lower in promo.get('code', '').lower() or 
+                    search_lower in promo.get('owner', '').lower() or
+                    search_lower in promo.get('bill_facing_name', '').lower())
+            ]
+        
+        if owner_filter and owner_filter != "all":
+            promo_list = [promo for promo in promo_list if promo.get('owner', '') == owner_filter]
+        
+        # Sort by updated_at (most recent first) or code if no updated_at
+        promo_list.sort(key=lambda x: x.get('updated_at', x.get('code', '')), reverse=True)
+        
+        # Calculate pagination
+        total_items = len(promo_list)
+        total_pages = (total_items + per_page - 1) // per_page
+        start = (page - 1) * per_page
+        end = start + per_page
+        
+        paginated_promos = promo_list[start:end]
+        
+        # Get unique owners for filter dropdown
+        all_owners = sorted(set(promo.get('owner', '') for promo in all_promos.values() if promo.get('owner')))
+        
+        return {
+            'promotions': paginated_promos,
+            'pagination': {
+                'page': page,
+                'per_page': per_page,
+                'total_items': total_items,
+                'total_pages': total_pages,
+                'has_prev': page > 1,
+                'has_next': page < total_pages,
+                'prev_num': page - 1 if page > 1 else None,
+                'next_num': page + 1 if page < total_pages else None
+            },
+            'owners': all_owners
+        }
+    
     def get_all_spe_promos(self) -> Dict[str, Any]:
         """Get all SPE promotions"""
         return self._load_json(self.spe_file)
@@ -862,3 +909,71 @@ class PromoDataManager:
         if file_info:
             return file_info.get('file_path')
         return None
+    
+    def get_date_mismatched_promos(self) -> List[Dict[str, Any]]:
+        """Get promotions with date mismatches between ORBIT and PAM"""
+        # For now, we'll generate sample data with some date mismatches
+        # When ORBIT database connection is available, this will query real data
+        
+        all_promos = self.get_all_promos()
+        mismatched_promos = []
+        
+        # Sample ORBIT dates to simulate mismatches
+        sample_orbit_dates = {
+            'P0472022': {
+                'orbit_start_date': '2025-07-05',  # Different from PAM
+                'orbit_end_date': '2025-08-10'    # Different from PAM
+            },
+            'R223': {
+                'orbit_start_date': '2025-06-15',  # Different from PAM  
+                'orbit_end_date': '2025-07-20'    # Different from PAM
+            }
+        }
+        
+        for promo_code, promo_data in all_promos.items():
+            # Skip if no ORBIT ID
+            if not promo_data.get('orbit_id'):
+                continue
+                
+            # Get PAM dates
+            pam_start = promo_data.get('promo_start_date', '')
+            pam_end = promo_data.get('promo_end_date', '')
+            
+            # Get simulated ORBIT dates (in real implementation, this would come from ORBIT database)
+            orbit_dates = sample_orbit_dates.get(promo_code, {})
+            orbit_start = orbit_dates.get('orbit_start_date', pam_start)  # Default to PAM if no ORBIT data
+            orbit_end = orbit_dates.get('orbit_end_date', pam_end)
+            
+            # Check for mismatches
+            start_mismatch = orbit_start != pam_start
+            end_mismatch = orbit_end != pam_end
+            
+            if start_mismatch or end_mismatch:
+                # Determine mismatch type and severity
+                if start_mismatch and end_mismatch:
+                    mismatch_type = 'both'
+                    mismatch_severity = 'danger'
+                elif start_mismatch:
+                    mismatch_type = 'start_date'
+                    mismatch_severity = 'warning'
+                else:
+                    mismatch_type = 'end_date'
+                    mismatch_severity = 'warning'
+                
+                # Create mismatch entry
+                mismatch_entry = {
+                    'code': promo_code,
+                    'orbit_id': promo_data.get('orbit_id', ''),
+                    'orbit_start_date': orbit_start,
+                    'orbit_end_date': orbit_end,
+                    'promo_start_date': pam_start,
+                    'promo_end_date': pam_end,
+                    'mismatch_type': mismatch_type,
+                    'mismatch_severity': mismatch_severity,
+                    'bill_facing_name': promo_data.get('bill_facing_name', ''),
+                    'owner': promo_data.get('owner', '')
+                }
+                
+                mismatched_promos.append(mismatch_entry)
+        
+        return mismatched_promos

@@ -8,35 +8,158 @@
   <!-- Header -->
   <div class="header-container">
     <div class="header-left">
-      <i class="fas fa-calendar-check header-icon"></i>
+      <i class="fas fa-calendar-exclamation-triangle header-icon"></i>
       <div>
-        <h1>Date Mismatch</h1>
-        <p class="subtitle">Identify and resolve promotion date discrepancies</p>
+        <h1>Date Mismatch Analysis</h1>
+        <p class="subtitle">Identify and resolve promotion date discrepancies between ORBIT and PAM</p>
       </div>
     </div>
     <div class="header-right">
+      <button class="btn btn-primary" onclick="refreshData()">
+        <i class="fas fa-sync-alt"></i> Refresh Data
+      </button>
       <span class="user-info">{{ user_name }}</span>
     </div>
   </div>
 
-  <!-- Main Content -->
-  <div class="container-fluid">
-    <div class="row">
-      <div class="col-12">
-        <div class="card">
-          <div class="card-header">
-            <h3><i class="fas fa-calendar-check me-2"></i>Date Mismatch Analysis</h3>
-          </div>
-          <div class="card-body text-center">
-            <div class="placeholder-content">
-              <i class="fas fa-calendar-check display-1 text-muted mb-3"></i>
-              <h4 class="text-muted">Date Mismatch Tool</h4>
-              <p class="text-muted">This page will contain tools to identify and resolve promotion date discrepancies.</p>
-              <p class="text-muted mt-4">Coming soon...</p>
-            </div>
-          </div>
-        </div>
+  <!-- Controls -->
+  <div class="controls-container">
+    <div class="filter-group">
+      <label for="mismatch-filter">Filter by Mismatch Type</label>
+      <select id="mismatch-filter" class="form-select">
+        <option value="all">All Mismatches</option>
+        <option value="start_date">Start Date Mismatch</option>
+        <option value="end_date">End Date Mismatch</option>
+        <option value="both">Both Dates Mismatch</option>
+      </select>
+    </div>
+    
+    <div class="search-group">
+      <label for="search-input">Search</label>
+      <input type="text" id="search-input" class="form-control" placeholder="Promo Code or ORBIT Number">
+    </div>
+    
+    <div class="stats-group">
+      <div class="stat-item">
+        <span class="stat-number">{{ promos|length }}</span>
+        <span class="stat-label">Total Mismatches</span>
       </div>
-    </div>  </div>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="content-container">
+    {% if promos %}
+    <div class="table-container">
+      <table class="date-mismatch-table">
+        <thead>
+          <tr>
+            <th>ORBIT Number</th>
+            <th>Promo Code</th>
+            <th>ORBIT Start Date</th>
+            <th>ORBIT End Date</th>
+            <th>PAM Start Date</th>
+            <th>PAM End Date</th>
+            <th>Mismatch Type</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for promo in promos %}
+          <tr class="mismatch-row" data-mismatch-type="{{ promo.mismatch_type }}">
+            <td class="orbit-number">{{ promo.orbit_id or 'N/A' }}</td>
+            <td class="promo-code">
+              <a href="{{ url_for('promo.edit_promo', promo_code=promo.code) }}" class="promo-link">
+                {{ promo.code }}
+              </a>
+            </td>
+            <td class="orbit-start-date">{{ promo.orbit_start_date or 'N/A' }}</td>
+            <td class="orbit-end-date">{{ promo.orbit_end_date or 'N/A' }}</td>
+            <td class="pam-start-date">{{ promo.promo_start_date or 'N/A' }}</td>
+            <td class="pam-end-date">{{ promo.promo_end_date or 'N/A' }}</td>
+            <td class="mismatch-type">
+              <span class="badge badge-{{ promo.mismatch_severity }}">
+                {{ promo.mismatch_type }}
+              </span>
+            </td>
+            <td class="actions">
+              <button class="btn btn-sm btn-outline-primary" onclick="syncFromOrbit('{{ promo.code }}')">
+                <i class="fas fa-sync"></i> Sync from ORBIT
+              </button>
+              <button class="btn btn-sm btn-outline-secondary" onclick="syncToPam('{{ promo.code }}')">
+                <i class="fas fa-upload"></i> Update PAM
+              </button>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="no-data-container">
+      <div class="no-data-content">
+        <i class="fas fa-calendar-check display-1 text-success mb-3"></i>
+        <h4 class="text-success">No Date Mismatches Found</h4>
+        <p class="text-muted">All promotion dates are in sync between ORBIT and PAM.</p>
+        <button class="btn btn-primary mt-3" onclick="refreshData()">
+          <i class="fas fa-sync-alt"></i> Check Again
+        </button>
+      </div>
+    </div>
+    {% endif %}
+  </div>
 </div>
+
+<script>
+function refreshData() {
+  window.location.reload();
+}
+
+function syncFromOrbit(promoCode) {
+  if (confirm(`Sync dates from ORBIT for promotion ${promoCode}?`)) {
+    // TODO: Implement ORBIT sync when database connection is available
+    alert('ORBIT database connection not yet available. This feature will be implemented when connection is established.');
+  }
+}
+
+function syncToPam(promoCode) {
+  if (confirm(`Update PAM dates for promotion ${promoCode}?`)) {
+    // TODO: Implement PAM update functionality
+    alert('PAM update functionality will be implemented.');
+  }
+}
+
+// Filter functionality
+document.getElementById('mismatch-filter').addEventListener('change', function() {
+  const filterValue = this.value;
+  const rows = document.querySelectorAll('.mismatch-row');
+  
+  rows.forEach(row => {
+    const mismatchType = row.dataset.mismatchType;
+    if (filterValue === 'all' || mismatchType === filterValue) {
+      row.style.display = '';
+    } else {
+      row.style.display = 'none';
+    }
+  });
+});
+
+// Search functionality
+document.getElementById('search-input').addEventListener('input', function() {
+  const searchTerm = this.value.toLowerCase();
+  const rows = document.querySelectorAll('.mismatch-row');
+  
+  rows.forEach(row => {
+    const promoCode = row.querySelector('.promo-code').textContent.toLowerCase();
+    const orbitNumber = row.querySelector('.orbit-number').textContent.toLowerCase();
+    
+    if (promoCode.includes(searchTerm) || orbitNumber.includes(searchTerm)) {
+      row.style.display = '';
+    } else {
+      row.style.display = 'none';
+    }
+  });
+});
+</script>
+
 {% endblock %}
