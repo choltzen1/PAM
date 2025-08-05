@@ -119,11 +119,14 @@ def edit_spe():
 @app.route("/date_mismatch")
 def date_mismatch():
     try:
-        mismatched_promos = data_manager.get_date_mismatched_promos()
-        return render_template("date_mismatch.html", promos=mismatched_promos, user_name="Cade Holtzen")
+        mismatch_data = data_manager.get_date_mismatched_promos()
+        return render_template("date_mismatch.html", 
+                             promos=mismatch_data['promos'], 
+                             owners=mismatch_data['owners'],
+                             user_name="Cade Holtzen")
     except Exception as e:
         flash(f'Error loading date mismatch data: {str(e)}', 'error')
-        return render_template("date_mismatch.html", promos=[], user_name="Cade Holtzen")
+        return render_template("date_mismatch.html", promos=[], owners=[], user_name="Cade Holtzen")
 
 
 @app.route("/download_file/<promo_code>/<file_type>")

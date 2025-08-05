@@ -33,7 +33,6 @@ class PromoDataManager:
                     "owner": "Alejandro Ferrer",
                     "bill_facing_name": "2022 Samsung Trade P30",
                     "orbit_id": "15233",
-                    "pj_code": "P047",
                     "description": "Magenta Only: Customers can get up to $600 off GS22 Series when they trade in an eligible device (new and existing customers qualify) on a qualifying rate plan - TFB Retail Only.",
                     "promo_notes": "Two-tiered discount structure.\n1. $700: All iPhones EXCEPT the iPhone 14 and 15\n2. $730: iPhone 14 and 15 (including all memory variants) to have $730\nTier 1 $730: iPhone 15, iPhone 15 Plus, iPhone 15 Pro, iPhone 15 Pro Max, iPhone 14, iPhone 14 Plus, iPhone 14 Pro, iPhone 14 Pro Max\nTier 2 $700: iPhone 15 Plus, iPhone 15 Pro, iPhone 15 Pro Max, iPhone 14 Plus, iPhone 14 Pro, iPhone 14 Pro Max, iPhone 13 Mini, iPhone 13 Pro, iPhone 13 Pro Max",
                     "discount": 10,
@@ -96,7 +95,6 @@ class PromoDataManager:
                     "owner": "Hari Kariavula",
                     "bill_facing_name": "2022 Line On Us P2",
                     "orbit_id": "15600",
-                    "pj_code": "SPE",
                     "description": "SPE Line On Us Promo",
                     "promo_notes": "",
                     "promo_identifier": "B",
@@ -162,7 +160,6 @@ class PromoDataManager:
                     "owner": "Rich Brakenhoff",
                     "bill_facing_name": "Internet ID250153",
                     "orbit_id": "23987",
-                    "pj_code": "SPE",
                     "description": "Internet ID250153",
                     "promo_notes": "",
                     "promo_identifier": "F",
@@ -917,16 +914,15 @@ class PromoDataManager:
         
         all_promos = self.get_all_promos()
         mismatched_promos = []
+        owners = set()  # Track unique owners
         
-        # Sample ORBIT dates to simulate mismatches
+        # Sample ORBIT dates to simulate mismatches (only end dates matter)
         sample_orbit_dates = {
-            'P0472022': {
-                'orbit_start_date': '2025-07-05',  # Different from PAM
-                'orbit_end_date': '2025-08-10'    # Different from PAM
+            'P047': {
+                'orbit_end_date': '2025-08-10'    # Different from PAM end date
             },
             'R223': {
-                'orbit_start_date': '2025-06-15',  # Different from PAM  
-                'orbit_end_date': '2025-07-20'    # Different from PAM
+                'orbit_end_date': '2025-07-20'    # Different from PAM end date
             }
         }
         
@@ -938,28 +934,22 @@ class PromoDataManager:
             # Get PAM dates
             pam_start = promo_data.get('promo_start_date', '')
             pam_end = promo_data.get('promo_end_date', '')
+            owner = promo_data.get('owner', '')
+            
+            # Track owners for filter
+            if owner:
+                owners.add(owner)
             
             # Get simulated ORBIT dates (in real implementation, this would come from ORBIT database)
+            # Only check end dates since start dates are manually adjusted before launch
             orbit_dates = sample_orbit_dates.get(promo_code, {})
-            orbit_start = orbit_dates.get('orbit_start_date', pam_start)  # Default to PAM if no ORBIT data
+            orbit_start = pam_start  # Use PAM start date as ORBIT start (not checked for mismatches)
             orbit_end = orbit_dates.get('orbit_end_date', pam_end)
             
-            # Check for mismatches
-            start_mismatch = orbit_start != pam_start
+            # Check for end date mismatch only
             end_mismatch = orbit_end != pam_end
             
-            if start_mismatch or end_mismatch:
-                # Determine mismatch type and severity
-                if start_mismatch and end_mismatch:
-                    mismatch_type = 'both'
-                    mismatch_severity = 'danger'
-                elif start_mismatch:
-                    mismatch_type = 'start_date'
-                    mismatch_severity = 'warning'
-                else:
-                    mismatch_type = 'end_date'
-                    mismatch_severity = 'warning'
-                
+            if end_mismatch:
                 # Create mismatch entry
                 mismatch_entry = {
                     'code': promo_code,
@@ -968,12 +958,15 @@ class PromoDataManager:
                     'orbit_end_date': orbit_end,
                     'promo_start_date': pam_start,
                     'promo_end_date': pam_end,
-                    'mismatch_type': mismatch_type,
-                    'mismatch_severity': mismatch_severity,
+                    'mismatch_type': 'end_date',
+                    'mismatch_severity': 'warning',
                     'bill_facing_name': promo_data.get('bill_facing_name', ''),
-                    'owner': promo_data.get('owner', '')
+                    'owner': owner
                 }
                 
                 mismatched_promos.append(mismatch_entry)
         
-        return mismatched_promos
+        return {
+            'promos': mismatched_promos,
+            'owners': sorted(list(owners))
+        }
