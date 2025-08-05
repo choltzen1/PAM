@@ -20,7 +20,7 @@ html, body {
   overflow-x: hidden;
 }
 
-/* Data Mismatch Page Container - scrollable content area */
+/* Date Mismatch Page Container - scrollable content area */
 .date-mismatch-page {
   flex: 1 1 auto;
   min-height: 0;
@@ -88,6 +88,12 @@ html, body {
   border: 1px solid var(--tmobile-border);
 }
 
+.filters-section {
+  display: flex;
+  gap: 1.5rem;
+  align-items: flex-end;
+}
+
 .filter-group, .search-group {
   display: flex;
   flex-direction: column;
@@ -136,12 +142,14 @@ html, body {
   border-radius: 8px;
   overflow: hidden;
   box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  width: 100%;
 }
 
 .date-mismatch-table {
   width: 100%;
   border-collapse: collapse;
   font-size: 0.9rem;
+  table-layout: fixed;
 }
 
 .date-mismatch-table th {
@@ -153,12 +161,30 @@ html, body {
   font-size: 0.85rem;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  white-space: nowrap;
 }
+
+.date-mismatch-table th:nth-child(1) { width: 15%; } /* Promo Owner */
+.date-mismatch-table th:nth-child(2) { width: 12%; } /* ORBIT Number */
+.date-mismatch-table th:nth-child(3) { width: 12%; } /* Promo Code */
+.date-mismatch-table th:nth-child(4) { width: 15%; } /* ORBIT End Date */
+.date-mismatch-table th:nth-child(5) { width: 15%; } /* PAM End Date */
+.date-mismatch-table th:nth-child(6) { width: 12%; } /* Mismatch Type */
+.date-mismatch-table th:nth-child(7) { width: 19%; text-align: right; } /* Actions */
 
 .date-mismatch-table td {
   padding: 0.75rem;
   border-bottom: 1px solid var(--tmobile-border);
   vertical-align: middle;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.date-mismatch-table td:last-child {
+  text-align: right;
+  white-space: nowrap;
+  padding-right: 0.75rem;
 }
 
 .date-mismatch-table tbody tr:hover {
@@ -197,6 +223,11 @@ html, body {
 
 .actions {
   white-space: nowrap;
+  text-align: right;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.4rem;
+  min-width: 200px;
 }
 
 .btn {
@@ -209,12 +240,13 @@ html, body {
   cursor: pointer;
   display: inline-block;
   text-align: center;
-  margin-right: 0.5rem;
+  flex-shrink: 0;
 }
 
 .btn-sm {
-  padding: 0.25rem 0.5rem;
-  font-size: 0.75rem;
+  padding: 0.25rem 0.4rem;
+  font-size: 0.7rem;
+  min-width: auto;
 }
 
 .btn-primary {
@@ -233,6 +265,12 @@ html, body {
   background: transparent;
   border-color: #6c757d;
   color: #6c757d;
+}
+
+.btn-outline-success {
+  background: transparent;
+  border-color: #28a745;
+  color: #28a745;
 }
 
 .btn:hover {
