@@ -913,12 +913,12 @@ class PromoDataManager:
         # When ORBIT database connection is available, this will query real data
         
         all_promos = self.get_all_promos()
-        mismatched_promos = []
+        all_promo_entries = []
         owners = set()  # Track unique owners
         
         # Sample ORBIT dates to simulate mismatches (only end dates matter)
         sample_orbit_dates = {
-            'P047': {
+            'P0472022': {
                 'orbit_end_date': '2025-08-10'    # Different from PAM end date
             },
             'R223': {
@@ -927,10 +927,6 @@ class PromoDataManager:
         }
         
         for promo_code, promo_data in all_promos.items():
-            # Skip if no ORBIT ID
-            if not promo_data.get('orbit_id'):
-                continue
-                
             # Get PAM dates
             pam_start = promo_data.get('promo_start_date', '')
             pam_end = promo_data.get('promo_end_date', '')
@@ -949,24 +945,23 @@ class PromoDataManager:
             # Check for end date mismatch only
             end_mismatch = orbit_end != pam_end
             
-            if end_mismatch:
-                # Create mismatch entry
-                mismatch_entry = {
-                    'code': promo_code,
-                    'orbit_id': promo_data.get('orbit_id', ''),
-                    'orbit_start_date': orbit_start,
-                    'orbit_end_date': orbit_end,
-                    'promo_start_date': pam_start,
-                    'promo_end_date': pam_end,
-                    'mismatch_type': 'end_date',
-                    'mismatch_severity': 'warning',
-                    'bill_facing_name': promo_data.get('bill_facing_name', ''),
-                    'owner': owner
-                }
-                
-                mismatched_promos.append(mismatch_entry)
+            # Create entry for ALL promos (with or without mismatches)
+            promo_entry = {
+                'code': promo_code,
+                'orbit_id': promo_data.get('orbit_id', ''),
+                'orbit_start_date': orbit_start,
+                'orbit_end_date': orbit_end,
+                'promo_start_date': pam_start,
+                'promo_end_date': pam_end,
+                'mismatch_type': 'end_date' if end_mismatch else '',
+                'mismatch_severity': 'warning' if end_mismatch else '',
+                'bill_facing_name': promo_data.get('bill_facing_name', ''),
+                'owner': owner
+            }
+            
+            all_promo_entries.append(promo_entry)
         
         return {
-            'promos': mismatched_promos,
+            'promos': all_promo_entries,
             'owners': sorted(list(owners))
         }
