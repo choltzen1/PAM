@@ -129,6 +129,36 @@ def date_mismatch():
         return render_template("date_mismatch.html", promos=[], owners=[], user_name="Cade Holtzen")
 
 
+@app.route("/rebates")
+def rebates():
+    return render_template("rebates.html")
+
+
+@app.route("/test")
+def test():
+    return render_template("test.html")
+
+
+@app.route("/approvers")
+def approvers():
+    return render_template("approvers.html")
+
+
+@app.route("/reviewers")
+def reviewers():
+    return render_template("reviewers.html")
+
+
+@app.route("/capacity")
+def capacity():
+    return render_template("capacity.html")
+
+
+@app.route("/admin")
+def admin():
+    return render_template("admin.html")
+
+
 @app.route("/download_file/<promo_code>/<file_type>")
 def download_file(promo_code, file_type):
     try:

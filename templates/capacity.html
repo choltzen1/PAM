@@ -1,0 +1,199 @@
+{% extends "base.html" %}
+
+{% block title %}Capacity Management{% endblock %}
+
+{% block head %}
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/capacity.css') }}">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+
+{% block content %}
+<!-- Styled Header Banner -->
+<div class="styled-header-banner">
+  <div class="styled-header-content">
+    <i class="bi bi-bar-chart-line styled-header-icon"></i>
+    <div class="styled-header-text">
+      <h2 class="styled-header-title">Capacity Management</h2>
+      <p class="styled-header-subtitle">Monitor and manage promotion capacity and resource allocation</p>
+    </div>
+  </div>
+</div>
+
+<!-- Main content area -->
+<div class="capacity-page">
+  <!-- Top Summary Numbers -->
+  <div class="capacity-summary-numbers">
+    <div class="summary-number">
+      <div class="number">10</div>
+      <div class="label">ACTIVE PROMOS</div>
+    </div>
+    <div class="summary-number">
+      <div class="number">4</div>
+      <div class="label">RDC</div>
+    </div>
+    <div class="summary-number">
+      <div class="number">6</div>
+      <div class="label">SPE</div>
+    </div>
+    <div class="summary-number">
+      <div class="number">0</div>
+      <div class="label">REBATE</div>
+    </div>
+  </div>
+
+  <!-- Main Content Grid -->
+  <div class="capacity-main-grid">
+    <!-- Left Column -->
+    <div class="capacity-left-column">
+      <!-- Owner Workload Distribution -->
+      <div class="capacity-section">
+        <div class="section-header">
+          <h3 class="section-title">
+            <i class="bi bi-person-check"></i> Owner Workload Distribution
+          </h3>
+          <div class="date-filter">
+            <label for="week-filter">Week:</label>
+            <select id="week-filter" name="week-filter" class="week-dropdown">
+              <option value="08/10/2025-08/16/2025">08/10/2025 - 08/16/2025</option>
+              <option value="08/17/2025-08/23/2025">08/17/2025 - 08/23/2025</option>
+              <option value="08/24/2025-08/30/2025">08/24/2025 - 08/30/2025</option>
+              <option value="08/31/2025-09/06/2025">08/31/2025 - 09/06/2025</option>
+              <option value="09/07/2025-09/13/2025">09/07/2025 - 09/13/2025</option>
+              <option value="09/14/2025-09/20/2025">09/14/2025 - 09/20/2025</option>
+              <option value="09/21/2025-09/27/2025">09/21/2025 - 09/27/2025</option>
+              <option value="09/28/2025-10/04/2025">09/28/2025 - 10/04/2025</option>
+            </select>
+          </div>
+        </div>
+        <div class="workload-table-container">
+          <table class="workload-table">
+            <thead>
+              <tr>
+                <th>Owner</th>
+                <th>RDC</th>
+                <th>SPE</th>
+                <th>Rebates</th>
+                <th>Total</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Alexandra Brown</td>
+                <td>1</td>
+                <td>0</td>
+                <td>0</td>
+                <td>1</td>
+                <td><span class="status-badge status-ok">OK</span></td>
+              </tr>
+              <tr>
+                <td>Cade Holtzen</td>
+                <td>1</td>
+                <td>2</td>
+                <td>0</td>
+                <td>3</td>
+                <td><span class="status-badge status-high">HIGH</span></td>
+              </tr>
+              <tr>
+                <td>John Smith</td>
+                <td>1</td>
+                <td>0</td>
+                <td>0</td>
+                <td>1</td>
+                <td><span class="status-badge status-ok">OK</span></td>
+              </tr>
+              <tr>
+                <td>Sarah Johnson</td>
+                <td>0</td>
+                <td>1</td>
+                <td>0</td>
+                <td>1</td>
+                <td><span class="status-badge status-ok">OK</span></td>
+              </tr>
+              <tr>
+                <td>Matt Gonzalez</td>
+                <td>0</td>
+                <td>1</td>
+                <td>0</td>
+                <td>1</td>
+                <td><span class="status-badge status-ok">OK</span></td>
+              </tr>
+              <tr>
+                <td>Tom Henderson</td>
+                <td>0</td>
+                <td>1</td>
+                <td>0</td>
+                <td>1</td>
+                <td><span class="status-badge status-ok">OK</span></td>
+              </tr>
+              <tr>
+                <td>Dylan Chen</td>
+                <td>0</td>
+                <td>1</td>
+                <td>0</td>
+                <td>1</td>
+                <td><span class="status-badge status-ok">OK</span></td>
+              </tr>
+              <tr>
+                <td>Maria Rodriguez</td>
+                <td>0</td>
+                <td>1</td>
+                <td>0</td>
+                <td>1</td>
+                <td><span class="status-badge status-ok">OK</span></td>
+              </tr>
+              <tr>
+                <td>Evan Park</td>
+                <td>0</td>
+                <td>1</td>
+                <td>0</td>
+                <td>1</td>
+                <td><span class="status-badge status-ok">OK</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column -->
+    <div class="capacity-right-column">
+      <!-- Weekly Launch Schedule -->
+      <div class="capacity-section">
+        <h3 class="section-title">
+          <i class="bi bi-calendar-week"></i> Weekly Launch Schedule
+        </h3>
+        <div class="schedule-grid">
+          <div class="schedule-item">
+            <div class="schedule-header">This Thursday Schedule</div>
+            <div class="schedule-content">
+              <div class="schedule-promo">P047-2022<br><span class="schedule-time">9 promos</span></div>
+            </div>
+          </div>
+          <div class="schedule-item">
+            <div class="schedule-header">Next Thursday Schedule</div>
+            <div class="schedule-content">
+              <div class="schedule-promo">R223<br><span class="schedule-time">6 promos</span></div>
+            </div>
+          </div>
+          <div class="schedule-item">
+            <div class="schedule-header">August 26, 2025</div>
+            <div class="schedule-content">
+              <div class="schedule-promo">TBD<br><span class="schedule-time">8 promos</span></div>
+            </div>
+          </div>
+          <div class="schedule-item">
+            <div class="schedule-header">September 02, 2025</div>
+            <div class="schedule-content">
+              <div class="schedule-promo">TBD<br><span class="schedule-time">5 promos</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
