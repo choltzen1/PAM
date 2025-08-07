@@ -1,0 +1,393 @@
+/* capacity.css */
+
+:root {
+  --tmobile-magenta: #e20074;
+  --tmobile-magenta-dark: #b8005a;
+  --tmobile-gray: #f4f4f4;
+  --tmobile-border: #e0e0e0;
+  --success-color: #28a745;
+  --warning-color: #ffc107;
+  --danger-color: #dc3545;
+  --info-color: #17a2b8;
+  --light-blue: #4285f4;
+  --purple: #8e44ad;
+}
+
+/* Styled Header Banner */
+.styled-header-banner {
+  background: linear-gradient(135deg, var(--tmobile-magenta) 0%, var(--tmobile-magenta-dark) 100%);
+  color: white;
+  padding: 2rem 2rem 2rem 1.5rem;
+  margin: 0;
+  border-radius: 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.styled-header-content {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  max-width: 1200px;
+  margin: 0;
+}
+
+.styled-header-icon {
+  font-size: 2.5rem;
+  color: white;
+  flex-shrink: 0;
+}
+
+.styled-header-text {
+  flex: 1;
+}
+
+.styled-header-title {
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 0 0 0.25rem 0;
+  color: white;
+}
+
+.styled-header-subtitle {
+  font-size: 1rem;
+  margin: 0;
+  opacity: 0.9;
+  color: white;
+  font-weight: 400;
+}
+
+/* Main page layout */
+html, body {
+  min-height: 100vh;
+  height: 100%;
+  width: 100vw;
+  margin: 0;
+  padding: 0;
+  background: #f8f9fa;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  font-family: 'Inter', Arial, sans-serif;
+  overflow-x: hidden;
+  overflow-y: hidden; /* Prevent vertical scrolling */
+}
+
+.capacity-page {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden; /* Prevent any overflow */
+  width: 100%;
+  padding: 1.5rem; /* Reduced padding */
+  box-sizing: border-box;
+  background: #f8f9fa;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Top Summary Numbers */
+.capacity-summary-numbers {
+  display: flex;
+  justify-content: flex-start; /* Changed from space-around to flex-start */
+  gap: 3rem; /* Added gap for spacing between items */
+  margin-bottom: 1.5rem; /* Reduced margin */
+  background: white;
+  border-radius: 8px;
+  padding: 1rem; /* Reduced padding */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  flex-shrink: 0; /* Prevent shrinking */
+}
+
+.summary-number {
+  text-align: center;
+}
+
+.summary-number .number {
+  font-size: 2rem; /* Slightly smaller */
+  font-weight: 700;
+  color: var(--tmobile-magenta);
+  margin-bottom: 0.25rem; /* Reduced margin */
+}
+
+.summary-number .label {
+  font-size: 0.7rem; /* Slightly smaller */
+  font-weight: 600;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Main Grid Layout */
+.capacity-main-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem; /* Reduced gap */
+  flex: 1; /* Use all remaining space */
+  min-height: 0; /* Allow flexing */
+}
+
+.capacity-left-column,
+.capacity-right-column {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  height: 100%;
+}
+
+/* Section styling */
+.capacity-section {
+  background: white;
+  border-radius: 8px;
+  padding: 1rem; /* Reduced padding */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0; /* Allow shrinking */
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  flex-shrink: 0;
+}
+
+.section-title {
+  font-size: 0.9rem; /* Slightly smaller */
+  font-weight: 600;
+  color: var(--tmobile-magenta);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.date-filter {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.date-filter label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #666;
+}
+
+.week-dropdown {
+  padding: 0.5rem;
+  border: 1px solid var(--tmobile-border);
+  border-radius: 4px;
+  font-size: 0.875rem;
+  background: white;
+  color: #333;
+  min-width: 200px;
+}
+
+.week-dropdown:focus {
+  outline: none;
+  border-color: var(--tmobile-magenta);
+  box-shadow: 0 0 0 2px rgba(226, 0, 116, 0.1);
+}
+
+.section-title i {
+  font-size: 1rem;
+}
+
+/* Workload Table */
+.workload-table-container {
+  overflow-y: auto;
+  flex: 1;
+}
+
+.workload-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+  height: 100%;
+}
+
+.workload-table th {
+  background: var(--tmobile-magenta);
+  color: white;
+  padding: 0.75rem 1rem;
+  text-align: left;
+  font-weight: 600;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.workload-table td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #eee;
+  text-align: center;
+}
+
+.workload-table td:first-child {
+  text-align: left;
+}
+
+.workload-table tbody tr:hover {
+  background: #f8f9fa;
+}
+
+/* Status badges */
+.status-badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.status-ok {
+  background: rgba(40, 167, 69, 0.1);
+  color: var(--success-color);
+}
+
+.status-high {
+  background: rgba(220, 53, 69, 0.1);
+  color: var(--danger-color);
+}
+
+/* Chart Container */
+.chart-container {
+  position: relative;
+  height: 300px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.chart-container canvas {
+  max-height: 250px;
+}
+
+.chart-legend {
+  margin-top: 1rem;
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.legend-color {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+/* Schedule Grid */
+.schedule-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  flex: 1;
+  align-content: start;
+}
+
+.schedule-item {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.schedule-header {
+  background: var(--tmobile-magenta);
+  color: white;
+  padding: 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  text-align: center;
+}
+
+.schedule-content {
+  padding: 1rem;
+  text-align: center;
+  background: white;
+}
+
+.schedule-promo {
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 0.5rem;
+}
+
+.schedule-time {
+  font-size: 0.875rem;
+  color: #666;
+  font-weight: normal;
+}
+
+/* Metrics Grid */
+.metrics-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.metric-card {
+  text-align: center;
+  padding: 1rem;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background: white;
+}
+
+.metric-title {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 1rem;
+}
+
+.metric-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--tmobile-magenta);
+  margin-bottom: 0.5rem;
+}
+
+.metric-subtitle {
+  font-size: 0.75rem;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .capacity-page {
+    padding: 1rem;
+  }
+  
+  .capacity-main-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .capacity-summary-numbers {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .schedule-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .metrics-grid {
+    grid-template-columns: 1fr;
+  }
+}
