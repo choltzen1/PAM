@@ -1,77 +1,83 @@
 {% extends "base.html" %}
-{% block title %}Edit Promotion – {{ promo.code }}{% endblock %}
+{% block title %}Edit Promotion{{ promo.code }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/jira_modal.css') }}">
+{% endblock %}
+
 {% block content %}
   <!-- Header -->
   <header class="header">
     <div class="header-title">Edit Promotion – {{ promo.code }}</div>
     <div class="user-name">{{ user_name }}</div>
   </header>
-  <div class="container" style="max-width: 1800px;">
-    <div style="display: flex; width: 100%; gap: 2.5rem;">
+
+  <div class="container wide-container">
+    <div class="layout-flex">
       <!-- LEFT PANEL -->
-      <div style="flex: 1.25; min-width: 420px; max-width: 600px; background: #fff; border-right: 2px solid #ccc; padding: 0;">
-        <!-- General Info Box -->
-        <div style="border-bottom: 4px solid var(--tmobile-magenta); padding: 1rem;">
-          <div style="font-weight: bold; color: var(--tmobile-magenta); font-size: 1.1rem; margin-bottom: 0.5rem;">General Information</div>
+      <div class="left-panel">
+        <div class="info-box">
+          <div class="info-title">General Information</div>
           <div><b>Promo Owner:</b> {{ promo.owner }}</div>
           <div><b>Bill Facing Name:</b> {{ promo.bill_facing_name }}</div>
           <div><b>Orbit ID:</b> {{ promo.orbit_id }}</div>
-          <div><b>PJ Code:</b> {{ promo.pj_code }}</div>
+          <div><b>Promo Code:</b> {{ promo.code }}</div>
           <div><b>Restricted:</b> Not Dark</div>
         </div>
-        <!-- Description Box -->
-        <div style="border-bottom: 4px solid var(--tmobile-magenta); padding: 1rem;">
-          <div style="font-weight: bold; color: var(--tmobile-magenta); font-size: 1.1rem; margin-bottom: 0.5rem;">Description</div>
-          <div style="margin-bottom: 0.5rem;">{{ promo.description }}</div>
+        <div class="info-box">
+          <div class="info-title">Description</div>
+          <div class="mb-sm">{{ promo.description }}</div>
           <div><b>Promo Notes:</b></div>
-          <div style="white-space: pre-line;">{{ promo.promo_notes }}</div>
+          <div class="pre-line">{{ promo.promo_notes }}</div>
         </div>
-        <!-- Updates Box -->
-        <div style="border-bottom: 4px solid var(--tmobile-magenta); padding: 1rem;">
-          <div style="font-weight: bold; color: var(--tmobile-magenta); font-size: 1.1rem; margin-bottom: 0.5rem;">Updates</div>
-          <div><b>Promo % Discount:</b> {{ promo.discount }}</div>
-          <div><b>Promo Amount:</b> {{ promo.amount }}</div>
+        <div class="info-box">
+          <div class="info-title">Updates</div>
+          <div><b>Promo % Discount:</b> {{ promo.discount if promo.discount is not none else '' }}</div>
+          <div><b>Promo Amount:</b> {{ promo.amount if promo.amount is not none else '' }}</div>
           <div><b>DCD Web In-Cart:</b> {{ 'Y' if promo.dcd_web_cart == 'Y' else 'N' }}</div>
           <div><b>Product Type:</b> {{ promo.product_type }}</div>
           <div><b>BOGO:</b> {{ 'Yes' if promo.bogo == 'Y' else 'No' }}</div>
           <div><b>Trade-in Group ID:</b> {{ promo.trade_in_group_id }}</div>
         </div>
-        <!-- Version History Box -->
-        <div style="border-bottom: 4px solid var(--tmobile-magenta); padding: 1rem;">
-          <div style="font-weight: bold; color: var(--tmobile-magenta); font-size: 1.1rem; margin-bottom: 0.5rem;">Version History</div>
-          <div style="font-size: 0.97em; color: #444;">
-            {% for entry in promo.version_history %}
+        {% if promo.last_changes %}
+        <div class="info-box">
+          <div class="info-title">Recent Changes</div>
+          <div class="last-changes">
+            <div style="color: #666; font-size: 0.9em;">{{ promo.last_changes }}</div>
+          </div>
+        </div>
+        {% endif %}
+        <div class="info-box">
+          <div class="info-title">Version History</div>
+          <div class="version-history">
+            {% for entry in promo.get('version_history', []) %}
               <div>{{ entry }}</div>
             {% endfor %}
           </div>
         </div>
       </div>
       <!-- RIGHT PANEL -->
-      <div style="flex: 2.2; min-width: 0; background: #fff; padding: 0;">
-        <div class="tabs" style="margin: 0 0 1rem 0;">
-          {% for tab in ['Details','Dates & Times','Requirements','Segmentation','Groupings','BPTCR'] %}
-            <a href="{{ url_for('edit_promo', promo_code=promo.code, tab=tab) }}"
-               class="tab {% if tab == active_tab %}active{% endif %}"
-               style="min-width: 120px; text-decoration: none; display: inline-block; margin-right: 0.3rem; font-size: 0.9rem;">
+      <div class="right-panel">
+        <div class="tabs">
+          {% for tab in ['Details','Dates & Times','Requirements','Trade','Tiers','Segmentation','Groupings','BPTCR','SQL Generation'] %}
+            <a href="{{ url_for('promo.edit_promo', promo_code=promo.code, tab=tab) }}"
+               class="tab {% if tab == active_tab %}active{% endif %}">
               {{ tab }}
             </a>
           {% endfor %}
         </div>
-        <form method="post" style="padding: 1.5rem 1.5rem 0 1.5rem;">
-          {# Tab state is preserved on POST by reading 'active_tab' from the form #}
+        <form method="post" enctype="multipart/form-data">
           <input type="hidden" name="active_tab" value="{{ active_tab }}">
           {% if active_tab == 'Details' %}
-            <!-- Details Tab Content (Editable) -->
-            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 1.2rem 0.7rem; align-items: start;">
-              <div style="grid-column: 1 / 5; font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); margin-bottom: 0.5rem; padding-bottom: 0.2rem;">Bill Facing Name</div>
-              <input style="grid-column: 1 / 5; margin-bottom: 0.5rem;" class="form-control" name="bill_facing_name" value="{{ promo.bill_facing_name }}">
-
-              <div style="font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); margin-bottom: 0.5rem; padding-bottom: 0.2rem;">Promo % Discount</div>
-              <div style="font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); margin-bottom: 0.5rem; padding-bottom: 0.2rem;">Promo Amount ($)</div>
-              <div style="font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); margin-bottom: 0.5rem; padding-bottom: 0.2rem;">NSEIP Drop</div>
-              <div style="font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); margin-bottom: 0.5rem; padding-bottom: 0.2rem;">DCD Web Cart</div>
-              <input class="form-control" name="discount" value="{{ promo.discount }}" type="number" min="0" step="0.01" placeholder="%">
-              <input class="form-control" name="amount" value="{{ promo.amount }}" type="number" min="0" step="0.01" placeholder="$">
+            <div class="grid-form four-col">
+              <label class="section-label col-span-2">Bill Facing Name</label>
+              <label class="section-label col-span-2">Initiative Name</label>
+              <input class="form-control col-span-2 mb-1" name="bill_facing_name" value="{{ promo.bill_facing_name }}">
+              <input class="form-control col-span-2 mb-1" name="initiative_name" value="{{ promo.initiative_name or '' }}">              <label class="section-label">Promo % Discount</label>
+              <label class="section-label">Promo Amount ($)</label>
+              <label class="section-label">NSEIP Drop</label>
+              <label class="section-label">DCD Web Cart</label>              <input class="form-control" name="discount" value="{{ promo.discount if promo.discount is not none else '' }}" type="number" min="0" step="1" placeholder="%">
+              <input class="form-control" name="amount" value="{{ promo.amount if promo.amount is not none else '' }}" type="number" min="0" step="1" placeholder="$">
               <select class="form-select" name="nseip_drop">
                 <option value="Y" {% if promo.nseip_drop == 'Y' %}selected{% endif %}>Yes</option>
                 <option value="N" {% if promo.nseip_drop == 'N' %}selected{% endif %}>No</option>
@@ -79,15 +85,26 @@
               <select class="form-select" name="dcd_web_cart">
                 <option value="Y" {% if promo.dcd_web_cart == 'Y' %}selected{% endif %}>Yes</option>
                 <option value="N" {% if promo.dcd_web_cart == 'N' %}selected{% endif %}>No</option>
-              </select>
+              </select>              <label class="grid-full section-label">Product Type</label>
+              <div class="input-group vertical-radio grid-full mb-1">
+                <label class="radio-vertical">
+                  B
+                  <input type="radio" name="product_type" value="B" {% if promo.product_type == 'B' %}checked{% endif %}>
+                </label>
+                <label class="radio-vertical">
+                  G
+                  <input type="radio" name="product_type" value="G" {% if promo.product_type == 'G' %}checked{% endif %}>
+                </label>
+                <label class="radio-vertical">
+                  *
+                  <input type="radio" name="product_type" value="*" {% if promo.product_type == '*' %}checked{% endif %}>
+                </label>
+              </div>
 
-              <div style="grid-column: 1 / 5; font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); margin-top: 1rem; margin-bottom: 0.5rem; padding-bottom: 0.2rem;">Product Type</div>
-              <input style="grid-column: 1 / 5; margin-bottom: 0.5rem;" class="form-control" name="product_type" value="{{ promo.product_type }}">
-
-              <div style="font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); margin-bottom: 0.5rem; padding-bottom: 0.2rem;">BOGO</div>
-              <div style="font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); margin-bottom: 0.5rem; padding-bottom: 0.2rem;">Bolt Trade-In Group ID</div>
-              <div style="font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); margin-bottom: 0.5rem; padding-bottom: 0.2rem;">FPD Display Promo</div>
-              <div style="font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); margin-bottom: 0.5rem; padding-bottom: 0.2rem;">On Menu</div>
+              <label class="section-label">BOGO</label>
+              <label class="section-label">Bolt Trade-In Group ID</label>
+              <label class="section-label">FPD Display Promo</label>
+              <label class="section-label">On Menu</label>
               <select class="form-select" name="bogo">
                 <option value="Y" {% if promo.bogo == 'Y' %}selected{% endif %}>Yes</option>
                 <option value="N" {% if promo.bogo == 'N' %}selected{% endif %}>No</option>
@@ -102,334 +119,1333 @@
                 <option value="N" {% if promo.on_menu == 'N' %}selected{% endif %}>No</option>
               </select>
 
-              <div style="grid-column: 1 / 3; font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); margin-top: 1rem; margin-bottom: 0.5rem; padding-bottom: 0.2rem;">Market Group</div>
-              <div style="grid-column: 3 / 5; font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); margin-top: 1rem; margin-bottom: 0.5rem; padding-bottom: 0.2rem;">Store Group</div>
-              <input style="grid-column: 1 / 3;" class="form-control" name="market_group" value="*">
-              <input style="grid-column: 3 / 5;" class="form-control" name="store_group" value="*">
+              <label class="section-label col-span-2">Market Group</label>
+              <label class="section-label col-span-2">Store Group</label>
+              <input class="form-control col-span-2" name="market_group" value="*">
+              <input class="form-control col-span-2" name="store_group" value="*">              <label class="grid-full section-label">SKU Link Address</label>
+              <input class="form-control grid-full" name="sku_link" value="{{ promo.sku_link }}">
 
-              <div style="grid-column: 1 / 5; font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); margin-top: 1rem; margin-bottom: 0.5rem; padding-bottom: 0.2rem;">SKU Link Address</div>
-              <input style="grid-column: 1 / 5;" class="form-control" name="sku_link" value="https://web.powerapps.com/webplayer/iframe...">
-              <div style="grid-column: 1 / 5; font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); margin-top: 1rem; margin-bottom: 0.5rem; padding-bottom: 0.2rem;">Trade-In Link Address</div>
-              <input style="grid-column: 1 / 5;" class="form-control" name="tradein_link" value="https://web.powerapps.com/webplayer/iframe...">
+              <label class="grid-full section-label">Trade-In Link Address</label>
+              <input class="form-control grid-full" name="tradein_link" value="{{ promo.tradein_link }}">
             </div>
-          {% elif active_tab == 'Dates & Times' %}
-            <!-- Dates & Times Tab Content (Editable) -->
-            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 1.2rem 0.7rem; align-items: start;">
+            <div class="save-footer">
+              <button type="submit" class="btn btn-primary">Save Details</button>
+            </div>
 
-              <!-- Promo Start Date, End Date, Comm End Date, Promo Duration (Legacy style) -->
-              <div style="font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); padding-bottom: 0.2rem;">Promo Start Date</div>
-              <div style="font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); padding-bottom: 0.2rem;">Promo End Date</div>
-              <div style="font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); padding-bottom: 0.2rem;">Comm End Date</div>
-              <div style="font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); padding-bottom: 0.2rem;">Promo Duration</div>
+          {% elif active_tab == 'Dates & Times' %}
+            <div class="grid-form four-col">
+              <label class="section-label">Promo Start Date</label>
+              <label class="section-label">Promo End Date</label>
+              <label class="section-label">Comm End Date</label>
+              <label class="section-label">Promo Duration</label>
               <input class="form-control" name="promo_start_date" type="date" value="{{ promo.promo_start_date }}">
               <input class="form-control" name="promo_end_date" type="date" value="{{ promo.promo_end_date }}">
               <input class="form-control" name="comm_end_date" type="date" value="{{ promo.comm_end_date }}">
-              <div style="display: flex; gap: 0.5rem; align-items: center; justify-content: flex-start; background: #f7f7f7; border-radius: 4px; padding: 0.3rem 0.7rem; border: 1px solid #ccc;">
-                <label style="margin-right: 1.2rem; font-weight: 500; color: #333;">Duration:</label>
-                <label style="margin-right: 0.7rem;">
+              <div class="input-group vertical-radio">
+                <label class="radio-vertical">
+                  24
                   <input type="radio" name="promo_duration" value="24" {% if promo.promo_duration == 24 %}checked{% endif %}>
-                  <span style="margin-left: 0.2rem;">24</span>
                 </label>
-                <label style="margin-right: 0.7rem;">
+                <label class="radio-vertical">
+                  30
                   <input type="radio" name="promo_duration" value="30" {% if promo.promo_duration == 30 %}checked{% endif %}>
-                  <span style="margin-left: 0.2rem;">30</span>
                 </label>
-                <label>
+                <label class="radio-vertical">
+                  36
                   <input type="radio" name="promo_duration" value="36" {% if promo.promo_duration == 36 %}checked{% endif %}>
-                  <span style="margin-left: 0.2rem;">36</span>
                 </label>
               </div>
 
-              <!-- Delay Time -->
-              <div style="font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); padding-bottom: 0.2rem;">Delay Time</div>
-              <div style="font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); padding-bottom: 0.2rem;">Application Grace Period</div>
-              <div style="font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); padding-bottom: 0.2rem;">Promo Grace</div>
-              <div style="font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); padding-bottom: 0.2rem;">Trade-In Grace</div>
+              <label class="section-label">Delay Time</label>
+              <label class="section-label">MPSS Lookback</label>
+              <label class="section-label">Promo Grace</label>
+              <label class="section-label">Trade-In Grace</label>
               <input class="form-control" name="delay_time" type="number" min="0" value="{{ promo.delay_time }}">
-              <div style="display: flex; gap: 0.5rem; align-items: center; justify-content: flex-start; background: #f7f7f7; border-radius: 4px; padding: 0.3rem 0.7rem; border: 1px solid #ccc;">
-                <label style="margin-right: 1.2rem; font-weight: 500; color: #333;">Grace:</label>
-                {% for grace in ['G11','G12','G13','G14','G15','G16','G17','NULL'] %}
-                  <label style="margin-right: 0.7rem;">
-                    <input type="radio" name="application_grace_period" value="{{ grace }}" {% if promo.application_grace_period == grace %}checked{% endif %}>
-                    <span style="margin-left: 0.2rem;">{{ grace }}</span>
-                  </label>
-                {% endfor %}
-              </div>
+              <input class="form-control" name="mpss_lookback" value="{{ promo.mpss_lookback }}">
               <input class="form-control" name="promo_grace" value="{{ promo.promo_grace }}">
-              <input class="form-control" name="trade_in_grace" value="{{ promo.trade_in_grace }}">
-
-              <!-- MPSS Lookback -->
-              <div style="grid-column: 1 / 5; font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); margin-top: 1rem; margin-bottom: 0.5rem; padding-bottom: 0.2rem;">MPSS Lookback</div>
-              <input style="grid-column: 1 / 5;" class="form-control" name="mpss_lookback" value="{{ promo.mpss_lookback }}">
-            </div>
-          {% elif active_tab == 'Requirements' %}
-            <!-- Requirements Tab Content (Modernized, Consistent Layout) -->
-            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 1.2rem 0.7rem; align-items: start;">
-              <!-- Device Sales Type -->
-              <div style="font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); padding-bottom: 0.2rem;">Device Sales Type</div>
-              <div style="font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); padding-bottom: 0.2rem;">Activation Type</div>
-              <div style="font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); padding-bottom: 0.2rem;">Maintain SOC</div>
-              <div style="font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); padding-bottom: 0.2rem;">Limit Per BAN</div>
-              <div>
-                <div style="display: flex; gap: 0.5rem; align-items: center; background: #f7f7f7; border-radius: 4px; padding: 0.3rem 0.7rem; border: 1px solid #ccc;">
-                  {% for type in ['J01','S01','*','NULL'] %}
-                    <label style="margin-right: 0.7rem; font-weight: 500; color: #333;">
-                      <input type="radio" name="device_sales_type" value="{{ type }}" {% if promo.device_sales_type == type %}checked{% endif %}>
-                      <span style="margin-left: 0.2rem;">{{ type }}</span>
-                    </label>
-                  {% endfor %}
-                </div>
-              </div>
-              <div>
-                <div style="display: flex; gap: 0.5rem; align-items: center; background: #f7f7f7; border-radius: 4px; padding: 0.3rem 0.7rem; border: 1px solid #ccc;">
-                  {% for type in ['AE1','E01','N01','NA1','*','NULL'] %}
-                    <label style="margin-right: 0.7rem; font-weight: 500; color: #333;">
-                      <input type="radio" name="activation_type" value="{{ type }}" {% if promo.activation_type == type %}checked{% endif %}>
-                      <span style="margin-left: 0.2rem;">{{ type }}</span>
-                    </label>
-                  {% endfor %}
-                </div>
-              </div>
-              <div>
-                <div style="display: flex; gap: 0.5rem; align-items: center; background: #f7f7f7; border-radius: 4px; padding: 0.3rem 0.7rem; border: 1px solid #ccc;">
-                  <label style="margin-right: 0.7rem; font-weight: 500; color: #333;">
-                    <input type="radio" name="maintain_soc" value="Y" {% if promo.maintain_soc == 'Y' %}checked{% endif %}> Y
-                  </label>
-                  <label style="margin-right: 0.7rem; font-weight: 500; color: #333;">
-                    <input type="radio" name="maintain_soc" value="N" {% if promo.maintain_soc == 'N' %}checked{% endif %}> N
-                  </label>
-                </div>
-              </div>
-              <div>
-                <input class="form-control" name="limit_per_ban" value="{{ promo.limit_per_ban }}">
-              </div>
-
-              <!-- Minimum GSM Count -->
-              <div style="font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); padding-bottom: 0.2rem;">Minimum GSM Count</div>
-              <div style="font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); padding-bottom: 0.2rem;">Maximum GSM Count</div>
-              <div style="font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); padding-bottom: 0.2rem; grid-column: 3 / 5;">Port-In Group ID</div>
-              <div>
-                <input class="form-control" name="min_gsm_count" value="{{ promo.min_gsm_count }}">
-              </div>
-              <div>
-                <input class="form-control" name="max_gsm_count" value="{{ promo.max_gsm_count }}">
-              </div>
-              <div style="grid-column: 3 / 5;">
-                <div style="display: flex; gap: 0.5rem; align-items: center; background: #f7f7f7; border-radius: 4px; padding: 0.3rem 0.7rem; border: 1px solid #ccc;">
-                  {% for group in ['G02','G03','G04','G05','G06','G07','NULL'] %}
-                    <label style="margin-right: 0.7rem; font-weight: 500; color: #333;">
-                      <input type="radio" name="port_in_group_id" value="{{ group }}" {% if promo.port_in_group_id == group %}checked{% endif %}>
-                      <span style="margin-left: 0.2rem;">{{ group }}</span>
-                    </label>
-                  {% endfor %}
-                </div>
-              </div>
-            </div>
-          {% elif active_tab == 'Segmentation' %}
-            <!-- Segmentation Tab Content (Modernized, Consistent Layout) -->
-            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 1.2rem 0.7rem; align-items: start;">
-              <!-- Segment Name -->
-              <div style="grid-column: 1 / 5; font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); margin-bottom: 0.5rem; padding-bottom: 0.2rem;">Segment Name</div>
-              <input style="grid-column: 1 / 5; margin-bottom: 0.5rem;" class="form-control" name="segment_name" value="{{ promo.segment_name }}">
-
-              <!-- Sub Segment -->
-              <div style="grid-column: 1 / 5; font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); margin-bottom: 0.5rem; padding-bottom: 0.2rem;">Sub Segment</div>
-              <div style="grid-column: 1 / 5; display: flex; gap: 1rem; align-items: center; background: #f7f7f7; border-radius: 4px; padding: 0.5rem 0.7rem; border: 1px solid #ccc; margin-bottom: 0.5rem;">
-                {% for segment in ['Active Military','Family','Reserve','Retired','Promo Code'] %}
-                  <label style="font-weight: 500; color: #333;">
-                    <input type="radio" name="sub_segment" value="{{ segment }}" {% if promo.sub_segment == segment %}checked{% endif %}>
-                    <span style="margin-left: 0.2rem;">{{ segment }}</span>
+              <input class="form-control" name="trade_in_grace" value="{{ promo.trade_in_grace }}">              <label class="section-label grid-full">Application Grace Period</label>
+              <div class="input-group vertical-radio grid-full">
+                {% for grace in ['G11','G12','G13','G14','G15','G16','G17','NULL'] %}
+                  <label class="radio-vertical">
+                    {{ grace }}
+                    <input type="radio" name="application_grace_period" value="{{ grace }}" {% if promo.application_grace_period == grace %}checked{% endif %}>
                   </label>
                 {% endfor %}
               </div>
-
-              <!-- Segment Group ID -->
-              <div style="font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); padding-bottom: 0.2rem; grid-column: 1 / 3;">Segment Group ID</div>
-              <div style="font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); padding-bottom: 0.2rem; grid-column: 3 / 5;">Segment Level</div>
-              <input style="grid-column: 1 / 3;" class="form-control" name="segment_group_id" value="{{ promo.segment_group_id }}">
-              <div style="grid-column: 3 / 5;">
-                <div style="display: flex; gap: 1rem; align-items: center; background: #f7f7f7; border-radius: 4px; padding: 0.3rem 0.7rem; border: 1px solid #ccc;">
-                  {% for level in ['BAN','LINE','NA'] %}
-                    <label style="font-weight: 500; color: #333;">
-                      <input type="radio" name="segment_level" value="{{ level }}" {% if promo.segment_level == level %}checked{% endif %}>
-                      <span style="margin-left: 0.2rem;">{{ level }}</span>
-                    </label>
-                  {% endfor %}
-                </div>
-              </div>
             </div>
-          {% elif active_tab == 'Requirements' %}
-            <!-- Requirements Tab Content (Legacy/Modernized) -->
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem 0.7rem; align-items: start;">
-              <!-- Device Sales Type -->
-              <div style="grid-column: 1 / 3; background: var(--tmobile-magenta); color: #fff; font-weight: bold; padding: 0.4rem 0.7rem; border-radius: 4px 4px 0 0; border-bottom: 2px solid #fff;">Device Sales Type</div>
-              <div style="grid-column: 1 / 3; display: flex; gap: 1.2rem; align-items: center; background: #f7f7f7; border-radius: 0 0 4px 4px; padding: 0.5rem 0.7rem; border: 1px solid #ccc;">
+            <div class="save-footer">
+              <button type="submit" class="btn btn-primary">Save Dates & Times</button>
+            </div>
+
+          {% elif active_tab == 'Requirements' %}            <div class="grid-form four-col">
+              <label class="section-label">Device Sales Type</label>
+              <label class="section-label">Activation Type</label>
+              <label class="section-label">Active Line Required</label>
+              <label class="section-label">Maintain SOC</label>
+              <div class="input-group vertical-radio">
                 {% for type in ['J01','S01','*','NULL'] %}
-                  <label style="margin-right: 1.2rem; font-weight: 500; color: #333;">
+                  <label class="radio-vertical">
+                    {{ type }}
                     <input type="radio" name="device_sales_type" value="{{ type }}" {% if promo.device_sales_type == type %}checked{% endif %}>
-                    <span style="margin-left: 0.2rem;">{{ type }}</span>
                   </label>
                 {% endfor %}
               </div>
-
-              <!-- Activation Type -->
-              <div style="grid-column: 1 / 3; background: var(--tmobile-magenta); color: #fff; font-weight: bold; padding: 0.4rem 0.7rem; border-radius: 4px 4px 0 0; border-bottom: 2px solid #fff;">Activation Type</div>
-              <div style="grid-column: 1 / 3; display: flex; gap: 1.2rem; align-items: center; background: #f7f7f7; border-radius: 0 0 4px 4px; padding: 0.5rem 0.7rem; border: 1px solid #ccc;">
+              <div class="input-group vertical-radio">
                 {% for type in ['AE1','E01','N01','NA1','*','NULL'] %}
-                  <label style="margin-right: 1.2rem; font-weight: 500; color: #333;">
+                  <label class="radio-vertical">
+                    {{ type }}
                     <input type="radio" name="activation_type" value="{{ type }}" {% if promo.activation_type == type %}checked{% endif %}>
-                    <span style="margin-left: 0.2rem;">{{ type }}</span>
                   </label>
                 {% endfor %}
               </div>
-
-              <!-- Maintain SOC -->
-              <div style="background: var(--tmobile-magenta); color: #fff; font-weight: bold; padding: 0.4rem 0.7rem; border-radius: 4px 4px 0 0; border-bottom: 2px solid #fff;">Maintain SOC</div>
-              <div style="display: flex; gap: 1.2rem; align-items: center; background: #f7f7f7; border-radius: 0 0 4px 4px; padding: 0.5rem 0.7rem; border: 1px solid #ccc;">
-                <label style="margin-right: 1.2rem; font-weight: 500; color: #333;">
-                  <input type="radio" name="maintain_soc" value="Y" {% if promo.maintain_soc == 'Y' %}checked{% endif %}> Y
+              <div class="input-group vertical-radio">
+                <label class="radio-vertical">
+                  Y
+                  <input type="radio" name="active_line_required" value="Y" {% if promo.active_line_required == 'Y' %}checked{% endif %}>
                 </label>
-                <label style="margin-right: 1.2rem; font-weight: 500; color: #333;">
-                  <input type="radio" name="maintain_soc" value="N" {% if promo.maintain_soc == 'N' %}checked{% endif %}> N
+                <label class="radio-vertical">
+                  N
+                  <input type="radio" name="active_line_required" value="N" {% if promo.active_line_required == 'N' %}checked{% endif %}>
+                </label>
+              </div>
+              <div class="input-group vertical-radio">
+                <label class="radio-vertical">
+                  Y
+                  <input type="radio" name="maintain_soc" value="Y" {% if promo.maintain_soc == 'Y' %}checked{% endif %}>
+                </label>
+                <label class="radio-vertical">
+                  N
+                  <input type="radio" name="maintain_soc" value="N" {% if promo.maintain_soc == 'N' %}checked{% endif %}>
                 </label>
               </div>
 
-              <!-- Limit Per BAN -->
-              <div style="background: var(--tmobile-magenta); color: #fff; font-weight: bold; padding: 0.4rem 0.7rem; border-radius: 4px 4px 0 0; border-bottom: 2px solid #fff;">Limit Per BAN</div>
-              <input class="form-control" name="limit_per_ban" value="{{ promo.limit_per_ban }}">
-
-              <!-- Minimum GSM Count -->
-              <div style="background: var(--tmobile-magenta); color: #fff; font-weight: bold; padding: 0.4rem 0.7rem; border-radius: 4px 4px 0 0; border-bottom: 2px solid #fff;">Minimum GSM Count</div>
+              <label class="section-label">Maintain Active Line</label>
+              <label class="section-label">Limit Per BAN</label>
+              <label class="section-label">Minimum GSM Count</label>
+              <label class="section-label">Maximum GSM Count</label>
+              <div class="input-group vertical-radio">
+                <label class="radio-vertical">
+                  Y
+                  <input type="radio" name="maintain_active_line" value="Y" {% if promo.maintain_active_line == 'Y' %}checked{% endif %}>
+                </label>
+                <label class="radio-vertical">
+                  N
+                  <input type="radio" name="maintain_active_line" value="N" {% if promo.maintain_active_line == 'N' %}checked{% endif %}>
+                </label>
+              </div>              <input class="form-control" name="limit_per_ban" value="{{ promo.limit_per_ban }}">
               <input class="form-control" name="min_gsm_count" value="{{ promo.min_gsm_count }}">
+              <input class="form-control" name="max_gsm_count" value="{{ promo.max_gsm_count if promo.max_gsm_count is not none else '' }}">
 
-              <!-- Maximum GSM Count -->
-              <div style="background: var(--tmobile-magenta); color: #fff; font-weight: bold; padding: 0.4rem 0.7rem; border-radius: 4px 4px 0 0; border-bottom: 2px solid #fff;">Maximum GSM Count</div>
-              <input class="form-control" name="max_gsm_count" value="{{ promo.max_gsm_count }}">
-
-              <!-- Port-In Group ID -->
-              <div style="grid-column: 1 / 3; background: var(--tmobile-magenta); color: #fff; font-weight: bold; padding: 0.4rem 0.7rem; border-radius: 4px 4px 0 0; border-bottom: 2px solid #fff;">Port-In Group ID</div>
-              <div style="grid-column: 1 / 3; display: flex; gap: 1.2rem; align-items: center; background: #f7f7f7; border-radius: 0 0 4px 4px; padding: 0.5rem 0.7rem; border: 1px solid #ccc;">
+              <label class="section-label col-span-4">Port-In Group ID</label>
+              <div class="input-group vertical-radio col-span-4">
                 {% for group in ['G02','G03','G04','G05','G06','G07','NULL'] %}
-                  <label style="margin-right: 1.2rem; font-weight: 500; color: #333;">
+                  <label class="radio-vertical">
+                    {{ group }}
                     <input type="radio" name="port_in_group_id" value="{{ group }}" {% if promo.port_in_group_id == group %}checked{% endif %}>
-                    <span style="margin-left: 0.2rem;">{{ group }}</span>
+                  </label>
+                {% endfor %}
+              </div><label class="section-label">Operator ID</label>
+              <label class="section-label">SKU Group ID</label>
+              <label class="section-label">Device Status Group ID</label>
+              <label class="section-label">Clawback Indicator</label>
+              <input class="form-control" name="operator_id" value="{{ promo.operator_id or '16085' }}">
+              <input class="form-control" name="sku_group_id" value="{{ promo.sku_group_id }}">
+              <input class="form-control" name="device_status_group_id" value="{{ promo.device_status_group_id }}">
+              <div class="input-group vertical-radio">
+                <label class="radio-vertical">
+                  Y
+                  <input type="radio" name="clawback_indicator" value="Y" {% if promo.clawback_indicator == 'Y' %}checked{% endif %}>
+                </label>
+                <label class="radio-vertical">
+                  N
+                  <input type="radio" name="clawback_indicator" value="N" {% if promo.clawback_indicator == 'N' %}checked{% endif %}>
+                </label>
+              </div>              <label class="section-label col-span-4">Flow Indicator</label>
+              <div class="input-group vertical-radio col-span-4">
+                {% for indicator in ['NULL','100RDC'] %}
+                  <label class="radio-vertical">
+                    {{ indicator }}
+                    <input type="radio" name="flow_indicator" value="{{ indicator }}" {% if promo.flow_indicator == indicator %}checked{% endif %}>
                   </label>
                 {% endfor %}
               </div>
             </div>
-          {% elif active_tab == 'BPTCR' %}
-            <!-- BPTCR Tab Content -->
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem 0.7rem; align-items: start;">
-              <!-- BPTCR Section -->
-              <div style="grid-column: 1 / 3; font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); margin-bottom: 0.5rem; padding-bottom: 0.2rem;">BPTCR Details</div>
-              <div style="grid-column: 1 / 3; background: #f7f7f7; border-radius: 4px; padding: 0.5rem 0.7rem; border: 1px solid #ccc;">
-                <ul style="margin: 0; padding: 0; list-style: none;">
-                  {% for detail in promo.bptcr_details %}
-                    <li style="margin-bottom: 0.5rem;">{{ detail }}</li>
-                  {% endfor %}
-                </ul>
+            <div class="save-footer">
+              <button type="submit" class="btn btn-primary">Save Requirements</button>
+            </div>
+
+          {% elif active_tab == 'Trade' %}
+            <div class="grid-form four-col">
+              <label class="section-label col-span-3">Trade-In Group ID</label>
+              <label class="section-label">Broken Trade</label>
+              <input class="form-control col-span-3" name="trade_in_group_id" value="{{ promo.trade_in_group_id }}">
+              <div class="input-group vertical-radio">
+                <label class="radio-vertical">
+                  Y
+                  <input type="radio" name="broken_trade" value="Y" {% if promo.broken_trade == 'Y' %}checked{% endif %}>
+                </label>
+                <label class="radio-vertical">
+                  N
+                  <input type="radio" name="broken_trade" value="N" {% if promo.broken_trade == 'N' %}checked{% endif %}>
+                </label>
               </div>
             </div>
+
+            <div class="grid-form" style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.5rem;">
+              <label class="section-label">Tier 1 Make Model Group</label>
+              <label class="section-label">Tier 1 Amount $</label>
+              <label class="section-label">Tier 1 Trade In Cond ID</label>
+              <label class="section-label">Tier 1 Min FMV</label>
+              <label class="section-label">Tier 1 Max FMV</label>
+              <input class="form-control" name="trade_tier_1_make_model" value="{{ promo.trade_tier_1_make_model }}">
+              <input class="form-control" name="trade_tier_1_amount" value="{{ promo.trade_tier_1_amount }}">
+              <input class="form-control" name="trade_tier_1_cond_id" value="{{ promo.trade_tier_1_cond_id }}" title="Trade-In Condition ID - ST1 for Good Condition">
+              <input class="form-control" name="trade_tier_1_min_fmv" value="{{ promo.trade_tier_1_min_fmv }}" title="Minimum Fair Market Value">
+              <input class="form-control" name="trade_tier_1_max_fmv" value="{{ promo.trade_tier_1_max_fmv }}" title="Maximum Fair Market Value">
+
+              <label class="section-label">Tier 2 Make Model Group</label>
+              <label class="section-label">Tier 2 Amount $</label>
+              <label class="section-label">Tier 2 Trade In Cond ID</label>
+              <label class="section-label">Tier 2 Min FMV</label>
+              <label class="section-label">Tier 2 Max FMV</label>
+              <input class="form-control" name="trade_tier_2_make_model" value="{{ promo.trade_tier_2_make_model }}">
+              <input class="form-control" name="trade_tier_2_amount" value="{{ promo.trade_tier_2_amount }}">
+              <input class="form-control" name="trade_tier_2_cond_id" value="{{ promo.trade_tier_2_cond_id }}" title="Trade-In Condition ID - ST1 for Good Condition">
+              <input class="form-control" name="trade_tier_2_min_fmv" value="{{ promo.trade_tier_2_min_fmv }}" title="Minimum Fair Market Value">
+              <input class="form-control" name="trade_tier_2_max_fmv" value="{{ promo.trade_tier_2_max_fmv }}" title="Maximum Fair Market Value">
+
+              <label class="section-label">Tier 3 Make Model Group</label>
+              <label class="section-label">Tier 3 Amount $</label>
+              <label class="section-label">Tier 3 Trade In Cond ID</label>
+              <label class="section-label">Tier 3 Min FMV</label>
+              <label class="section-label">Tier 3 Max FMV</label>
+              <input class="form-control" name="trade_tier_3_make_model" value="{{ promo.trade_tier_3_make_model }}">
+              <input class="form-control" name="trade_tier_3_amount" value="{{ promo.trade_tier_3_amount }}">
+              <input class="form-control" name="trade_tier_3_cond_id" value="{{ promo.trade_tier_3_cond_id }}" title="Trade-In Condition ID - ST1 for Good Condition">
+              <input class="form-control" name="trade_tier_3_min_fmv" value="{{ promo.trade_tier_3_min_fmv }}" title="Minimum Fair Market Value">
+              <input class="form-control" name="trade_tier_3_max_fmv" value="{{ promo.trade_tier_3_max_fmv }}" title="Maximum Fair Market Value">
+
+              <label class="section-label">Tier 4 Make Model Group</label>
+              <label class="section-label">Tier 4 Amount $</label>
+              <label class="section-label">Tier 4 Trade In Cond ID</label>
+              <label class="section-label">Tier 4 Min FMV</label>
+              <label class="section-label">Tier 4 Max FMV</label>
+              <input class="form-control" name="trade_tier_4_make_model" value="{{ promo.trade_tier_4_make_model }}">
+              <input class="form-control" name="trade_tier_4_amount" value="{{ promo.trade_tier_4_amount }}">
+              <input class="form-control" name="trade_tier_4_cond_id" value="{{ promo.trade_tier_4_cond_id }}" title="Trade-In Condition ID - ST1 for Good Condition">
+              <input class="form-control" name="trade_tier_4_min_fmv" value="{{ promo.trade_tier_4_min_fmv }}" title="Minimum Fair Market Value">
+              <input class="form-control" name="trade_tier_4_max_fmv" value="{{ promo.trade_tier_4_max_fmv }}" title="Maximum Fair Market Value">
+            </div>
+            <div class="save-footer">
+              <div style="display: flex; justify-content: flex-end; align-items: center; gap: 15px;">
+                <button type="button" onclick="clearTradeData()" class="btn btn-outline" style="background-color: #fff; border: 1px solid #dc3545; color: #dc3545;">
+                  <i class="fas fa-trash"></i> Clear Trade Data
+                </button>
+                <button type="submit" class="btn btn-primary">Save Trade</button>
+              </div>
+            </div>
+
+          {% elif active_tab == 'Tiers' %}
+            <div class="grid-form four-col">
+              <label class="section-label col-span-4">Tiered Group ID</label>
+              <input class="form-control col-span-4" name="tiered_group_id" value="{{ promo.tiered_group_id }}">
+
+              <label class="section-label">Tier 1 Amount $</label>
+              <label class="section-label">Tier 1 SKU Group ID</label>
+              <label class="section-label col-span-2">Tier 1 Devices</label>
+              <input class="form-control" name="tier_1_amount" value="{{ promo.tier_1_amount }}">
+              <input class="form-control" name="tier_1_sku_group_id" value="{{ promo.tier_1_sku_group_id }}">
+              <textarea class="form-control col-span-2" name="tier_1_devices" rows="2" style="resize: none; height: 60px; overflow-y: auto;">{{ promo.tier_1_devices }}</textarea>
+
+              <label class="section-label">Tier 2 Amount $</label>
+              <label class="section-label">Tier 2 SKU Group ID</label>
+              <label class="section-label col-span-2">Tier 2 Devices</label>
+              <input class="form-control" name="tier_2_amount" value="{{ promo.tier_2_amount }}">
+              <input class="form-control" name="tier_2_sku_group_id" value="{{ promo.tier_2_sku_group_id }}">
+              <textarea class="form-control col-span-2" name="tier_2_devices" rows="2">{{ promo.tier_2_devices }}</textarea>
+
+              <label class="section-label">Tier 3 Amount $</label>
+              <label class="section-label">Tier 3 SKU Group ID</label>
+              <label class="section-label col-span-2">Tier 3 Devices</label>
+              <input class="form-control" name="tier_3_amount" value="{{ promo.tier_3_amount }}">
+              <input class="form-control" name="tier_3_sku_group_id" value="{{ promo.tier_3_sku_group_id }}">
+              <textarea class="form-control col-span-2" name="tier_3_devices" rows="2">{{ promo.tier_3_devices }}</textarea>
+
+              <label class="section-label">Tier 4 Amount $</label>
+              <label class="section-label">Tier 4 SKU Group ID</label>
+              <label class="section-label col-span-2">Tier 4 Devices</label>
+              <input class="form-control" name="tier_4_amount" value="{{ promo.tier_4_amount }}">
+              <input class="form-control" name="tier_4_sku_group_id" value="{{ promo.tier_4_sku_group_id }}">
+              <textarea class="form-control col-span-2" name="tier_4_devices" rows="2">{{ promo.tier_4_devices }}</textarea>
+            </div>
+            <div class="save-footer">
+              <div style="display: flex; justify-content: flex-end; align-items: center; gap: 15px;">
+                <button type="button" onclick="clearTiersData()" class="btn btn-outline" style="background-color: #fff; border: 1px solid #dc3545; color: #dc3545;">
+                  <i class="fas fa-trash"></i> Clear Tiers Data
+                </button>
+                <button type="submit" class="btn btn-primary">Save Tiers</button>
+              </div>
+            </div>
+
+          {% elif active_tab == 'Segmentation' %}
+            <div class="grid-form four-col">
+              <label class="grid-full section-label">Segment Name</label>
+              <input class="form-control grid-full mb-1" name="segment_name" value="{{ promo.segment_name }}">
+
+              <label class="grid-full section-label">Sub Segment</label>
+              <div class="input-group vertical-radio grid-full mb-1">
+                {% for segment in ['Active Military','Family','Reserve','Retired','Promo Code'] %}
+                  <label class="radio-vertical">
+                    {{ segment }}
+                    <input type="radio" name="sub_segment" value="{{ segment }}" {% if promo.sub_segment == segment %}checked{% endif %}>
+                  </label>
+                {% endfor %}
+              </div>
+
+              <label class="section-label col-span-2">Segment Group ID</label>
+              <label class="section-label col-span-2">Segment Level</label>
+              <input class="form-control col-span-2" name="segment_group_id" value="{{ promo.segment_group_id }}">              <div class="input-group vertical-radio col-span-2">
+                {% for level in ['BAN','LINE','NA'] %}
+                  <label class="radio-vertical">
+                    {{ level }}
+                    <input type="radio" name="segment_level" value="{{ level }}" {% if promo.segment_level == level %}checked{% endif %}>
+                  </label>
+                {% endfor %}
+              </div>
+            </div>
+            <div class="save-footer">
+              <div style="display: flex; justify-content: flex-end; align-items: center; gap: 15px;">
+                <button type="button" onclick="clearSegmentData()" class="btn btn-outline" style="background-color: #fff; border: 1px solid #dc3545; color: #dc3545;">
+                  <i class="fas fa-trash"></i> Clear Segment Data
+                </button>
+                <button type="submit" class="btn btn-primary">Save Segmentation</button>
+              </div>
+            </div>
+
           {% elif active_tab == 'Groupings' %}
-            <!-- Groupings Tab Content -->
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem 0.7rem; align-items: start;">
-              <!-- SOC Grouping -->
-              <div style="grid-column: 1 / 3; font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); margin-bottom: 1rem; padding-bottom: 0.5rem; text-align: center;">SOC Grouping</div>
-              <div style="grid-column: 1 / 2; flex: 1; padding: 1rem; background: #e6e6e6; border-radius: 4px;">
-                <select class="form-select" name="soc_grouping" style="width: 100%; padding: 0.5rem; font-size: 1rem;">
-                  <option value="Group 1NS">Group 1NS</option>
-                  <option value="Group 3">Group 3</option>
-                  <option value="Group 4">Group 4</option>
-                  <option value="Group 5">Group 5</option>
-                  <option value="Group 6">Group 6</option>
+            <div class="grid-form two-col">
+              <label class="section-label center grid-full mb-2">SOC Grouping</label>
+                <select class="form-select full-width" name="soc_grouping">
+                  {% for group_code in soc_groupings %}
+                    <option value="{{ group_code }}" {% if promo.soc_grouping == group_code %}selected{% endif %}>{{ group_code }}</option>
+                  {% endfor %}
+                </select>
+              <div class="details-box scrollable">
+                {{ soc_grouping_details|safe }}
+              </div>
+              <label class="section-label grid-full mt-1">Account Type</label>
+              <div>
+                <select class="form-select" name="account_type">
+                  {% for account_type in account_types %}
+                    <option value="{{ account_type }}" {% if promo.account_type == account_type %}selected{% endif %}>{{ account_type }}</option>
+                  {% endfor %}
                 </select>
               </div>
-              <div style="grid-column: 2 / 3; flex: 3; padding: 1rem; background: #f7f7f7; border-radius: 4px; border: 1px solid #ccc; overflow-y: auto; max-height: 300px;">
-                <ul style="margin: 0; padding: 0; list-style: none; font-size: 0.9rem; line-height: 1.5;">
-                  <li style="margin-bottom: 0.5rem; font-weight: bold;">Group 1NS - GSM - Consumer & TFB</li>
-                  <li style="margin-bottom: 0.5rem;">T-Mobile ONE rate plans</li>
-                  <li style="margin-bottom: 0.5rem;">Magenta rate plans</li>
-                  <li style="margin-bottom: 0.5rem;">Essentials rate plans</li>
-                  <li style="margin-bottom: 0.5rem;">Bus/Gov Unlimited rate plans</li>
-                  <li style="margin-bottom: 0.5rem; font-weight: bold;">Group 3 - MI - Consumer & TFB</li>
-                  <li style="margin-bottom: 0.5rem;">10GB or higher Mobile Internet rate plans (limited buckets)</li>
-                  <li style="margin-bottom: 0.5rem;">Excludes unlimited highspeed data plans</li>
-                  <li style="margin-bottom: 0.5rem; font-weight: bold;">Group 4 - GSM - Consumer & TFB - excludes PlusUP & MAXUp line level upsell SOCs)</li>
-                  <li style="margin-bottom: 0.5rem; font-weight: bold;">Group 5 - MI - All MTME Eligible MI/BTS - Consumer & TFB</li>
-                  <li style="margin-bottom: 0.5rem; font-weight: bold;">Group 6 - GSM - Consumer & TFB</li>
-                  <li style="margin-bottom: 0.5rem;">TMO ONE Plus rate plans (Incl. 55+)</li>
-                  <li style="margin-bottom: 0.5rem;">Magenta Plus rate plans (Incl. First Responder & 55+)</li>
-                  <li style="margin-bottom: 0.5rem;">Magenta MAX rate plans (Incl. First responder & 55+)</li>
-                  <li style="margin-bottom: 0.5rem;">TMO ONE Plus Military rate plans</li>
-                  <li style="margin-bottom: 0.5rem;">Magenta Plus Military rate plans</li>
-                  <li style="margin-bottom: 0.5rem;">Magenta MAX Military rate plans</li>
-                  <li style="margin-bottom: 0.5rem;">Business Unlimited Plus plans</li>
-                  <li style="margin-bottom: 0.5rem;">Magenta Plus DHH plans</li>
-                  <li style="margin-bottom: 0.5rem;">Magenta MAX DHH plans</li>
-                  <li style="margin-bottom: 0.5rem;">Business Unlimited Ultimate plans</li>
-                  <li style="margin-bottom: 0.5rem;">Plus Up Upsell SOCs (Include Intl/Global Plus SOCs)</li>
-                  <li style="margin-bottom: 0.5rem;">MAXUp Upsell SOCs</li>
-                  <li style="margin-bottom: 0.5rem;">Business Unlimited Upsell SOCs (Ultimate)</li>
-                </ul>
+              <div class="details-box scrollable">
+                {{ account_type_details|safe }}
               </div>
-
-              <!-- Account Type -->
-              <div style="grid-column: 1 / 3; font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); margin-top: 1rem; margin-bottom: 0.5rem; padding-bottom: 0.2rem;">Account Type</div>
-              <div style="grid-column: 1 / 2;">
-                <select class="form-select">
-                  <option value="A01">A01</option>
-                  <option value="A02">A02</option>
-                  <option value="A03">A03</option>
-                  <option value="A04">A04</option>
-                  <option value="A05">A05</option>
-                  <option value="A06">A06</option>
-                  <option value="A07">A07</option>
-                  <option value="A08">A08</option>
-                  <option value="A09">A09</option>
-                  <option value="A10">A10</option>
+              <label class="section-label grid-full mt-1">Sales Applications</label>
+              <div>
+                <select class="form-select" name="sales_application">
+                  {% for sales_app in sales_applications %}
+                    <option value="{{ sales_app }}" {% if promo.sales_application == sales_app %}selected{% endif %}>{{ sales_app }}</option>
+                  {% endfor %}
                 </select>
               </div>
-              <div style="grid-column: 2 / 3; background: #f7f7f7; border-radius: 4px; padding: 0.5rem 0.7rem; border: 1px solid #ccc; overflow-y: auto; max-height: 150px;">
-                <ul style="margin: 0; padding: 0; list-style: none;">
-                  <li style="margin-bottom: 0.5rem;">Regular (I/R); Association (I/A); GSA (I/F); Government (I/G); MCSA (I/M)</li>
-                  <li style="margin-bottom: 0.5rem;">Corporate (B/C); Retail (B/L); MCSA (B/M); National (B/N); MCSAGE (B/O)</li>
-                  <li style="margin-bottom: 0.5rem;">Non-Profit (B/P); Sole-Proprietorship (I/S)</li>
-                  <li style="margin-bottom: 0.5rem;">Employee (S/Y); Non TMO Employee (S/6)</li>
-                </ul>
+              <div class="details-box scrollable">
+                {{ sales_application_details|safe }}
               </div>
-
-              <!-- Sales Applications -->
-              <div style="grid-column: 1 / 3; font-weight: bold; color: var(--tmobile-magenta); border-bottom: 2px solid var(--tmobile-magenta); margin-top: 1rem; margin-bottom: 0.5rem; padding-bottom: 0.2rem;">Sales Applications</div>
-              <div style="grid-column: 1 / 2;">
-                <select class="form-select">
-                  <option value="S01">S01</option>
-                  <option value="S02">S02</option>
-                  <option value="S03">S03</option>
-                  <option value="S04">S04</option>
-                  <option value="S05">S05</option>
-                  <option value="S06">S06</option>
-                  <option value="S07">S07</option>
-                  <option value="S08">S08</option>
-                  <option value="S09">S09</option>
-                  <option value="S10">S10</option>
-                </select>
+            </div>
+            <div class="save-footer">
+              <button type="submit" class="btn btn-primary">Save Groupings</button>            </div>          {% elif active_tab == 'BPTCR' %}
+            <div class="grid-form four-col">
+              <label class="grid-full section-label">BPTCR</label>
+              <input class="form-control grid-full mb-1" name="bptcr" value="{{ promo.bptcr or '' }}">
+            </div>
+            
+            <!-- JIRA Ticket Management Card -->
+            <div class="jira-management-card">
+              <h3 class="jira-card-title">Jira Ticket Management</h3>
+              
+              <div class="jira-card-content">
+                <div class="jira-card-info">
+                  <h4>Generate BPTCR Jira Ticket</h4>
+                  <p>Create a new Jira ticket for BPTCR approval process</p>
+                </div>
+                <button type="button" onclick="openJiraModal()" class="jira-generate-btn">
+                  <i class="fas fa-ticket-alt"></i>
+                  Generate Jira Ticket
+                </button>
               </div>
-              <div style="grid-column: 2 / 3; background: #f7f7f7; border-radius: 4px; padding: 0.5rem 0.7rem; border: 1px solid #ccc; overflow-y: auto; max-height: 150px;">
-                <ul style="margin: 0; padding: 0; list-style: none;">
-                  <li style="margin-bottom: 0.5rem;">Care - QVXPC; Dash (TSL) - Virtual Retail</li>
-                  <li style="margin-bottom: 0.5rem;">QVXPR - Retail; POS - Retail; NAT - National Retail</li>
-                  <li style="margin-bottom: 0.5rem;">Web (TMO) - T-Mo.com; Web - MyT-Mo (cloud)</li>
-                  <li style="margin-bottom: 0.5rem;">Costco with EIP; BestBuy</li>
-                </ul>
+              
+              {% if promo.jira_ticket %}
+              <div class="jira-ticket-status">
+                <i class="fas fa-check-circle"></i>
+                <strong>JIRA Ticket Created:</strong> 
+                <a href="https://t-mobile-stage.atlassian.net/browse/{{ promo.jira_ticket }}" target="_blank">{{ promo.jira_ticket }}</a>
               </div>
+              {% endif %}
+            </div>
+            
+            <div class="save-footer">
+              <button type="submit" class="btn btn-primary">Save BPTCR</button>            </div>          {% elif active_tab == 'SQL Generation' %}
+            <div class="grid-form two-col">
+              <!-- SKU List Section -->
+              <div class="col-span-1">
+                <div class="upload-section">
+                  <label class="section-label">SKU List (Excel)</label>
+                  {% if promo.uploaded_files and promo.uploaded_files.get('sku_excel') %}
+                    <div class="file-info-card">
+                      <div class="file-info">
+                        <i class="fas fa-file-excel"></i>
+                        <div class="file-details">
+                          <div class="file-name">{{ promo.uploaded_files.sku_excel.original_name }}</div>
+                          <div class="file-meta">
+                            {{ (promo.uploaded_files.sku_excel.file_size / 1024) | round(1) }} KB • 
+                            {{ promo.uploaded_files.sku_excel.upload_date[:10] }}
+                          </div>
+                        </div>
+                      </div>
+                      <div class="file-actions">
+                        <a href="{{ url_for('promo.download_file', promo_code=promo.code, file_type='sku_excel') }}" 
+                           class="btn btn-sm btn-outline">Download</a>
+                        <button type="button" onclick="deleteUploadedFile('sku_excel', '{{ promo.code }}')" 
+                                class="btn btn-sm btn-outline" style="color: #dc3545; border-color: #dc3545; margin-left: 0.5rem;">
+                          <i class="fas fa-trash"></i> Delete
+                        </button>
+                      </div>
+                    </div>
+                  {% else %}
+                    <div class="upload-area">
+                      <input class="form-control" type="file" name="sku_excel" accept=".xlsx,.xls">
+                      <small class="form-text">Upload Excel file with SKU list</small>
+                    </div>
+                  {% endif %}
+                </div>
+              </div>
+                <!-- Trade-In List Section -->
+              <div class="col-span-1">
+                <div class="upload-section">
+                  <label class="section-label">Trade-In List (Excel)</label>
+                  {% if promo.uploaded_files and promo.uploaded_files.get('tradein_excel') %}
+                    <div class="file-info-card">
+                      <div class="file-info">
+                        <i class="fas fa-file-excel"></i>
+                        <div class="file-details">
+                          <div class="file-name">{{ promo.uploaded_files.tradein_excel.original_name }}</div>
+                          <div class="file-meta">
+                            {{ (promo.uploaded_files.tradein_excel.file_size / 1024) | round(1) }} KB • 
+                            {{ promo.uploaded_files.tradein_excel.upload_date[:10] }}
+                          </div>
+                        </div>
+                      </div>
+                      <div class="file-actions">
+                        <a href="{{ url_for('promo.download_file', promo_code=promo.code, file_type='tradein_excel') }}" 
+                           class="btn btn-sm btn-outline">Download</a>
+                        <button type="button" onclick="deleteUploadedFile('tradein_excel', '{{ promo.code }}')" 
+                                class="btn btn-sm btn-outline" style="color: #dc3545; border-color: #dc3545; margin-left: 0.5rem;">
+                          <i class="fas fa-trash"></i> Delete
+                        </button>
+                      </div>
+                    </div>
+                  {% else %}
+                    <div class="upload-area">
+                      <input class="form-control" type="file" name="tradein_excel" accept=".xlsx,.xls">
+                      <small class="form-text">Upload Excel file with trade-in list</small>
+                    </div>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+              <!-- Display Generated SQL -->
+            {% if promo.generated_sql %}
+            <div class="grid-form one-col" style="margin-top: 2rem;">
+              <label class="section-label">Generated SQL Statement</label>
+              <div class="file-info-card" style="margin-bottom: 1rem;">
+                <div class="file-info">
+                  <i class="fas fa-database"></i>
+                  <div>
+                    <div class="file-name">{{ promo.code }}_promo_eligibility_rules.sql</div>
+                    <div class="file-meta">
+                      Generated on {{ promo.sql_generated_at if promo.sql_generated_at else 'Unknown' }}
+                      {% if promo.sql_length %}
+                        • {{ "{:,}".format(promo.sql_length) }} characters
+                      {% endif %}
+                      {% if promo.sql_generation_time %}
+                        • Generated in {{ promo.sql_generation_time }}s
+                      {% endif %}
+                    </div>
+                  </div>
+                </div>
+                <div class="file-actions">
+                  <a href="{{ url_for('promo.download_sql', promo_code=promo.code) }}" 
+                     class="btn btn-sm btn-outline">
+                    <i class="fas fa-download"></i> Download SQL
+                  </a>
+                  <button type="button" onclick="toggleSqlPreview()" id="sqlPreviewBtn"
+                          class="btn btn-sm btn-outline" style="margin-left: 0.5rem;">
+                    <i class="fas fa-eye"></i> Preview
+                  </button>
+                </div>
+              </div>
+              
+              <!-- SQL Preview (initially hidden) -->
+              <div id="sqlPreviewContainer" style="display: none;">
+                <div class="sql-preview-header">
+                  <span>SQL Preview (first 1000 characters)</span>
+                  <button type="button" onclick="loadFullSql()" id="loadFullBtn" class="btn btn-sm btn-link">
+                    Load Full SQL
+                  </button>
+                </div>
+                <textarea class="form-control" id="sqlPreviewArea" rows="15" readonly 
+                          style="font-family: monospace; font-size: 12px; background-color: #f8f9fa; resize: vertical; overflow-y: auto;">
+                  {%- if promo.generated_sql|length > 1000 -%}
+                    {{ promo.generated_sql[:1000] }}...
+                    
+[SQL truncated for performance - use "Load Full SQL" button or download to see complete statement]
+                  {%- else -%}
+                    {{ promo.generated_sql }}
+                  {%- endif -%}
+                </textarea>
+              </div>
+              
+              <small class="form-text">SQL file has been generated and saved. Use the download button above to get the complete file.</small>
+            </div>
+            {% endif %}
+            
+            <div class="save-footer">
+              <button type="submit" class="btn btn-primary">Save SQL Generation</button>
+              <button type="submit" name="generate_sql" value="1" class="btn btn-secondary" style="margin-left:1em;">
+                <i class="fas fa-cog"></i> Generate SQL
+              </button>
             </div>
           {% endif %}
-          <div class="mt-4 d-flex justify-content-end gap-2">
-            <button type="submit" class="btn btn-primary">Save {{ active_tab }}</button>
-            <button type="button" class="btn btn-secondary">Cancel</button>
-          </div>
+
         </form>
       </div>
     </div>
   </div>
+
+<!-- JIRA Creation Modal -->
+<div id="jiraModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>Create JIRA Ticket</h3>
+      <span class="close" onclick="closeJiraModal()">&times;</span>
+    </div>
+    
+    <form id="jiraForm">
+      <div class="form-group">
+        <label>Summary:</label>
+        <input type="text" id="jiraSummary" class="form-control" placeholder="Brief description of the task" required>
+      </div>
+      
+      <div class="form-group">
+        <label>Description:</label>
+        <textarea id="jiraDescription" class="form-control" rows="4" placeholder="Detailed description..." required></textarea>
+      </div>
+      
+      <div class="form-group">
+        <label>Priority:</label>
+        <select id="jiraPriority" class="form-select">
+          <option value="High" selected>High</option>
+          <option value="Medium">Medium</option>
+          <option value="Low">Low</option>
+          <option value="Highest">Highest</option>
+          <option value="Lowest">Lowest</option>
+        </select>
+      </div>
+      
+      <div class="form-group">
+        <label>Issue Type:</label>
+        <select id="jiraIssueType" class="form-select">
+          <option value="Task">Task</option>
+          <option value="Bug">Bug</option>
+          <option value="Story">Story</option>
+          <option value="Epic">Epic</option>
+        </select>
+      </div>
+      
+      <div class="form-group">
+        <label>Parent (optional):</label>
+        <select id="jiraParent" class="form-select">
+          <option value="">None</option>
+          <option value="CPO-2">CPO-2 - Device</option>
+          <option value="CPO-3">CPO-3 - Service</option>
+          <option value="DCOMM-13037">DCD-Request</option>
+        </select>
+      </div>
+      
+      <div class="form-group">
+        <label>Your JIRA Email:</label>
+        <input type="email" id="jiraEmail" class="form-control" placeholder="your.email@t-mobile.com" required>
+      </div>
+      
+      <div class="form-group">
+        <label>API Token:</label>
+        <input type="password" id="jiraToken" class="form-control" placeholder="Your JIRA API token" required>
+        <small>Get your API token from <a href="https://id.atlassian.com/manage-profile/security/api-tokens" target="_blank">Atlassian Account Settings</a></small>
+      </div>
+      
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeJiraModal()">Cancel</button>
+        <button type="button" class="btn btn-primary" onclick="createJiraTicket()">
+          <i class="fas fa-ticket-alt"></i> Create Ticket
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/jira_modal.js') }}"></script>
+<script>
+// Trade validation functions
+function validateTradeFields() {
+  const brokenTradeY = document.querySelector('input[name="broken_trade"][value="Y"]');
+  const brokenTradeChecked = brokenTradeY && brokenTradeY.checked;
+  
+  // Clear existing validation errors first
+  document.querySelectorAll('.validation-error').forEach(el => {
+    el.classList.remove('validation-error');
+  });
+  document.querySelectorAll('.validation-message').forEach(el => {
+    el.remove();
+  });
+  
+  if (brokenTradeChecked) {
+    let hasErrors = false;
+    // Check all trade tier condition IDs
+    for (let tier = 1; tier <= 4; tier++) {
+      const condInput = document.querySelector(`input[name="trade_tier_${tier}_cond_id"]`);
+      if (condInput && condInput.value === 'ST1') {
+        // Add error styling
+        condInput.classList.add('validation-error');
+        
+        // Add error message
+        const errorMsg = document.createElement('small');
+        errorMsg.className = 'validation-message';
+        errorMsg.textContent = 'Must be BT1 when Broken Trade is Yes';
+        condInput.parentNode.appendChild(errorMsg);
+        
+        hasErrors = true;
+      }
+    }
+    
+    if (hasErrors) {
+      // Show alert at top of Trade tab
+      showValidationAlert('When Broken Trade is Yes, Trade In Condition IDs cannot be ST1.');
+    }
+  }
+}
+
+function showCompatibilityWarning(tabType, message) {
+  const tabSelector = tabType === 'trade' ? 
+    'div[style*="grid-template-columns: repeat(5, 1fr)"]' : 
+    '.grid-form.four-col';
+  
+  const targetElement = document.querySelector(tabSelector);
+  if (targetElement) {
+    const warning = document.createElement('div');
+    warning.className = 'compatibility-warning';
+    warning.style.cssText = 'background-color: #fff3cd; border: 1px solid #ffeaa7; color: #856404; padding: 10px; margin-bottom: 15px; border-radius: 4px; font-size: 14px;';
+    warning.innerHTML = `<strong>⚠️ Configuration Conflict:</strong> ${message}`;
+    targetElement.insertBefore(warning, targetElement.firstChild);
+  }
+  
+  // Add warning indicators to tab navigation
+  updateTabWarnings(hasTradeData, hasTieredData);
+}
+
+function updateTabWarnings(hasTradeData, hasTieredData) {
+  // Remove existing warning indicators
+  document.querySelectorAll('.tab-warning').forEach(el => el.remove());
+  
+  if (hasTradeData && hasTieredData) {
+    // Add warning to Trade tab
+    const tradeTab = document.querySelector('a[href*="tab=Trade"]');
+    if (tradeTab) {
+      const warning = document.createElement('span');
+      warning.className = 'tab-warning';
+      warning.innerHTML = ' ⚠️';
+      warning.style.color = '#856404';
+      tradeTab.appendChild(warning);
+    }
+    
+    // Add warning to Tiers tab
+    const tiersTab = document.querySelector('a[href*="tab=Tiers"]');
+    if (tiersTab) {
+      const warning = document.createElement('span');
+      warning.className = 'tab-warning';
+      warning.innerHTML = ' ⚠️';
+      warning.style.color = '#856404';
+      tiersTab.appendChild(warning);
+    }
+  }
+}
+
+// Update the checkTierCompatibility function to track the data state
+function checkTierCompatibility() {
+  // Check if trade tiers have data
+  let hasTradeData = false;
+  for (let tier = 1; tier <= 4; tier++) {
+    const amount = document.querySelector(`input[name="trade_tier_${tier}_amount"]`);
+    const model = document.querySelector(`input[name="trade_tier_${tier}_make_model"]`);
+    if ((amount && amount.value.trim()) || (model && model.value.trim())) {
+      hasTradeData = true;
+      break;
+    }
+  }
+  
+  // Check if tiered groups have data
+  let hasTieredData = false;
+  const tieredGroupId = document.querySelector('input[name="tiered_group_id"]');
+  for (let tier = 1; tier <= 4; tier++) {
+    const amount = document.querySelector(`input[name="tier_${tier}_amount"]`);
+    const skuGroup = document.querySelector(`input[name="tier_${tier}_sku_group_id"]`);
+    if ((amount && amount.value.trim()) || (skuGroup && skuGroup.value.trim()) || (tieredGroupId && tieredGroupId.value.trim())) {
+      hasTieredData = true;
+      break;
+    }
+  }
+  
+  // Store the state for use in other functions
+  window.hasTradeData = hasTradeData;
+  window.hasTieredData = hasTieredData;
+  
+  // Clear existing compatibility warnings
+  document.querySelectorAll('.compatibility-warning').forEach(el => {
+    el.remove();
+  });
+  
+  // Update tab warnings
+  updateTabWarnings(hasTradeData, hasTieredData);
+  
+  // If both have data, show warnings
+  if (hasTradeData && hasTieredData) {
+    showCompatibilityWarning('trade', 'Trade-in tiers and tiered groups cannot be used together. Please clear one of the configurations before proceeding.');
+    showCompatibilityWarning('tiers', 'Trade-in tiers and tiered groups cannot be used together. Please clear one of the configurations before proceeding.');
+  }
+}
+
+function showValidationAlert(message) {
+  // Remove existing alert if any
+  const existingAlert = document.querySelector('.alert-validation');
+  if (existingAlert) {
+    existingAlert.remove();
+  }
+  
+  // Create new alert
+  const alert = document.createElement('div');
+  alert.className = 'alert-validation';
+  alert.innerHTML = `<strong>Validation Error:</strong> ${message}`;
+  
+  // Insert at top of the active tab content
+  const activeTabContent = document.querySelector('.tab-content');
+  if (activeTabContent) {
+    activeTabContent.insertBefore(alert, activeTabContent.firstChild);
+  }
+}
+
+// Function to show clear message at bottom of tab
+function showClearMessage(message) {
+  // Remove any existing clear messages
+  document.querySelectorAll('.clear-message').forEach(el => {
+    el.remove();
+  });
+  
+  // Create the message element
+  const messageEl = document.createElement('div');
+  messageEl.className = 'clear-message';
+  messageEl.textContent = message;
+  messageEl.style.cssText = 'color: #e20074; font-size: 14px; font-weight: 500; margin-right: 15px;';
+  
+  // Find the active tab's save footer and insert the message
+  const saveFooter = document.querySelector('.save-footer');
+  if (saveFooter) {
+    const buttonContainer = saveFooter.querySelector('div[style*="display: flex"]');
+    if (buttonContainer) {
+      buttonContainer.insertBefore(messageEl, buttonContainer.firstChild);
+    } else {
+      // If no button container, insert before the save button
+      const saveButton = saveFooter.querySelector('button[type="submit"]');
+      if (saveButton) {
+        saveFooter.insertBefore(messageEl, saveButton);
+      }
+    }
+  }
+  
+  // Auto-remove the message after 3 seconds
+  setTimeout(() => {
+    if (messageEl.parentNode) {
+      messageEl.remove();
+    }
+  }, 3000);
+}
+
+// Clear data functions for each tab
+function clearTradeData() {
+  // Send request to backend to clear trade data
+  fetch(`/clear_trade_data/${window.promoData.code}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      // Clear the form fields in the UI
+      const tradeGroupInput = document.querySelector('input[name="trade_in_group_id"]');
+      if (tradeGroupInput) tradeGroupInput.value = '';
+      
+      // Clear broken trade radio buttons
+      document.querySelectorAll('input[name="broken_trade"]').forEach(radio => {
+        radio.checked = false;
+      });
+      
+      // Clear all trade tier fields
+      for (let tier = 1; tier <= 4; tier++) {
+        const fields = [
+          `trade_tier_${tier}_make_model`,
+          `trade_tier_${tier}_amount`,
+          `trade_tier_${tier}_cond_id`,
+          `trade_tier_${tier}_min_fmv`,
+          `trade_tier_${tier}_max_fmv`
+        ];
+        
+        fields.forEach(fieldName => {
+          const input = document.querySelector(`input[name="${fieldName}"]`);
+          if (input) input.value = '';
+        });
+      }
+      
+      // Re-run validation after clearing
+      validateTradeFields();
+      checkTierCompatibility();
+      
+      // Show success message
+      showClearMessage('Trade data cleared');
+    } else {
+      showErrorMessage('Error clearing trade data: ' + data.error);
+    }
+  })
+  .catch(error => {
+    console.error('Error:', error);
+    showErrorMessage('Error clearing trade data. Please try again.');
+  });
+}
+
+function clearTiersData() {
+  // Send request to backend to clear tiers data
+  fetch(`/clear_tiers_data/${window.promoData.code}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      // Clear the form fields in the UI
+      const tieredGroupInput = document.querySelector('input[name="tiered_group_id"]');
+      if (tieredGroupInput) tieredGroupInput.value = '';
+      
+      // Clear all tier fields
+      for (let tier = 1; tier <= 4; tier++) {
+        const amountInput = document.querySelector(`input[name="tier_${tier}_amount"]`);
+        const skuGroupInput = document.querySelector(`input[name="tier_${tier}_sku_group_id"]`);
+        const devicesTextarea = document.querySelector(`textarea[name="tier_${tier}_devices"]`);
+        
+        if (amountInput) amountInput.value = '';
+        if (skuGroupInput) skuGroupInput.value = '';
+        if (devicesTextarea) devicesTextarea.value = '';
+      }
+      
+      // Re-run validation after clearing
+      checkTierCompatibility();
+      
+      // Show success message
+      showClearMessage('Tiers data cleared');
+    } else {
+      showErrorMessage('Error clearing tiers data: ' + data.error);
+    }
+  })
+  .catch(error => {
+    console.error('Error:', error);
+    showErrorMessage('Error clearing tiers data. Please try again.');
+  });
+}
+
+function clearSegmentData() {
+  // Send request to backend to clear segment data
+  fetch(`/clear_segment_data/${window.promoData.code}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      // Clear the form fields in the UI
+      const segmentNameInput = document.querySelector('input[name="segment_name"]');
+      if (segmentNameInput) segmentNameInput.value = '';
+      
+      // Clear sub segment radio buttons
+      document.querySelectorAll('input[name="sub_segment"]').forEach(radio => {
+        radio.checked = false;
+      });
+      
+      // Clear segment group ID
+      const segmentGroupInput = document.querySelector('input[name="segment_group_id"]');
+      if (segmentGroupInput) segmentGroupInput.value = '';
+      
+      // Clear segment level radio buttons
+      document.querySelectorAll('input[name="segment_level"]').forEach(radio => {
+        radio.checked = false;
+      });
+      
+      // Show success message
+      showClearMessage('Segmentation data cleared');
+    } else {
+      showErrorMessage('Error clearing segmentation data: ' + data.error);
+    }
+  })
+  .catch(error => {
+    console.error('Error:', error);
+    showErrorMessage('Error clearing segmentation data. Please try again.');
+  });
+}
+
+function deleteUploadedFile(fileType, promoCode) {
+  // Create a more elegant confirmation dialog
+  const fileTypeName = fileType.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
+  
+  // Create confirmation modal
+  const confirmModal = document.createElement('div');
+  confirmModal.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 10000;';
+  
+  confirmModal.innerHTML = `
+    <div style="background: white; border-radius: 8px; padding: 2rem; max-width: 400px; margin: 1rem;">
+      <h3 style="margin-top: 0; color: #333;">Delete ${fileTypeName} File</h3>
+      <p style="color: #666; margin-bottom: 2rem;">Are you sure you want to delete this file? This action cannot be undone.</p>
+      <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+        <button id="cancelDelete" style="padding: 0.5rem 1rem; border: 1px solid #ddd; background: white; border-radius: 4px; cursor: pointer;">Cancel</button>
+        <button id="confirmDelete" style="padding: 0.5rem 1rem; border: 1px solid #dc3545; background: #dc3545; color: white; border-radius: 4px; cursor: pointer;">Delete</button>
+      </div>
+    </div>
+  `;
+  
+  document.body.appendChild(confirmModal);
+  
+  // Handle confirmation
+  document.getElementById('cancelDelete').onclick = () => {
+    document.body.removeChild(confirmModal);
+  };
+  
+  document.getElementById('confirmDelete').onclick = () => {
+    document.body.removeChild(confirmModal);
+    performFileDelete(fileType, promoCode);
+  };
+  
+  // Close on backdrop click
+  confirmModal.onclick = (e) => {
+    if (e.target === confirmModal) {
+      document.body.removeChild(confirmModal);
+    }
+  };
+}
+
+function performFileDelete(fileType, promoCode) {
+  const fileTypeName = fileType.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
+  
+  fetch(`/delete_file/${promoCode}/${fileType}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      showSuccessMessage(`${fileTypeName} file deleted successfully`);
+      // Reload the page to refresh the file display
+      setTimeout(() => {
+        window.location.reload();
+      }, 1500);
+    } else {
+      showErrorMessage(`Error deleting file: ${data.error}`);
+    }
+  })
+  .catch(error => {
+    console.error('Error:', error);
+    showErrorMessage('Error deleting file. Please try again.');
+  });
+}
+
+function showSuccessMessage(message) {
+  const toast = document.createElement('div');
+  toast.style.cssText = 'position: fixed; top: 20px; right: 20px; background: #28a745; color: white; padding: 1rem 1.5rem; border-radius: 4px; z-index: 10000; box-shadow: 0 2px 10px rgba(0,0,0,0.2);';
+  toast.innerHTML = `<i class="fas fa-check-circle" style="margin-right: 0.5rem;"></i>${message}`;
+  
+  document.body.appendChild(toast);
+  
+  setTimeout(() => {
+    if (toast.parentNode) {
+      document.body.removeChild(toast);
+    }
+  }, 3000);
+}
+
+function showErrorMessage(message) {
+  const toast = document.createElement('div');
+  toast.style.cssText = 'position: fixed; top: 20px; right: 20px; background: #dc3545; color: white; padding: 1rem 1.5rem; border-radius: 4px; z-index: 10000; box-shadow: 0 2px 10px rgba(0,0,0,0.2);';
+  toast.innerHTML = `<i class="fas fa-exclamation-circle" style="margin-right: 0.5rem;"></i>${message}`;
+  
+  document.body.appendChild(toast);
+  
+  setTimeout(() => {
+    if (toast.parentNode) {
+      document.body.removeChild(toast);
+    }
+  }, 4000);
+}
+
+// Add event listeners when DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+  // Initialize auto-save functionality FIRST
+  initAutoSave();
+  
+  // Initialize promo data for JavaScript access
+  window.promoData = {
+    code: "{{ promo.code }}",
+    orbit_id: "{{ promo.orbit_id }}",
+    initiative_name: {{ (promo.initiative_name or '') | tojson }},
+    promo_start_date: "{{ promo.promo_start_date }}"
+  };
+  
+  // Listen for changes to broken trade radio buttons
+  document.querySelectorAll('input[name="broken_trade"]').forEach(radio => {
+    radio.addEventListener('change', validateTradeFields);
+  });
+  
+  // Listen for changes to condition ID inputs
+  for (let tier = 1; tier <= 4; tier++) {
+    const condInput = document.querySelector(`input[name="trade_tier_${tier}_cond_id"]`);
+    if (condInput) {
+      condInput.addEventListener('input', validateTradeFields);
+      condInput.addEventListener('blur', validateTradeFields);
+    }
+  }
+  
+  // Add tier compatibility validation listeners
+  // Trade tier inputs
+  for (let tier = 1; tier <= 4; tier++) {
+    const amountInput = document.querySelector(`input[name="trade_tier_${tier}_amount"]`);
+    const modelInput = document.querySelector(`input[name="trade_tier_${tier}_make_model"]`);
+    if (amountInput) {
+      amountInput.addEventListener('input', checkTierCompatibility);
+      amountInput.addEventListener('blur', checkTierCompatibility);
+    }
+    if (modelInput) {
+      modelInput.addEventListener('input', checkTierCompatibility);
+      modelInput.addEventListener('blur', checkTierCompatibility);
+    }
+  }
+  
+  // Tiered group inputs
+  const tieredGroupIdInput = document.querySelector('input[name="tiered_group_id"]');
+  if (tieredGroupIdInput) {
+    tieredGroupIdInput.addEventListener('input', checkTierCompatibility);
+    tieredGroupIdInput.addEventListener('blur', checkTierCompatibility);
+  }
+  
+  for (let tier = 1; tier <= 4; tier++) {
+    const tierAmountInput = document.querySelector(`input[name="tier_${tier}_amount"]`);
+    const tierSkuInput = document.querySelector(`input[name="tier_${tier}_sku_group_id"]`);
+    if (tierAmountInput) {
+      tierAmountInput.addEventListener('input', checkTierCompatibility);
+      tierAmountInput.addEventListener('blur', checkTierCompatibility);
+    }
+    if (tierSkuInput) {
+      tierSkuInput.addEventListener('input', checkTierCompatibility);
+      tierSkuInput.addEventListener('blur', checkTierCompatibility);
+    }
+  }
+  
+  // Validate on page load
+  validateTradeFields();
+  checkTierCompatibility();
+});
+
+// Auto-save functionality
+let autoSaveTimeout;
+let isSaving = false;
+let saveIndicator;
+
+function initAutoSave() {
+  console.log('Initializing auto-save...');
+  
+  // Create auto-save indicator
+  createSaveIndicator();
+  
+  // Add auto-save listeners to all form inputs
+  const form = document.querySelector('form[method="post"]');
+  if (!form) {
+    console.log('No form found for auto-save');
+    return;
+  }
+  
+  // Target ALL inputs including file inputs (but exclude certain types)
+  const allInputs = form.querySelectorAll('input:not([type="hidden"]):not([type="submit"]):not([name="generate_sql"]):not([name="active_tab"]), select, textarea');
+  console.log(`Found ${allInputs.length} total inputs for auto-save`);
+  
+  // Filter to only inputs that are actually visible and have dimensions
+  const activeInputs = Array.from(allInputs).filter(input => {
+    const rect = input.getBoundingClientRect();
+    const isVisible = rect.width > 0 && rect.height > 0 && input.offsetParent !== null;
+    if (isVisible) {
+      console.log(`Adding auto-save to: ${input.name || input.type} (${input.tagName})`);
+    }
+    return isVisible;
+  });
+  
+  console.log(`Filtered to ${activeInputs.length} active inputs`);
+  
+  activeInputs.forEach((input) => {
+    // For file inputs, trigger immediate upload on change
+    if (input.type === 'file') {
+      input.addEventListener('change', () => {
+        console.log(`File upload triggered for: ${input.name}`);
+        if (input.files && input.files.length > 0) {
+          console.log(`File selected: ${input.files[0].name}`);
+          // Trigger immediate save for file uploads
+          performAutoSave();
+        }
+      });
+    } else {
+      // For regular inputs, use debounced auto-save
+      input.addEventListener('input', () => {
+        console.log(`Auto-save triggered by INPUT event on: ${input.name}`);
+        debounceAutoSave();
+      });
+      
+      input.addEventListener('change', () => {
+        console.log(`Auto-save triggered by CHANGE event on: ${input.name}`);
+        debounceAutoSave();
+      });
+      
+      // For radio buttons, also listen to click events
+      if (input.type === 'radio') {
+        input.addEventListener('click', () => {
+          console.log(`Auto-save triggered by CLICK event on radio: ${input.name}`);
+          debounceAutoSave();
+        });
+      }
+    }
+  });
+  
+  console.log('Auto-save initialization complete');
+}
+
+function createSaveIndicator() {
+  saveIndicator = document.createElement('div');
+  saveIndicator.id = 'autoSaveIndicator';
+  saveIndicator.style.cssText = `
+    position: fixed; 
+    top: 80px; 
+    right: 20px; 
+    background: #17a2b8; 
+    color: white; 
+    padding: 0.5rem 1rem; 
+    border-radius: 4px; 
+    z-index: 9999; 
+    font-size: 14px;
+    display: none;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+  `;
+  saveIndicator.innerHTML = '<i class="fas fa-spinner fa-spin" style="margin-right: 0.5rem;"></i>Auto-saving...';
+  document.body.appendChild(saveIndicator);
+}
+
+function debounceAutoSave() {
+  console.log('Debounce auto-save called');
+  
+  // Clear existing timeout
+  if (autoSaveTimeout) {
+    clearTimeout(autoSaveTimeout);
+  }
+  
+  // Set new timeout for 2 seconds after user stops typing
+  autoSaveTimeout = setTimeout(() => {
+    console.log('Auto-save timeout triggered');
+    performAutoSave();
+  }, 2000);
+}
+
+function performAutoSave() {
+  console.log('performAutoSave called, isSaving:', isSaving);
+  
+  if (isSaving) {
+    console.log('Already saving, skipping');
+    return;
+  }
+  
+  isSaving = true;
+  showSaveIndicator();
+  
+  const form = document.querySelector('form[method="post"]');
+  if (!form) {
+    console.log('No form found for auto-save');
+    hideSaveIndicator();
+    isSaving = false;
+    return;
+  }
+  
+  const formData = new FormData(form);
+  
+  // Check if this is a file upload
+  const hasFileUpload = Array.from(formData.entries()).some(([key, value]) => 
+    value instanceof File && value.size > 0
+  );
+  
+  console.log('Sending auto-save request to:', window.location.href);
+  console.log('Has file upload:', hasFileUpload);
+  
+  fetch(window.location.href, {
+    method: 'POST',
+    body: formData
+  })
+  .then(response => {
+    console.log('Auto-save response status:', response.status);
+    if (response.ok) {
+      // For file uploads, reload immediately without showing success message
+      if (hasFileUpload) {
+        window.location.reload();
+      } else {
+        showAutoSaveSuccess();
+      }
+    } else {
+      showAutoSaveError('Save failed');
+    }
+  })
+  .catch(error => {
+    console.error('Auto-save error:', error);
+    showAutoSaveError('Auto-save failed');
+  })
+  .finally(() => {
+    hideSaveIndicator();
+    isSaving = false;
+  });
+}
+
+function showSaveIndicator() {
+  if (saveIndicator) {
+    saveIndicator.style.display = 'block';
+  }
+}
+
+function hideSaveIndicator() {
+  if (saveIndicator) {
+    saveIndicator.style.display = 'none';
+  }
+}
+
+function showAutoSaveSuccess() {
+  const successIndicator = document.createElement('div');
+  successIndicator.style.cssText = `
+    position: fixed; 
+    top: 80px; 
+    right: 20px; 
+    background: #28a745; 
+    color: white; 
+    padding: 0.5rem 1rem; 
+    border-radius: 4px; 
+    z-index: 9999; 
+    font-size: 14px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+  `;
+  successIndicator.innerHTML = '<i class="fas fa-check" style="margin-right: 0.5rem;"></i>Auto-saved';
+  
+  document.body.appendChild(successIndicator);
+  
+  setTimeout(() => {
+    if (successIndicator.parentNode) {
+      document.body.removeChild(successIndicator);
+    }
+  }, 2000);
+}
+
+// SQL Preview Functions
+function toggleSqlPreview() {
+  const container = document.getElementById('sqlPreviewContainer');
+  const btn = document.getElementById('sqlPreviewBtn');
+  
+  if (container.style.display === 'none') {
+    container.style.display = 'block';
+    btn.innerHTML = '<i class="fas fa-eye-slash"></i> Hide';
+  } else {
+    container.style.display = 'none';
+    btn.innerHTML = '<i class="fas fa-eye"></i> Preview';
+  }
+}
+
+function loadFullSql() {
+  const promoCode = '{{ promo.code }}';
+  const loadBtn = document.getElementById('loadFullBtn');
+  const textarea = document.getElementById('sqlPreviewArea');
+  
+  // Show loading state
+  loadBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading...';
+  loadBtn.disabled = true;
+  
+  // Fetch full SQL via AJAX
+  fetch(`/get_full_sql/${promoCode}`)
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        textarea.value = data.sql;
+        textarea.rows = 25; // Expand to show more
+        loadBtn.style.display = 'none'; // Hide the button
+      } else {
+        alert('Error loading SQL: ' + data.error);
+        loadBtn.innerHTML = 'Load Full SQL';
+        loadBtn.disabled = false;
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      alert('Error loading SQL');
+      loadBtn.innerHTML = 'Load Full SQL';
+      loadBtn.disabled = false;
+    });
+}
+
+function showAutoSaveError(message) {
+  const errorIndicator = document.createElement('div');
+  errorIndicator.style.cssText = `
+    position: fixed; 
+    top: 80px; 
+    right: 20px; 
+    background: #dc3545; 
+    color: white; 
+    padding: 0.5rem 1rem; 
+    border-radius: 4px; 
+    z-index: 9999; 
+    font-size: 14px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+  `;
+  errorIndicator.innerHTML = `<i class="fas fa-exclamation-triangle" style="margin-right: 0.5rem;"></i>${message}`;
+  
+  document.body.appendChild(errorIndicator);
+  
+  setTimeout(() => {
+    if (errorIndicator.parentNode) {
+      document.body.removeChild(errorIndicator);
+    }
+  }, 3000);
+}
+</script>
+{% endblock %}
 {% endblock %}

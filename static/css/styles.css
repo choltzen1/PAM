@@ -1,192 +1,92 @@
-/* Base styles */
-body {
-  background: #f8f9fa;
-  color: #222;
-  font-family: 'Segoe UI', 'Arial', sans-serif;
-  font-size: 1rem;
-  margin: 0;
-  padding: 0;
-}
-
-/* T-Mobile Magenta */
+/* styles.css - Global styles and utilities */
 :root {
-  --tmobile-magenta: #E20074;
-  --tmobile-magenta-dark: #c20066;
+  --tmobile-magenta: #e20074;
+  --tmobile-magenta-dark: #b8005a;
   --tmobile-gray: #f4f4f4;
   --tmobile-border: #e0e0e0;
 }
 
-/* Sidebar */
-.sidebar {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 220px;
-  height: 100vh;
-  background: var(--tmobile-magenta);
-  color: #fff;
-  padding-top: 1rem;
-  border-right: 1px solid var(--tmobile-magenta-dark);
-  z-index: 101;
-}
-.sidebar h5 {
-  font-weight: bold;
-  letter-spacing: 1px;
-}
-.sidebar a {
-  color: #fff;
-  text-decoration: none;
-  padding: 12px 20px;
-  display: flex;
-  align-items: center;
-  border-radius: 4px;
-  margin: 2px 8px;
-  transition: background 0.2s;
-}
-.sidebar a:hover, .sidebar a.active {
-  background: var(--tmobile-magenta-dark);
-}
-
-/* Topbar */
-.topbar {
-  background: var(--tmobile-magenta);
-  color: #fff;
-  height: 60px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 2rem;
-  margin-left: 220px;
-  border-bottom: 1px solid var(--tmobile-magenta-dark);
-  position: sticky;
-  top: 0;
-  z-index: 100;
-}
-
-/* Main content */
-.main {
-  margin-left: 220px;
-  margin-top: 80px;
-  padding: 2rem 2rem 4rem 2rem;
-  background: #fff;
-  min-height: calc(100vh - 120px);
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.03);
-}
-
-/* Headings */
-h1, h2, h3, h4, h5 {
-  font-weight: 600;
-  color: var(--tmobile-magenta);
-  margin-bottom: 0.5em;
-}
-
-/* Buttons */
-.btn, button {
-  background: var(--tmobile-magenta);
-  color: #fff;
-  border: none;
-  border-radius: 4px;
-  padding: 0.5em 1.2em;
-  font-weight: 500;
-  transition: background 0.2s;
-}
-.btn:hover, button:hover {
-  background: var(--tmobile-magenta-dark);
-}
-
-/* Tables */
-table {
-  width: 100%;
-  border-collapse: collapse;
-  background: #fff;
-  margin-bottom: 2rem;
-}
-th, td {
-  padding: 0.75em 1em;
-  border-bottom: 1px solid var(--tmobile-border);
-  text-align: left;
-}
-th {
-  background: var(--tmobile-magenta);
-  color: #fff;
-  font-weight: 600;
-}
-tr:nth-child(even) {
-  background: var(--tmobile-gray);
-}
-
-/* Footer */
-.footer {
-  background: var(--tmobile-magenta);
-  color: #fff;
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  padding: 0.5em 2em;
-  font-size: 1rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  z-index: 200;
-  border-top: 1px solid var(--tmobile-magenta-dark);
-}
-
-/* Icons */
-.bi {
-  font-size: 1.2em;
-  vertical-align: middle;
-  margin-right: 0.5em;
-}
-
-/* Inputs */
-input, select, textarea {
-  border: 1px solid var(--tmobile-border);
-  border-radius: 4px;
-  padding: 0.5em;
-  font-size: 1em;
-  margin-bottom: 0.5em;
-  width: 100%;
+/* Global reset and base styling */
+*, *::before, *::after {
   box-sizing: border-box;
 }
-input:focus, select:focus, textarea:focus {
-  outline: none;
-  border-color: var(--tmobile-magenta);
-  box-shadow: 0 0 0 2px #e2007433;
+
+/* Flash messages */
+.flash-messages {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 300;
+  max-width: 400px;
 }
 
-/* Responsive adjustments */
-@media (max-width: 900px) {
-  .sidebar {
-    width: 60px;
-    padding: 0.5rem 0;
+.flash-message {
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.5rem;
+  border-radius: 4px;
+  border: 1px solid transparent;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  animation: slideIn 0.3s ease-out;
+}
+
+.flash-success {
+  background-color: #d4edda;
+  border-color: #c3e6cb;
+  color: #155724;
+}
+
+.flash-error {
+  background-color: #f8d7da;
+  border-color: #f5c6cb;
+  color: #721c24;
+}
+
+.flash-warning {
+  background-color: #fff3cd;
+  border-color: #ffeaa7;
+  color: #856404;
+}
+
+.flash-info {
+  background-color: #cce7ff;
+  border-color: #bee5eb;
+  color: #0c5460;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
   }
-  .sidebar a span {
-    display: none;
-  }
-  .topbar, .main {
-    margin-left: 60px;
+  to {
+    transform: translateX(0);
+    opacity: 1;
   }
 }
-@media (max-width: 600px) {
-  .sidebar, .topbar, .main {
-    margin-left: 0;
-    width: 100%;
-  }
-  .sidebar {
-    position: static;
-    width: 100%;
-    min-height: auto;
-    display: flex;
-    flex-direction: row;
-    overflow-x: auto;
-  }
-  .main {
-    padding: 1rem 0.5rem 3rem 0.5rem;
-  }
-  .footer {
-    font-size: 0.9rem;
-    padding: 0.5em 1em;
-  }
+
+/* Utility classes */
+.text-center { text-align: center; }
+.text-muted { color: #6c757d; }
+.me-2 { margin-right: 0.5rem; }
+.mb-3 { margin-bottom: 1rem; }
+.mt-4 { margin-top: 1.5rem; }
+.display-1 { font-size: 4rem; }
+
+/* Bootstrap-like container and grid */
+.container-fluid {
+  width: 100%;
+  padding: 0;
+  margin: 0;
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  margin: 0 -0.75rem;
+}
+
+.col-12 {
+  flex: 0 0 100%;
+  max-width: 100%;
+  padding: 0 0.75rem;
 }

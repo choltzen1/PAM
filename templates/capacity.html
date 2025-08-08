@@ -1,0 +1,166 @@
+{% extends "base.html" %}
+
+{% block title %}Capacity Management{% endblock %}
+
+{% block head %}
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/capacity.css') }}">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+
+{% block content %}
+<!-- Styled Header Banner -->
+<div class="styled-header-banner">
+  <div class="styled-header-content">
+    <i class="bi bi-bar-chart-line styled-header-icon"></i>
+    <div class="styled-header-text">
+      <h2 class="styled-header-title">Capacity Management</h2>
+      <p class="styled-header-subtitle">Monitor and manage promotion capacity and resource allocation</p>
+    </div>
+  </div>
+</div>
+
+<!-- Main content area -->
+<div class="capacity-page">
+  <!-- Top Summary Numbers -->
+  <div class="capacity-summary-numbers">
+    <div class="summary-number">
+      <div class="number">{{ active_today }}</div>
+      <div class="label">ACTIVE TODAY</div>
+    </div>
+    <div class="summary-number">
+      <div class="number">{{ active_rdc }}</div>
+      <div class="label">RDC</div>
+    </div>
+    <div class="summary-number">
+      <div class="number">{{ active_spe }}</div>
+      <div class="label">SPE</div>
+    </div>
+    <div class="summary-number">
+      <div class="number">{{ active_rebates }}</div>
+      <div class="label">REBATE</div>
+    </div>
+  </div>
+
+  <!-- Main Content Grid -->
+  <div class="capacity-main-grid">
+    <!-- Left Column -->
+    <div class="capacity-left-column">
+      <!-- Owner Workload Distribution -->
+      <div class="capacity-section">
+        <div class="section-header">
+          <h3 class="section-title">
+            <i class="bi bi-person-check"></i> Owner Workload Distribution
+          </h3>
+          <div class="date-filter">
+            <label for="week-filter">Week:</label>
+            <select id="week-filter" name="week-filter" class="week-dropdown" onchange="filterByWeek()">
+              <option value="08/10/2025-08/16/2025" {% if selected_week == '08/10/2025-08/16/2025' %}selected{% endif %}>08/10/2025 - 08/16/2025</option>
+              <option value="08/17/2025-08/23/2025" {% if selected_week == '08/17/2025-08/23/2025' %}selected{% endif %}>08/17/2025 - 08/23/2025</option>
+              <option value="08/24/2025-08/30/2025" {% if selected_week == '08/24/2025-08/30/2025' %}selected{% endif %}>08/24/2025 - 08/30/2025</option>
+              <option value="08/31/2025-09/06/2025" {% if selected_week == '08/31/2025-09/06/2025' %}selected{% endif %}>08/31/2025 - 09/06/2025</option>
+              <option value="09/07/2025-09/13/2025" {% if selected_week == '09/07/2025-09/13/2025' %}selected{% endif %}>09/07/2025 - 09/13/2025</option>
+              <option value="09/14/2025-09/20/2025" {% if selected_week == '09/14/2025-09/20/2025' %}selected{% endif %}>09/14/2025 - 09/20/2025</option>
+              <option value="09/21/2025-09/27/2025" {% if selected_week == '09/21/2025-09/27/2025' %}selected{% endif %}>09/21/2025 - 09/27/2025</option>
+              <option value="09/28/2025-10/04/2025" {% if selected_week == '09/28/2025-10/04/2025' %}selected{% endif %}>09/28/2025 - 10/04/2025</option>
+            </select>
+          </div>
+        </div>
+        <div class="workload-table-container" style="--row-count: {{ owner_workload|length }};">
+          <table class="workload-table">
+            <thead>
+              <tr>
+                <th>Owner</th>
+                <th>RDC</th>
+                <th>SPE</th>
+                <th>Rebates</th>
+                <th>Total</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for owner, workload in owner_workload.items() %}
+              <tr>
+                <td>{{ owner }}</td>
+                <td>{{ workload.rdc }}</td>
+                <td>{{ workload.spe }}</td>
+                <td>{{ workload.rebates }}</td>
+                <td>{{ workload.total }}</td>
+                <td>
+                  {% if workload.status == 'HIGH' %}
+                    <span class="status-badge status-high">HIGH</span>
+                  {% else %}
+                    <span class="status-badge status-ok">OK</span>
+                  {% endif %}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column -->
+    <div class="capacity-right-column">
+      <!-- Weekly Launch Schedule -->
+      <div class="capacity-section">
+        <h3 class="section-title">
+          <i class="bi bi-calendar-week"></i> Weekly Launch Schedule
+        </h3>
+        <div class="schedule-grid">
+          {% for week_data in next_four_weeks %}
+          <div class="schedule-item">
+            <div class="schedule-header">{{ week_data.week_label }}</div>
+            <div class="schedule-content">
+              {% if week_data.promotions %}
+                <table class="schedule-promo-table">
+                  <thead>
+                    <tr>
+                      <th>Code</th>
+                      <th>Orbit</th>
+                      <th>Start</th>
+                      <th>End</th>
+                      <th>Type</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for promo in week_data.promotions %}
+                    <tr>
+                      <td>{{ promo.code }}</td>
+                      <td>{{ promo.orbit_id }}</td>
+                      <td>{{ promo.promo_start_date }}</td>
+                      <td>{{ promo.promo_end_date }}</td>
+                      <td>
+                        <span class="promo-type-mini type-{{ promo.type.lower() if promo.type else 'unknown' }}">
+                          {{ promo.type or 'UNK' }}
+                        </span>
+                      </td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              {% else %}
+                <div class="no-launches">No launches scheduled</div>
+              {% endif %}
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function filterByWeek() {
+  const weekFilter = document.getElementById('week-filter');
+  const selectedWeek = weekFilter.value;
+  
+  // Reload the page with the selected week parameter
+  window.location.href = `/capacity?week=${encodeURIComponent(selectedWeek)}`;
+}
+</script>
+
+{% endblock %}

@@ -1,4 +1,7 @@
 from datetime import datetime
+import pandas as pd
+import os
+from typing import List, Dict, Any
 
 # --- Parser: Convert PDT one-liner into structured dict ---
 
@@ -96,3 +99,112 @@ def parse_pdt_line(line: str) -> dict:
         'dvc_sts_grp_id':            safe_get(37),  # Corrected index
         'clawback_ind':              safe_get(38),  # Corrected index
     }
+
+
+def parse_tradein_excel(file_path: str, promo_data: Dict[str, Any]) -> List[str]:
+    """
+    Parse trade-in Excel file and generate SQL INSERT statements
+    
+    Args:
+        file_path: Path to the Excel file
+        promo_data: Promotion data dictionary containing necessary fields
+        
+    Returns:
+        List of SQL INSERT statements
+    """
+    try:
+        # Check file size before processing - warn but don't block for large files
+        import os
+        file_size = os.path.getsize(file_path)
+        if file_size > 50 * 1024 * 1024:  # 50MB limit
+            print(f"Warning: Trade-in file is very large ({file_size:,} bytes). Processing may take time.")
+        
+        # Read the Excel file with optimizations for large files
+        df = pd.read_excel(
+            file_path,
+            engine='openpyxl',  # Specify engine for better performance
+            nrows=50000         # Limit to 50k rows to prevent memory issues
+        )
+        
+        # Expected columns: MAXVALUE_MFG, MAXVALUE_MODEL, MAXVALUE_DEVICE_TIER
+        required_columns = ['MAXVALUE_MFG', 'MAXVALUE_MODEL', 'MAXVALUE_DEVICE_TIER'] 
+        
+        # Check if all required columns exist
+        missing_columns = [col for col in required_columns if col not in df.columns]
+        if missing_columns:
+            raise ValueError(f"Missing required columns: {', '.join(missing_columns)}")
+        
+        sql_statements = []
+        
+        # Get operator_id from promo data (default to 16086 if not found)
+        operator_id = promo_data.get('operator_id', '16086')
+        promo_code = promo_data.get('code', 'UNKNOWN')
+        
+        # Group devices by tier to create tier-specific make/model group IDs
+        tier_groups = {}
+        
+        for _, row in df.iterrows():
+            make = str(row['MAXVALUE_MFG']).strip().upper()
+            model = str(row['MAXVALUE_MODEL']).strip()
+            tier = str(row['MAXVALUE_DEVICE_TIER']).strip()
+            
+            # Skip empty rows
+            if not make or not model or not tier or make == 'NAN' or model == 'NAN':
+                continue
+            
+            if tier not in tier_groups:
+                tier_groups[tier] = []
+            
+            tier_groups[tier].append({
+                'make': make,
+                'model': model
+            })
+        
+        # Generate SQL statements for each tier
+        for tier, devices in tier_groups.items():
+            # Get the tier-specific make model group ID from promo data
+            tier_field = f"trade_tier_{tier}_make_model"
+            mk_mdl_grp_id = promo_data.get(tier_field, f"{promo_code}_{tier}")
+            
+            # Skip if no make model group ID is defined for this tier
+            if not mk_mdl_grp_id or mk_mdl_grp_id.strip() == "":
+                continue
+            
+            for device in devices:
+                # Generate SQL INSERT statement
+                sql_statement = f"""Insert into PROMO_MK_MDL_GROUPS (MK_MDL_GRP_ID, MAKE, MODEL, SYS_CREATION_DATE, OPERATOR_ID, APPLICATION_ID, DL_SERVICE_CODE, MK_MDL_GROUP_DESC) Values ('{mk_mdl_grp_id}','{device['make']}','{device['model']}',sysdate,{operator_id},'CPO','USRST','NEW PROMO - {promo_code} CPO-{operator_id} - TIER {tier}');"""
+                
+                sql_statements.append(sql_statement)
+        
+        return sql_statements
+        
+    except Exception as e:
+        raise Exception(f"Error parsing trade-in Excel file: {str(e)}")
+
+
+def parse_sku_excel(file_path: str, promo_data: Dict[str, Any]) -> List[str]:
+    """
+    Parse SKU Excel file and generate SQL INSERT statements
+    
+    Args:
+        file_path: Path to the Excel file  
+        promo_data: Promotion data dictionary containing necessary fields
+        
+    Returns:
+        List of SQL INSERT statements
+    """
+    try:
+        # Read the Excel file
+        df = pd.read_excel(file_path)
+        
+        sql_statements = []
+        operator_id = promo_data.get('operator_id', '16086')
+        promo_code = promo_data.get('code', 'UNKNOWN')
+        
+        # Process SKU data (this would depend on your SKU Excel format)
+        # Add your SKU processing logic here based on the actual Excel structure
+        
+        return sql_statements
+        
+    except Exception as e:
+        raise Exception(f"Error parsing SKU Excel file: {str(e)}")
