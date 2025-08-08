@@ -209,7 +209,79 @@ def capacity():
             week_end = week_start + timedelta(days=6)  # Saturday
             return week_start, week_end
         
-        # Get date filter parameter
+        # Helper function to check if a promotion is active on a given date
+        def is_promo_active_on_date(promo_start, promo_end, check_date):
+            """Check if promotion is active on the given date"""
+            try:
+                if not promo_start:
+                    return False
+                
+                promo_start_date = datetime.strptime(promo_start, '%Y-%m-%d').date()
+                
+                # If no end date, assume it's active if start date is in the past
+                if not promo_end or promo_end == '':
+                    return promo_start_date <= check_date
+                
+                promo_end_date = datetime.strptime(promo_end, '%Y-%m-%d').date()
+                
+                # Check if check_date falls within the promo period
+                return promo_start_date <= check_date <= promo_end_date
+            except Exception as e:
+                return False
+        
+        # Get current date for active promotions calculation
+        current_date = date.today()  # This will be today's date
+        
+        # Get data for all promotion types
+        rdc_data = data_manager.get_all_promos()
+        spe_data = data_manager.get_all_spe_promos()
+        rebates_data = data_manager.get_all_rebates()
+        
+        # Calculate currently active promotions (for summary metrics)
+        active_rdc = {}
+        active_spe = {}
+        active_rebates = {}
+        
+        # Find active RDC promotions
+        for promo_key, promo in rdc_data.items():
+            if is_promo_active_on_date(
+                promo.get('promo_start_date'), 
+                promo.get('promo_end_date'),
+                current_date
+            ):
+                promo_with_type = promo.copy()
+                promo_with_type['type'] = 'RDC'
+                active_rdc[promo_key] = promo_with_type
+
+        # Find active SPE promotions
+        for spe_key, spe in spe_data.items():
+            if is_promo_active_on_date(
+                spe.get('promo_start_date'), 
+                spe.get('promo_end_date'),
+                current_date
+            ):
+                spe_with_type = spe.copy()
+                spe_with_type['type'] = 'SPE'
+                active_spe[spe_key] = spe_with_type
+
+        # Find active Rebate promotions
+        for rebate_key, rebate in rebates_data.items():
+            if is_promo_active_on_date(
+                rebate.get('promo_start_date'), 
+                rebate.get('promo_end_date'),
+                current_date
+            ):
+                rebate_with_type = rebate.copy()
+                rebate_with_type['type'] = 'REBATE'
+                active_rebates[rebate_key] = rebate_with_type
+        
+        # Calculate summary metrics for currently active promotions
+        total_active_rdc = len(active_rdc)
+        total_active_spe = len(active_spe)
+        total_active_rebates = len(active_rebates)
+        total_currently_active = total_active_rdc + total_active_spe + total_active_rebates
+        
+        # Get date filter parameter for weekly schedule view
         selected_week = request.args.get('week', '08/10/2025-08/16/2025')
         start_date_str, end_date_str = selected_week.split('-')
         
@@ -220,15 +292,6 @@ def capacity():
         start_date, end_date = get_sunday_saturday_week(input_start)
         start_date_dt = datetime.combine(start_date, datetime.min.time())
         end_date_dt = datetime.combine(end_date, datetime.min.time())
-        
-        # Get RDC promotions data
-        rdc_data = data_manager.get_all_promos()
-        
-        # Get SPE promotions data  
-        spe_data = data_manager.get_all_spe_promos()
-        
-        # Get Rebates promotions data
-        rebates_data = data_manager.get_all_rebates()
         
         # Filter promotions by date range
         def is_promo_launching_in_week(promo_start, week_start, week_end):
@@ -384,6 +447,10 @@ def capacity():
                              total_rdc=total_rdc,
                              total_spe=total_spe,
                              total_rebates=total_rebates,
+                             active_today=total_currently_active,
+                             active_rdc=total_active_rdc,
+                             active_spe=total_active_spe,
+                             active_rebates=total_active_rebates,
                              owner_workload=owner_workload,
                              next_four_weeks=next_four_weeks,
                              selected_week=standardized_week)
@@ -395,6 +462,10 @@ def capacity():
                              total_rdc=0,
                              total_spe=0,
                              total_rebates=0,
+                             active_today=0,
+                             active_rdc=0,
+                             active_spe=0,
+                             active_rebates=0,
                              owner_workload={},
                              next_four_weeks=[],
                              selected_week='08/10/2025-08/16/2025')
