@@ -29,7 +29,7 @@
         <label for="owner-filter">Filter by Promo Owner</label>
         <select id="owner-filter" class="form-select">
           <option value="all">All Owners</option>
-          {% for owner in owners %}
+          {% for owner in unique_owners %}
             <option value="{{ owner }}">{{ owner }}</option>
           {% endfor %}
         </select>
@@ -37,7 +37,7 @@
       
       <div class="search-group">
         <label for="promo-search">Search Promo Code</label>
-        <input type="text" id="promo-search" class="form-control" placeholder="Enter promo code">
+        <input type="text" id="promo-search" class="form-control" placeholder="Enter promo code" value="{{ target_promo_code if target_promo_code else '' }}">
       </div>
     </div>
   </div>
@@ -340,7 +340,7 @@ document.addEventListener('change', function(e) {
   }
 });
 
-// Initialize send button states on page load
+// Initialize send button states and handle target promo highlighting
 document.addEventListener('DOMContentLoaded', function() {
   const sendBtns = document.querySelectorAll('.send-btn');
   sendBtns.forEach(btn => {
@@ -348,6 +348,66 @@ document.addEventListener('DOMContentLoaded', function() {
     btn.classList.remove('btn-primary');
     btn.classList.add('btn-secondary');
   });
+  
+  // If there's a target promo, trigger search to filter the table
+  const targetPromo = '{{ target_promo_code }}';
+  if (targetPromo) {
+    // Trigger the search to filter rows
+    filterTable();
+  }
+});
+
+// Add search functionality
+function filterTable() {
+  const searchInput = document.getElementById('promo-search');
+  const ownerFilter = document.getElementById('owner-filter');
+  const searchTerm = searchInput.value.toLowerCase().trim();
+  const selectedOwner = ownerFilter.value;
+  const rows = document.querySelectorAll('.approver-row');
+  
+  rows.forEach(row => {
+    const promoCode = row.getAttribute('data-promo-code').toLowerCase();
+    const owner = row.getAttribute('data-owner');
+    
+    const matchesSearch = searchTerm === '' || promoCode.includes(searchTerm);
+    const matchesOwner = selectedOwner === 'all' || owner === selectedOwner;
+    
+    if (matchesSearch && matchesOwner) {
+      row.style.display = '';
+    } else {
+      row.style.display = 'none';
+    }
+  });
+}
+
+// Update URL when search changes
+function updateUrl() {
+  const searchInput = document.getElementById('promo-search');
+  const searchTerm = searchInput.value.trim();
+  
+  // Update URL without page reload
+  const url = new URL(window.location);
+  if (searchTerm) {
+    url.searchParams.set('promo_code', searchTerm);
+  } else {
+    url.searchParams.delete('promo_code');
+  }
+  
+  // Update URL without refreshing the page
+  window.history.replaceState({}, '', url);
+}
+
+// Add event listeners for filtering
+document.addEventListener('DOMContentLoaded', function() {
+  const searchInput = document.getElementById('promo-search');
+  const ownerFilter = document.getElementById('owner-filter');
+  
+  searchInput.addEventListener('input', function() {
+    filterTable();
+    updateUrl();
+  });
+  
+  ownerFilter.addEventListener('change', filterTable);
 });
 </script>
 

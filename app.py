@@ -163,7 +163,79 @@ def test():
 
 @app.route("/approvers")
 def approvers():
-    return render_template("approvers.html")
+    try:
+        # Get the promo_code parameter if provided
+        target_promo_code = request.args.get('promo_code', '').strip()
+        
+        # Load promotion data
+        data_manager = PromoDataManager()
+        rdc_data = data_manager.get_all_promos()
+        spe_data = data_manager.get_all_spe_promos()
+        rebates_data = data_manager.get_all_rebates()
+        
+        # Combine all promo codes and owners
+        all_promos = []
+        
+        # Add RDC promotions
+        for promo_key, promo in rdc_data.items():
+            all_promos.append({
+                'code': promo.get('code', promo_key),
+                'owner': promo.get('owner', 'Unknown'),
+                'type': 'RDC'
+            })
+        
+        # Add SPE promotions
+        for spe_key, spe in spe_data.items():
+            all_promos.append({
+                'code': spe.get('code', spe_key),
+                'owner': spe.get('owner', 'Unknown'),
+                'type': 'SPE'
+            })
+        
+        # Add Rebate promotions
+        for rebate_key, rebate in rebates_data.items():
+            all_promos.append({
+                'code': rebate.get('code', rebate_key),
+                'owner': rebate.get('owner', 'Unknown'),
+                'type': 'REBATE'
+            })
+        
+        # If a target promo is specified, sort to put it first
+        if target_promo_code:
+            target_promos = [p for p in all_promos if p['code'] == target_promo_code]
+            other_promos = [p for p in all_promos if p['code'] != target_promo_code]
+            all_promos = target_promos + other_promos
+        
+        # Extract separate lists for template compatibility
+        promo_codes = [promo['code'] for promo in all_promos]
+        owners = [promo['owner'] for promo in all_promos]
+        
+        # Create unique list of owners for the filter dropdown
+        unique_owners = sorted(list(set(owners)))
+        
+        # Mock revenue approvers (you can replace this with actual data)
+        revenue_approvers = [
+            {'name': 'John Smith', 'email': 'john.smith@company.com'},
+            {'name': 'Sarah Davis', 'email': 'sarah.davis@company.com'},
+            {'name': 'Mike Johnson', 'email': 'mike.johnson@company.com'},
+            {'name': 'Lisa Chen', 'email': 'lisa.chen@company.com'}
+        ]
+        
+        return render_template("approvers.html", 
+                             promo_codes=promo_codes,
+                             owners=owners,
+                             unique_owners=unique_owners,
+                             revenue_approvers=revenue_approvers,
+                             target_promo_code=target_promo_code)
+    
+    except Exception as e:
+        flash(f'Error loading approvers data: {str(e)}', 'error')
+        return render_template("approvers.html", 
+                             promo_codes=[],
+                             owners=[],
+                             unique_owners=[],
+                             revenue_approvers=[],
+                             target_promo_code='')
 
 
 @app.route("/reviewers")

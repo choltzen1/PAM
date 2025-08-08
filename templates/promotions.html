@@ -90,7 +90,7 @@
           <td class="promo-actions">
             <a href="{{ url_for('promo.edit_promo', promo_code=promo.code) }}" class="icon-button" title="Edit"><i class="fas fa-edit"></i></a>
             <button class="icon-button" title="Team"><i class="fas fa-users"></i></button>
-            <button class="icon-button" title="Export"><i class="fas fa-file-export"></i></button>
+            <a href="{{ url_for('approvers', promo_code=promo.code) }}" class="icon-button" title="Approvers"><i class="fas fa-file-signature"></i></a>
             <button class="icon-button" title="Refresh"><i class="fas fa-sync-alt"></i></button>
             <button class="icon-button" title="Link"><i class="fas fa-link"></i></button>
           </td>
