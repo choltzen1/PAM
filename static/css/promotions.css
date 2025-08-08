@@ -50,16 +50,13 @@
   font-weight: 400;
 }
 
-/* 1. Flex column page layout: header, content, footer */
+/* 1. Page layout with fixed footer */
 html, body {
   min-height: 100vh;
   height: 100%;
-  width: 100vw;
   margin: 0;
   padding: 0;
   background: #f4f4f4;
-  display: flex;
-  flex-direction: column;
   box-sizing: border-box;
   font-family: 'Inter', Arial, sans-serif;
   overflow-x: hidden;
@@ -88,13 +85,11 @@ html, body {
   font-size: 1rem;
 }
 
-/* 3. Main content area - scrollable between header and footer */
+/* 3. Main content area - scrollable with fixed footer */
 .promotions-page {
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow-y: auto;
-  width: 100%;
+  min-height: calc(100vh - 60px); /* Account for footer */
   padding: 1rem 2rem;
+  padding-bottom: calc(1rem + 60px); /* Extra padding for footer */
   box-sizing: border-box;
   background: #fff;
 }

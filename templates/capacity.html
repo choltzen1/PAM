@@ -26,19 +26,19 @@
   <!-- Top Summary Numbers -->
   <div class="capacity-summary-numbers">
     <div class="summary-number">
-      <div class="number">10</div>
+      <div class="number">{{ total_active }}</div>
       <div class="label">ACTIVE PROMOS</div>
     </div>
     <div class="summary-number">
-      <div class="number">4</div>
+      <div class="number">{{ total_rdc }}</div>
       <div class="label">RDC</div>
     </div>
     <div class="summary-number">
-      <div class="number">6</div>
+      <div class="number">{{ total_spe }}</div>
       <div class="label">SPE</div>
     </div>
     <div class="summary-number">
-      <div class="number">0</div>
+      <div class="number">{{ total_rebates }}</div>
       <div class="label">REBATE</div>
     </div>
   </div>
@@ -55,19 +55,19 @@
           </h3>
           <div class="date-filter">
             <label for="week-filter">Week:</label>
-            <select id="week-filter" name="week-filter" class="week-dropdown">
-              <option value="08/10/2025-08/16/2025">08/10/2025 - 08/16/2025</option>
-              <option value="08/17/2025-08/23/2025">08/17/2025 - 08/23/2025</option>
-              <option value="08/24/2025-08/30/2025">08/24/2025 - 08/30/2025</option>
-              <option value="08/31/2025-09/06/2025">08/31/2025 - 09/06/2025</option>
-              <option value="09/07/2025-09/13/2025">09/07/2025 - 09/13/2025</option>
-              <option value="09/14/2025-09/20/2025">09/14/2025 - 09/20/2025</option>
-              <option value="09/21/2025-09/27/2025">09/21/2025 - 09/27/2025</option>
-              <option value="09/28/2025-10/04/2025">09/28/2025 - 10/04/2025</option>
+            <select id="week-filter" name="week-filter" class="week-dropdown" onchange="filterByWeek()">
+              <option value="08/10/2025-08/16/2025" {% if selected_week == '08/10/2025-08/16/2025' %}selected{% endif %}>08/10/2025 - 08/16/2025</option>
+              <option value="08/17/2025-08/23/2025" {% if selected_week == '08/17/2025-08/23/2025' %}selected{% endif %}>08/17/2025 - 08/23/2025</option>
+              <option value="08/24/2025-08/30/2025" {% if selected_week == '08/24/2025-08/30/2025' %}selected{% endif %}>08/24/2025 - 08/30/2025</option>
+              <option value="08/31/2025-09/06/2025" {% if selected_week == '08/31/2025-09/06/2025' %}selected{% endif %}>08/31/2025 - 09/06/2025</option>
+              <option value="09/07/2025-09/13/2025" {% if selected_week == '09/07/2025-09/13/2025' %}selected{% endif %}>09/07/2025 - 09/13/2025</option>
+              <option value="09/14/2025-09/20/2025" {% if selected_week == '09/14/2025-09/20/2025' %}selected{% endif %}>09/14/2025 - 09/20/2025</option>
+              <option value="09/21/2025-09/27/2025" {% if selected_week == '09/21/2025-09/27/2025' %}selected{% endif %}>09/21/2025 - 09/27/2025</option>
+              <option value="09/28/2025-10/04/2025" {% if selected_week == '09/28/2025-10/04/2025' %}selected{% endif %}>09/28/2025 - 10/04/2025</option>
             </select>
           </div>
         </div>
-        <div class="workload-table-container">
+        <div class="workload-table-container" style="--row-count: {{ owner_workload|length }};">
           <table class="workload-table">
             <thead>
               <tr>
@@ -80,78 +80,22 @@
               </tr>
             </thead>
             <tbody>
+              {% for owner, workload in owner_workload.items() %}
               <tr>
-                <td>Alexandra Brown</td>
-                <td>1</td>
-                <td>0</td>
-                <td>0</td>
-                <td>1</td>
-                <td><span class="status-badge status-ok">OK</span></td>
+                <td>{{ owner }}</td>
+                <td>{{ workload.rdc }}</td>
+                <td>{{ workload.spe }}</td>
+                <td>{{ workload.rebates }}</td>
+                <td>{{ workload.total }}</td>
+                <td>
+                  {% if workload.status == 'HIGH' %}
+                    <span class="status-badge status-high">HIGH</span>
+                  {% else %}
+                    <span class="status-badge status-ok">OK</span>
+                  {% endif %}
+                </td>
               </tr>
-              <tr>
-                <td>Cade Holtzen</td>
-                <td>1</td>
-                <td>2</td>
-                <td>0</td>
-                <td>3</td>
-                <td><span class="status-badge status-high">HIGH</span></td>
-              </tr>
-              <tr>
-                <td>John Smith</td>
-                <td>1</td>
-                <td>0</td>
-                <td>0</td>
-                <td>1</td>
-                <td><span class="status-badge status-ok">OK</span></td>
-              </tr>
-              <tr>
-                <td>Sarah Johnson</td>
-                <td>0</td>
-                <td>1</td>
-                <td>0</td>
-                <td>1</td>
-                <td><span class="status-badge status-ok">OK</span></td>
-              </tr>
-              <tr>
-                <td>Matt Gonzalez</td>
-                <td>0</td>
-                <td>1</td>
-                <td>0</td>
-                <td>1</td>
-                <td><span class="status-badge status-ok">OK</span></td>
-              </tr>
-              <tr>
-                <td>Tom Henderson</td>
-                <td>0</td>
-                <td>1</td>
-                <td>0</td>
-                <td>1</td>
-                <td><span class="status-badge status-ok">OK</span></td>
-              </tr>
-              <tr>
-                <td>Dylan Chen</td>
-                <td>0</td>
-                <td>1</td>
-                <td>0</td>
-                <td>1</td>
-                <td><span class="status-badge status-ok">OK</span></td>
-              </tr>
-              <tr>
-                <td>Maria Rodriguez</td>
-                <td>0</td>
-                <td>1</td>
-                <td>0</td>
-                <td>1</td>
-                <td><span class="status-badge status-ok">OK</span></td>
-              </tr>
-              <tr>
-                <td>Evan Park</td>
-                <td>0</td>
-                <td>1</td>
-                <td>0</td>
-                <td>1</td>
-                <td><span class="status-badge status-ok">OK</span></td>
-              </tr>
+              {% endfor %}
             </tbody>
           </table>
         </div>
@@ -166,34 +110,57 @@
           <i class="bi bi-calendar-week"></i> Weekly Launch Schedule
         </h3>
         <div class="schedule-grid">
+          {% for week_data in next_four_weeks %}
           <div class="schedule-item">
-            <div class="schedule-header">This Thursday Schedule</div>
+            <div class="schedule-header">{{ week_data.week_label }}</div>
             <div class="schedule-content">
-              <div class="schedule-promo">P047-2022<br><span class="schedule-time">9 promos</span></div>
+              {% if week_data.promotions %}
+                <table class="schedule-promo-table">
+                  <thead>
+                    <tr>
+                      <th>Code</th>
+                      <th>Orbit</th>
+                      <th>Start</th>
+                      <th>End</th>
+                      <th>Type</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for promo in week_data.promotions %}
+                    <tr>
+                      <td>{{ promo.code }}</td>
+                      <td>{{ promo.orbit_id }}</td>
+                      <td>{{ promo.promo_start_date }}</td>
+                      <td>{{ promo.promo_end_date }}</td>
+                      <td>
+                        <span class="promo-type-mini type-{{ promo.type.lower() if promo.type else 'unknown' }}">
+                          {{ promo.type or 'UNK' }}
+                        </span>
+                      </td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              {% else %}
+                <div class="no-launches">No launches scheduled</div>
+              {% endif %}
             </div>
           </div>
-          <div class="schedule-item">
-            <div class="schedule-header">Next Thursday Schedule</div>
-            <div class="schedule-content">
-              <div class="schedule-promo">R223<br><span class="schedule-time">6 promos</span></div>
-            </div>
-          </div>
-          <div class="schedule-item">
-            <div class="schedule-header">August 26, 2025</div>
-            <div class="schedule-content">
-              <div class="schedule-promo">TBD<br><span class="schedule-time">8 promos</span></div>
-            </div>
-          </div>
-          <div class="schedule-item">
-            <div class="schedule-header">September 02, 2025</div>
-            <div class="schedule-content">
-              <div class="schedule-promo">TBD<br><span class="schedule-time">5 promos</span></div>
-            </div>
-          </div>
+          {% endfor %}
         </div>
       </div>
     </div>
   </div>
 </div>
+
+<script>
+function filterByWeek() {
+  const weekFilter = document.getElementById('week-filter');
+  const selectedWeek = weekFilter.value;
+  
+  // Reload the page with the selected week parameter
+  window.location.href = `/capacity?week=${encodeURIComponent(selectedWeek)}`;
+}
+</script>
 
 {% endblock %}

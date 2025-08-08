@@ -7,7 +7,7 @@ from data.storage import PromoDataManager
 from promo.builders import generate_promo_eligibility_sql
 from promo.routes import promo_bp
 
-# Pre-import pandas to avoid delays during SQL generation
+# Pre-load pandas to avoid delays during SQL generation
 try:
     import pandas as pd
     print("✅ Pandas pre-loaded for faster SQL generation")
@@ -149,9 +149,233 @@ def reviewers():
     return render_template("reviewers.html")
 
 
+@app.route("/debug-capacity")
+def debug_capacity():
+    """Debug endpoint to see raw data"""
+    try:
+        # Get all data
+        rdc_data = data_manager.get_all_promos()
+        spe_data = data_manager.get_all_spe_promos()
+        
+        # Show sample data structure
+        sample_rdc = list(rdc_data.values())[:3] if rdc_data else []
+        sample_spe = list(spe_data.values())[:3] if spe_data else []
+        
+        return {
+            "total_rdc": len(rdc_data),
+            "total_spe": len(spe_data),
+            "sample_rdc": sample_rdc,
+            "sample_spe": sample_spe
+        }
+    except Exception as e:
+        return {"error": str(e)}
+
+
 @app.route("/capacity")
 def capacity():
-    return render_template("capacity.html")
+    try:
+        from datetime import datetime, date, timedelta
+        
+        # Helper function to get Sunday-Saturday week dates
+        def get_sunday_saturday_week(input_date):
+            """Convert any date to the Sunday-Saturday week it belongs to"""
+            # Get the Sunday of the week containing input_date
+            days_since_sunday = input_date.weekday() + 1  # Monday=0, so add 1 to make Sunday=0
+            if days_since_sunday == 7:  # If it's Sunday, days_since_sunday would be 7
+                days_since_sunday = 0
+            week_start = input_date - timedelta(days=days_since_sunday)
+            week_end = week_start + timedelta(days=6)  # Saturday
+            return week_start, week_end
+        
+        # Get date filter parameter
+        selected_week = request.args.get('week', '08/10/2025-08/16/2025')
+        start_date_str, end_date_str = selected_week.split('-')
+        
+        # Convert to datetime objects and standardize to Sunday-Saturday week
+        input_start = datetime.strptime(start_date_str, '%m/%d/%Y').date()
+        
+        # Get the Sunday-Saturday week for the input date
+        start_date, end_date = get_sunday_saturday_week(input_start)
+        start_date_dt = datetime.combine(start_date, datetime.min.time())
+        end_date_dt = datetime.combine(end_date, datetime.min.time())
+        
+        # Get RDC promotions data
+        rdc_data = data_manager.get_all_promos()
+        
+        # Get SPE promotions data  
+        spe_data = data_manager.get_all_spe_promos()
+        
+        # Get Rebates promotions data
+        rebates_data = data_manager.get_all_rebates()
+        
+        # Filter promotions by date range
+        def is_promo_launching_in_week(promo_start, week_start, week_end):
+            """Check if promotion launches during the selected week"""
+            try:
+                if not promo_start:
+                    return False
+                
+                promo_start_date = datetime.strptime(promo_start, '%Y-%m-%d')
+                
+                # Check if promo start date falls within the selected week
+                return week_start <= promo_start_date <= week_end
+            except Exception as e:
+                return False
+        
+        # Filter RDC promotions for the selected week
+        filtered_rdc = {}
+        for promo_key, promo in rdc_data.items():
+            if is_promo_launching_in_week(
+                promo.get('promo_start_date'), 
+                start_date_dt, 
+                end_date_dt
+            ):
+                # Add type flag for RDC promotions
+                promo_with_type = promo.copy()
+                promo_with_type['type'] = 'RDC'
+                filtered_rdc[promo_key] = promo_with_type
+
+        # Filter SPE promotions for the selected week
+        filtered_spe = {}
+        for spe_key, spe in spe_data.items():
+            if is_promo_launching_in_week(
+                spe.get('promo_start_date'), 
+                start_date_dt, 
+                end_date_dt
+            ):
+                # Add type flag for SPE promotions
+                spe_with_type = spe.copy()
+                spe_with_type['type'] = 'SPE'
+                filtered_spe[spe_key] = spe_with_type
+
+        # Filter Rebate promotions for the selected week
+        filtered_rebates = {}
+        for rebate_key, rebate in rebates_data.items():
+            if is_promo_launching_in_week(
+                rebate.get('promo_start_date'), 
+                start_date_dt, 
+                end_date_dt
+            ):
+                # Add type flag for Rebate promotions
+                rebate_with_type = rebate.copy()
+                rebate_with_type['type'] = 'REBATE'
+                filtered_rebates[rebate_key] = rebate_with_type
+        
+        # Calculate summary metrics based on filtered data
+        total_rdc = len(filtered_rdc)
+        total_spe = len(filtered_spe)
+        total_rebates = len(filtered_rebates)
+        total_active = total_rdc + total_spe + total_rebates
+        
+        # Calculate owner workload distribution for filtered data
+        owner_workload = {}
+        
+        # Count RDC promotions by owner
+        for promo_key, promo in filtered_rdc.items():
+            owner = promo.get('owner', 'Unknown')
+            if owner not in owner_workload:
+                owner_workload[owner] = {'rdc': 0, 'spe': 0, 'rebates': 0}
+            owner_workload[owner]['rdc'] += 1
+            # Debug: print which promo goes to which owner
+            print(f"RDC Debug: {promo_key} -> owner: {owner}, start_date: {promo.get('promo_start_date')}")
+        
+        # Count SPE promotions by owner
+        for spe_key, spe in filtered_spe.items():
+            owner = spe.get('owner', 'Unknown')
+            if owner not in owner_workload:
+                owner_workload[owner] = {'rdc': 0, 'spe': 0, 'rebates': 0}
+            owner_workload[owner]['spe'] += 1
+            # Debug: print which promo goes to which owner
+            print(f"SPE Debug: {spe_key} -> owner: {owner}, start_date: {spe.get('promo_start_date')}")
+
+        # Count Rebate promotions by owner
+        for rebate_key, rebate in filtered_rebates.items():
+            owner = rebate.get('owner', 'Unknown')
+            if owner not in owner_workload:
+                owner_workload[owner] = {'rdc': 0, 'spe': 0, 'rebates': 0}
+            owner_workload[owner]['rebates'] += 1
+            # Debug: print which promo goes to which owner  
+            print(f"REBATE Debug: {rebate_key} -> owner: {owner}, start_date: {rebate.get('promo_start_date')}")
+        
+        # Calculate totals and status for each owner
+        for owner in owner_workload:
+            workload = owner_workload[owner]
+            workload['total'] = workload['rdc'] + workload['spe'] + workload['rebates']
+            # Determine status based on total workload
+            if workload['total'] >= 3:
+                workload['status'] = 'HIGH'
+            else:
+                workload['status'] = 'OK'
+        
+        # Generate next four weeks data for schedule view (Sunday-Saturday weeks)
+        import calendar
+        
+        next_four_weeks = []
+        current_date = date(2025, 8, 8)  # Current date: August 8, 2025
+        
+        # Get the next Sunday (start of next week) as the starting point
+        current_week_start, _ = get_sunday_saturday_week(current_date)
+        next_week_start = current_week_start + timedelta(weeks=1)  # Start from next week
+        
+        for i in range(4):
+            # Calculate each Sunday-Saturday week starting from next week
+            week_start = next_week_start + timedelta(weeks=i)
+            week_end = week_start + timedelta(days=6)  # Saturday
+            
+            week_start_dt = datetime.combine(week_start, datetime.min.time())
+            week_end_dt = datetime.combine(week_end, datetime.min.time())
+            
+            # Find promotions launching in this week
+            week_promos = []
+            for promo in rdc_data.values():
+                if is_promo_launching_in_week(promo.get('promo_start_date'), week_start_dt, week_end_dt):
+                    # Add type flag for RDC promotions
+                    promo_with_type = promo.copy()
+                    promo_with_type['type'] = 'RDC'
+                    week_promos.append(promo_with_type)
+            for spe in spe_data.values():
+                if is_promo_launching_in_week(spe.get('promo_start_date'), week_start_dt, week_end_dt):
+                    # Add type flag for SPE promotions
+                    spe_with_type = spe.copy()
+                    spe_with_type['type'] = 'SPE'
+                    week_promos.append(spe_with_type)
+            for rebate in rebates_data.values():
+                if is_promo_launching_in_week(rebate.get('promo_start_date'), week_start_dt, week_end_dt):
+                    # Add type flag for Rebate promotions
+                    rebate_with_type = rebate.copy()
+                    rebate_with_type['type'] = 'REBATE'
+                    week_promos.append(rebate_with_type)
+            
+            # Format week label
+            week_label = f"{week_start.strftime('%m/%d/%Y')} - {week_end.strftime('%m/%d/%Y')}"
+            
+            next_four_weeks.append({
+                'week_label': week_label,
+                'promotions': week_promos  # Show all promotions for the week
+            })
+        
+        # Update selected_week to reflect the standardized Sunday-Saturday week
+        standardized_week = f"{start_date.strftime('%m/%d/%Y')}-{end_date.strftime('%m/%d/%Y')}"
+        
+        return render_template("capacity.html", 
+                             total_active=total_active,
+                             total_rdc=total_rdc,
+                             total_spe=total_spe,
+                             total_rebates=total_rebates,
+                             owner_workload=owner_workload,
+                             next_four_weeks=next_four_weeks,
+                             selected_week=standardized_week)
+    except Exception as e:
+        flash(f'Error loading capacity data: {str(e)}', 'error')
+        # Return with default values if there's an error
+        return render_template("capacity.html",
+                             total_active=0,
+                             total_rdc=0,
+                             total_spe=0,
+                             total_rebates=0,
+                             owner_workload={},
+                             next_four_weeks=[],
+                             selected_week='08/10/2025-08/16/2025')
 
 
 @app.route("/admin")

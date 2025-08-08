@@ -106,7 +106,7 @@ html, body {
 .main {
   position: fixed;
   top: 44px; /* Height of topbar */
-  bottom: 90px; /* Height of footer + disclaimer */
+  bottom: 92px; /* Height of footer (60px) + disclaimer (~32px) */
   left: 200px;
   right: 0;
   overflow-y: auto;
@@ -135,16 +135,12 @@ html, body {
 }
 
 .footer-nav {
-  position: fixed !important;
-  bottom: 0;
-  left: 0;
-  right: 0;
+  /* Inherit the global fixed positioning from base.html */
   height: 45px;
   background: var(--tmobile-magenta) !important;
   color: #fff !important;
   font-size: 1rem;
   border-top: 2px solid #fff2;
-  z-index: 150;
 }
 
 .footer-nav #footer-time {
@@ -153,7 +149,7 @@ html, body {
 
 .disclaimer {
   position: fixed;
-  bottom: 45px; /* Back to original position to be flush with footer */
+  bottom: 60px; /* Position above the 60px footer */
   left: 200px;
   right: 0;
   background-color: #666;
@@ -185,7 +181,7 @@ html, body {
     font-size: 1.2em; /* Slightly smaller but still readable */
   }  .main {
     top: 44px;
-    bottom: 90px;
+    bottom: 92px;
     left: 140px;
     padding: 1.5rem 1rem 1.5rem 1rem;
   }
@@ -226,7 +222,7 @@ html, body {
     font-size: 1.1em; /* Reasonable size for tablets */
   }  .main {
     top: 44px;
-    bottom: 90px;
+    bottom: 92px;
     left: 120px;
     padding: 1rem 0.5rem 1rem 0.5rem;
   }
@@ -269,7 +265,7 @@ html, body {
     font-size: 1em; /* Good size for mobile */
   }  .main {
     top: 44px;
-    bottom: 90px;
+    bottom: 92px;
     left: 100px;
     padding: 0.8rem 0.3rem 0.8rem 0.3rem;
   }
@@ -311,7 +307,7 @@ html, body {
     letter-spacing: 0.3px; /* Slightly less letter spacing */
   }  .main {
     top: 44px;
-    bottom: 90px;
+    bottom: 92px;
     left: 80px;
     padding: 0.5rem 0.2rem 0.5rem 0.2rem;
   }

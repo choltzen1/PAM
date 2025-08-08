@@ -5,16 +5,13 @@
   --tmobile-border: #e0e0e0;
 }
 
-/* 1. Flex column page layout: header, content, footer */
+/* 1. Page layout with fixed footer */
 html, body {
   min-height: 100vh;
   height: 100%;
-  width: 100vw;
   margin: 0;
   padding: 0;
   background: #f4f4f4;
-  display: flex;
-  flex-direction: column;
   box-sizing: border-box;
   font-family: 'Inter', Arial, sans-serif;
   overflow-x: hidden;
@@ -22,11 +19,9 @@ html, body {
 
 /* Date Mismatch Page Container - scrollable content area */
 .date-mismatch-page {
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow-y: auto;
-  width: 100%;
+  min-height: calc(100vh - 60px); /* Account for footer */
   padding: 1rem 2rem;
+  padding-bottom: calc(1rem + 60px); /* Extra padding for footer */
   box-sizing: border-box;
   background: #fff;
 }
@@ -419,4 +414,198 @@ html, body {
   .placeholder-content .display-1 {
     font-size: 3rem;
   }
+}
+
+/* Launch Schedule Compact Grid */
+.launch-grid-compact {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+    margin-top: 15px;
+}
+
+.launch-week-card-compact {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 15px;
+    text-align: center;
+}
+
+.launch-week-card-compact .launch-date {
+    font-weight: 600;
+    color: #495057;
+    font-size: 0.9rem;
+    margin-bottom: 8px;
+}
+
+.launch-week-card-compact .count-number {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #007bff;
+    display: block;
+}
+
+.launch-week-card-compact .count-label {
+    font-size: 0.8rem;
+    color: #6c757d;
+}
+
+/* Metrics Grid for Quarter 4 */
+.metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+    margin-top: 15px;
+}
+
+.metric-item {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 20px;
+    text-align: center;
+}
+
+.metric-value {
+    font-size: 1.8rem;
+    font-weight: bold;
+    color: #007bff;
+    display: block;
+    margin-bottom: 5px;
+}
+
+.metric-label {
+    font-size: 0.85rem;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Quartered Layout CSS */
+.quartered-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 20px;
+    height: 600px; /* Fixed height for equal quarters */
+    margin: 20px 0;
+}
+
+.quarter-section {
+    background: #fff;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 20px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.quarter-section h3 {
+    margin: 0 0 15px 0;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #e20074;
+    color: #333;
+    font-size: 1.1rem;
+}
+
+.quarter-section .section-description {
+    font-size: 0.9rem;
+    color: #6c757d;
+    margin-bottom: 15px;
+}
+
+/* Quarter 1: Owner Workload Table */
+.quarter-section .table-container {
+    flex: 1;
+    overflow-y: auto;
+}
+
+.quarter-section .capacity-table {
+    width: 100%;
+    font-size: 0.85rem;
+}
+
+.quarter-section .capacity-table th {
+    background: #f8f9fa;
+    padding: 8px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.quarter-section .capacity-table td {
+    padding: 6px 8px;
+    border-bottom: 1px solid #eee;
+}
+
+/* Quarter 2: Launch Schedule Compact */
+.quarter-section .launch-grid-compact {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    flex: 1;
+}
+
+.quarter-section .launch-week-card-compact {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    padding: 12px;
+    text-align: center;
+    height: fit-content;
+}
+
+/* Quarter 3: Chart Container */
+.quarter-section .chart-container {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.quarter-section canvas {
+    max-width: 100%;
+    max-height: 100%;
+}
+
+/* Quarter 4: Metrics Grid */
+.quarter-section .metrics-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    flex: 1;
+}
+
+.quarter-section .metric-item {
+    padding: 15px;
+    font-size: 0.9rem;
+}
+
+.quarter-section .metric-value {
+    font-size: 1.4rem;
+}
+
+/* Badge styles for workload status */
+.badge {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.badge-success {
+    background-color: #28a745;
+    color: white;
+}
+
+.badge-warning {
+    background-color: #ffc107;
+    color: #212529;
+}
+
+.badge-danger {
+    background-color: #dc3545;
+    color: white;
 }
