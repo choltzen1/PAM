@@ -32,7 +32,7 @@
     "updated_mrc_ranking": "NULL",
     "suppress_discount_reorder": "No",
     "retro_ban_evaluation": "No",
-    "port_in_group_id": "NULL",
+    "port_in_group_id": "G07",
     "adjustment_code": "EEDG74",
     "discount_codes": "22Q12F, 22Q12P, 22Q12S",
     "total_indicator": "N",
@@ -72,8 +72,8 @@
       "07/29/2025 10:41 AM - Daniel Zhang - PCR version #1"
     ],
     "created_at": "2025-07-23T14:26:32.937005",
-    "updated_at": "2025-07-29T10:41:20.154147",
-    "last_changes": "Last save: 07/29/2025 10:40 AM - Daniel Zhang - Changed: Max Discount (cleared)"
+    "updated_at": "2025-08-08T13:21:39.402332",
+    "last_changes": "Last save: 08/08/2025 01:21 PM - Cade Holtzen - Changed: Port-In Group ID (→ G07)"
   },
   "SP122": {
     "code": "SP122",

@@ -78,42 +78,64 @@ def spe():
         return render_template("spe.html", spe_data=[], active_tab='SPE')
 
 
-@app.route("/edit_spe", methods=["GET", "POST"])
-def edit_spe():
+@app.route("/edit_spe/<promo_code>", methods=["GET", "POST"])
+def edit_spe(promo_code):
+    # Get the active tab from query parameter or form, default to 'Details'
+    tab = request.args.get('tab', 'Details')
+    
     if request.method == "POST":
+        # Get the active tab from form
+        tab = request.form.get('active_tab', tab)
+        
+        # Get current SPE data
+        spe_data = data_manager.get_spe_promo(promo_code)
+        if not spe_data:
+            flash(f"SPE {promo_code} not found", "error")
+            return redirect(url_for('spe'))
+        
         # Get the SPE data from the form
-        spe_data = {}
+        updated_data = {}
         
-        # Get all form data that starts with 'spe_'
+        # Get all form data (no need for spe_ prefix since template uses direct field names)
         for key, value in request.form.items():
-            if key.startswith('spe_'):
-                # Remove the 'spe_' prefix to get the actual field name
-                field_name = key[4:]
-                spe_data[field_name] = value
+            # Skip the active_tab field as it's not data
+            if key != 'active_tab':
+                updated_data[key] = value
         
-        # Determine the key for this SPE (could be from existing or new)
-        spe_key = request.form.get('spe_key', f"SPE_{datetime.now().strftime('%Y%m%d_%H%M%S')}")
+        # Update the existing data with form data
+        spe_data.update(updated_data)
         
         try:
             # Save the SPE data
-            data_manager.save_spe(spe_key, spe_data)
-            flash(f'SPE {spe_key} saved successfully!', 'success')
-            return redirect(url_for('spe'))
+            data_manager.save_spe_promo(promo_code, spe_data, user_name="Cade Holtzen")
+            flash(f'SPE {promo_code} saved successfully!', 'success')
+            # Redirect back to the same tab
+            return redirect(url_for('edit_spe', promo_code=promo_code, tab=tab))
         except Exception as e:
             flash(f'Error saving SPE: {str(e)}', 'error')
     
-    # If it's a GET request or there was an error, show the form
-    spe_key = request.args.get('spe_key')
-    spe_data = {}
+    # GET request - load SPE data
+    spe_data = data_manager.get_spe_promo(promo_code)
+    if not spe_data:
+        flash(f"SPE {promo_code} not found", "error")
+        return redirect(url_for('spe'))
     
-    if spe_key:
-        try:
-            all_spe = data_manager.get_all_spe()
-            spe_data = all_spe.get(spe_key, {})
-        except:
-            pass
+    # Ensure the data has the basic structure expected by template
+    if not isinstance(spe_data, dict):
+        spe_data = {}
     
-    return render_template("edit_spe.html", spe_data=spe_data, spe_key=spe_key)
+    return render_template("edit_spe.html", 
+                         promo=spe_data, 
+                         spe_data=spe_data, 
+                         spe_key=promo_code,
+                         active_tab=tab or 'Details',
+                         soc_groupings=data_manager.get_soc_groupings(),
+                         soc_grouping_details=data_manager.get_soc_grouping_details(),
+                         account_types=data_manager.get_account_types(),
+                         account_type_details=data_manager.get_account_type_details(),
+                         sales_applications=data_manager.get_sales_applications(),
+                         sales_application_details=data_manager.get_sales_application_details(),
+                         user_name="Cade Holtzen")
 
 
 @app.route("/date_mismatch")
