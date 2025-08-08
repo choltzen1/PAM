@@ -20,9 +20,11 @@
   {% block head %}{% endblock %}
 </head>
 <body>
-  {% block content %}{% endblock %}
+  <div class="page-content">
+    {% block content %}{% endblock %}
+  </div>
   
-  <footer class="footer-nav" style="background:var(--tmobile-magenta);color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0.5em 2em;font-size:1rem;flex-shrink:0;">
+  <footer class="footer-nav" style="background:var(--tmobile-magenta);color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0.5em 2em;font-size:1rem;height:60px;box-sizing:border-box;">
     <div id="footer-time">{{ current_datetime }}</div>
     <nav class="footer-links" style="display:flex;gap:1.5em;align-items:center;">
       <a href="javascript:history.back()" style="color:#fff;text-decoration:none;font-size:1.2em;"><i class="fas fa-chevron-left"></i></a>
@@ -44,5 +46,29 @@
   </script>
   {% block extra_js %}{% endblock %}
   {% block scripts %}{% endblock %}
+  
+  <style>
+    /* Global footer positioning - footer always visible at bottom */
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+    }
+    
+    .page-content {
+      padding-bottom: 60px; /* Account for footer height */
+      min-height: calc(100vh - 60px);
+    }
+    
+    .footer-nav {
+      position: fixed !important;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 1000;
+      height: 60px;
+      box-sizing: border-box;
+    }
+  </style>
 </body>
 </html>

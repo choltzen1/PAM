@@ -13,6 +13,7 @@ class PromoDataManager:
         self.data_dir = data_dir
         self.promo_file = os.path.join(data_dir, "promotions.json")
         self.spe_file = os.path.join(data_dir, "spe_promotions.json")
+        self.rebates_file = os.path.join(data_dir, "rebates.json")
         self.uploads_dir = os.path.join(data_dir, "uploads")
         self.promo_uploads_dir = os.path.join(self.uploads_dir, "promotions")
         
@@ -543,7 +544,8 @@ class PromoDataManager:
                 "description": promo_data.get("description", ""),
                 "start_date": promo_data.get("promo_start_date", ""),
                 "end_date": promo_data.get("promo_end_date", ""),
-                "owner": promo_data.get("owner", "")
+                "owner": promo_data.get("owner", ""),
+                "type": "RDC"
             }
             for code, promo_data in data.items()
         ]
@@ -558,10 +560,72 @@ class PromoDataManager:
                 "status": "Active" if promo_data.get("promo_end_date", "") > datetime.now().strftime("%Y-%m-%d") else "Expired",
                 "description": promo_data.get("description", ""),
                 "start_date": promo_data.get("promo_start_date", ""),
-                "end_date": promo_data.get("promo_end_date", ""),                "owner": promo_data.get("owner", "")
+                "end_date": promo_data.get("promo_end_date", ""),
+                "owner": promo_data.get("owner", ""),
+                "type": "SPE"
             }
             for code, promo_data in data.items()
         ]
+    
+    def get_rebate_list(self) -> List[Dict[str, Any]]:
+        """Get a list of all rebate promotions for display in tables"""
+        # Check if rebates file exists
+        if not os.path.exists(self.rebates_file):
+            return []
+            
+        data = self._load_json(self.rebates_file)
+        return [
+            {
+                "code": promo_data.get("code", code),
+                "orbit_id": promo_data.get("orbit_id", ""),
+                "status": "Active" if promo_data.get("promo_end_date", "") > datetime.now().strftime("%Y-%m-%d") else "Expired",
+                "description": promo_data.get("description", ""),
+                "start_date": promo_data.get("promo_start_date", ""),
+                "end_date": promo_data.get("promo_end_date", ""),
+                "owner": promo_data.get("owner", ""),
+                "type": "REBATE"
+            }
+            for code, promo_data in data.items()
+        ]
+
+    def get_all_rebates(self) -> Dict[str, Any]:
+        """Get all rebates data"""
+        if not os.path.exists(self.rebates_file):
+            return {}
+        
+        # Load rebates data which is in array format
+        rebates_data = self._load_json(self.rebates_file)
+        
+        # Handle case where data might not be a list
+        if not isinstance(rebates_data, list):
+            return {}
+        
+        # Convert array to dict format to match other data structures
+        rebates_dict = {}
+        for i, rebate in enumerate(rebates_data):
+            # Ensure rebate is a dict
+            if not isinstance(rebate, dict):
+                continue
+                
+            # Convert field names to match promotion format
+            rebate_formatted = {
+                'owner': rebate.get('owner', 'Unknown'),  # Default owner if not present
+                'promo_start_date': rebate.get('startDate', ''),
+                'promo_end_date': rebate.get('endDate', ''),
+                'promo_code': rebate.get('promoCode', rebate.get('id', '')),
+                'orbit_id': rebate.get('id', ''),
+                'title': rebate.get('title', ''),
+                'description': rebate.get('description', ''),
+                'type': rebate.get('rebateType', ''),
+                'amount': rebate.get('amount', rebate.get('percent', 0)),
+                'status': rebate.get('status', 'active')
+            }
+            
+            # Use the rebate ID as the key, or fallback to index
+            key = rebate.get('id', f'rebate_{i}')
+            rebates_dict[key] = rebate_formatted
+        
+        return rebates_dict
     
     def get_owners(self) -> List[str]:
         """Get list of unique owners from both promo types"""
