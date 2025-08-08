@@ -1,10 +1,10 @@
 
 {% extends "base.html" %}
-{% block title %}Edit SPE Promotion – {{ promo.code }}{% endblock %}
+{% block title %}Edit SPE Promotion – {{ promo.get('code', spe_key) or 'New SPE' }}{% endblock %}
 {% block content %}
   <!-- Header -->
   <header class="header">
-    <div class="header-title">Edit SPE Promotion – {{ promo.code }}</div>
+    <div class="header-title">Edit SPE Promotion – {{ promo.get('code', spe_key) or 'New SPE' }}</div>
     <div class="user-name">{{ user_name }}</div>
   </header>
 
@@ -14,38 +14,38 @@
       <div class="left-panel">
         <div class="info-box">
           <div class="info-title">General Information</div>
-          <div><b>Promo Owner:</b> {{ promo.owner }}</div>
-          <div><b>Bill Facing Name:</b> {{ promo.bill_facing_name }}</div>
-          <div><b>Orbit ID:</b> {{ promo.orbit_id }}</div>
-          <div><b>Promo Code:</b> {{ promo.code }}</div>
+          <div><b>Promo Owner:</b> {{ promo.get('owner', '') }}</div>
+          <div><b>Bill Facing Name:</b> {{ promo.get('bill_facing_name', '') }}</div>
+          <div><b>Orbit ID:</b> {{ promo.get('orbit_id', '') }}</div>
+          <div><b>Promo Code:</b> {{ promo.get('code', spe_key) }}</div>
           <div><b>Restricted:</b> Not Dark</div>
         </div>
         <div class="info-box">
           <div class="info-title">Description</div>
-          <div class="mb-sm">{{ promo.description }}</div>
+          <div class="mb-sm">{{ promo.get('description', '') }}</div>
           <div><b>Promo Notes:</b></div>
-          <div class="pre-line">{{ promo.promo_notes }}</div>
+          <div class="pre-line">{{ promo.get('promo_notes', '') }}</div>
         </div>
         <div class="info-box">
-          <div class="info-title">Updates</div>          <div><b>Promo % Discount:</b> {{ promo.discount if promo.discount is not none else '' }}</div>
-          <div><b>Promo Amount:</b> {{ promo.amount if promo.amount is not none else '' }}</div>
-          <div><b>DCD Web In-Cart:</b> {{ 'Y' if promo.dcd_web_cart == 'Y' else 'N' }}</div>
-          <div><b>Product Type:</b> {{ promo.product_type }}</div>
-          <div><b>BOGO:</b> {{ 'Yes' if promo.bogo == 'Y' else 'No' }}</div>
-          <div><b>Trade-in Group ID:</b> {{ promo.trade_in_group_id }}</div>
+          <div class="info-title">Updates</div>          <div><b>Promo % Discount:</b> {{ promo.get('discount', '') if promo.get('discount') is not none else '' }}</div>
+          <div><b>Promo Amount:</b> {{ promo.get('amount', '') if promo.get('amount') is not none else '' }}</div>
+          <div><b>DCD Web In-Cart:</b> {{ 'Y' if promo.get('dcd_web_cart') == 'Y' else 'N' }}</div>
+          <div><b>Product Type:</b> {{ promo.get('product_type', '') }}</div>
+          <div><b>BOGO:</b> {{ 'Yes' if promo.get('bogo') == 'Y' else 'No' }}</div>
+          <div><b>Trade-in Group ID:</b> {{ promo.get('trade_in_group_id', '') }}</div>
         </div>
-        {% if promo.last_changes %}
+        {% if promo.get('last_changes') %}
         <div class="info-box">
           <div class="info-title">Recent Changes</div>
           <div class="last-changes">
-            <div style="color: #666; font-size: 0.9em;">{{ promo.last_changes }}</div>
+            <div style="color: #666; font-size: 0.9em;">{{ promo.get('last_changes') }}</div>
           </div>
         </div>
         {% endif %}
         <div class="info-box">
           <div class="info-title">Version History</div>
           <div class="version-history">
-            {% for entry in promo.version_history %}
+            {% for entry in promo.get('version_history', []) %}
               <div>{{ entry }}</div>
             {% endfor %}
           </div>
@@ -55,7 +55,7 @@
       <div class="right-panel">
         <div class="tabs">
           {% for tab in ['Details','Dates & Times','Requirements','Line Indicators','SOC Groupings'] %}
-            <a href="{{ url_for('edit_spe', promo_code=promo.code, tab=tab) }}"
+            <a href="{{ url_for('edit_spe', promo_code=promo.get('code', spe_key), tab=tab) }}"
                class="tab {% if tab == active_tab %}active{% endif %}">
               {{ tab }}
             </a>
@@ -70,7 +70,7 @@
                 {% for val in ['B','F','I','U','Z','NULL'] %}
                   <label >
                     {{ val }}
-                    <input type="radio" name="promo_identifier" value="{{ val }}" {% if promo.promo_identifier == val %}checked{% endif %}>
+                    <input type="radio" name="promo_identifier" value="{{ val }}" {% if promo.get('promo_identifier') == val %}checked{% endif %}>
                   </label>
                 {% endfor %}
               </div>
@@ -78,7 +78,7 @@
                 {% for val in ['B','G','NULL'] %}
                   <label >
                     {{ val }}
-                    <input type="radio" name="pt_priority_indicator" value="{{ val }}" {% if promo.pt_priority_indicator == val %}checked{% endif %}>
+                    <input type="radio" name="pt_priority_indicator" value="{{ val }}" {% if promo.get('pt_priority_indicator') == val %}checked{% endif %}>
                   </label>
                 {% endfor %}
               </div>
