@@ -1,0 +1,193 @@
+{% extends "base.html" %}
+{% block title %}Date Mismatch - PAM{% endblock %}
+{% block head %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/date_mismatch.css') }}">
+{% endblock %}
+{% block content %}
+<div class="date-mismatch-page">
+  <!-- Header -->
+  <div class="header-container">
+    <div class="header-left">
+      <i class="fas fa-calendar-exclamation-triangle header-icon"></i>
+      <div>
+        <h1>Date Mismatch Analysis</h1>
+        <p class="subtitle">Identify and resolve promotion date discrepancies between ORBIT and PAM</p>
+      </div>
+    </div>
+    <div class="header-right">
+      <button class="btn btn-primary" onclick="refreshData()">
+        <i class="fas fa-sync-alt"></i> Refresh Data
+      </button>
+      <span class="user-info">{{ user_name }}</span>
+    </div>
+  </div>
+
+  <!-- Controls -->
+  <div class="controls-container">
+    <div class="filters-section">
+      <div class="filter-group">
+        <label for="mismatch-filter">Filter by Mismatch Type</label>
+        <select id="mismatch-filter" class="form-select">
+          <option value="all">All Promos</option>
+          <option value="end_date">End Date Mismatches</option>
+        </select>
+      </div>
+      
+      <div class="filter-group">
+        <label for="owner-filter">Filter by Promo Owner</label>
+        <select id="owner-filter" class="form-select">
+          <option value="all">All Owners</option>
+          {% for owner in owners %}
+            <option value="{{ owner }}">{{ owner }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      
+      <div class="search-group">
+        <label for="search-input">Search</label>
+        <input type="text" id="search-input" class="form-control" placeholder="Promo Code or ORBIT Number">
+      </div>
+    </div>
+    
+    <div class="stats-group">
+      <div class="stat-item">
+        <span class="stat-number">{{ promos|length }}</span>
+        <span class="stat-label">Total Mismatches</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="content-container">
+    {% if promos %}
+    <div class="table-container">
+      <table class="date-mismatch-table">
+        <thead>
+          <tr>
+            <th>Promo Owner</th>
+            <th>ORBIT Number</th>
+            <th>Promo Code</th>
+            <th>ORBIT End Date</th>
+            <th>PAM End Date</th>
+            <th>Mismatch Type</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for promo in promos %}
+          <tr class="mismatch-row" data-mismatch-type="{{ promo.mismatch_type }}" data-owner="{{ promo.owner }}">
+            <td class="promo-owner">{{ promo.owner or 'N/A' }}</td>
+            <td class="orbit-number">{{ promo.orbit_id or 'N/A' }}</td>
+            <td class="promo-code">
+              <a href="{{ url_for('promo.edit_promo', promo_code=promo.code) }}" class="promo-link">
+                {{ promo.code }}
+              </a>
+            </td>
+            <td class="orbit-end-date">{{ promo.orbit_end_date or 'N/A' }}</td>
+            <td class="pam-end-date">{{ promo.promo_end_date or 'N/A' }}</td>
+            <td class="mismatch-type">
+              <span class="badge badge-{{ promo.mismatch_severity }}">
+                {{ promo.mismatch_type }}
+              </span>
+            </td>
+            <td class="actions">
+              <button class="btn btn-sm btn-outline-primary" onclick="syncFromOrbit('{{ promo.code }}')">
+                <i class="fas fa-sync"></i> Sync from ORBIT
+              </button>
+              <button class="btn btn-sm btn-outline-secondary" onclick="syncToPam('{{ promo.code }}')">
+                <i class="fas fa-upload"></i> Update PAM
+              </button>
+              <button class="btn btn-sm btn-outline-success" onclick="generateSql('{{ promo.code }}')">
+                <i class="fas fa-code"></i> Generate SQL
+              </button>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="no-data-container">
+      <div class="no-data-content">
+        <i class="fas fa-calendar-check display-1 text-success mb-3"></i>
+        <h4 class="text-success">No Date Mismatches Found</h4>
+        <p class="text-muted">All promotion dates are in sync between ORBIT and PAM.</p>
+        <button class="btn btn-primary mt-3" onclick="refreshData()">
+          <i class="fas fa-sync-alt"></i> Check Again
+        </button>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<script>
+function refreshData() {
+  window.location.reload();
+}
+
+function syncFromOrbit(promoCode) {
+  if (confirm(`Sync dates from ORBIT for promotion ${promoCode}?`)) {
+    // TODO: Implement ORBIT sync when database connection is available
+    alert('ORBIT database connection not yet available. This feature will be implemented when connection is established.');
+  }
+}
+
+function syncToPam(promoCode) {
+  if (confirm(`Update PAM dates for promotion ${promoCode}?`)) {
+    // TODO: Implement PAM update functionality
+    alert('PAM update functionality will be implemented.');
+  }
+}
+
+function generateSql(promoCode) {
+  // TODO: Implement SQL generation functionality
+  console.log(`Generate SQL requested for promo: ${promoCode}`);
+}
+
+// Filter functionality
+document.getElementById('mismatch-filter').addEventListener('change', applyFilters);
+document.getElementById('owner-filter').addEventListener('change', applyFilters);
+
+function applyFilters() {
+  const mismatchFilter = document.getElementById('mismatch-filter').value;
+  const ownerFilter = document.getElementById('owner-filter').value;
+  const rows = document.querySelectorAll('.mismatch-row');
+  
+  rows.forEach(row => {
+    const mismatchType = row.dataset.mismatchType;
+    const owner = row.dataset.owner;
+    
+    // For "all" promos, show everything. For "end_date", only show rows with mismatch types
+    const matchesMismatch = mismatchFilter === 'all' || 
+                           (mismatchFilter === 'end_date' && mismatchType && mismatchType !== '' && mismatchType !== 'none');
+    const matchesOwner = ownerFilter === 'all' || owner === ownerFilter;
+    
+    if (matchesMismatch && matchesOwner) {
+      row.style.display = '';
+    } else {
+      row.style.display = 'none';
+    }
+  });
+}
+
+// Search functionality
+document.getElementById('search-input').addEventListener('input', function() {
+  const searchTerm = this.value.toLowerCase();
+  const rows = document.querySelectorAll('.mismatch-row');
+  
+  rows.forEach(row => {
+    const promoCode = row.querySelector('.promo-code').textContent.toLowerCase();
+    const orbitNumber = row.querySelector('.orbit-number').textContent.toLowerCase();
+    const owner = row.querySelector('.promo-owner').textContent.toLowerCase();
+    
+    if (promoCode.includes(searchTerm) || orbitNumber.includes(searchTerm) || owner.includes(searchTerm)) {
+      row.style.display = '';
+    } else {
+      row.style.display = 'none';
+    }
+  });
+});
+</script>
+
+{% endblock %}

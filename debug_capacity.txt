@@ -1,0 +1,157 @@
+=== TOP METRICS DEBUG ===
+Selected week (input): 08/17/2025-08/23/2025
+Standardized week: 2025-08-17 to 2025-08-23
+Top metrics - RDC: 3, SPE: 0, Rebates: 2, Total: 5
+Filtered RDC keys: ['P0172025', 'P0172025B', 'SAMPLE001']
+Filtered SPE keys: []
+Filtered Rebates keys: ['RBT-2025-002', 'RBT-2025-003']
+
+=== OWNER WORKLOAD DEBUG ===
+Owner workload total promos: 5
+Sarah Johnson: RDC=1, SPE=0, REBATES=1, Total=2
+Cade Holtzen: RDC=1, SPE=0, REBATES=0, Total=1
+John Smith: RDC=1, SPE=0, REBATES=0, Total=1
+Alejandro Ferrer: RDC=0, SPE=0, REBATES=1, Total=1
+
+=== WEEKLY SCHEDULE DEBUG - 08/10/2025 - 08/16/2025 ===
+Week range: 2025-08-10 00:00:00 to 2025-08-16 00:00:00
+Promotions found: 4
+  - P0812025 (RDC) starts: 2025-08-10
+  - P0812025B (RDC) starts: 2025-08-12
+  - SAMPLE003 (RDC) starts: 2025-08-15
+  - N/A (REBATE) starts: 2025-08-12
+
+=== WEEKLY SCHEDULE DEBUG - 08/17/2025 - 08/23/2025 ===
+Week range: 2025-08-17 00:00:00 to 2025-08-23 00:00:00
+Promotions found: 5
+  - P0172025 (RDC) starts: 2025-08-17
+  - P0172025B (RDC) starts: 2025-08-19
+  - SAMPLE001 (RDC) starts: 2025-08-17
+  - N/A (REBATE) starts: 2025-08-17
+  - N/A (REBATE) starts: 2025-08-19
+
+=== WEEKLY SCHEDULE DEBUG - 08/24/2025 - 08/30/2025 ===
+Week range: 2025-08-24 00:00:00 to 2025-08-30 00:00:00
+Promotions found: 3
+  - P0242025 (RDC) starts: 2025-08-24
+  - P0242025B (RDC) starts: 2025-08-26
+  - N/A (REBATE) starts: 2025-08-26
+
+=== WEEKLY SCHEDULE DEBUG - 08/31/2025 - 09/06/2025 ===
+Week range: 2025-08-31 00:00:00 to 2025-09-06 00:00:00
+Promotions found: 3
+  - P0312025 (RDC) starts: 2025-08-31
+  - P0312025B (RDC) starts: 2025-09-02
+  - N/A (REBATE) starts: 2025-09-02
+
+=== OWNER WORKLOAD DEBUG ===
+Owner workload total promos: 5
+Sarah Johnson: RDC=1, SPE=0, REBATES=1, Total=2
+Cade Holtzen: RDC=1, SPE=0, REBATES=0, Total=1
+John Smith: RDC=1, SPE=0, REBATES=0, Total=1
+Alejandro Ferrer: RDC=0, SPE=0, REBATES=1, Total=1
+
+=== WEEKLY SCHEDULE DEBUG - 08/10/2025 - 08/16/2025 ===
+Week range: 2025-08-10 00:00:00 to 2025-08-16 00:00:00
+Promotions found: 4
+  - P0812025 (RDC) starts: 2025-08-10
+  - P0812025B (RDC) starts: 2025-08-12
+  - SAMPLE003 (RDC) starts: 2025-08-15
+  - N/A (REBATE) starts: 2025-08-12
+
+=== WEEKLY SCHEDULE DEBUG - 08/17/2025 - 08/23/2025 ===
+Week range: 2025-08-17 00:00:00 to 2025-08-23 00:00:00
+Promotions found: 5
+  - P0172025 (RDC) starts: 2025-08-17
+  - P0172025B (RDC) starts: 2025-08-19
+  - SAMPLE001 (RDC) starts: 2025-08-17
+  - N/A (REBATE) starts: 2025-08-17
+  - N/A (REBATE) starts: 2025-08-19
+
+=== WEEKLY SCHEDULE DEBUG - 08/24/2025 - 08/30/2025 ===
+Week range: 2025-08-24 00:00:00 to 2025-08-30 00:00:00
+Promotions found: 3
+  - P0242025 (RDC) starts: 2025-08-24
+  - P0242025B (RDC) starts: 2025-08-26
+  - N/A (REBATE) starts: 2025-08-26
+
+=== WEEKLY SCHEDULE DEBUG - 08/31/2025 - 09/06/2025 ===
+Week range: 2025-08-31 00:00:00 to 2025-09-06 00:00:00
+Promotions found: 3
+  - P0312025 (RDC) starts: 2025-08-31
+  - P0312025B (RDC) starts: 2025-09-02
+  - N/A (REBATE) starts: 2025-09-02
+
+=== OWNER WORKLOAD DEBUG ===
+Owner workload total promos: 4
+Cade Holtzen: RDC=1, SPE=0, REBATES=1, Total=2
+Alejandro Ferrer: RDC=1, SPE=0, REBATES=0, Total=1
+Mike Davis: RDC=1, SPE=0, REBATES=0, Total=1
+
+=== WEEKLY SCHEDULE DEBUG - 08/10/2025 - 08/16/2025 ===
+Week range: 2025-08-10 00:00:00 to 2025-08-16 00:00:00
+Promotions found: 4
+  - P0812025 (RDC) starts: 2025-08-10
+  - P0812025B (RDC) starts: 2025-08-12
+  - SAMPLE003 (RDC) starts: 2025-08-15
+  - N/A (REBATE) starts: 2025-08-12
+
+=== WEEKLY SCHEDULE DEBUG - 08/17/2025 - 08/23/2025 ===
+Week range: 2025-08-17 00:00:00 to 2025-08-23 00:00:00
+Promotions found: 5
+  - P0172025 (RDC) starts: 2025-08-17
+  - P0172025B (RDC) starts: 2025-08-19
+  - SAMPLE001 (RDC) starts: 2025-08-17
+  - N/A (REBATE) starts: 2025-08-17
+  - N/A (REBATE) starts: 2025-08-19
+
+=== WEEKLY SCHEDULE DEBUG - 08/24/2025 - 08/30/2025 ===
+Week range: 2025-08-24 00:00:00 to 2025-08-30 00:00:00
+Promotions found: 3
+  - P0242025 (RDC) starts: 2025-08-24
+  - P0242025B (RDC) starts: 2025-08-26
+  - N/A (REBATE) starts: 2025-08-26
+
+=== WEEKLY SCHEDULE DEBUG - 08/31/2025 - 09/06/2025 ===
+Week range: 2025-08-31 00:00:00 to 2025-09-06 00:00:00
+Promotions found: 3
+  - P0312025 (RDC) starts: 2025-08-31
+  - P0312025B (RDC) starts: 2025-09-02
+  - N/A (REBATE) starts: 2025-09-02
+
+=== OWNER WORKLOAD DEBUG ===
+Owner workload total promos: 4
+Cade Holtzen: RDC=1, SPE=0, REBATES=1, Total=2
+Alejandro Ferrer: RDC=1, SPE=0, REBATES=0, Total=1
+Mike Davis: RDC=1, SPE=0, REBATES=0, Total=1
+
+=== WEEKLY SCHEDULE DEBUG - 08/10/2025 - 08/16/2025 ===
+Week range: 2025-08-10 00:00:00 to 2025-08-16 00:00:00
+Promotions found: 4
+  - P0812025 (RDC) starts: 2025-08-10
+  - P0812025B (RDC) starts: 2025-08-12
+  - SAMPLE003 (RDC) starts: 2025-08-15
+  - N/A (REBATE) starts: 2025-08-12
+
+=== WEEKLY SCHEDULE DEBUG - 08/17/2025 - 08/23/2025 ===
+Week range: 2025-08-17 00:00:00 to 2025-08-23 00:00:00
+Promotions found: 5
+  - P0172025 (RDC) starts: 2025-08-17
+  - P0172025B (RDC) starts: 2025-08-19
+  - SAMPLE001 (RDC) starts: 2025-08-17
+  - N/A (REBATE) starts: 2025-08-17
+  - N/A (REBATE) starts: 2025-08-19
+
+=== WEEKLY SCHEDULE DEBUG - 08/24/2025 - 08/30/2025 ===
+Week range: 2025-08-24 00:00:00 to 2025-08-30 00:00:00
+Promotions found: 3
+  - P0242025 (RDC) starts: 2025-08-24
+  - P0242025B (RDC) starts: 2025-08-26
+  - N/A (REBATE) starts: 2025-08-26
+
+=== WEEKLY SCHEDULE DEBUG - 08/31/2025 - 09/06/2025 ===
+Week range: 2025-08-31 00:00:00 to 2025-09-06 00:00:00
+Promotions found: 3
+  - P0312025 (RDC) starts: 2025-08-31
+  - P0312025B (RDC) starts: 2025-09-02
+  - N/A (REBATE) starts: 2025-09-02

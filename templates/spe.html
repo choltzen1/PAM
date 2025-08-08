@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block title %}SPE Promotions{% endblock %}
+
+{% block head %}
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/spe.css') }}">
+{% endblock %}
+
+{% block content %}
+<!-- Styled Header Banner -->
+<div class="styled-header-banner">
+  <div class="styled-header-content">
+    <i class="bi bi-lightning-charge-fill styled-header-icon"></i>
+    <div class="styled-header-text">
+      <h2 class="styled-header-title">SPE Promotions</h2>
+      <p class="styled-header-subtitle">Build, launch and monitor special promotional events</p>
+    </div>
+  </div>
+</div>
+
+<!-- Main content area (scrollable) -->
+<div class="promotions-page">
+  <!-- Controls row: filter, search, actions -->
+  <div class="promotions-controls">
+    <div class="filter-group">
+      <label for="owner-filter">Filter by Promotion Owner</label>
+      <select id="owner-filter" name="owner">
+        <option value="all">All</option>
+        {% for owner in owners %}
+          <option value="{{ owner }}" {% if owner==selected_owner %}selected{% endif %}>
+            {{ owner }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="search-group">
+      <label class="visually-hidden" for="search-input">Search</label>
+      <input
+        type="text"
+        id="search-input"
+        name="search"
+        placeholder="Promo Code or Owner"
+        value="{{ search_query }}"
+      />
+    </div>
+
+    <div class="action-buttons">
+      <button class="btn"><i class="fas fa-wrench"></i> Get Promo Code</button>
+    </div>
+  </div>
+
+  <!-- Tabs row -->
+  <div class="promotions-tabs">
+    <a href="{{ url_for('promotions') }}" class="tab {% if active_tab=='RDC' %}active{% endif %}">RDC</a>
+    <a href="{{ url_for('spe') }}" class="tab {% if active_tab=='SPE' %}active{% endif %}">SPE</a>
+    <button class="tab">Sprint</button>
+    <button class="tab">Functional</button>
+    <button class="tab">Z-Lab</button>  </div>
+
+  <!-- Table -->
+  <div class="table-container">
+    <table class="promo-table">
+      <thead>
+        <tr>
+          <th>Promo Code</th>
+          <th>Orbit ID</th>
+          <th>Status</th>
+          <th>Bill Facing Name</th>
+          <th>Start Date</th>
+          <th>End Date</th>
+          <th>Promo Owner</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for promo in spe_data %}
+        <tr>
+          <td>{{ promo.code }}</td>
+          <td>{{ promo.orbit_id }}</td>
+          <td>{{ promo.get('status', 'Active') }}</td>
+          <td>{{ promo.bill_facing_name }}</td>
+          <td>{{ promo.promo_start_date }}</td>
+          <td>{{ promo.promo_end_date }}</td>          <td class="promo-owner">{{ promo.owner }}</td>
+          <td class="promo-actions">
+            <a href="{{ url_for('edit_spe', promo_code=promo.code) }}" class="icon-button" title="Edit"><i class="fas fa-edit"></i></a>
+            <button class="icon-button" title="Team"><i class="fas fa-users"></i></button>
+            <a href="{{ url_for('approvers', promo_code=promo.code) }}" class="icon-button" title="Approvers"><i class="fas fa-file-signature"></i></a>
+            <button class="icon-button" title="Refresh"><i class="fas fa-sync-alt"></i></button>
+            <button class="icon-button" title="Link"><i class="fas fa-link"></i></button>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

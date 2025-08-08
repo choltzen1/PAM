@@ -1,5 +1,3 @@
-/* edit_promo.css - Clean, modern, T-Mobile inspired styling for the Edit Promo page */
-
 :root {
   --tmobile-magenta: #E20074;
   --tmobile-magenta-dark: #b8005a;
@@ -7,14 +5,17 @@
   --tmobile-border: #e0e0e0;
 }
 
-body {
-  background: var(--tmobile-gray);
-  color: #222;
-  font-family: 'Segoe UI', 'Arial', sans-serif;
+/* Page layout with fixed footer */
+html, body {
+  min-height: 100vh;
+  height: 100%;
   margin: 0;
   padding: 0;
+  background: var(--tmobile-gray);
+  box-sizing: border-box;
 }
 
+/* Header (always visible) */
 .header {
   background: var(--tmobile-magenta);
   color: #fff;
@@ -25,122 +26,203 @@ body {
   font-size: 1.2rem;
   font-weight: 600;
   margin-bottom: 1.5rem;
+  flex-shrink: 0;
 }
 
-
-/* Two-panel layout for edit promo */
-.container {
-  max-width: 1300px;
-  margin: 0 auto;
-  padding: 2rem 1rem 3rem 1rem;
+/* Footer (always visible, never overlapped) */
+.footer {
+  width: 100vw;
+  background: var(--tmobile-magenta);
+  color: #fff;
+  font-size: 1.05rem;
+  font-weight: 500;
+  text-align: left;
+  padding: 0 1.5rem;
+  height: 40px;
+  line-height: 40px;
+  box-sizing: border-box;
+  flex-shrink: 0;
+  position: relative;
+  letter-spacing: 0.02em;
+}
+.footer-content {
   display: flex;
+  align-items: center;
+  height: 100%;
+}
+
+/* MAIN CONTENT scrolls as needed */
+.main-content-area {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Container & Panels */
+.container, .wide-container {
+  min-height: calc(100vh - 60px); /* Account for footer */
+  width: 98vw;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 2.5rem 1vw calc(4rem + 60px) 1vw; /* Extra padding for footer space */
+}
+
+/* Panels layout */
+.layout-flex {
+  width: 100%;
+  max-width: 1800px;
+  min-height: 0;
+  display: flex;
+  align-items: stretch;
   gap: 2rem;
 }
 
-/* Left panel: details */
-.edit-left {
-  flex: 1.1;
+.left-panel, .right-panel {
+  min-height: 0;
+  height: 100%;
+  box-sizing: border-box;
+  overflow: visible; /* NO individual scrollbars! */
+}
+
+/* Panel styling */
+.left-panel {
+  flex: 1 1 340px;
   min-width: 340px;
-  max-width: 420px;
+  max-width: 520px;
   background: #fff;
   border-radius: 10px;
   box-shadow: 0 2px 12px rgba(0,0,0,0.06);
-  padding: 2rem 1.5rem 2rem 1.5rem;
+  padding: 2rem 2.2rem;
   display: flex;
   flex-direction: column;
   gap: 2rem;
+  overflow-y: auto !important;
 }
-
-/* Right panel: tabbed content */
-.edit-right {
-  flex: 2;
-  min-width: 0;
+.right-panel {
+  flex: 2 1 600px;
+  min-width: 400px;
+  max-width: 1200px;
+  width: 100%;
   background: #fff;
   border-radius: 10px;
   box-shadow: 0 2px 12px rgba(0,0,0,0.06);
-  padding: 2rem 1.5rem 2rem 1.5rem;
+  padding: 2.2rem 2.2rem 4rem 2.2rem;
   display: flex;
   flex-direction: column;
+  position: relative;
+  box-sizing: border-box;
+  overflow-x: hidden;
 }
 
-/* Tabs at the top of right panel */
-.tabs {
-  display: flex;
-  gap: 0.5rem;
-  margin-bottom: 1.5rem;
-  border-bottom: 2px solid var(--tmobile-border);
+.info-box {
+  border-bottom: 4px solid var(--tmobile-magenta);
+  padding: 1rem;
 }
-.tab {
-  padding: 0.6rem 1.5rem;
-  border: none;
-  border-radius: 6px 6px 0 0;
-  background: #b0b0b0;
-  color: #fff;
-  font-weight: 500;
-  font-size: 1rem;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-.tab.active {
-  background: var(--tmobile-magenta);
-  color: #fff;
-}
-
-/* Responsive: stack panels on mobile */
-@media (max-width: 900px) {
-  .container {
-    flex-direction: column;
-    gap: 1rem;
-    padding: 1rem 0.5rem 2rem 0.5rem;
-  }
-  .edit-left, .edit-right {
-    max-width: 100%;
-    padding: 1rem;
-  }
-}
-
-.tabs {
-  display: flex;
-  gap: 0.5rem;
-  margin-bottom: 2rem;
-  border-bottom: 2px solid var(--tmobile-border);
-}
-
-.tab {
-  padding: 0.6rem 1.5rem;
-  border: none;
-  border-radius: 6px 6px 0 0;
-  background: #b0b0b0;
-  color: #fff;
-  font-weight: 500;
-  font-size: 1rem;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-.tab.active {
-  background: var(--tmobile-magenta);
-  color: #fff;
-}
-
-.card {
-  background: #fff;
-  border-radius: 10px;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
-  padding: 2rem;
-  margin-bottom: 2rem;
-}
-
-h5 {
+.info-title {
+  font-weight: bold;
   color: var(--tmobile-magenta);
+  font-size: 1.1rem;
+  margin-bottom: 0.5rem;
+}
+.version-history {
+  font-size: 0.97em;
+  color: #444;
+}
+.mb-sm { margin-bottom: 0.5rem; }
+.pre-line { white-space: pre-line; }
+
+/* Tabs */
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  width: 100%;
+  min-width: 0;
+  border-bottom: 2px solid var(--tmobile-border);
+  margin-bottom: 2.2rem;
+  background: transparent;
+  gap: 0.5rem;
+  overflow: visible;
+  /* Force tabs into two rows with 6 tabs per row for better width utilization */
+  max-height: 140px; /* Approximately 2 rows height */
+}
+.tab {
+  flex: 1 1 calc(16.66% - 0.42rem); /* 6 tabs per row to fill width better */
+  min-width: 100px;
+  max-width: none;
+  padding: 0.7rem 0.5rem;
+  text-align: center;
+  text-decoration: none;
+  background: #b0b0b0;
+  color: #fff;
+  border-radius: 8px 8px 0 0;
   font-weight: 600;
-  margin-bottom: 1rem;
+  font-size: 0.9rem; /* Slightly smaller font for better fit */
+  cursor: pointer;
+  transition: background 0.17s;
+  border: none;
+  outline: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  height: 60px; /* Fixed height for consistency */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+.tab.active {
+  background: var(--tmobile-magenta);
+  color: #fff;
 }
 
+/* Responsive tabs for smaller screens */
+@media (max-width: 1400px) {
+  .tab {
+    flex: 1 1 calc(20% - 0.4rem); /* 5 tabs per row on medium screens */
+    font-size: 0.85rem;
+    padding: 0.6rem 0.4rem;
+  }
+}
+
+@media (max-width: 1000px) {
+  .tab {
+    flex: 1 1 calc(25% - 0.4rem); /* 4 tabs per row on smaller screens */
+    font-size: 0.8rem;
+    padding: 0.6rem 0.3rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .tab {
+    flex: 1 1 calc(33.333% - 0.4rem); /* 3 tabs per row on mobile */
+    font-size: 0.75rem;
+    min-width: 90px;
+    max-width: none;
+  }
+  .tabs {
+    max-height: 200px; /* Allow more height for mobile */
+  }
+}
+
+@media (max-width: 500px) {
+  .tab {
+    flex: 1 1 calc(50% - 0.4rem); /* 2 tabs per row on small mobile */
+    font-size: 0.7rem;
+    height: 50px;
+    padding: 0.5rem 0.2rem;
+  }
+}
+
+/* Forms, Grid Layout, Section Titles */
 .form-label {
   font-weight: 500;
   color: #333;
 }
-
 .form-control, .form-select {
   border: 1px solid var(--tmobile-border);
   border-radius: 5px;
@@ -157,33 +239,133 @@ h5 {
   border-color: var(--tmobile-magenta);
   box-shadow: 0 0 0 2px #e2007433;
 }
+.grid-form {
+  display: grid;
+  gap: 1.2rem 0.7rem;
+  align-items: start;
+  width: 100%;
+  box-sizing: border-box;
+}
+.four-col { grid-template-columns: 1fr 1fr 1fr 1fr; }
+.two-col { grid-template-columns: 1fr 1fr; }
+.grid-full { grid-column: 1 / -1; }
+.col-span-2 { grid-column: span 2; }
+.col-span-3 { grid-column: span 3; }
+.col-span-4 { grid-column: span 4; }
+.section-label {
+  font-weight: bold;
+  color: var(--tmobile-magenta);
+  border-bottom: 2px solid var(--tmobile-magenta);
+  margin-bottom: 0.5rem;
+  padding-bottom: 0.2rem;
+}
+.center { text-align: center; }
+.mt-1 { margin-top: 1rem; }
+.mb-1 { margin-bottom: 0.5rem; }
+.mb-2 { margin-bottom: 1rem; }
 
-.form-check-input[type="checkbox"] {
-  width: 2em;
-  height: 1.2em;
-  background: #ccc;
-  border-radius: 1em;
-  border: 1px solid var(--tmobile-border);
-  transition: background 0.2s;
+.input-group {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  width: 100%;
+  gap: 0.7em;
+  margin-bottom: 0.5em;
 }
-.form-check-input:checked {
-  background: var(--tmobile-magenta);
-  border-color: var(--tmobile-magenta);
-}
-.form-check-label {
-  margin-left: 0.5em;
+.radio-label {
+  margin-right: 1.2rem;
   font-weight: 500;
+  color: #333;
+}
+.radio-option {
+  font-weight: 500;
+  color: #333;
+}
+.radio-row { gap: 1rem; }
+
+input[type="radio"]:focus {
+  outline: none;
+  box-shadow: none;
 }
 
-.bg-light {
-  background: #f8f9fa !important;
+/* --- Fix radio button alignment and Save button overlap --- */
+.input-group label {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3em;
+  margin-bottom: 0;
+  width: auto;
+  min-width: 0;
+  font-size: inherit;
+}
+.input-group input[type="radio"],
+.input-group input[type="checkbox"] {
+  margin: 0 0.2em 0 0;
+  vertical-align: middle;
+  position: relative;
+  top: 0;
+}
+.input-group {
+  justify-content: flex-start;
+  align-items: center;
+  flex-wrap: wrap;
+  width: 100%;
+  gap: 0.5em;
 }
 
-.small {
-  font-size: 0.95em;
-  color: #555;
+/* Save button: always below content, never overlaps */
+.save-footer {
+  position: static !important;
+  width: 100%;
+  margin-top: 2rem;
+  text-align: right;
+  right: unset !important;
+  bottom: unset !important;
+  z-index: 1;
+}
+@media (max-width: 700px) {
+  .save-footer {
+    margin-top: 1rem;
+    text-align: center;
+  }
+  .btn, .btn-primary {
+    font-size: 0.8rem !important;
+    padding: 0.3em 0.7em !important;
+  }
 }
 
+/* Lists, Details, Selects */
+.plain-list { margin: 0; padding: 0; list-style: none; }
+.details-box {
+  background: #f7f7f7;
+  border-radius: 4px;
+  padding: 1rem;
+  border: 1px solid #ccc;
+}
+.select-box {
+  padding: 1rem;
+  background: #e6e6e6;
+  border-radius: 4px;
+}
+.scrollable {
+  overflow-y: auto;
+  max-height: 150px;
+}
+.small-height { max-height: 150px; }
+.small-text { font-size: 0.9rem; line-height: 1.5; }
+.bold { font-weight: bold; }
+
+/* Buttons */
+.save-footer {
+  position: absolute;
+  right: 2.2rem;
+  bottom: 1.7rem;
+  z-index: 3;
+}
 .btn {
   background: var(--tmobile-magenta);
   color: #fff;
@@ -204,15 +386,792 @@ h5 {
 .btn-secondary:hover {
   background: #888;
 }
+.btn-primary {
+  background: var(--tmobile-magenta);
+  color: #fff;
+}
+
+/* Outline button for download actions - more subtle appearance */
+.btn-outline {
+  background: #f8f9fa;
+  color: var(--tmobile-magenta);
+  border: 1px solid var(--tmobile-magenta);
+  border-radius: 5px;
+  padding: 0.5em 1.5em;
+  font-weight: 500;
+  font-size: 1rem;
+  transition: background 0.2s, color 0.2s;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.btn-outline:hover {
+  background: var(--tmobile-magenta);
+  color: #fff;
+}
+
+.btn-sm {
+  padding: 0.35em 1em;
+  font-size: 0.875rem;
+}
+
+/* Card */
+.card {
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  padding: 2rem;
+  margin-bottom: 2rem;
+}
+h5 {
+  color: var(--tmobile-magenta);
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+
+
+/* Responsive: Grid and Panels */
+@media (max-width: 1300px) {
+  .four-col { grid-template-columns: 1fr 1fr; }
+}
 
 @media (max-width: 900px) {
-  .container {
-    padding: 1rem 0.5rem 2rem 0.5rem;
-  }
-  .card {
-    padding: 1rem;
-  }
-  .row.g-4 {
+  .four-col { grid-template-columns: 1fr; }
+  .container, .wide-container, .layout-flex {
     flex-direction: column;
+    gap: 1.5rem;
+    padding: 1.5rem 0.5rem;
+    align-items: stretch;
+    min-height: 0;
+    height: auto;
   }
+  .left-panel, .right-panel {
+    max-width: 100%;
+    width: 100%;
+    min-width: 0;
+    height: auto;
+    padding-left: 1rem;
+    padding-right: 1rem;
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+    font-size: 0.98rem;
+  }
+  .save-footer {
+    right: 1.2rem;
+    bottom: 1.2rem;
+  }
+  .card { padding: 1rem; }
+}
+
+@media (max-width: 700px) {
+  .left-panel, .right-panel {
+    padding: 0.5rem 0.2rem 2.3rem 0.2rem;
+    font-size: 1.01rem;
+  }
+  .tab {
+    font-size: 0.97rem;
+    min-width: 80px;
+    padding: 0.5rem 0.2rem;
+  }
+}
+
+/* --- Responsive improvements for right-panel and grid-form --- */
+@media (max-width: 600px) {
+  .right-panel {
+    padding: 0.5rem 0.2rem 2.3rem 0.2rem;
+    font-size: 1rem;
+    min-width: 0;
+    width: 100%;
+    overflow-x: auto;
+    position: static;
+  }
+  .grid-form,
+  .four-col,
+  .two-col {
+    grid-template-columns: 1fr !important;
+  }
+  .save-footer {
+    position: static;
+    width: 100%;
+    margin-top: 1.5rem;
+    right: unset;
+    bottom: unset;
+    text-align: right;
+  }
+}
+
+/* --- Keep grid columns at all breakpoints, only shrink content --- */
+/* Remove grid-template-columns: 1fr !important; at small breakpoints */
+/* Comment out or remove these rules: */
+/*
+@media (max-width: 1200px) {
+  .four-col, .two-col {
+    grid-template-columns: 1fr !important;
+  }
+}
+@media (max-width: 600px) {
+  .grid-form,
+  .four-col,
+  .two-col {
+    grid-template-columns: 1fr !important;
+  }
+}
+*/
+
+/* Keep original grid columns at all sizes */
+.four-col { grid-template-columns: 1fr 1fr 1fr 1fr; }
+.two-col { grid-template-columns: 1fr 1fr; }
+
+/* Keep aggressive scaling for font and controls */
+/* --- Responsive font and element scaling for panels and forms --- */
+@media (max-width: 1400px) {
+  html, body, .right-panel, .left-panel, .grid-form, .form-control, .form-select, .input-group, .tab {
+    font-size: 0.97rem;
+  }
+}
+@media (max-width: 1100px) {
+  html, body, .right-panel, .left-panel, .grid-form, .form-control, .form-select, .input-group, .tab {
+    font-size: 0.93rem;
+  }
+}
+@media (max-width: 900px) {
+  html, body, .right-panel, .left-panel, .grid-form, .form-control, .form-select, .input-group, .tab {
+    font-size: 0.89rem;
+  }
+}
+@media (max-width: 700px) {
+  html, body, .right-panel, .left-panel, .grid-form, .form-control, .form-select, .input-group, .tab {
+    font-size: 0.85rem;
+  }
+}
+@media (max-width: 500px) {
+  html, body, .right-panel, .left-panel, .grid-form, .form-control, .form-select, .input-group, .tab {
+    font-size: 0.8rem;
+  }
+}
+
+/* Remove horizontal scroll from grid-form and right-panel */
+.grid-form, .right-panel {
+  overflow-x: visible !important;
+}
+
+/* Ensure radio groups and input groups wrap and shrink */
+.input-group {
+  flex-wrap: wrap;
+  width: 100%;
+  gap: 0.3rem;
+}
+.input-group > * {
+  min-width: 0;
+  flex: 1 1 0;
+  width: auto;
+  max-width: 100%;
+}
+
+/* Make labels and section-labels shrink and wrap */
+.grid-form label,
+.grid-form .section-label {
+  min-width: 0;
+  word-break: break-word;
+  white-space: normal;
+  font-size: inherit;
+}
+
+/* Make Save button scale down on small screens */
+@media (max-width: 700px) {
+  .btn, .btn-primary {
+    font-size: 0.9rem;
+    padding: 0.4em 1em;
+  }
+}
+
+/* --- Prevent overflow in right-panel and grid-form --- */
+.right-panel, .grid-form {
+  max-width: 100%;
+  width: 100%;
+  box-sizing: border-box;
+}
+.right-panel > *, .grid-form > * {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+.grid-form label,
+.grid-form .section-label,
+.input-group label,
+.input-group input,
+.input-group select,
+.form-control, .form-select {
+  word-break: break-word;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* Remove any min-widths that could cause overflow */
+.grid-form label,
+.grid-form .section-label,
+.input-group label,
+.input-group input,
+.input-group select,
+.form-control, .form-select {
+  min-width: 0 !important;
+}
+
+/* Ensure .right-panel and .grid-form never overflow horizontally */
+.right-panel, .grid-form {
+  overflow-x: hidden !important;
+}
+
+/* --- Aggressive scaling for form controls and text on small screens --- */
+@media (max-width: 700px) {
+  .right-panel, .left-panel, .grid-form, .form-control, .form-select, .input-group, .tab, .grid-form label, .section-label {
+    font-size: 0.75rem !important;
+  }
+  .form-control, .form-select {
+    padding: 0.3em 0.5em !important;
+    min-height: 1.6em !important;
+    height: 2em !important;
+  }
+  .input-group {
+    gap: 0.2rem !important;
+    padding: 0.15rem 0.3rem !important;
+  }
+  .btn, .btn-primary {
+    font-size: 0.8rem !important;
+    padding: 0.3em 0.7em !important;
+  }
+  input[type="radio"], input[type="checkbox"] {
+    transform: scale(0.8);
+    margin-right: 0.2em;
+  }
+}
+@media (max-width: 500px) {
+  .right-panel, .left-panel, .grid-form, .form-control, .form-select, .input-group, .tab, .grid-form label, .section-label {
+    font-size: 0.65rem !important;
+  }
+  .form-control, .form-select {
+    padding: 0.2em 0.3em !important;
+    min-height: 1.2em !important;
+    height: 1.5em !important;
+  }
+  .btn, .btn-primary {
+    font-size: 0.7rem !important;
+    padding: 0.2em 0.5em !important;
+  }
+  input[type="radio"], input[type="checkbox"] {
+    transform: scale(0.7);
+  }
+}
+
+/* --- Radio group label above, radio buttons horizontal and centered --- */
+.input-group {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  width: 100%;
+  gap: 0.7em;
+  margin-bottom: 0.5em;
+}
+.input-group label {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3em;
+  margin-bottom: 0;
+  width: auto;
+  min-width: 0;
+  font-size: inherit;
+}
+
+/* For group labels above radio groups, use grid-full or col-span-* in HTML */
+.section-label.grid-full, .section-label.col-span-2, .section-label.col-span-3, .section-label.col-span-4 {
+  text-align: center;
+}
+
+/* --- Vertical radio group: label on the side of input, options in a row --- */
+.input-group.vertical-radio {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-around;
+  align-items: center;
+  gap: 0.6em;
+  width: 100%;
+  max-width: 100%;
+  margin: 0 auto;
+  font-size: 1rem;
+  box-sizing: border-box;
+  padding: 0 0.3em;
+}
+.input-group.vertical-radio label {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.3em;
+  margin-bottom: 0;
+  font-size: inherit;
+  flex: 0 1 auto;
+  justify-content: center;
+  white-space: nowrap;
+  min-width: 0;
+  text-align: center;
+  max-width: calc(100% / var(--items, 3) - 0.4em);
+}
+.input-group.vertical-radio input[type="radio"] {
+  margin: 0;
+  flex-shrink: 0;
+}
+
+/* Multi-column radio groups need to stay within their grid boundaries */
+.input-group.vertical-radio.col-span-2,
+.input-group.vertical-radio.col-span-3,
+.input-group.vertical-radio.col-span-4 {
+  width: 100%;
+  justify-content: space-around;
+  padding: 0 0.5em;
+}
+
+/* Grid-full can spread more evenly */
+.input-group.vertical-radio.grid-full {
+  width: 100%;
+  justify-content: space-around;
+  flex-wrap: wrap;
+  padding: 0 0.2em;
+}
+
+/* Special styling for Yes/No radio groups to match other radio buttons */
+.input-group.vertical-radio.yes-no {
+  gap: 0.6em;
+  justify-content: space-around !important;
+  max-width: none;
+  margin: 0 auto;
+  padding: 0 0.3em;
+}
+
+.input-group.vertical-radio.yes-no.col-span-2,
+.input-group.vertical-radio.yes-no.col-span-3,
+.input-group.vertical-radio.yes-no.col-span-4 {
+  justify-content: space-around !important;
+  max-width: none;
+  margin: 0 auto;
+  padding: 0 0.5em;
+}
+
+/* Responsive scaling for radio groups - keeps within boundaries */
+@media (max-width: 1200px) {
+  .input-group.vertical-radio {
+    font-size: 0.9rem;
+    gap: 0.5em;
+  }
+  .input-group.vertical-radio label {
+    gap: 0.25em;
+  }
+  .input-group.vertical-radio.yes-no {
+    gap: 0.5em;
+  }
+}
+
+@media (max-width: 1000px) {
+  .input-group.vertical-radio {
+    font-size: 0.85rem;
+    gap: 0.45em;
+  }
+  .input-group.vertical-radio label {
+    gap: 0.2em;
+  }
+  .input-group.vertical-radio.yes-no {
+    gap: 0.45em;
+  }
+}
+
+@media (max-width: 800px) {
+  .input-group.vertical-radio {
+    font-size: 0.8rem;
+    gap: 0.4em;
+  }
+  .input-group.vertical-radio label {
+    gap: 0.15em;
+  }
+  .input-group.vertical-radio.yes-no {
+    gap: 0.4em;
+  }
+}
+
+@media (max-width: 600px) {
+  .input-group.vertical-radio {
+    font-size: 0.75rem;
+    gap: 0.3em;
+  }
+  .input-group.vertical-radio label {
+    gap: 0.1em;
+  }
+  .input-group.vertical-radio.yes-no {
+    gap: 0.3em;
+  }
+}
+
+/* Special handling for radio groups with many options (5+ options) */
+.input-group.vertical-radio.grid-full {
+  flex-wrap: wrap;
+  justify-content: space-around;
+  gap: 0.3em;
+  padding: 0 0.1em;
+}
+
+.input-group.vertical-radio.grid-full label {
+  flex: 0 1 auto;
+  min-width: calc(100% / 9 - 0.6em);
+  max-width: calc(100% / 6 - 0.3em);
+}
+
+@media (max-width: 900px) {
+  .input-group.vertical-radio.grid-full {
+    gap: 0.25em;
+  }
+  .input-group.vertical-radio.grid-full label {
+    gap: 0.15em;
+    font-size: 0.8rem;
+    min-width: calc(100% / 6 - 0.5em);
+    max-width: calc(100% / 5 - 0.25em);
+  }
+}
+
+@media (max-width: 700px) {
+  .input-group.vertical-radio.grid-full {
+    gap: 0.2em;
+  }
+  .input-group.vertical-radio.grid-full label {
+    gap: 0.1em;
+    font-size: 0.75rem;
+    min-width: calc(100% / 5 - 0.4em);
+    max-width: calc(100% / 4 - 0.2em);
+  }
+}
+
+@media (max-width: 500px) {
+  .input-group.vertical-radio.grid-full {
+    gap: 0.15em;
+  }
+  .input-group.vertical-radio.grid-full label {
+    gap: 0.05em;
+    font-size: 0.7rem;
+    min-width: calc(100% / 4 - 0.3em);
+    max-width: calc(100% / 3 - 0.15em);
+  }
+}
+
+/* For very narrow screens, ensure wrapping works properly */
+@media (max-width: 400px) {
+  .input-group.vertical-radio.grid-full {
+    flex-wrap: wrap;
+    gap: 0.1em;
+  }
+  .input-group.vertical-radio.grid-full label {
+    font-size: 0.65rem;
+    min-width: calc(100% / 3 - 0.2em);
+    max-width: calc(100% / 3 - 0.1em);
+    flex: 0 0 calc(100% / 3 - 0.2em);
+  }
+}
+
+/* File Upload Cards */
+.file-info-card {
+  background: #ffffff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.file-info-card:hover {
+  box-shadow: 0 3px 12px rgba(0,0,0,0.15);
+  border-color: #bbb;
+}
+
+/* Upload Section Styling */
+.upload-section {
+  margin-bottom: 1.5rem;
+}
+
+.upload-section .section-label {
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid var(--tmobile-magenta);
+  display: block;
+}
+
+.upload-area {
+  background: #f8f9fa;
+  border: 2px dashed #ddd;
+  border-radius: 8px;
+  padding: 1.5rem;
+  text-align: center;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.upload-area:hover {
+  border-color: var(--tmobile-magenta);
+  background: #f0f8ff;
+}
+
+.upload-area .form-control {
+  margin-bottom: 0.5rem;
+  background: transparent;
+  border: none;
+  text-align: center;
+}
+
+.upload-area .form-text {
+  color: #666;
+  font-size: 0.85rem;
+  margin: 0;
+}
+
+.file-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.file-info i {
+  font-size: 1.5rem;
+  color: var(--tmobile-magenta);
+  min-width: 24px;
+  flex-shrink: 0;
+}
+
+.file-details {
+  flex: 1;
+  min-width: 0;
+}
+
+.file-name {
+  font-weight: 600;
+  color: #333;
+  font-size: 1rem;
+  margin-bottom: 0.25rem;
+  word-break: break-word;
+}
+
+.file-meta {
+  font-size: 0.85rem;
+  color: #666;
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.file-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.file-actions a {
+  color: var(--tmobile-magenta);
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 500;
+  padding: 0.4rem 0.8rem;
+  border-radius: 4px;
+  border: 1px solid var(--tmobile-magenta);
+  background: #ffffff;
+  transition: background-color 0.2s ease, color 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.file-actions a:hover {
+  background-color: var(--tmobile-magenta);
+  color: #ffffff;
+}
+
+.file-upload-section {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--tmobile-border);
+}
+
+.file-upload-section h4 {
+  color: var(--tmobile-magenta);
+  margin-bottom: 1rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.upload-group {
+  margin-bottom: 1.5rem;
+}
+
+.upload-label {
+  display: block;
+  font-weight: 500;
+  color: #333;
+  margin-bottom: 0.5rem;
+}
+
+.file-input {
+  border: 1px solid var(--tmobile-border);
+  border-radius: 5px;
+  padding: 0.5rem;
+  background: #fafafa;
+  width: 100%;
+  box-sizing: border-box;
+  font-size: 0.95rem;
+}
+
+.file-input:focus {
+  outline: none;
+  border-color: var(--tmobile-magenta);
+  box-shadow: 0 0 0 2px rgba(226, 0, 116, 0.2);
+}
+
+.upload-guidance {
+  background: #e8f4f8;
+  border: 1px solid #b3d9e6;
+  border-radius: 6px;
+  padding: 1rem;
+  margin-top: 1rem;
+  font-size: 0.9rem;
+  color: #2c6e7a;
+}
+
+.upload-guidance h5 {
+  margin: 0 0 0.5rem 0;
+  color: #1e4a52;
+  font-weight: 600;
+}
+
+.upload-guidance ul {
+  margin: 0.5rem 0 0 1.2rem;
+  padding: 0;
+}
+
+.upload-guidance li {
+  margin-bottom: 0.25rem;
+}
+
+/* Validation Styles */
+.form-control.validation-error {
+  border: 2px solid #dc3545 !important;
+  box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.2) !important;
+}
+
+.form-control.validation-error:focus {
+  border-color: #dc3545 !important;
+  box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.3) !important;
+}
+
+.validation-message {
+  color: #dc3545;
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+  display: block;
+}
+
+.alert-validation {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  margin-bottom: 1rem;
+  background-color: #fff3cd;
+  border: 1px solid #ffeaa7;
+  color: #856404;
+  padding: 1rem;
+  border-radius: 6px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.alert-validation strong {
+  font-weight: 600;
+}
+
+/* Flash Message Alerts */
+.alert {
+  padding: 1rem 1.25rem;
+  margin-bottom: 1rem;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  position: relative;
+}
+
+.alert-info {
+  color: #0c5460;
+  background-color: #d1ecf1;
+  border-color: #bee5eb;
+}
+
+.alert-warning {
+  color: #856404;
+  background-color: #fff3cd;
+  border-color: #ffeaa7;
+}
+
+.alert-danger {
+  color: #721c24;
+  background-color: #f8d7da;
+  border-color: #f5c6cb;
+}
+
+.alert-dismissible {
+  padding-right: 3rem;
+}
+
+.btn-close {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 2;
+  padding: 1.25rem 1rem;
+  color: inherit;
+  background: none;
+  border: 0;
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0.5;
+}
+
+.btn-close:hover {
+  opacity: 0.8;
+}
+
+/* SQL Preview Styling */
+.sql-preview-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+  padding: 0.5rem;
+  background: #e9ecef;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.sql-preview-header .btn-link {
+  padding: 0.25rem 0.5rem;
+  color: var(--tmobile-magenta);
+  text-decoration: none;
+  font-size: 0.8rem;
+  border: none;
+  background: none;
+  cursor: pointer;
+}
+
+.sql-preview-header .btn-link:hover {
+  text-decoration: underline;
+  color: var(--tmobile-magenta-dark);
+}
+
+#sqlPreviewArea {
+  max-height: 400px;
+  min-height: 200px;
 }

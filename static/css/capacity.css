@@ -1,0 +1,556 @@
+/* capacity.css */
+
+:root {
+  --tmobile-magenta: #e20074;
+  --tmobile-magenta-dark: #b8005a;
+  --tmobile-gray: #f4f4f4;
+  --tmobile-border: #e0e0e0;
+  --success-color: #28a745;
+  --warning-color: #ffc107;
+  --danger-color: #dc3545;
+  --info-color: #17a2b8;
+  --light-blue: #4285f4;
+  --purple: #8e44ad;
+}
+
+/* Styled Header Banner */
+.styled-header-banner {
+  background: linear-gradient(135deg, var(--tmobile-magenta) 0%, var(--tmobile-magenta-dark) 100%);
+  color: white;
+  padding: 2rem 2rem 2rem 1.5rem;
+  margin: 0;
+  border-radius: 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.styled-header-content {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  max-width: 1200px;
+  margin: 0;
+}
+
+.styled-header-icon {
+  font-size: 2.5rem;
+  color: white;
+  flex-shrink: 0;
+}
+
+.styled-header-text {
+  flex: 1;
+}
+
+.styled-header-title {
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 0 0 0.25rem 0;
+  color: white;
+}
+
+.styled-header-subtitle {
+  font-size: 1rem;
+  margin: 0;
+  opacity: 0.9;
+  color: white;
+  font-weight: 400;
+}
+
+/* Main page layout */
+html, body {
+  margin: 0;
+  padding: 0;
+  background: #f8f9fa;
+  box-sizing: border-box;
+  font-family: 'Inter', Arial, sans-serif;
+  overflow-x: hidden;
+}
+
+.capacity-page {
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100vh - 60px); /* Account for footer height */
+  padding: 1.5rem;
+  padding-bottom: calc(1.5rem + 60px); /* Extra padding for footer */
+  box-sizing: border-box;
+  background: #f8f9fa;
+}
+
+/* Top Summary Numbers */
+.capacity-summary-numbers {
+  display: flex;
+  justify-content: flex-start; /* Changed from space-around to flex-start */
+  gap: 3rem; /* Added gap for spacing between items */
+  margin-bottom: 1.5rem; /* Reduced margin */
+  background: white;
+  border-radius: 8px;
+  padding: 1rem; /* Reduced padding */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  flex-shrink: 0; /* Prevent shrinking */
+}
+
+.summary-number {
+  text-align: center;
+}
+
+.summary-number .number {
+  font-size: 2rem; /* Slightly smaller */
+  font-weight: 700;
+  color: var(--tmobile-magenta);
+  margin-bottom: 0.25rem; /* Reduced margin */
+}
+
+.summary-number .label {
+  font-size: 0.7rem; /* Slightly smaller */
+  font-weight: 600;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Main Grid Layout */
+.capacity-main-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  flex: 1;
+  min-height: 0; /* Allow grid to shrink */
+  height: calc(100vh - 300px); /* Account for header, summary, footer, and padding */
+}
+
+.capacity-left-column,
+.capacity-right-column {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  height: 100%;
+}
+
+.capacity-right-column .capacity-section {
+  flex: 1;
+  height: 100%;
+}
+
+/* Section styling */
+.capacity-section {
+  background: white;
+  border-radius: 8px;
+  padding: 1rem; /* Reduced padding */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  flex-shrink: 0;
+}
+
+.section-title {
+  font-size: 0.9rem; /* Slightly smaller */
+  font-weight: 600;
+  color: var(--tmobile-magenta);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.date-filter {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.date-filter label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #666;
+}
+
+.week-dropdown {
+  padding: 0.5rem;
+  border: 1px solid var(--tmobile-border);
+  border-radius: 4px;
+  font-size: 0.875rem;
+  background: white;
+  color: #333;
+  min-width: 200px;
+}
+
+.week-dropdown:focus {
+  outline: none;
+  border-color: var(--tmobile-magenta);
+  box-shadow: 0 0 0 2px rgba(226, 0, 116, 0.1);
+}
+
+.section-title i {
+  font-size: 1rem;
+}
+
+/* Workload Table */
+.workload-table-container {
+  overflow-y: auto;
+  flex: 1;
+  min-height: 300px; /* Ensure minimum height for all entries */
+  max-height: 600px; /* Prevent it from growing too large */
+  display: flex;
+  flex-direction: column;
+}
+
+.workload-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+  flex: 1;
+  display: table;
+}
+
+.workload-table thead {
+  display: table-header-group;
+}
+
+.workload-table tbody {
+  display: table-row-group;
+  height: 100%;
+}
+
+.workload-table tbody tr {
+  display: table-row;
+  height: calc(100% / var(--row-count, 5)); /* Dynamic height based on row count */
+}
+
+.workload-table th {
+  background: var(--tmobile-magenta);
+  color: white;
+  padding: 0.3rem 0.75rem;
+  text-align: left;
+  font-weight: 600;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  height: auto;
+}
+
+.workload-table td {
+  padding: 0.3rem 0.75rem;
+  border-bottom: 1px solid #eee;
+  text-align: center;
+  vertical-align: middle;
+  height: inherit;
+}
+
+.workload-table td:first-child {
+  text-align: left;
+}
+
+.workload-table tbody tr:hover {
+  background: #f8f9fa;
+}
+
+/* Status badges */
+.status-badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.status-ok {
+  background: rgba(40, 167, 69, 0.1);
+  color: var(--success-color);
+}
+
+.status-high {
+  background: rgba(220, 53, 69, 0.1);
+  color: var(--danger-color);
+}
+
+/* Chart Container */
+.chart-container {
+  position: relative;
+  height: 300px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.chart-container canvas {
+  max-height: 250px;
+}
+
+.chart-legend {
+  margin-top: 1rem;
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.legend-color {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+/* Schedule Grid */
+.schedule-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.schedule-item {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.schedule-header {
+  background: var(--tmobile-magenta);
+  color: white;
+  padding: 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  text-align: center;
+}
+
+.schedule-content {
+  padding: 1.5rem 1rem;
+  text-align: center;
+  background: white;
+  flex: 1;
+}
+
+.schedule-promo {
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 0.5rem;
+}
+
+.schedule-time {
+  font-size: 0.875rem;
+  color: #666;
+  font-weight: normal;
+}
+
+/* Metrics Grid */
+.metrics-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.metric-card {
+  text-align: center;
+  padding: 1rem;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background: white;
+}
+
+.metric-title {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 1rem;
+}
+
+.metric-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--tmobile-magenta);
+  margin-bottom: 0.5rem;
+}
+
+.metric-subtitle {
+  font-size: 0.75rem;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .capacity-page {
+    padding: 1rem;
+  }
+  
+  .capacity-main-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .capacity-summary-numbers {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .schedule-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .metrics-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Promotions Table */
+.promotions-table-container {
+  margin-top: 15px;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.promotions-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  font-size: 12px;
+}
+
+.promotions-table th {
+  background: #f8f9fa;
+  padding: 8px 10px;
+  text-align: left;
+  font-weight: 600;
+  border-bottom: 2px solid #e9ecef;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.promotions-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid #e9ecef;
+  vertical-align: middle;
+}
+
+.promotions-table tr:hover {
+  background-color: #f8f9fa;
+}
+
+.promo-type-badge {
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.type-g {
+  background-color: #e3f2fd;
+  color: #1976d2;
+}
+
+.type-t {
+  background-color: #f3e5f5;
+  color: #7b1fa2;
+}
+
+.type-a {
+  background-color: #e8f5e8;
+  color: #388e3c;
+}
+
+.type-unknown {
+  background-color: #f5f5f5;
+  color: #666;
+}
+
+.no-data {
+  text-align: center;
+  color: #666;
+  font-style: italic;
+  padding: 20px;
+}
+
+/* Schedule Promo Table */
+.schedule-promo-table {
+  width: 100%;
+  font-size: 10px;
+  border-collapse: collapse;
+}
+
+.schedule-promo-table th {
+  background-color: #f8f9fa;
+  padding: 6px 8px;
+  text-align: left;
+  font-weight: 600;
+  border-bottom: 1px solid #dee2e6;
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.schedule-promo-table td {
+  padding: 6px 8px;
+  border-bottom: 1px solid #f0f0f0;
+  vertical-align: middle;
+  font-size: 10px;
+  text-align: left;
+}
+
+.schedule-promo-table tr:hover {
+  background-color: #f8f9fa;
+}
+
+.promo-type-mini {
+  padding: 1px 4px;
+  border-radius: 8px;
+  font-size: 8px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.2px;
+}
+
+/* Type-specific colors for promotion types */
+.type-rdc {
+  background-color: #e3f2fd;
+  color: #1976d2;
+}
+
+.type-spe {
+  background-color: #f3e5f5;
+  color: #7b1fa2;
+}
+
+.type-rebate {
+  background-color: #e8f5e8;
+  color: #388e3c;
+}
+
+.type-unknown {
+  background-color: #f5f5f5;
+  color: #757575;
+}
+
+.no-launches {
+  text-align: center;
+  color: #999;
+  font-style: italic;
+  padding: 20px;
+  font-size: 12px;
+}

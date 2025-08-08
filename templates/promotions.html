@@ -1,15 +1,27 @@
 {% extends "base.html" %}
 
-{% block title %}Promotions – {{ promotion_code }}{% endblock %}
+{% block title %}RDC Promotions{% endblock %}
+
+{% block head %}
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/promotions.css') }}">
+{% endblock %}
 
 {% block content %}
-<div class="promotions-page">
-  <!-- Page header -->
-  <header class="header-bar">
-    <div class="header-title">Promotions – {{ promotion_code }}</div>
-    <div class="user-name">{{ user_name }}</div>
-  </header>
+<!-- Styled Header Banner -->
+<div class="styled-header-banner">
+  <div class="styled-header-content">
+    <i class="bi bi-tags-fill styled-header-icon"></i>
+    <div class="styled-header-text">
+      <h2 class="styled-header-title">RDC Promotions</h2>
+      <p class="styled-header-subtitle">Build, launch and monitor device promotions</p>
+    </div>
+  </div>
+</div>
 
+<!-- Main content area (scrollable) -->
+<div class="promotions-page">
   <!-- Controls row: filter, search, actions -->
   <div class="promotions-controls">
     <div class="filter-group">
@@ -30,31 +42,29 @@
         type="text"
         id="search-input"
         name="search"
-        placeholder="Promo Code or Owner"
+        placeholder="Promo Code, Owner, or Name"
         value="{{ search_query }}"
+        onkeyup="debounceSearch()"
       />
     </div>
 
     <div class="action-buttons">
-      <button class="btn"><i class="fas fa-plus"></i> Create JIRA</button>
-      <button class="btn"><i class="fas fa-calendar-alt"></i> Date Mismatch</button>
       <button class="btn"><i class="fas fa-wrench"></i> Get Promo Code</button>
-      <button class="btn"><i class="fas fa-check-square"></i> DCD Validation</button>
     </div>
   </div>
 
   <!-- Tabs row -->
   <div class="promotions-tabs">
-    {% for tab in ['RDC','SPE','Sprint','Functional','Z-Lab'] %}
-      <button class="tab {% if tab==active_tab %}active{% endif %}">
-        {{ tab }}
-      </button>
-    {% endfor %}
+    <a href="{{ url_for('promotions') }}" class="tab {% if active_tab=='RDC' %}active{% endif %}">RDC</a>
+    <a href="{{ url_for('spe') }}" class="tab {% if active_tab=='SPE' %}active{% endif %}">SPE</a>
+    <button class="tab">Sprint</button>
+    <button class="tab">Functional</button>
+    <button class="tab">Z-Lab</button>
   </div>
 
   <!-- Table -->
   <div class="table-container">
-    <table class="promotions-table">
+    <table class="promo-table">
       <thead>
         <tr>
           <th>Promo Code</th>
@@ -72,25 +82,80 @@
         <tr>
           <td>{{ promo.code }}</td>
           <td>{{ promo.orbit_id }}</td>
-          <td>{{ promo.status }}</td>
-          <td>{{ promo.description }}</td>
-          <td>{{ promo.start_date }}</td>
-          <td>{{ promo.end_date }}</td>
-          <td>{{ promo.owner }}</td>
-          <td>
-            <div class="actions">
-              <a href="{{ url_for('edit_promo', promo_code=promo.code) }}"
-                 class="icon-button" title="Edit"><i class="fas fa-edit"></i></a>
-              <button class="icon-button" title="Team"><i class="fas fa-users"></i></button>
-              <button class="icon-button" title="Export"><i class="fas fa-file-export"></i></button>
-              <button class="icon-button" title="Refresh"><i class="fas fa-sync-alt"></i></button>
-              <button class="icon-button" title="Link"><i class="fas fa-link"></i></button>
-            </div>
+          <td>{{ promo.status if promo.status else 'Active' }}</td>
+          <td>{{ promo.bill_facing_name }}</td>
+          <td>{{ promo.promo_start_date }}</td>
+          <td>{{ promo.promo_end_date }}</td>
+          <td class="promo-owner">{{ promo.owner }}</td>
+          <td class="promo-actions">
+            <a href="{{ url_for('promo.edit_promo', promo_code=promo.code) }}" class="icon-button" title="Edit"><i class="fas fa-edit"></i></a>
+            <button class="icon-button" title="Team"><i class="fas fa-users"></i></button>
+            <a href="{{ url_for('approvers', promo_code=promo.code) }}" class="icon-button" title="Approvers"><i class="fas fa-file-signature"></i></a>
+            <button class="icon-button" title="Refresh"><i class="fas fa-sync-alt"></i></button>
+            <button class="icon-button" title="Link"><i class="fas fa-link"></i></button>
           </td>
         </tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
+
+  <!-- Pagination Controls -->
+  {% if pagination.total_pages > 1 %}
+  <div class="pagination-container">
+    <div class="pagination-info">
+      Showing {{ ((pagination.page - 1) * pagination.per_page + 1) }} to {{ 
+        pagination.page * pagination.per_page if pagination.page * pagination.per_page <= pagination.total_items 
+        else pagination.total_items 
+      }} of {{ pagination.total_items }} promotions
+    </div>
+    
+    <div class="pagination-controls">
+      {% if pagination.has_prev %}
+        <a href="{{ url_for('promotions', page=1, search=search_query, owner=selected_owner) }}" class="pagination-btn">First</a>
+        <a href="{{ url_for('promotions', page=pagination.prev_num, search=search_query, owner=selected_owner) }}" class="pagination-btn">‹ Prev</a>
+      {% endif %}
+      
+      {% for page_num in range(
+        [pagination.page - 2, 1]|max, 
+        [pagination.page + 2, pagination.total_pages]|min + 1
+      ) %}
+        {% if page_num == pagination.page %}
+          <span class="pagination-btn active">{{ page_num }}</span>
+        {% else %}
+          <a href="{{ url_for('promotions', page=page_num, search=search_query, owner=selected_owner) }}" class="pagination-btn">{{ page_num }}</a>
+        {% endif %}
+      {% endfor %}
+      
+      {% if pagination.has_next %}
+        <a href="{{ url_for('promotions', page=pagination.next_num, search=search_query, owner=selected_owner) }}" class="pagination-btn">Next ›</a>
+        <a href="{{ url_for('promotions', page=pagination.total_pages, search=search_query, owner=selected_owner) }}" class="pagination-btn">Last</a>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
 </div>
+
+<script>
+let searchTimeout;
+
+function debounceSearch() {
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(() => {
+    const search = document.getElementById('search-input').value;
+    const owner = document.getElementById('owner-filter').value;
+    const url = new URL(window.location);
+    url.searchParams.set('search', search);
+    url.searchParams.set('owner', owner);
+    url.searchParams.set('page', '1'); // Reset to first page
+    window.location.href = url.toString();
+  }, 500); // Wait 500ms after user stops typing
+}
+
+// Handle owner filter change
+document.getElementById('owner-filter').addEventListener('change', function() {
+  debounceSearch();
+});
+</script>
+
 {% endblock %}
