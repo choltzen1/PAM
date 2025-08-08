@@ -1,7 +1,7 @@
-# PAM - Promotion Approval Management System
+# PAM - Promotion Automation Manager System
 
 ## Overview
-PAM (Promotion Approval Management) is a comprehensive web-based application designed for T-Mobile's promotions team to streamline the management, validation, and approval process of promotional campaigns. The system provides advanced tools for promotion lifecycle management, capacity planning, and approval workflows.
+PAM (Promotion Automation Manager) is a comprehensive web-based application designed for T-Mobile's promotions team to streamline the management, validation, and approval process of promotional campaigns. The system provides advanced tools for promotion lifecycle management, capacity planning, and approval workflows.
 
 ### Key Features
 
