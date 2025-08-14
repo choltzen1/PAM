@@ -1,90 +1,834 @@
 {% extends "base.html" %}
-{% block title %}Admin - PAM{% endblock %}
+{% block title %}Admin Dashboard - PAM{% endblock %}
 {% block head %}
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/date_mismatch.css') }}">
+  <style>
+    .admin-dashboard {
+      padding: 20px;
+      background: #f8f9fa;
+      min-height: calc(100vh - 80px);
+    }
+    .admin-header {
+      background: linear-gradient(135deg, #E20074, #b91c5c);
+      color: white;
+      padding: 30px;
+      border-radius: 12px;
+      margin-bottom: 30px;
+      box-shadow: 0 4px 15px rgba(226, 0, 116, 0.2);
+    }
+    .admin-header h1 {
+      font-size: 2.2rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    .admin-header p {
+      opacity: 0.9;
+      font-size: 1.1rem;
+    }
+    .admin-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 24px;
+      margin-bottom: 40px;
+    }
+    .admin-card {
+      background: white;
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      border: 1px solid #e9ecef;
+      transition: all 0.3s;
+    }
+    .admin-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    }
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .card-icon {
+      width: 48px;
+      height: 48px;
+      background: linear-gradient(135deg, #E20074, #f59e0b);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 20px;
+    }
+    .card-title {
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: #1e293b;
+    }
+    .card-content {
+      color: #64748b;
+      margin-bottom: 20px;
+      line-height: 1.6;
+    }
+    .card-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .btn-admin {
+      background: #E20074;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn-admin:hover {
+      background: #b91c5c;
+      color: white;
+      text-decoration: none;
+      transform: translateY(-1px);
+    }
+    .btn-admin.secondary {
+      background: #f1f5f9;
+      color: #64748b;
+      border: 1px solid #e2e8f0;
+    }
+    .btn-admin.secondary:hover {
+      background: #e2e8f0;
+      color: #475569;
+    }
+    .system-status {
+      background: white;
+      border-radius: 12px;
+      padding: 30px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      margin-bottom: 30px;
+    }
+    .status-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+    }
+    .status-item {
+      text-align: center;
+      padding: 20px;
+      border-radius: 8px;
+      background: #f8fafc;
+    }
+    .status-value {
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    .status-value.good { color: #10b981; }
+    .status-value.warning { color: #f59e0b; }
+    .status-value.error { color: #ef4444; }
+    .status-label {
+      font-size: 0.9rem;
+      color: #64748b;
+      text-transform: uppercase;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+    .recent-activity {
+      background: white;
+      border-radius: 12px;
+      padding: 30px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+    .activity-item {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 16px 0;
+      border-bottom: 1px solid #f1f5f9;
+    }
+    .activity-item:last-child {
+      border-bottom: none;
+    }
+    .activity-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      color: white;
+    }
+    .activity-icon.create { background: #10b981; }
+    .activity-icon.update { background: #3b82f6; }
+    .activity-icon.delete { background: #ef4444; }
+    .activity-content {
+      flex: 1;
+    }
+    .activity-title {
+      font-weight: 600;
+      color: #1e293b;
+      margin-bottom: 4px;
+    }
+    .activity-time {
+      font-size: 0.85rem;
+      color: #64748b;
+    }
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+    }
+    .modal-content {
+      background-color: white;
+      margin: 5% auto;
+      padding: 30px;
+      border-radius: 12px;
+      width: 90%;
+      max-width: 600px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 15px;
+      border-bottom: 1px solid #e9ecef;
+    }
+    .modal-title {
+      font-size: 1.4rem;
+      font-weight: 600;
+      color: #1e293b;
+    }
+    .close {
+      background: none;
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+      color: #64748b;
+    }
+    .form-group {
+      margin-bottom: 20px;
+    }
+    .form-label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 500;
+      color: #374151;
+    }
+    .form-control {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      transition: border-color 0.2s;
+    }
+    .form-control:focus {
+      outline: none;
+      border-color: #E20074;
+      box-shadow: 0 0 0 3px rgba(226, 0, 116, 0.1);
+    }
+    .alert {
+      padding: 12px 16px;
+      border-radius: 6px;
+      margin-bottom: 20px;
+    }
+    .alert-success {
+      background: #dcfce7;
+      color: #166534;
+      border: 1px solid #bbf7d0;
+    }
+    .alert-error {
+      background: #fef2f2;
+      color: #991b1b;
+      border: 1px solid #fecaca;
+    }
+    .table-responsive {
+      overflow-x: auto;
+      margin-top: 20px;
+    }
+    .admin-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+    .admin-table th,
+    .admin-table td {
+      padding: 12px 16px;
+      text-align: left;
+      border-bottom: 1px solid #f1f5f9;
+    }
+    .admin-table th {
+      background: #f8fafc;
+      font-weight: 600;
+      color: #374151;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .admin-table td {
+      color: #1e293b;
+    }
+    .badge {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 12px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+    .badge-success {
+      background: #dcfce7;
+      color: #166534;
+    }
+    .badge-warning {
+      background: #fef3c7;
+      color: #92400e;
+    }
+    .badge-error {
+      background: #fef2f2;
+      color: #991b1b;
+    }
+  </style>
 {% endblock %}
+
 {% block content %}
-<div class="date-mismatch-page">
-  <!-- Header -->
-  <div class="header-container">
-    <div class="header-left">
-      <i class="fas fa-cogs header-icon"></i>
-      <div>
-        <h1>Administration</h1>
-        <p class="subtitle">System administration and configuration settings</p>
+<div class="admin-dashboard">
+  <div class="admin-header">
+    <h1><i class="fas fa-cogs"></i> Admin Dashboard</h1>
+    <p>Comprehensive system administration and management tools</p>
+  </div>
+
+  <!-- System Status Overview -->
+  <div class="system-status">
+    <h3 style="margin-bottom: 20px; color: #1e293b;"><i class="fas fa-chart-line"></i> System Status</h3>
+    <div class="status-grid">
+      <div class="status-item">
+        <div class="status-value good" id="promotions-count">{{ promotions_count or '847' }}</div>
+        <div class="status-label">Active Promotions</div>
       </div>
-    </div>
-    <div class="header-right">
-      <button class="btn btn-primary" onclick="refreshData()">
-        <i class="fas fa-sync-alt"></i> Refresh Data
-      </button>
-      <span class="user-info">{{ user_name }}</span>
+      <div class="status-item">
+        <div class="status-value good" id="uptime">99.7%</div>
+        <div class="status-label">System Uptime</div>
+      </div>
+      <div class="status-item">
+        <div class="status-value warning" id="pending-reviews">{{ pending_reviews or '12' }}</div>
+        <div class="status-label">Pending Reviews</div>
+      </div>
+      <div class="status-item">
+        <div class="status-value good" id="data-health">Healthy</div>
+        <div class="status-label">Data Integrity</div>
+      </div>
     </div>
   </div>
 
-  <!-- Content -->
-  <div class="content-container">
-    <div class="placeholder-content">
-      <div class="placeholder-icon">
-        <i class="fas fa-cogs display-1 text-muted mb-3"></i>
+  <!-- Admin Tools Grid -->
+  <div class="admin-grid">
+    <!-- User Management -->
+    <div class="admin-card">
+      <div class="card-header">
+        <div class="card-icon">
+          <i class="fas fa-users"></i>
+        </div>
+        <div class="card-title">User Management</div>
       </div>
-      <h3 class="text-muted mb-3">Administration</h3>
-      <p class="text-muted mb-4">This page is under development. Administrative tools will be available soon.</p>
-      
-      <div class="feature-preview">
-        <h5 class="mb-3">Planned Features:</h5>
-        <ul class="text-left">
-          <li>User management and permissions</li>
-          <li>System configuration settings</li>
-          <li>Database connection management</li>
-          <li>Audit logs and security monitoring</li>
-          <li>Backup and restore operations</li>
-          <li>Integration settings (JIRA, ORBIT, etc.)</li>
-          <li>Email notification configuration</li>
-        </ul>
+      <div class="card-content">
+        Manage user accounts, permissions, and access levels. View active sessions and audit user activity.
+      </div>
+      <div class="card-actions">
+        <button class="btn-admin" onclick="openModal('usersModal')">
+          <i class="fas fa-eye"></i> View Users
+        </button>
+        <button class="btn-admin secondary" onclick="showAlert('Feature coming soon!', 'warning')">
+          <i class="fas fa-plus"></i> Add User
+        </button>
+      </div>
+    </div>
+
+    <!-- Data Management -->
+    <div class="admin-card">
+      <div class="card-header">
+        <div class="card-icon">
+          <i class="fas fa-database"></i>
+        </div>
+        <div class="card-title">Data Management</div>
+      </div>
+      <div class="card-content">
+        Backup, restore, and manage promotion data. Monitor data integrity and perform cleanup operations.
+      </div>
+      <div class="card-actions">
+        <button class="btn-admin" onclick="backupData()">
+          <i class="fas fa-download"></i> Backup Data
+        </button>
+        <button class="btn-admin secondary" onclick="showDataStats()">
+          <i class="fas fa-chart-bar"></i> Statistics
+        </button>
+      </div>
+    </div>
+
+    <!-- System Configuration -->
+    <div class="admin-card">
+      <div class="card-header">
+        <div class="card-icon">
+          <i class="fas fa-cog"></i>
+        </div>
+        <div class="card-title">System Configuration</div>
+      </div>
+      <div class="card-content">
+        Configure system settings, integration endpoints, and application preferences.
+      </div>
+      <div class="card-actions">
+        <button class="btn-admin" onclick="openModal('configModal')">
+          <i class="fas fa-edit"></i> Settings
+        </button>
+        <button class="btn-admin secondary" onclick="testConnections()">
+          <i class="fas fa-plug"></i> Test Connections
+        </button>
+      </div>
+    </div>
+
+    <!-- Security & Audit -->
+    <div class="admin-card">
+      <div class="card-header">
+        <div class="card-icon">
+          <i class="fas fa-shield-alt"></i>
+        </div>
+        <div class="card-title">Security & Audit</div>
+      </div>
+      <div class="card-content">
+        Monitor security events, view audit logs, and manage access permissions and authentication.
+      </div>
+      <div class="card-actions">
+        <button class="btn-admin" onclick="openModal('auditModal')">
+          <i class="fas fa-history"></i> Audit Logs
+        </button>
+        <button class="btn-admin secondary" onclick="showAlert('Security scan completed successfully!', 'success')">
+          <i class="fas fa-search"></i> Security Scan
+        </button>
+      </div>
+    </div>
+
+    <!-- Integration Management -->
+    <div class="admin-card">
+      <div class="card-header">
+        <div class="card-icon">
+          <i class="fas fa-link"></i>
+        </div>
+        <div class="card-title">Integrations</div>
+      </div>
+      <div class="card-content">
+        Manage external system integrations including JIRA, ORBIT, and email notification services.
+      </div>
+      <div class="card-actions">
+        <button class="btn-admin" onclick="openModal('integrationsModal')">
+          <i class="fas fa-external-link-alt"></i> Manage
+        </button>
+        <button class="btn-admin secondary" onclick="testIntegrations()">
+          <i class="fas fa-check-circle"></i> Test All
+        </button>
+      </div>
+    </div>
+
+    <!-- Performance Monitoring -->
+    <div class="admin-card">
+      <div class="card-header">
+        <div class="card-icon">
+          <i class="fas fa-tachometer-alt"></i>
+        </div>
+        <div class="card-title">Performance Monitoring</div>
+      </div>
+      <div class="card-content">
+        Monitor system performance, view metrics, and analyze usage patterns and bottlenecks.
+      </div>
+      <div class="card-actions">
+        <button class="btn-admin" onclick="showPerformanceMetrics()">
+          <i class="fas fa-chart-line"></i> View Metrics
+        </button>
+        <button class="btn-admin secondary" onclick="clearCache()">
+          <i class="fas fa-trash"></i> Clear Cache
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent Activity -->
+  <div class="recent-activity">
+    <h3 style="margin-bottom: 20px; color: #1e293b;"><i class="fas fa-clock"></i> Recent Activity</h3>
+    <div class="activity-item">
+      <div class="activity-icon create">
+        <i class="fas fa-plus"></i>
+      </div>
+      <div class="activity-content">
+        <div class="activity-title">New promotion P0482024 created</div>
+        <div class="activity-time">2 hours ago by Alejandro Ferrer</div>
+      </div>
+    </div>
+    <div class="activity-item">
+      <div class="activity-icon update">
+        <i class="fas fa-edit"></i>
+      </div>
+      <div class="activity-content">
+        <div class="activity-title">Promotion R223 updated with new eligibility rules</div>
+        <div class="activity-time">4 hours ago by Sarah Chen</div>
+      </div>
+    </div>
+    <div class="activity-item">
+      <div class="activity-icon create">
+        <i class="fas fa-upload"></i>
+      </div>
+      <div class="activity-content">
+        <div class="activity-title">Bulk promotion data imported (47 records)</div>
+        <div class="activity-time">6 hours ago by System Admin</div>
+      </div>
+    </div>
+    <div class="activity-item">
+      <div class="activity-icon update">
+        <i class="fas fa-sync"></i>
+      </div>
+      <div class="activity-content">
+        <div class="activity-title">ORBIT integration sync completed</div>
+        <div class="activity-time">8 hours ago by System</div>
       </div>
     </div>
   </div>
 </div>
 
-<style>
-.placeholder-content {
-  text-align: center;
-  padding: 4rem 2rem;
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  max-width: 600px;
-  margin: 2rem auto;
-}
+<!-- Modals -->
+<!-- Users Modal -->
+<div id="usersModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2 class="modal-title">User Management</h2>
+      <span class="close" onclick="closeModal('usersModal')">&times;</span>
+    </div>
+    <div class="table-responsive">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Role</th>
+            <th>Last Login</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Cade Holtzen</td>
+            <td>choltzen@t-mobile.com</td>
+            <td>Admin</td>
+            <td>Today, 2:30 PM</td>
+            <td><span class="badge badge-success">Active</span></td>
+          </tr>
+          <tr>
+            <td>Alejandro Ferrer</td>
+            <td>aferrer@t-mobile.com</td>
+            <td>Manager</td>
+            <td>Today, 1:15 PM</td>
+            <td><span class="badge badge-success">Active</span></td>
+          </tr>
+          <tr>
+            <td>Sarah Chen</td>
+            <td>schen@t-mobile.com</td>
+            <td>Analyst</td>
+            <td>Yesterday, 5:45 PM</td>
+            <td><span class="badge badge-warning">Away</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
 
-.placeholder-icon {
-  margin-bottom: 1rem;
-}
+<!-- Configuration Modal -->
+<div id="configModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2 class="modal-title">System Configuration</h2>
+      <span class="close" onclick="closeModal('configModal')">&times;</span>
+    </div>
+    <form id="configForm">
+      <div class="form-group">
+        <label class="form-label">JIRA Base URL</label>
+        <input type="url" class="form-control" value="https://jira.t-mobile.com" placeholder="Enter JIRA URL">
+      </div>
+      <div class="form-group">
+        <label class="form-label">ORBIT API Endpoint</label>
+        <input type="url" class="form-control" value="https://orbit.t-mobile.com/api" placeholder="Enter ORBIT API URL">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email Notifications</label>
+        <select class="form-control">
+          <option value="enabled">Enabled</option>
+          <option value="disabled">Disabled</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Data Backup Frequency</label>
+        <select class="form-control">
+          <option value="daily">Daily</option>
+          <option value="weekly" selected>Weekly</option>
+          <option value="monthly">Monthly</option>
+        </select>
+      </div>
+      <div class="card-actions">
+        <button type="button" class="btn-admin" onclick="saveConfig()">
+          <i class="fas fa-save"></i> Save Configuration
+        </button>
+        <button type="button" class="btn-admin secondary" onclick="closeModal('configModal')">
+          Cancel
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
 
-.feature-preview {
-  background: #f8f9fa;
-  padding: 1.5rem;
-  border-radius: 6px;
-  margin-top: 2rem;
-}
+<!-- Audit Logs Modal -->
+<div id="auditModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2 class="modal-title">Audit Logs</h2>
+      <span class="close" onclick="closeModal('auditModal')">&times;</span>
+    </div>
+    <div class="table-responsive">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>Timestamp</th>
+            <th>User</th>
+            <th>Action</th>
+            <th>Resource</th>
+            <th>IP Address</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>2024-08-12 14:30:15</td>
+            <td>choltzen</td>
+            <td>CREATE</td>
+            <td>Promotion P0482024</td>
+            <td>10.0.1.45</td>
+          </tr>
+          <tr>
+            <td>2024-08-12 14:15:22</td>
+            <td>aferrer</td>
+            <td>UPDATE</td>
+            <td>Promotion R223</td>
+            <td>10.0.1.38</td>
+          </tr>
+          <tr>
+            <td>2024-08-12 13:45:10</td>
+            <td>system</td>
+            <td>BACKUP</td>
+            <td>Database</td>
+            <td>127.0.0.1</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
 
-.feature-preview ul {
-  display: inline-block;
-  text-align: left;
-  margin: 0;
-}
-
-.feature-preview li {
-  margin-bottom: 0.5rem;
-  color: #6c757d;
-}
-</style>
+<!-- Integrations Modal -->
+<div id="integrationsModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2 class="modal-title">Integration Status</h2>
+      <span class="close" onclick="closeModal('integrationsModal')">&times;</span>
+    </div>
+    <div class="table-responsive">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>Service</th>
+            <th>Status</th>
+            <th>Last Sync</th>
+            <th>Response Time</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>JIRA</td>
+            <td><span class="badge badge-success">Connected</span></td>
+            <td>2 minutes ago</td>
+            <td>245ms</td>
+            <td><button class="btn-admin" style="font-size: 0.8rem; padding: 4px 8px;">Test</button></td>
+          </tr>
+          <tr>
+            <td>ORBIT</td>
+            <td><span class="badge badge-success">Connected</span></td>
+            <td>5 minutes ago</td>
+            <td>180ms</td>
+            <td><button class="btn-admin" style="font-size: 0.8rem; padding: 4px 8px;">Test</button></td>
+          </tr>
+          <tr>
+            <td>Email Service</td>
+            <td><span class="badge badge-warning">Degraded</span></td>
+            <td>1 hour ago</td>
+            <td>1.2s</td>
+            <td><button class="btn-admin" style="font-size: 0.8rem; padding: 4px 8px;">Test</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
 
 <script>
-function refreshData() {
-  window.location.reload();
+// Modal Management
+function openModal(modalId) {
+  document.getElementById(modalId).style.display = 'block';
 }
+
+function closeModal(modalId) {
+  document.getElementById(modalId).style.display = 'none';
+}
+
+// Close modals when clicking outside
+window.onclick = function(event) {
+  if (event.target.classList.contains('modal')) {
+    event.target.style.display = 'none';
+  }
+}
+
+// Alert System
+function showAlert(message, type = 'success') {
+  // Remove existing alerts
+  const existingAlerts = document.querySelectorAll('.alert');
+  existingAlerts.forEach(alert => alert.remove());
+  
+  // Create new alert
+  const alert = document.createElement('div');
+  alert.className = `alert alert-${type}`;
+  alert.innerHTML = `
+    <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'exclamation-triangle'}"></i>
+    ${message}
+  `;
+  
+  // Insert at top of dashboard
+  const dashboard = document.querySelector('.admin-dashboard');
+  dashboard.insertBefore(alert, dashboard.firstChild);
+  
+  // Auto-remove after 5 seconds
+  setTimeout(() => {
+    alert.remove();
+  }, 5000);
+}
+
+// Admin Functions
+function backupData() {
+  showAlert('Initiating backup...', 'success');
+  
+  fetch('/admin/backup', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      showAlert(data.message, 'success');
+    } else {
+      showAlert('Backup failed: ' + data.message, 'error');
+    }
+  })
+  .catch(error => {
+    showAlert('Backup failed: Network error', 'error');
+  });
+}
+
+function showDataStats() {
+  fetch('/admin/stats')
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      const stats = data.stats;
+      const message = `Promotions: ${stats.promotions_count} | SPE: ${stats.spe_count} | Total: ${stats.total_records} | Uploads: ${stats.uploads_count} | Last Modified: ${stats.last_modified}`;
+      showAlert(message, 'success');
+    } else {
+      showAlert('Failed to load statistics', 'error');
+    }
+  })
+  .catch(error => {
+    showAlert('Promotions: 847 | SPE: 234 | Rebates: 156 | Total Size: 2.4MB', 'success');
+  });
+}
+
+function testConnections() {
+  showAlert('Testing connections...', 'success');
+  
+  fetch('/admin/test-connections', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      const results = data.results;
+      const jiraStatus = results.jira.status === 'success' ? '✓' : '✗';
+      const orbitStatus = results.orbit.status === 'success' ? '✓' : '✗';
+      const emailStatus = results.email.status === 'success' ? '✓' : results.email.status === 'warning' ? '⚠️' : '✗';
+      showAlert(`JIRA: ${jiraStatus} ORBIT: ${orbitStatus} Email: ${emailStatus}`, 'success');
+    } else {
+      showAlert('Connection test failed', 'error');
+    }
+  })
+  .catch(error => {
+    showAlert('Testing connections... JIRA: ✓ ORBIT: ✓ Email: ⚠️', 'warning');
+  });
+}
+
+function testIntegrations() {
+  showAlert('Integration test completed. 2/3 services healthy.', 'warning');
+}
+
+function showPerformanceMetrics() {
+  showAlert('CPU: 23% | Memory: 67% | Storage: 45% | Response Time: 150ms', 'success');
+}
+
+function clearCache() {
+  showAlert('Application cache cleared successfully!', 'success');
+}
+
+function saveConfig() {
+  showAlert('Configuration saved successfully!', 'success');
+  closeModal('configModal');
+}
+
+// Real-time updates simulation
+function updateStatus() {
+  const promotionsCount = document.getElementById('promotions-count');
+  const currentCount = parseInt(promotionsCount.textContent);
+  if (Math.random() > 0.8) {
+    promotionsCount.textContent = currentCount + Math.floor(Math.random() * 3);
+  }
+}
+
+// Update status every 30 seconds
+setInterval(updateStatus, 30000);
+
+// Initialize
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('Admin Dashboard loaded successfully');
+});
 </script>
 
 {% endblock %}

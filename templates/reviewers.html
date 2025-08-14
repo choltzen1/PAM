@@ -1,89 +1,534 @@
 {% extends "base.html" %}
-{% block title %}Reviewers - PAM{% endblock %}
-{% block head %}
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/date_mismatch.css') }}">
-{% endblock %}
-{% block content %}
-<div class="date-mismatch-page">
-  <!-- Header -->
-  <div class="header-container">
-    <div class="header-left">
-      <i class="fas fa-user-check header-icon"></i>
-      <div>
-        <h1>Reviewers Management</h1>
-        <p class="subtitle">Manage promotion reviewers and approval workflows</p>
-      </div>
-    </div>
-    <div class="header-right">
-      <button class="btn btn-primary" onclick="refreshData()">
-        <i class="fas fa-sync-alt"></i> Refresh Data
-      </button>
-      <span class="user-info">{{ user_name }}</span>
-    </div>
-  </div>
 
-  <!-- Content -->
-  <div class="content-container">
-    <div class="placeholder-content">
-      <div class="placeholder-icon">
-        <i class="fas fa-user-check display-1 text-muted mb-3"></i>
-      </div>
-      <h3 class="text-muted mb-3">Reviewers Management</h3>
-      <p class="text-muted mb-4">This page is under development. Reviewer management functionality will be available soon.</p>
-      
-      <div class="feature-preview">
-        <h5 class="mb-3">Planned Features:</h5>
-        <ul class="text-left">
-          <li>Assign reviewers to promotion types</li>
-          <li>Manage reviewer permissions and roles</li>
-          <li>Track review status and progress</li>
-          <li>Configure approval workflows</li>
-          <li>Reviewer workload balancing</li>
-          <li>Review history and audit trails</li>
-        </ul>
-      </div>
+{% block title %}Reviewers{% if promo_code %} - {{ promo_code }}{% endif %} - PAM{% endblock %}
+
+{% block head %}
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/promotions.css') }}">
+{% endblock %}
+
+{% block content %}
+<!-- Styled Header Banner -->
+<div class="styled-header-banner">
+  <div class="styled-header-content">
+    <i class="bi bi-person-check-fill styled-header-icon"></i>
+    <div class="styled-header-text">
+      <h2 class="styled-header-title">Reviewers{% if promo_code %} - {{ promo_code }}{% endif %}</h2>
+      <p class="styled-header-subtitle">{% if promo_data and promo_data.promotion_name %}{{ promo_data.promotion_name }}{% else %}Review promotion details and manage approvals{% endif %}</p>
     </div>
   </div>
 </div>
 
+<!-- Main content area -->
+<div class="promotions-page">
+  <!-- Search controls -->
+  <div class="promotions-controls">
+    <div class="search-group">
+      <label for="promo-search">Search Promo Code</label>
+      <input
+        type="text"
+        id="promo-search"
+        name="promo_code"
+        placeholder="Enter promo code"
+        value="{{ promo_code or '' }}"
+        onkeypress="handleSearchKeyPress(event)"
+      />
+    </div>
+    
+    <div class="action-group">
+      <button class="btn btn-primary" onclick="searchPromo()">
+        <i class="bi bi-search"></i> Search
+      </button>
+      {% if promo_code %}
+      <a href="{{ url_for('promotions') }}" class="btn btn-secondary">
+        <i class="bi bi-arrow-left"></i> Back to Promotions
+      </a>
+      {% endif %}
+    </div>
+  </div>
+
+  {% if error_message %}
+  <div class="alert alert-warning alert-dismissible fade show" role="alert">
+    <i class="bi bi-exclamation-triangle"></i> {{ error_message }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  </div>
+  {% endif %}
+
+  {% if promo_code and promo_data %}
+  <!-- Promotion Details Grid -->
+  <div class="row g-4">
+    <!-- Details Section -->
+    <div class="col-lg-3">
+      <div class="card h-100">
+        <div class="card-header">
+          <h5 class="card-title mb-0"><i class="bi bi-info-circle"></i> Details</h5>
+        </div>
+        <div class="card-body">
+          <div class="detail-row">
+            <label>Promo Owner:</label>
+            <span>{{ promo_data.owner or 'N/A' }}</span>
+          </div>
+          <div class="detail-row">
+            <label>Bill Facing Name:</label>
+            <span>{{ promo_data.bill_facing_name or 'N/A' }}</span>
+          </div>
+          <div class="detail-row">
+            <label>Orbit ID:</label>
+            <span>{{ promo_data.orbit_id or 'N/A' }}</span>
+          </div>
+          <div class="detail-row">
+            <label>PJ Code:</label>
+            <span>{{ promo_data.pj_code or '' }}</span>
+          </div>
+          <div class="detail-row">
+            <label>Promo Amount:</label>
+            <span>{{ promo_data.amount or '' }}</span>
+          </div>
+          <div class="detail-row">
+            <label>Trade-In Group:</label>
+            <span>{{ promo_data.trade_in_group_id or '' }}</span>
+          </div>
+          <div class="detail-row">
+            <label>Broken Trade:</label>
+            <span class="badge {% if promo_data.broken_trade == 'Y' %}bg-success{% else %}bg-secondary{% endif %}">
+              {{ 'Yes' if promo_data.broken_trade == 'Y' else 'No' }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Basic Settings Section -->
+    <div class="col-lg-3">
+      <div class="card h-100">
+        <div class="card-header">
+          <h5 class="card-title mb-0"><i class="bi bi-gear"></i> Basic Settings</h5>
+        </div>
+        <div class="card-body">
+          <div class="detail-row">
+            <label>BOGO:</label>
+            <span class="badge {% if promo_data.bogo == 'Y' %}bg-success{% else %}bg-secondary{% endif %}">
+              {{ 'Yes' if promo_data.bogo == 'Y' else 'No' }}
+            </span>
+          </div>
+          <div class="detail-row">
+            <label>On Menu:</label>
+            <span class="badge {% if promo_data.on_menu == 'Y' %}bg-success{% else %}bg-secondary{% endif %}">
+              {{ 'Yes' if promo_data.on_menu == 'Y' else 'No' }}
+            </span>
+          </div>
+          <div class="detail-row">
+            <label>FPD Display Promo:</label>
+            <span class="badge {% if promo_data.fpd_display_promo == 'Y' %}bg-success{% else %}bg-secondary{% endif %}">
+              {{ 'Yes' if promo_data.fpd_display_promo == 'Y' else 'No' }}
+            </span>
+          </div>
+          <div class="detail-row">
+            <label>NSEIP Drop:</label>
+            <span class="badge {% if promo_data.nseip_drop == 'Y' %}bg-success{% else %}bg-secondary{% endif %}">
+              {{ 'Yes' if promo_data.nseip_drop == 'Y' else 'No' }}
+            </span>
+          </div>
+          <div class="detail-row">
+            <label>DCD Web In-Cart:</label>
+            <span class="badge {% if promo_data.dcd_web_cart == 'Y' %}bg-success{% else %}bg-secondary{% endif %}">
+              {{ 'Yes' if promo_data.dcd_web_cart == 'Y' else 'No' }}
+            </span>
+          </div>
+          <div class="detail-row">
+            <label>Product Type:</label>
+            <span>{{ promo_data.product_type or '' }}</span>
+          </div>
+          <div class="detail-row">
+            <label>Market Group:</label>
+            <span>{{ promo_data.market_group or '*' }}</span>
+          </div>
+          <div class="detail-row">
+            <label>Store Group:</label>
+            <span>{{ promo_data.store_group or '*' }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Line Counts Section -->
+    <div class="col-lg-3">
+      <div class="card h-100">
+        <div class="card-header">
+          <h5 class="card-title mb-0"><i class="bi bi-bar-chart"></i> Line Counts</h5>
+        </div>
+        <div class="card-body">
+          <div class="detail-row">
+            <label>Limit Per BAN:</label>
+            <span>{{ promo_data.limit_per_ban or '' }}</span>
+          </div>
+          <div class="detail-row">
+            <label>Min GSM Count:</label>
+            <span>{{ promo_data.min_gsm_count or '' }}</span>
+          </div>
+          <div class="detail-row">
+            <label>Max GSM Count:</label>
+            <span>{{ promo_data.max_gsm_count or '' }}</span>
+          </div>
+          <div class="detail-row">
+            <label>Active Line Required:</label>
+            <span class="badge {% if promo_data.active_line_required == 'Y' %}bg-success{% else %}bg-secondary{% endif %}">
+              {{ 'Yes' if promo_data.active_line_required == 'Y' else 'No' }}
+            </span>
+          </div>
+          <div class="detail-row">
+            <label>Maintain Active Line:</label>
+            <span class="badge {% if promo_data.maintain_active_line == 'Y' %}bg-success{% else %}bg-secondary{% endif %}">
+              {{ 'Yes' if promo_data.maintain_active_line == 'Y' else 'No' }}
+            </span>
+          </div>
+          <div class="detail-row">
+            <label>Maintain SOC:</label>
+            <span class="badge {% if promo_data.maintain_soc == 'Y' %}bg-success{% else %}bg-secondary{% endif %}">
+              {{ 'Yes' if promo_data.maintain_soc == 'Y' else 'No' }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Additional Requirements Section -->
+    <div class="col-lg-3">
+      <div class="card h-100">
+        <div class="card-header">
+          <h5 class="card-title mb-0"><i class="bi bi-list-check"></i> Additional Requirements</h5>
+        </div>
+        <div class="card-body">
+          <div class="detail-row">
+            <label>Device Sales Type:</label>
+            <span>{{ promo_data.device_sales_type or '' }}</span>
+          </div>
+          <div class="detail-row">
+            <label>Activation Type:</label>
+            <span>{{ promo_data.activation_type or '' }}</span>
+          </div>
+          <div class="detail-row">
+            <label>Promo Grace:</label>
+            <span>{{ promo_data.promo_grace or '' }}</span>
+          </div>
+          <div class="detail-row">
+            <label>MPSS Lookback:</label>
+            <span>{{ promo_data.mpss_lookback or '' }}</span>
+          </div>
+          <div class="detail-row">
+            <label>Operator ID:</label>
+            <span>{{ promo_data.operator_id or '' }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Second Row -->
+  <div class="row g-4 mt-3">
+    <!-- Dates & Times Section -->
+    <div class="col-lg-3">
+      <div class="card h-100">
+        <div class="card-header">
+          <h5 class="card-title mb-0"><i class="bi bi-calendar"></i> Dates & Times</h5>
+        </div>
+        <div class="card-body">
+          <div class="detail-row">
+            <label>Promo Start Date:</label>
+            <span>{{ promo_data.promo_start_date or 'N/A' }}</span>
+          </div>
+          <div class="detail-row">
+            <label>Promo End Date:</label>
+            <span>{{ promo_data.promo_end_date or 'N/A' }}</span>
+          </div>
+          <div class="detail-row">
+            <label>Application Grace Period:</label>
+            <span>{{ promo_data.application_grace_period or '' }}</span>
+          </div>
+          <div class="detail-row">
+            <label>Trade-In Grace Period:</label>
+            <span>{{ promo_data.trade_in_grace or '' }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Links Section -->
+    <div class="col-lg-3">
+      <div class="card h-100">
+        <div class="card-header">
+          <h5 class="card-title mb-0"><i class="bi bi-link"></i> Links</h5>
+        </div>
+        <div class="card-body">
+          <div class="detail-row">
+            <label>C2 Article:</label>
+            <span>
+              {% if promo_data.c2_article %}
+                <a href="{{ promo_data.c2_article }}" target="_blank" class="text-primary">View Article</a>
+              {% else %}
+                N/A
+              {% endif %}
+            </span>
+          </div>
+          <div class="detail-row">
+            <label>SKU Link:</label>
+            <span>
+              {% if promo_data.sku_link %}
+                <a href="{{ promo_data.sku_link }}" target="_blank" class="text-primary">View SKUs</a>
+              {% else %}
+                N/A
+              {% endif %}
+            </span>
+          </div>
+          <div class="detail-row">
+            <label>Trade-In Link:</label>
+            <span>
+              {% if promo_data.tradein_link %}
+                <a href="{{ promo_data.tradein_link }}" target="_blank" class="text-primary">View Trade-In</a>
+              {% else %}
+                N/A
+              {% endif %}
+            </span>
+          </div>
+          <div class="detail-row">
+            <label>Legal Disclaimer:</label>
+            <span>
+              {% if promo_data.legal_disclaimer_link %}
+                <a href="{{ promo_data.legal_disclaimer_link }}" target="_blank" class="text-primary">View Legal Terms</a>
+              {% else %}
+                N/A
+              {% endif %}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Segmentation Section -->
+    <div class="col-lg-3">
+      <div class="card h-100">
+        <div class="card-header">
+          <h5 class="card-title mb-0"><i class="bi bi-funnel"></i> Segmentation</h5>
+        </div>
+        <div class="card-body">
+          <div class="detail-row">
+            <label>Segment Name:</label>
+            <span>{{ promo_data.segment_name or '' }}</span>
+          </div>
+          <div class="detail-row">
+            <label>Segment Level:</label>
+            <span>{{ promo_data.segment_level or '' }}</span>
+          </div>
+          <div class="detail-row">
+            <label>Sub Segment:</label>
+            <span>{{ promo_data.sub_segment or '' }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stackability Section -->
+    <div class="col-lg-3">
+      <div class="card h-100">
+        <div class="card-header">
+          <h5 class="card-title mb-0"><i class="bi bi-stack"></i> Stackability</h5>
+        </div>
+        <div class="card-body">
+          <div class="detail-row">
+            <label>Stackability Rules:</label>
+            <span>{{ promo_data.stackability or 'Not stackable with non-Go5G Next RP' }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Third Row -->
+  <div class="row g-4 mt-3">
+    <!-- Groupings Section -->
+    <div class="col-lg-3">
+      <div class="card h-100">
+        <div class="card-header">
+          <h5 class="card-title mb-0"><i class="bi bi-people"></i> Groupings</h5>
+        </div>
+        <div class="card-body">
+          <div class="detail-row">
+            <label>SOC Grouping:</label>
+            <span>{{ promo_data.soc_grouping or 'Not specified' }}</span>
+          </div>
+          <div class="detail-row">
+            <label>Account Type:</label>
+            <span>{{ promo_data.account_type or 'Not specified' }}</span>
+          </div>
+          <div class="detail-row">
+            <label>Sales Application:</label>
+            <span>{{ promo_data.sales_application or 'Not specified' }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Description Section -->
+    <div class="col-lg-3">
+      <div class="card h-100">
+        <div class="card-header">
+          <h5 class="card-title mb-0"><i class="bi bi-file-text"></i> Description</h5>
+        </div>
+        <div class="card-body">
+          <div class="notes-content">
+            {% if promo_data.description %}
+              <div class="notes-text">{{ promo_data.description }}</div>
+            {% else %}
+              <div class="no-notes text-muted">No description available for this promotion</div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Devices Section -->
+    <div class="col-lg-3">
+      <div class="card h-100">
+        <div class="card-header">
+          <h5 class="card-title mb-0"><i class="bi bi-phone"></i> Devices</h5>
+        </div>
+        <div class="card-body">
+          <div class="detail-row">
+            <label>Device Category:</label>
+            <span>{{ promo_data.device_category or '' }}</span>
+          </div>
+          <div class="detail-row">
+            <label>Tier 1 Devices:</label>
+            <span>{{ promo_data.tier_1_devices or '' }}</span>
+          </div>
+          <div class="detail-row">
+            <label>Tier 2 Devices:</label>
+            <span>{{ promo_data.tier_2_devices or '' }}</span>
+          </div>
+          <div class="detail-row">
+            <label>Device Restrictions:</label>
+            <span>{{ promo_data.device_restrictions or '' }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Notes Section -->
+    <div class="col-lg-3">
+      <div class="card h-100">
+        <div class="card-header">
+          <h5 class="card-title mb-0"><i class="bi bi-sticky"></i> Notes</h5>
+        </div>
+        <div class="card-body">
+          <div class="notes-content">
+            {% if promo_data.notes %}
+              <div class="notes-text">{{ promo_data.notes }}</div>
+            {% else %}
+              <div class="no-notes text-muted">No notes available for this promotion</div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+</div>
+
 <style>
-.placeholder-content {
-  text-align: center;
-  padding: 4rem 2rem;
-  background: white;
-  border-radius: 8px;
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #eee;
+}
+
+.detail-row:last-child {
+  border-bottom: none;
+}
+
+.detail-row label {
+  font-weight: 600;
+  margin-bottom: 0;
+  color: #666;
+}
+
+.detail-row span {
+  text-align: right;
+  flex-shrink: 0;
+  margin-left: 1rem;
+}
+
+.card {
+  border: 1px solid #dee2e6;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  max-width: 600px;
-  margin: 2rem auto;
 }
 
-.placeholder-icon {
-  margin-bottom: 1rem;
+.card-header {
+  background: var(--tmobile-magenta);
+  border-bottom: 1px solid var(--tmobile-magenta);
+  color: white;
 }
 
-.feature-preview {
-  background: #f8f9fa;
-  padding: 1.5rem;
-  border-radius: 6px;
-  margin-top: 2rem;
+.card-header .card-title {
+  color: white;
 }
 
-.feature-preview ul {
-  display: inline-block;
-  text-align: left;
-  margin: 0;
+.card-header i {
+  color: white;
 }
 
-.feature-preview li {
-  margin-bottom: 0.5rem;
-  color: #6c757d;
+.btn-primary {
+  background: var(--tmobile-magenta);
+  border-color: var(--tmobile-magenta);
+  color: white;
+}
+
+.btn-primary:hover {
+  background: var(--tmobile-magenta-dark);
+  border-color: var(--tmobile-magenta-dark);
+  color: white;
+}
+
+.notes-content {
+  min-height: 120px;
+  max-height: 200px;
+  overflow-y: auto;
+  padding: 0.75rem;
+  background-color: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 0.375rem;
+}
+
+.notes-text {
+  font-size: 0.9rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.no-notes {
+  font-style: italic;
+  text-align: center;
+  padding: 2rem 0;
 }
 </style>
 
 <script>
-function refreshData() {
-  window.location.reload();
+function searchPromo() {
+  const promoCode = document.getElementById('promo-search').value.trim().toUpperCase();
+  if (promoCode) {
+    window.location.href = `/reviewers/${promoCode}`;
+  } else {
+    window.location.href = `/reviewers`;
+  }
+}
+
+function handleSearchKeyPress(event) {
+  if (event.key === 'Enter') {
+    searchPromo();
+  }
 }
 </script>
-
 {% endblock %}

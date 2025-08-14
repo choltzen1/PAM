@@ -609,3 +609,188 @@ html, body {
     background-color: #dc3545;
     color: white;
 }
+
+/* Reviewer Page Enhancements */
+.reviewer-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.reviewer-sections {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.reviewer-section {
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.reviewer-section h4 {
+    color: var(--tmobile-magenta);
+    font-weight: 600;
+    margin-bottom: 15px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid var(--tmobile-magenta);
+    font-size: 1.1rem;
+}
+
+.reviewer-field-group {
+    margin-bottom: 15px;
+}
+
+.reviewer-field-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-bottom: 12px;
+}
+
+.reviewer-field {
+    flex: 1;
+    min-width: 200px;
+}
+
+.reviewer-field.full-width {
+    flex: 1 1 100%;
+}
+
+.reviewer-field.half-width {
+    flex: 1 1 45%;
+}
+
+.reviewer-field.quarter-width {
+    flex: 1 1 22%;
+}
+
+.reviewer-field-label {
+    display: block;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 5px;
+    font-size: 0.9rem;
+}
+
+.reviewer-field-value {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    padding: 8px 12px;
+    font-size: 0.9rem;
+    color: #495057;
+    min-height: 20px;
+    display: flex;
+    align-items: center;
+}
+
+.reviewer-field-value.empty {
+    color: #6c757d;
+    font-style: italic;
+}
+
+.reviewer-field-value.boolean-true {
+    background: #d4edda;
+    color: #155724;
+    border-color: #c3e6cb;
+}
+
+.reviewer-field-value.boolean-false {
+    background: #f8d7da;
+    color: #721c24;
+    border-color: #f5c6cb;
+}
+
+.reviewer-field-value.highlight {
+    background: #fff3cd;
+    border-color: #ffeaa7;
+    color: #856404;
+}
+
+/* Special styling for specific field types */
+.reviewer-field-value.date {
+    font-family: 'Courier New', monospace;
+}
+
+.reviewer-field-value.currency {
+    text-align: right;
+    font-weight: 600;
+}
+
+.reviewer-field-value.percentage {
+    text-align: right;
+}
+
+/* Section-specific styling */
+.details-section {
+    border-left: 4px solid var(--tmobile-magenta);
+}
+
+.basic-section {
+    border-left: 4px solid #28a745;
+}
+
+.line-counts-section {
+    border-left: 4px solid #17a2b8;
+}
+
+.requirements-section {
+    border-left: 4px solid #ffc107;
+}
+
+.dates-section {
+    border-left: 4px solid #6f42c1;
+}
+
+.links-section {
+    border-left: 4px solid #fd7e14;
+}
+
+.segmentation-section {
+    border-left: 4px solid #20c997;
+}
+
+.stackability-section {
+    border-left: 4px solid #e83e8c;
+}
+
+.soc-section {
+    border-left: 4px solid #6c757d;
+}
+
+/* Responsive design for smaller screens */
+@media (max-width: 768px) {
+    .reviewer-sections {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+    
+    .reviewer-field-row {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .reviewer-field {
+        min-width: auto;
+    }
+    
+    .reviewer-field.half-width,
+    .reviewer-field.quarter-width {
+        flex: 1 1 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .reviewer-container {
+        padding: 10px;
+    }
+    
+    .reviewer-section {
+        padding: 15px;
+    }
+}
