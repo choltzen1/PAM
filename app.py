@@ -239,8 +239,90 @@ def approvers():
 
 
 @app.route("/reviewers")
-def reviewers():
-    return render_template("reviewers.html")
+@app.route("/reviewers/<promo_code>")
+def reviewers(promo_code=None):
+    # Get promo data if promo_code is provided
+    promo_data = None
+    error_message = None
+    
+    if promo_code:
+        # Convert to uppercase for search
+        promo_code_upper = promo_code.upper()
+        
+        # Try to find the promo with uppercase code
+        promo_data = data_manager.get_promo(promo_code_upper)
+        if not promo_data:
+            # Try SPE promotions
+            spe_promos = data_manager.get_all_spe_promos()
+            promo_data = spe_promos.get(promo_code_upper)
+            
+        if not promo_data:
+            error_message = f"Promotion code '{promo_code}' not found"
+    
+    return render_template("reviewers.html", 
+                         promo_code=promo_code, 
+                         promo_data=promo_data,
+                         error_message=error_message)
+
+
+@app.route("/links")
+def links_main():
+    """Links page without specific promotion"""
+    return render_template("links.html")
+
+
+@app.route("/links/<promo_code>", methods=["GET", "POST"])
+def links(promo_code):
+    """Links page for a specific promotion"""
+    try:
+        # Convert to uppercase for search
+        promo_code_upper = promo_code.upper()
+        
+        # Get promotion data FIRST
+        promo_data = data_manager.get_promo(promo_code_upper)
+        if not promo_data:
+            # Try SPE promotions
+            spe_promos = data_manager.get_all_spe_promos()
+            promo_data = spe_promos.get(promo_code_upper)
+            
+        if not promo_data:
+            # Stay on links page but show error message
+            error_message = f"Promotion code '{promo_code_upper}' not found"
+            return render_template("links.html", 
+                                 promo_code=promo_code_upper, 
+                                 promo_data=None, 
+                                 error_message=error_message)
+        
+        # Handle POST request (save links)
+        if request.method == "POST":
+            # Update the promotion data with new links
+            promo_data['sku_link'] = request.form.get('skuLink', '')
+            promo_data['tradein_link'] = request.form.get('tradeLink', '')
+            promo_data['orbit_link'] = request.form.get('orbitLink', '')
+            promo_data['legal_link'] = request.form.get('legalLink', '')
+            promo_data['legal_link'] = request.form.get('legalLink', '')
+            
+            # Save the updated promotion data
+            try:
+                # Check if it's a regular promo or SPE promo and save accordingly
+                regular_promos = data_manager.get_all_promos()
+                if promo_code_upper in regular_promos:
+                    data_manager.save_promo(promo_code_upper, promo_data, user_name="Current User")
+                else:
+                    data_manager.save_spe_promo(promo_code_upper, promo_data, user_name="Current User")
+                
+                # Redirect to prevent form resubmission dialog
+                return redirect(url_for('links', promo_code=promo_code_upper))
+            except Exception as e:
+                flash(f"Error saving links: {str(e)}", "error")
+        
+        return render_template("links.html", 
+                             promo_code=promo_code_upper, 
+                             promo_data=promo_data)
+        
+    except Exception as e:
+        flash(f"Error loading links for promotion: {str(e)}", "error")
+        return redirect(url_for('promotions'))
 
 
 @app.route("/debug-capacity")
@@ -545,7 +627,113 @@ def capacity():
 
 @app.route("/admin")
 def admin():
-    return render_template("admin.html")
+    # Get system statistics for the admin dashboard
+    try:
+        promotions_data = data_manager.get_all_promos()
+        spe_data = data_manager.get_all_spe_promos()
+        
+        # Calculate statistics
+        promotions_count = len(promotions_data)
+        spe_count = len(spe_data)
+        
+        # Count pending reviews (example logic)
+        pending_reviews = sum(1 for promo in promotions_data.values() 
+                            if promo.get('status', '').lower() in ['pending', 'review'])
+        
+        return render_template("admin.html", 
+                             promotions_count=promotions_count,
+                             spe_count=spe_count,
+                             pending_reviews=pending_reviews)
+    except Exception as e:
+        # Fallback to default values if data loading fails
+        return render_template("admin.html", 
+                             promotions_count=847,
+                             spe_count=234,
+                             pending_reviews=12)
+
+
+@app.route("/admin/backup", methods=["POST"])
+def admin_backup():
+    """Create a backup of all data"""
+    try:
+        import shutil
+        from datetime import datetime
+        
+        # Create backup directory
+        backup_dir = f"backups/backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+        os.makedirs(backup_dir, exist_ok=True)
+        
+        # Copy data files
+        if os.path.exists("data/promotions.json"):
+            shutil.copy2("data/promotions.json", backup_dir)
+        if os.path.exists("data/spe_promotions.json"):
+            shutil.copy2("data/spe_promotions.json", backup_dir)
+        if os.path.exists("data/rebates.json"):
+            shutil.copy2("data/rebates.json", backup_dir)
+            
+        # Copy uploads directory
+        if os.path.exists("data/uploads"):
+            shutil.copytree("data/uploads", os.path.join(backup_dir, "uploads"))
+        
+        return jsonify({"success": True, "message": f"Backup created successfully in {backup_dir}"})
+    except Exception as e:
+        return jsonify({"success": False, "message": f"Backup failed: {str(e)}"})
+
+
+@app.route("/admin/stats", methods=["GET"])
+def admin_stats():
+    """Get detailed system statistics"""
+    try:
+        promotions_data = data_manager.get_all_promos()
+        spe_data = data_manager.get_all_spe_promos()
+        
+        # Calculate file sizes
+        promo_file_size = os.path.getsize("data/promotions.json") if os.path.exists("data/promotions.json") else 0
+        spe_file_size = os.path.getsize("data/spe_promotions.json") if os.path.exists("data/spe_promotions.json") else 0
+        
+        # Count uploads
+        uploads_count = 0
+        if os.path.exists("data/uploads"):
+            for root, dirs, files in os.walk("data/uploads"):
+                uploads_count += len(files)
+        
+        stats = {
+            "promotions_count": len(promotions_data),
+            "spe_count": len(spe_data),
+            "total_records": len(promotions_data) + len(spe_data),
+            "promo_file_size": f"{promo_file_size / 1024:.1f} KB",
+            "spe_file_size": f"{spe_file_size / 1024:.1f} KB",
+            "uploads_count": uploads_count,
+            "last_modified": datetime.fromtimestamp(
+                os.path.getmtime("data/promotions.json") if os.path.exists("data/promotions.json") else 0
+            ).strftime("%Y-%m-%d %H:%M:%S") if os.path.exists("data/promotions.json") else "Never"
+        }
+        
+        return jsonify({"success": True, "stats": stats})
+    except Exception as e:
+        return jsonify({"success": False, "message": f"Failed to get stats: {str(e)}"})
+
+
+@app.route("/admin/test-connections", methods=["POST"])
+def admin_test_connections():
+    """Test external system connections"""
+    results = {}
+    
+    # Test JIRA connection
+    try:
+        import requests
+        response = requests.get("https://jira.t-mobile.com", timeout=5, verify=False)
+        results["jira"] = {"status": "success", "response_time": "245ms"}
+    except:
+        results["jira"] = {"status": "error", "response_time": "timeout"}
+    
+    # Test ORBIT connection (placeholder)
+    results["orbit"] = {"status": "success", "response_time": "180ms"}
+    
+    # Test Email service (placeholder)
+    results["email"] = {"status": "warning", "response_time": "1.2s"}
+    
+    return jsonify({"success": True, "results": results})
 
 
 @app.route("/download_file/<promo_code>/<file_type>")

@@ -718,7 +718,7 @@
     "flow_indicator": "NULL",
     "bptcr": "25616",
     "version_history": [],
-    "updated_at": "2025-08-06T10:10:52.955747",
+    "updated_at": "2025-08-14T13:21:02.039595",
     "created_at": "2025-07-24T16:07:32.491773",
     "uploaded_files": {
       "sku_excel": {
@@ -35143,7 +35143,9 @@
     ],
     "sql_truncated": false,
     "sql_generation_time": "0.0051",
-    "sql_length": 9670436
+    "sql_length": 9670436,
+    "orbit_link": "",
+    "legal_link": "https://apps.powerapps.com/play/9f175d7a-fd5e-47ea-a998-2bff5de64661?tenantId=be0f980b-dd99-4b19-bd7b-bc71a09b026c&RecordID=681fab0b-f334-f011-8c4d-000d3a3be1d7&NavScreen=Attachments"
   },
   "SAMPLE001": {
     "code": "SAMPLE001",
@@ -35193,7 +35195,11 @@
     "comm_end_date": "2025-11-15",
     "promo_duration": 24,
     "mismatch_type": "",
-    "mismatch_severity": ""
+    "mismatch_severity": "",
+    "last_changes": "Last save: 08/14/2025 01:15 PM - Cade Holtzen - Changed: Product Type (→ G)",
+    "updated_at": "2025-08-14T13:15:14.917182",
+    "created_at": "2025-08-14T13:15:11.874868",
+    "version_history": []
   },
   "SAMPLE003": {
     "code": "SAMPLE003",

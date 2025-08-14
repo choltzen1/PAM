@@ -1,0 +1,272 @@
+{% extends "base.html" %}
+{% block title %}Links{% if promo_code %} - {{ promo_code }}{% endif %} - PAM{% endblock %}
+{% block head %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/date_mismatch.css') }}">
+{% endblock %}
+{% block content %}
+<div class="date-mismatch-page">
+  <!-- Header -->
+  <div class="header-container">
+    <div class="header-left">
+      <i class="fas fa-link header-icon"></i>
+      <div>
+        {% if promo_code %}
+        <h1>Links - {{ promo_code }}</h1>
+        <p class="subtitle">{% if promo_data and promo_data.promotion_name %}{{ promo_data.promotion_name }}{% else %}Promotion links management{% endif %}</p>
+        {% else %}
+        <h1>Links Management</h1>
+        <p class="subtitle">Manage promotion links and resources</p>
+        {% endif %}
+      </div>
+    </div>
+    <div class="header-right">
+      {% if promo_code %}
+      <a href="{{ url_for('promotions') }}" class="btn btn-secondary">
+        <i class="fas fa-arrow-left"></i> Back to Promotions
+      </a>
+      {% endif %}
+      <button class="btn btn-primary" onclick="refreshData()">
+        <i class="fas fa-sync-alt"></i> Refresh Data
+      </button>
+      <span class="user-info">{{ user_name }}</span>
+    </div>
+  </div>
+
+  <!-- Search Box -->
+  <div class="content-container">
+    <div class="search-filters mb-3">
+      <div class="filter-group">
+        <label for="promoSearch">Search Promo Code</label>
+        <input type="text" id="promoSearch" class="form-control" placeholder="Enter promo code" 
+               value="{{ promo_code or '' }}" onkeypress="handleSearchKeyPress(event)">
+      </div>
+      <div class="button-group">
+        <button class="btn btn-primary" onclick="searchPromo()">
+          <i class="fas fa-search"></i> Search
+        </button>
+      </div>
+    </div>
+
+    {% if error_message %}
+    <div class="alert alert-warning alert-dismissible fade show" role="alert">
+      <i class="fas fa-exclamation-triangle"></i> {{ error_message }}
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endif %}
+
+    {% if promo_code and promo_data %}
+    <!-- Promotion-specific links content -->
+    <div class="promotion-info">
+      <div class="card mb-4">
+        <div class="card-body">
+          <div class="row">
+            <div class="col">
+              <p><strong>Promotion Code:</strong> {{ promo_data.code }} &nbsp;&nbsp;&nbsp; <strong>Promotion Name:</strong> {{ promo_data.bill_facing_name or 'N/A' }} &nbsp;&nbsp;&nbsp; <strong>Start Date:</strong> {{ promo_data.promo_start_date or 'N/A' }} &nbsp;&nbsp;&nbsp; <strong>End Date:</strong> {{ promo_data.promo_end_date or 'N/A' }} &nbsp;&nbsp;&nbsp; <strong>Status:</strong> {{ promo_data.status or 'Active' }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Links Management Form -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <h5><i class="fas fa-link"></i> Promotion Links</h5>
+        </div>
+        <div class="card-body">
+          <form id="linksForm" method="post">
+            <!-- Link to Orbit -->
+            <div class="mb-3">
+              <label for="orbitLink" class="form-label">Link to Orbit:</label>
+              <input type="text" class="form-control" id="orbitLink" name="orbitLink" 
+                     value="{{ promo_data.orbit_link or '' }}"
+                     placeholder="Enter Orbit link URL">
+            </div>
+
+            <!-- SKU Link Address -->
+            <div class="mb-3">
+              <label for="skuLink" class="form-label">SKU Link Address:</label>
+              <input type="text" class="form-control" id="skuLink" name="skuLink" 
+                     value="{{ promo_data.sku_link or '' }}" 
+                     placeholder="Enter SKU link address">
+            </div>
+
+            <!-- Trade Link Address -->
+            <div class="mb-3">
+              <label for="tradeLink" class="form-label">Trade Link Address:</label>
+              <input type="text" class="form-control" id="tradeLink" name="tradeLink" 
+                     value="{{ promo_data.tradein_link or '' }}" 
+                     placeholder="Enter Trade link address">
+            </div>
+
+            <!-- Legal Link -->
+            <div class="mb-3">
+              <label for="legalLink" class="form-label">Legal Link:</label>
+              <input type="text" class="form-control" id="legalLink" name="legalLink" 
+                     value="{{ promo_data.legal_link or '' }}"
+                     placeholder="Enter Legal link URL">
+            </div>
+
+            <!-- Save Button -->
+            <div class="text-end">
+              <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save"></i> Save Links
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+    {% elif promo_code and not promo_data %}
+    <!-- Promo code searched but not found -->
+    <div class="alert alert-warning" role="alert">
+      <i class="fas fa-exclamation-triangle"></i> No promotion found with code "{{ promo_code }}"
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<style>
+.placeholder-content {
+  text-align: center;
+  padding: 4rem 2rem;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  max-width: 600px;
+  margin: 2rem auto;
+}
+
+.placeholder-icon {
+  margin-bottom: 1rem;
+}
+
+.feature-preview {
+  background: #f8f9fa;
+  padding: 1.5rem;
+  border-radius: 6px;
+  margin-top: 2rem;
+}
+
+.feature-preview ul {
+  display: inline-block;
+  text-align: left;
+  margin: 0;
+}
+
+.feature-preview li {
+  margin-bottom: 0.5rem;
+  color: #6c757d;
+}
+
+.search-filters {
+  background: #f8f9fa;
+  padding: 1rem;
+  border-radius: 4px;
+  display: flex;
+  align-items: flex-end;
+  gap: 1rem;
+  border: 1px solid #dee2e6;
+}
+
+.filter-group {
+  flex: 1;
+  max-width: 300px;
+}
+
+.filter-group label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #495057;
+  margin-bottom: 0.25rem;
+}
+
+.filter-group .form-control {
+  font-size: 0.875rem;
+  height: 38px;
+  border-radius: 4px;
+  margin: 0;
+  padding: 0.375rem 0.75rem;
+}
+
+.button-group {
+  display: flex;
+  align-items: flex-end;
+}
+
+.search-filters .btn {
+  height: 38px;
+  white-space: nowrap;
+  background-color: #E20074;
+  border-color: #E20074;
+  border-radius: 4px;
+  margin: 0;
+  padding: 0.375rem 0.75rem;
+}
+
+.search-filters .btn:hover {
+  background-color: #c1005d;
+  border-color: #c1005d;
+}
+</style>
+
+<script>
+function refreshData() {
+  window.location.reload();
+}
+
+function searchPromo() {
+  const promoCode = document.getElementById('promoSearch').value.trim().toUpperCase();
+  if (promoCode) {
+    window.location.href = `/links/${promoCode}`;
+  } else {
+    window.location.href = `/links`;
+  }
+}
+
+function handleSearchKeyPress(event) {
+  if (event.key === 'Enter') {
+    searchPromo();
+  }
+}
+
+// Focus on search box when page loads
+document.addEventListener('DOMContentLoaded', function() {
+  document.getElementById('promoSearch').focus();
+  
+  // Add submit handler to show save message
+  const form = document.getElementById('linksForm');
+  if (form) {
+    form.addEventListener('submit', function(e) {
+      // Let the form submit normally, but show message on successful save
+      const saveBtn = form.querySelector('button[type="submit"]');
+      
+      // Remove any existing message
+      const existingMessage = document.querySelector('.inline-save-message');
+      if (existingMessage) {
+        existingMessage.remove();
+      }
+      
+      // Add message after form submits successfully
+      setTimeout(() => {
+        const messageEl = document.createElement('span');
+        messageEl.className = 'inline-save-message';
+        messageEl.textContent = 'Links saved successfully';
+        messageEl.style.cssText = 'color: #e20074; font-size: 14px; font-weight: 500; margin-left: 15px;';
+        
+        // Insert after the save button
+        saveBtn.parentNode.insertBefore(messageEl, saveBtn.nextSibling);
+        
+        // Remove message after 5 seconds
+        setTimeout(() => {
+          if (messageEl.parentNode) {
+            messageEl.remove();
+          }
+        }, 5000);
+      }, 100); // Small delay to ensure form submitted
+    });
+  }
+});
+</script>
+
+{% endblock %}
