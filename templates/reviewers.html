@@ -143,6 +143,10 @@
               <label>Max GSM Ct:</label>
               <span>{{ promo_data.max_gsm_count or '' }}</span>
             </div>
+            <div class="detail-item">
+              <label>DCD Web In-Cart:</label>
+              <span>{{ promo_data.dcd_web_cart or '' }}</span>
+            </div>
           </div>
         </div>
 
@@ -181,10 +185,6 @@
             <div class="detail-item">
               <label>NSEIP Drop:</label>
               <span>{{ 'Yes' if promo_data.nseip_drop == 'Y' else 'Yes' }}</span>
-            </div>
-            <div class="detail-item">
-              <label>DCD Web In-Cart:</label>
-              <span>{{ promo_data.dcd_web_cart or '' }}</span>
             </div>
             <div class="detail-item">
               <label>Store Grp:</label>
@@ -313,9 +313,9 @@
         </div>
 
         <!-- Groupings Section -->
-        <div class="info-box reviewer-section">
+        <div class="info-box reviewer-section groupings-section">
           <div class="info-title">Groupings</div>
-          <div class="detail-grid">
+          <div class="detail-grid groupings-grid">
             <div class="detail-item">
               <label>SOC Grouping:</label>
               <span>{{ promo_data.soc_grouping or '108' }}</span>
@@ -324,7 +324,7 @@
               <label>Account Type:</label>
               <span>{{ promo_data.account_type or 'A01' }}</span>
             </div>
-            <div class="detail-item" style="grid-column: 1 / -1;">
+            <div class="detail-item">
               <label>Sales Application:</label>
               <span>{{ promo_data.sales_application or 'S01' }}</span>
             </div>
@@ -397,6 +397,11 @@
   gap: 0.5rem;
 }
 
+/* Single column layout for groupings section */
+.groupings-grid {
+  grid-template-columns: 1fr !important;
+}
+
 .detail-item {
   display: flex;
   justify-content: space-between;
@@ -407,7 +412,16 @@
 }
 
 .detail-item:last-child {
-  border-bottom: none;
+  border-bottom: none !important;
+}
+
+/* Remove any trailing borders from info boxes */
+.info-box:last-child {
+  border-bottom: none !important;
+}
+
+.info-box .detail-grid .detail-item:last-child {
+  border-bottom: none !important;
 }
 
 .detail-item label {

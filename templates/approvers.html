@@ -140,8 +140,16 @@
 
 .approvers-table tbody td {
   padding: 1rem 0.75rem;
-  border-bottom: 1px solid #e9ecef;
   vertical-align: middle;
+  border: none !important; /* Force remove ALL borders from cells */
+}
+
+.approvers-table tbody tr {
+  border-bottom: 1px solid #e9ecef !important; /* Single continuous line per row */
+}
+
+.approvers-table tbody tr:last-child {
+  border-bottom: none !important; /* Remove border from last row */
 }
 
 .approvers-table tbody tr:hover {
