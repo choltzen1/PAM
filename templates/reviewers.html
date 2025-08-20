@@ -23,514 +23,413 @@
 {% endblock %}
 
 {% block content %}
-
-  <div class="container wide-container" style="height: calc(100vh - 120px); overflow-y: auto; padding: 2rem 1vw;">
-    <!-- Search controls -->
-    <div class="search-section" style="margin-bottom: 1.5rem; width: 100%; display: flex; justify-content: flex-start; flex-shrink: 0;">
-      <div style="display: flex; gap: 1rem; align-items: center; background: #fff; padding: 1.25rem 2rem; border-radius: 10px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); max-width: fit-content; min-height: 60px;">
-        <label for="promo-search" style="font-weight: 600; color: var(--tmobile-magenta); margin: 0; line-height: 1; display: flex; align-items: center;">Search Promo Code</label>
-        <input
-          type="text"
-          id="promo-search"
-          name="promo_code"
-          class="form-control"
-          style="width: 300px; height: 38px; margin: 0; box-sizing: border-box;"
-          placeholder="Enter promo code"
-          value="{{ promo_code or '' }}"
-          onkeypress="handleSearchKeyPress(event)"
-        />
-        <button class="btn btn-primary" onclick="searchPromo()" style="height: 38px; display: flex; align-items: center; margin: 0;">Search</button>
-        {% if promo_code %}
-        <a href="{{ url_for('promotions') }}" class="btn btn-secondary" style="height: 38px; display: flex; align-items: center; margin: 0; text-decoration: none;">Back to Promotions</a>
-        {% endif %}
-      </div>
+<div class="content-container" style="height: 100%; display: flex; flex-direction: column;">
+  <!-- Search controls -->
+  <div class="search-section" style="margin-bottom: 1.5rem; flex-shrink: 0;">
+    <div style="display: flex; gap: 1rem; align-items: center; background: #fff; padding: 1.25rem 2rem; border-radius: 10px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); max-width: fit-content; min-height: 60px;">
+      <label for="promo-search" style="font-weight: 600; color: var(--tmobile-magenta); margin: 0; line-height: 1; display: flex; align-items: center;">Search Promo Code</label>
+      <input
+        type="text"
+        id="promo-search"
+        name="promo_code"
+        class="form-control"
+        style="width: 300px; height: 38px; margin: 0; box-sizing: border-box; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;"
+        placeholder="Enter promo code"
+        value="{{ promo_code or '' }}"
+        onkeypress="handleSearchKeyPress(event)"
+      />
+      <button class="btn btn-primary" onclick="searchPromo()" style="height: 38px; display: flex; align-items: center; margin: 0; padding: 0.5rem 1rem; background: var(--tmobile-magenta); color: white; border: none; border-radius: 4px; cursor: pointer;">Search</button>
     </div>
-
-    {% if error_message %}
-    <div class="alert alert-warning" style="background: #fff3cd; border: 1px solid #ffeaa7; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; flex-shrink: 0;">
-      <i class="bi bi-exclamation-triangle" style="color: #856404;"></i> {{ error_message }}
-    </div>
-    {% endif %}
-
-    {% if promo_code and promo_data %}
-    <div class="reviewer-grid">
-      <!-- Row 1 -->
-      <div class="reviewer-row">
-        <!-- Details Section -->
-        <div class="info-box reviewer-section">
-          <div class="info-title">Details</div>
-          <div class="detail-grid">
-            <div class="detail-item">
-              <label>Promo Owner:</label>
-              <span>{{ promo_data.owner or 'Cade Holtzen' }}</span>
-            </div>
-            <div class="detail-item">
-              <label>Bill Facing Name:</label>
-              <span>{{ promo_data.bill_facing_name or 'Mobile Internet 1/29/2025' }}</span>
-            </div>
-            <div class="detail-item">
-              <label>Orbit ID:</label>
-              <span>{{ promo_data.orbit_id or '25616' }}</span>
-            </div>
-            <div class="detail-item">
-              <label>PJ Code:</label>
-              <span>{{ promo_data.pj_code or '' }}</span>
-            </div>
-            <div class="detail-item">
-              <label>Trade-In:</label>
-              <span>{{ promo_data.trade_in_group_id or '' }}</span>
-            </div>
-            <div class="detail-item">
-              <label>For/In:</label>
-              <span>{{ promo_data.for_in or '' }}</span>
-            </div>
-            <div class="detail-item">
-              <label>Promo % Discount:</label>
-              <span>{{ promo_data.discount or '' }}</span>
-            </div>
-            <div class="detail-item">
-              <label>Broken Trade:</label>
-              <span>{{ promo_data.broken_trade or '' }}</span>
-            </div>
-            <div class="detail-item">
-              <label>Promo Amount:</label>
-              <span>{{ promo_data.amount or '' }}</span>
-            </div>
-            <div class="detail-item">
-              <label>MEA:</label>
-              <span>{{ promo_data.mea or '' }}</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Requirements Section -->
-        <div class="info-box reviewer-section">
-          <div class="info-title">Requirements</div>
-          <div class="detail-grid">
-            <div class="detail-item">
-              <label>Device Sales Type:</label>
-              <span>{{ promo_data.device_sales_type or '' }}</span>
-            </div>
-            <div class="detail-item">
-              <label>Active Line Required:</label>
-              <span>{{ 'Yes' if promo_data.active_line_required == 'Y' else 'Yes' }}</span>
-            </div>
-            <div class="detail-item">
-              <label>Maintain Active Line:</label>
-              <span>{{ 'Yes' if promo_data.maintain_active_line == 'Y' else 'Yes' }}</span>
-            </div>
-            <div class="detail-item">
-              <label>Maintain SOC:</label>
-              <span>{{ 'Yes' if promo_data.maintain_soc == 'Y' else 'Yes' }}</span>
-            </div>
-            <div class="detail-item">
-              <label>Product Type:</label>
-              <span>{{ promo_data.product_type or 'B' }}</span>
-            </div>
-            <div class="detail-item">
-              <label>Activation Type:</label>
-              <span>{{ promo_data.activation_type or '*' }}</span>
-            </div>
-            <div class="detail-item">
-              <label>Limit Per BAN:</label>
-              <span>{{ promo_data.limit_per_ban or '' }}</span>
-            </div>
-            <div class="detail-item">
-              <label>Min GSM Ct:</label>
-              <span>{{ promo_data.min_gsm_count or '' }}</span>
-            </div>
-            <div class="detail-item">
-              <label>Max GSM Ct:</label>
-              <span>{{ promo_data.max_gsm_count or '' }}</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Additional Requirements Section -->
-        <div class="info-box reviewer-section">
-          <div class="info-title">Additional Requirements</div>
-          <div class="detail-grid">
-            <div class="detail-item">
-              <label>Finance Type:</label>
-              <span>{{ promo_data.finance_type or '' }}</span>
-            </div>
-            <div class="detail-item">
-              <label>Carrier Freedom:</label>
-              <span>{{ promo_data.carrier_freedom or '' }}</span>
-            </div>
-            <div class="detail-item">
-              <label>GQTR:</label>
-              <span>{{ promo_data.gqtr or '' }}</span>
-            </div>
-            <div class="detail-item">
-              <label>Incremental Lift Total:</label>
-              <span>{{ promo_data.incremental_lift_total or '' }}</span>
-            </div>
-            <div class="detail-item">
-              <label>Total Offer Spend:</label>
-              <span>{{ promo_data.total_offer_spend or '' }}</span>
-            </div>
-            <div class="detail-item">
-              <label>Anticipated Volume Take Rates Total:</label>
-              <span>{{ promo_data.anticipated_volume_take_rates_total or '' }}</span>
-            </div>
-            <div class="detail-item">
-              <label>FPD Display Promo:</label>
-              <span>{{ 'Yes' if promo_data.fpd_display_promo == 'Y' else 'Yes' }}</span>
-            </div>
-            <div class="detail-item">
-              <label>NSEIP Drop:</label>
-              <span>{{ 'Yes' if promo_data.nseip_drop == 'Y' else 'Yes' }}</span>
-            </div>
-            <div class="detail-item">
-              <label>DCD Web In-Cart:</label>
-              <span>{{ promo_data.dcd_web_cart or '' }}</span>
-            </div>
-            <div class="detail-item">
-              <label>Store Grp:</label>
-              <span>{{ promo_data.store_group or '*' }}</span>
-            </div>
-            <div class="detail-item">
-              <label>Market Grp:</label>
-              <span>{{ promo_data.market_group or '*' }}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Row 2 -->
-      <div class="reviewer-row">
-        <!-- Dates & Times Section -->
-        <div class="info-box reviewer-section">
-          <div class="info-title">Dates & Times</div>
-          <div class="detail-grid">
-            <div class="detail-item">
-              <label>Promo Start Date:</label>
-              <span>{{ promo_data.promo_start_date or '2028-07-17' }}</span>
-            </div>
-            <div class="detail-item">
-              <label>Promo End Date:</label>
-              <span>{{ promo_data.promo_end_date or '2028-01-14' }}</span>
-            </div>
-            <div class="detail-item">
-              <label>Promo Duration:</label>
-              <span>{{ promo_data.promo_duration or '' }}</span>
-            </div>
-            <div class="detail-item">
-              <label>Application Grace Period:</label>
-              <span>{{ promo_data.application_grace_period or 'G14' }}</span>
-            </div>
-            <div class="detail-item">
-              <label>Trade-In Grace Period:</label>
-              <span>{{ promo_data.trade_in_grace or '' }}</span>
-            </div>
-            <div class="detail-item">
-              <label>Delay Time:</label>
-              <span>{{ promo_data.delay_time or '' }}</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Links Section -->
-        <div class="info-box reviewer-section">
-          <div class="info-title">Links</div>
-          <div class="detail-grid">
-            <div class="detail-item">
-              <label>C2 Article:</label>
-              <span>
-                {% if promo_data.c2_article %}
-                  <a href="{{ promo_data.c2_article }}" target="_blank">{{ promo_data.c2_article }}</a>
-                {% else %}
-                  
-                {% endif %}
-              </span>
-            </div>
-            <div class="detail-item" style="grid-column: 1 / -1;">
-              <label>SKU Link:</label>
-              <span>
-                {% if promo_data.sku_link %}
-                  <a href="{{ promo_data.sku_link }}" target="_blank" class="sku-link">SKU Link</a>
-                {% else %}
-                  
-                {% endif %}
-              </span>
-            </div>
-            <div class="detail-item" style="grid-column: 1 / -1;">
-              <label>Trade-In Link:</label>
-              <span>
-                {% if promo_data.tradein_link %}
-                  <a href="{{ promo_data.tradein_link }}" target="_blank">{{ promo_data.tradein_link }}</a>
-                {% else %}
-                  
-                {% endif %}
-              </span>
-            </div>
-            <div class="detail-item" style="grid-column: 1 / -1;">
-              <label>Legal Disclaimer:</label>
-              <span>
-                {% if promo_data.legal_disclaimer_link %}
-                  <a href="{{ promo_data.legal_disclaimer_link }}" target="_blank">{{ promo_data.legal_disclaimer_link }}</a>
-                {% else %}
-                  
-                {% endif %}
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Row 3 -->
-      <div class="reviewer-row">
-        <!-- Segmentation Section -->
-        <div class="info-box reviewer-section">
-          <div class="info-title">Segmentation</div>
-          <div class="detail-grid">
-            <div class="detail-item" style="grid-column: 1 / -1;">
-              <label>Segment Name:</label>
-              <span>{{ promo_data.segment_name or '' }}</span>
-            </div>
-            <div class="detail-item" style="grid-column: 1 / -1;">
-              <label>Segment Level:</label>
-              <span>{{ promo_data.segment_level or '' }}</span>
-            </div>
-            <div class="detail-item" style="grid-column: 1 / -1;">
-              <label>Sub Segment:</label>
-              <span>{{ promo_data.sub_segment or '' }}</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Notes Section -->
-        <div class="info-box reviewer-section">
-          <div class="info-title">Notes</div>
-          <div class="notes-content">
-            {% if promo_data.notes %}
-              {{ promo_data.notes }}
-            {% else %}
-              
-            {% endif %}
-          </div>
-        </div>
-
-        <!-- Groupings Section -->
-        <div class="info-box reviewer-section">
-          <div class="info-title">Groupings</div>
-          <div class="detail-grid">
-            <div class="detail-item">
-              <label>SOC Grouping:</label>
-              <span>{{ promo_data.soc_grouping or '108' }}</span>
-            </div>
-            <div class="detail-item">
-              <label>Account Type:</label>
-              <span>{{ promo_data.account_type or 'A01' }}</span>
-            </div>
-            <div class="detail-item" style="grid-column: 1 / -1;">
-              <label>Sales Application:</label>
-              <span>{{ promo_data.sales_application or 'S01' }}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-    {% endif %}
   </div>
 
+  {% if error_message %}
+  <div class="alert alert-warning" style="background: #fff3cd; border: 1px solid #ffeaa7; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; flex-shrink: 0;">
+    <i class="bi bi-exclamation-triangle" style="color: #856404;"></i> {{ error_message }}
+  </div>
+  {% endif %}
+
+  {% if promo_code and promo_data %}
+  <div style="flex: 1; display: flex; flex-direction: column; min-height: 0;">
+    <div class="reviewer-grid" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.5rem; padding: 1rem; flex: 1; min-height: 0; height: 100%; grid-template-rows: 1fr 1fr 1fr auto;">
+      <!-- Details Section -->
+      <div class="card reviewer-section" style="display: flex; flex-direction: column; height: 100%;">
+        <div class="info-title" style="font-size: 1.2rem; font-weight: 600; color: var(--tmobile-magenta); margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid var(--tmobile-gray);">Details</div>
+        <div class="detail-grid" style="display: grid; grid-template-columns: 1fr; gap: 0.75rem; flex: 1; overflow-y: auto;">
+          <div class="detail-item" style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid #eee;">
+            <label style="font-weight: 600; color: #333;">Promo Owner:</label>
+            <span style="color: #666;">{{ promo_data.owner or 'Cade Holtzen' }}</span>
+          </div>
+          <div class="detail-item" style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid #eee;">
+            <label style="font-weight: 600; color: #333;">Bill Facing Name:</label>
+            <span style="color: #666;">{{ promo_data.bill_facing_name or 'Mobile Internet 1/29/2025' }}</span>
+          </div>
+          <div class="detail-item" style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid #eee;">
+            <label style="font-weight: 600; color: #333;">Orbit ID:</label>
+            <span style="color: #666;">{{ promo_data.orbit_id or '25616' }}</span>
+          </div>
+          <div class="detail-item" style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid #eee;">
+            <label style="font-weight: 600; color: #333;">PJ Code:</label>
+            <span style="color: #666;">{{ promo_data.pj_code or '' }}</span>
+          </div>
+          <div class="detail-item" style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid #eee;">
+            <label style="font-weight: 600; color: #333;">Trade-In:</label>
+            <span style="color: #666;">{{ promo_data.trade_in_group_id or '' }}</span>
+          </div>
+          <div class="detail-item" style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid #eee;">
+            <label style="font-weight: 600; color: #333;">For/In:</label>
+            <span style="color: #666;">{{ promo_data.for_in or '' }}</span>
+          </div>
+          <div class="detail-item" style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid #eee;">
+            <label style="font-weight: 600; color: #333;">Promo % Discount:</label>
+            <span style="color: #666;">{{ promo_data.discount or '' }}</span>
+          </div>
+          <div class="detail-item" style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid #eee;">
+            <label style="font-weight: 600; color: #333;">Broken Trade:</label>
+            <span style="color: #666;">{{ promo_data.broken_trade or '' }}</span>
+          </div>
+          <div class="detail-item" style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid #eee;">
+            <label style="font-weight: 600; color: #333;">Promo Amount:</label>
+            <span style="color: #666;">{{ promo_data.amount or '' }}</span>
+          </div>
+          <div class="detail-item" style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0;">
+            <label style="font-weight: 600; color: #333;">MEA:</label>
+            <span style="color: #666;">{{ promo_data.mea or '' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Requirements Section -->
+      <div class="card reviewer-section" style="display: flex; flex-direction: column; height: 100%;">
+        <div class="info-title" style="font-size: 1.2rem; font-weight: 600; color: var(--tmobile-magenta); margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid var(--tmobile-gray);">Requirements</div>
+        <div class="detail-grid" style="display: grid; grid-template-columns: 1fr; gap: 0.75rem; flex: 1; overflow-y: auto;">
+          <div class="detail-item" style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid #eee;">
+            <label style="font-weight: 600; color: #333;">Device Sales Type:</label>
+            <span style="color: #666;">{{ promo_data.device_sales_type or '' }}</span>
+          </div>
+          <div class="detail-item" style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid #eee;">
+            <label style="font-weight: 600; color: #333;">Active Line Required:</label>
+            <span style="color: #666;">{{ 'Yes' if promo_data.active_line_required == 'Y' else 'Yes' }}</span>
+          </div>
+          <div class="detail-item" style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid #eee;">
+            <label style="font-weight: 600; color: #333;">Maintain Active Line:</label>
+            <span style="color: #666;">{{ 'Yes' if promo_data.maintain_active_line == 'Y' else 'Yes' }}</span>
+          </div>
+          <div class="detail-item" style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid #eee;">
+            <label style="font-weight: 600; color: #333;">Maintain SOC:</label>
+            <span style="color: #666;">{{ 'Yes' if promo_data.maintain_soc == 'Y' else 'Yes' }}</span>
+          </div>
+          <div class="detail-item" style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid #eee;">
+            <label style="font-weight: 600; color: #333;">Product Type:</label>
+            <span style="color: #666;">{{ promo_data.product_type or 'B' }}</span>
+          </div>
+          <div class="detail-item" style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid #eee;">
+            <label style="font-weight: 600; color: #333;">Activation Type:</label>
+            <span style="color: #666;">{{ promo_data.activation_type or '*' }}</span>
+          </div>
+          <div class="detail-item" style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid #eee;">
+            <label style="font-weight: 600; color: #333;">Limit Per BAN:</label>
+            <span style="color: #666;">{{ promo_data.limit_per_ban or '' }}</span>
+          </div>
+          <div class="detail-item" style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid #eee;">
+            <label style="font-weight: 600; color: #333;">Min GSM Ct:</label>
+            <span style="color: #666;">{{ promo_data.min_gsm_count or '' }}</span>
+          </div>
+          <div class="detail-item" style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0;">
+            <label style="font-weight: 600; color: #333;">Max GSM Ct:</label>
+            <span style="color: #666;">{{ promo_data.max_gsm_count or '' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Additional Requirements Section -->
+      <div class="card reviewer-section" style="display: flex; flex-direction: column; height: 100%;">
+        <div class="info-title" style="font-size: 1.2rem; font-weight: 600; color: var(--tmobile-magenta); margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid var(--tmobile-gray);">Additional Requirements</div>
+        <div class="detail-grid" style="display: grid; grid-template-columns: 1fr; gap: 0.75rem; flex: 1; overflow-y: auto;">
+          <div class="detail-item" style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid #eee;">
+            <label style="font-weight: 600; color: #333;">Min Credit Class:</label>
+            <span style="color: #666;">{{ promo_data.min_credit_class or '' }}</span>
+          </div>
+          <div class="detail-item" style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid #eee;">
+            <label style="font-weight: 600; color: #333;">Max Credit Class:</label>
+            <span style="color: #666;">{{ promo_data.max_credit_class or '' }}</span>
+          </div>
+          <div class="detail-item" style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid #eee;">
+            <label style="font-weight: 600; color: #333;">Tenor Type:</label>
+            <span style="color: #666;">{{ promo_data.tenor_type or '' }}</span>
+          </div>
+          <div class="detail-item" style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid #eee;">
+            <label style="font-weight: 600; color: #333;">Tenor Length:</label>
+            <span style="color: #666;">{{ promo_data.tenor_length or '' }}</span>
+          </div>
+          <div class="detail-item" style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid #eee;">
+            <label style="font-weight: 600; color: #333;">Exclude Group:</label>
+            <span style="color: #666;">{{ promo_data.exclude_group or '' }}</span>
+          </div>
+          <div class="detail-item" style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid #eee;">
+            <label style="font-weight: 600; color: #333;">BYOD:</label>
+            <span style="color: #666;">{{ promo_data.byod or '' }}</span>
+          </div>
+          <div class="detail-item" style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid #eee;">
+            <label style="font-weight: 600; color: #333;">Account Type:</label>
+            <span style="color: #666;">{{ promo_data.account_type or '' }}</span>
+          </div>
+          <div class="detail-item" style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid #eee;">
+            <label style="font-weight: 600; color: #333;">Add Line Req:</label>
+            <span style="color: #666;">{{ promo_data.add_line_req or '' }}</span>
+          </div>
+          <div class="detail-item" style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0;">
+            <label style="font-weight: 600; color: #333;">Port-In Req:</label>
+            <span style="color: #666;">{{ promo_data.port_in_req or '' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Row 2: Dates & Times, Links, Finance & Business -->
+      <div class="card reviewer-section" style="display: flex; flex-direction: column; height: 100%;">
+        <div class="info-title" style="font-size: 1.2rem; font-weight: 600; color: var(--tmobile-magenta); margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid var(--tmobile-gray);">Dates & Times</div>
+        <div class="detail-grid" style="display: grid; grid-template-columns: 1fr; gap: 0.75rem; flex: 1; overflow-y: auto;">
+          <div class="detail-item" style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid #eee;">
+            <label style="font-weight: 600; color: #333;">Promo Start Date:</label>
+            <span style="color: #666;">{{ promo_data.promo_start_date or '2028-07-17' }}</span>
+          </div>
+          <div class="detail-item" style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid #eee;">
+            <label style="font-weight: 600; color: #333;">Promo End Date:</label>
+            <span style="color: #666;">{{ promo_data.promo_end_date or '2028-01-14' }}</span>
+          </div>
+          <div class="detail-item" style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid #eee;">
+            <label style="font-weight: 600; color: #333;">Promo Duration:</label>
+            <span style="color: #666;">{{ promo_data.promo_duration or '' }}</span>
+          </div>
+          <div class="detail-item" style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid #eee;">
+            <label style="font-weight: 600; color: #333;">Application Grace Period:</label>
+            <span style="color: #666;">{{ promo_data.application_grace_period or 'G14' }}</span>
+          </div>
+          <div class="detail-item" style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid #eee;">
+            <label style="font-weight: 600; color: #333;">Trade-In Grace Period:</label>
+            <span style="color: #666;">{{ promo_data.trade_in_grace or '' }}</span>
+          </div>
+          <div class="detail-item" style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0;">
+            <label style="font-weight: 600; color: #333;">Delay Time:</label>
+            <span style="color: #666;">{{ promo_data.delay_time or '' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card reviewer-section" style="display: flex; flex-direction: column; height: 100%;">
+        <div class="info-title" style="font-size: 1.2rem; font-weight: 600; color: var(--tmobile-magenta); margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid var(--tmobile-gray);">Links & References</div>
+        <div class="detail-grid" style="display: grid; grid-template-columns: 1fr; gap: 0.75rem; flex: 1; overflow-y: auto;">
+          <div class="detail-item" style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid #eee;">
+            <label style="font-weight: 600; color: #333;">C2 Article:</label>
+            <span style="color: #666;">
+              {% if promo_data.c2_article %}
+                <a href="{{ promo_data.c2_article }}" target="_blank" style="color: var(--tmobile-magenta); text-decoration: none;">View Article</a>
+              {% else %}
+                N/A
+              {% endif %}
+            </span>
+          </div>
+          <div class="detail-item" style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid #eee;">
+            <label style="font-weight: 600; color: #333;">SKU Link:</label>
+            <span style="color: #666;">
+              {% if promo_data.sku_link %}
+                <a href="{{ promo_data.sku_link }}" target="_blank" style="background: var(--tmobile-magenta); color: white; padding: 0.25rem 0.5rem; border-radius: 4px; text-decoration: none; font-size: 0.85rem;">SKU Link</a>
+              {% else %}
+                N/A
+              {% endif %}
+            </span>
+          </div>
+          <div class="detail-item" style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid #eee;">
+            <label style="font-weight: 600; color: #333;">Trade-In Link:</label>
+            <span style="color: #666;">
+              {% if promo_data.tradein_link %}
+                <a href="{{ promo_data.tradein_link }}" target="_blank" style="color: var(--tmobile-magenta); text-decoration: none;">Trade-In Details</a>
+              {% else %}
+                N/A
+              {% endif %}
+            </span>
+          </div>
+          <div class="detail-item" style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0;">
+            <label style="font-weight: 600; color: #333;">Legal Disclaimer:</label>
+            <span style="color: #666;">
+              {% if promo_data.legal_disclaimer_link %}
+                <a href="{{ promo_data.legal_disclaimer_link }}" target="_blank" style="color: var(--tmobile-magenta); text-decoration: none;">Legal Terms</a>
+              {% else %}
+                N/A
+              {% endif %}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card reviewer-section" style="display: flex; flex-direction: column; height: 100%;">
+        <div class="info-title" style="font-size: 1.2rem; font-weight: 600; color: var(--tmobile-magenta); margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid var(--tmobile-gray);">Finance & Business</div>
+        <div class="detail-grid" style="display: grid; grid-template-columns: 1fr; gap: 0.75rem; flex: 1; overflow-y: auto;">
+          <div class="detail-item" style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid #eee;">
+            <label style="font-weight: 600; color: #333;">Finance Type:</label>
+            <span style="color: #666;">{{ promo_data.finance_type or '' }}</span>
+          </div>
+          <div class="detail-item" style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid #eee;">
+            <label style="font-weight: 600; color: #333;">GQTR:</label>
+            <span style="color: #666;">{{ promo_data.gqtr or '' }}</span>
+          </div>
+          <div class="detail-item" style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid #eee;">
+            <label style="font-weight: 600; color: #333;">Total Offer Spend:</label>
+            <span style="color: #666;">{{ promo_data.total_offer_spend or '' }}</span>
+          </div>
+          <div class="detail-item" style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid #eee;">
+            <label style="font-weight: 600; color: #333;">Store Group:</label>
+            <span style="color: #666;">{{ promo_data.store_group or '*' }}</span>
+          </div>
+          <div class="detail-item" style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid #eee;">
+            <label style="font-weight: 600; color: #333;">Market Group:</label>
+            <span style="color: #666;">{{ promo_data.market_group or '*' }}</span>
+          </div>
+          <div class="detail-item" style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0;">
+            <label style="font-weight: 600; color: #333;">SOC Grouping:</label>
+            <span style="color: #666;">{{ promo_data.soc_grouping or '108' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Row 3: Segmentation, Notes, and Additional Business Info -->
+      <div class="card reviewer-section" style="display: flex; flex-direction: column; height: 100%;">
+        <div class="info-title" style="font-size: 1.2rem; font-weight: 600; color: var(--tmobile-magenta); margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid var(--tmobile-gray);">Segmentation</div>
+        <div class="detail-grid" style="display: grid; grid-template-columns: 1fr; gap: 0.75rem; flex: 1; overflow-y: auto;">
+          <div class="detail-item" style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid #eee;">
+            <label style="font-weight: 600; color: #333;">Segment Name:</label>
+            <span style="color: #666;">{{ promo_data.segment_name or '' }}</span>
+          </div>
+          <div class="detail-item" style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid #eee;">
+            <label style="font-weight: 600; color: #333;">Segment Level:</label>
+            <span style="color: #666;">{{ promo_data.segment_level or '' }}</span>
+          </div>
+          <div class="detail-item" style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0;">
+            <label style="font-weight: 600; color: #333;">Sub Segment:</label>
+            <span style="color: #666;">{{ promo_data.sub_segment or '' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card reviewer-section" style="display: flex; flex-direction: column; height: 100%;">
+        <div class="info-title" style="font-size: 1.2rem; font-weight: 600; color: var(--tmobile-magenta); margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid var(--tmobile-gray);">Notes</div>
+        <div style="flex: 1; padding: 1rem; background: #f8f9fa; border-radius: 4px; overflow-y: auto; min-height: 100px; font-size: 0.9rem; line-height: 1.4; white-space: pre-wrap;">
+          {% if promo_data.notes %}
+            {{ promo_data.notes }}
+          {% else %}
+            No notes available for this promotion.
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="card reviewer-section" style="display: flex; flex-direction: column; height: 100%;">
+        <div class="info-title" style="font-size: 1.2rem; font-weight: 600; color: var(--tmobile-magenta); margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid var(--tmobile-gray);">Additional Business Info</div>
+        <div class="detail-grid" style="display: grid; grid-template-columns: 1fr; gap: 0.75rem; flex: 1; overflow-y: auto;">
+          <div class="detail-item" style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid #eee;">
+            <label style="font-weight: 600; color: #333;">Carrier Freedom:</label>
+            <span style="color: #666;">{{ promo_data.carrier_freedom or '' }}</span>
+          </div>
+          <div class="detail-item" style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid #eee;">
+            <label style="font-weight: 600; color: #333;">Sales Application:</label>
+            <span style="color: #666;">{{ promo_data.sales_application or 'S01' }}</span>
+          </div>
+          <div class="detail-item" style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid #eee;">
+            <label style="font-weight: 600; color: #333;">FPD Display Promo:</label>
+            <span style="color: #666;">{{ 'Yes' if promo_data.fpd_display_promo == 'Y' else 'No' }}</span>
+          </div>
+          <div class="detail-item" style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0;">
+            <label style="font-weight: 600; color: #333;">DCD Web In-Cart:</label>
+            <span style="color: #666;">{{ promo_data.dcd_web_cart or '' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Reviewers Section (Full Width Row) -->
+      {% if reviewers %}
+      <div class="card reviewer-section" style="grid-column: 1 / -1; display: flex; flex-direction: column;">
+        <div class="info-title" style="font-size: 1.2rem; font-weight: 600; color: var(--tmobile-magenta); margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid var(--tmobile-gray);">Assigned Reviewers</div>
+        <div class="reviewer-list" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; flex: 1;">
+          {% for reviewer in reviewers %}
+          <div class="reviewer-card" style="background: #f8f9fa; padding: 1rem; border-radius: 8px; border-left: 4px solid var(--tmobile-magenta);">
+            <div style="font-weight: 600; color: #333; margin-bottom: 0.5rem;">{{ reviewer.name }}</div>
+            <div style="color: #666; font-size: 0.9rem;">{{ reviewer.email }}</div>
+            <div style="color: #666; font-size: 0.85rem; margin-top: 0.25rem;">Role: {{ reviewer.role or 'Reviewer' }}</div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+  {% else %}
+  <div class="scrollable" style="flex: 1; display: flex; align-items: center; justify-content: center;">
+    <div class="card" style="text-align: center; max-width: 400px;">
+      <h3 style="color: var(--tmobile-magenta); margin-bottom: 1rem;">No Promotion Selected</h3>
+      <p style="color: #666; margin-bottom: 1.5rem;">Please enter a promo code to view reviewer information.</p>
+      <i class="fas fa-users" style="font-size: 3rem; color: var(--tmobile-gray); opacity: 0.5;"></i>
+    </div>
+  </div>
+  {% endif %}
+</div>
+
 <style>
+/* Responsive Design for Reviewers Page */
 .reviewer-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-  width: 100%;
-  flex: 1;
-  min-height: 0;
-}
-
-.reviewer-row {
-  display: flex;
-  gap: 1.5rem;
-  width: 100%;
-  min-height: 0;
-  flex: 1;
-}
-
-.reviewer-section {
-  flex: 1;
-  min-width: 300px;
-  min-height: 0;
-  background: #fff;
-  border-radius: 10px;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
-  border: 1px solid #e0e0e0;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-}
-
-.reviewer-section .info-box {
-  border-bottom: none;
-  padding: 0;
   height: 100%;
-  display: flex;
-  flex-direction: column;
-}
-
-.reviewer-section .info-title {
-  background: var(--tmobile-magenta);
-  color: white;
-  font-weight: bold;
-  font-size: 1.1rem;
-  margin-bottom: 0;
-  padding: 1rem 1.5rem;
-  border-bottom: none;
-}
-
-.reviewer-section .detail-grid {
-  padding: 1rem 1.5rem 1.5rem 1.5rem;
-  flex: 1;
-  overflow-y: auto;
   min-height: 0;
 }
 
-.detail-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.5rem;
+.card.reviewer-section {
+  min-height: 0;
+  height: 100%;
 }
 
-.detail-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  padding: 0.4rem 0;
-  border-bottom: 1px solid #eee;
-  font-size: 0.9rem;
-}
-
-.detail-item:last-child {
-  border-bottom: none;
-}
-
-.detail-item label {
-  font-weight: 600;
-  color: #333;
-  margin-right: 1rem;
-  min-width: fit-content;
-}
-
-.detail-item span {
-  color: #666;
-  text-align: right;
-  word-break: break-word;
-}
-
-.detail-item a {
-  color: var(--tmobile-magenta);
-  text-decoration: none;
-}
-
-.detail-item a:hover {
-  text-decoration: underline;
-}
-
-.sku-link {
-  background: var(--tmobile-magenta);
-  color: white !important;
-  padding: 0.25rem 0.75rem;
-  border-radius: 4px;
-  text-decoration: none !important;
-  font-size: 0.9rem;
-}
-
-.sku-link:hover {
-  background: var(--tmobile-magenta-dark);
-}
-
-.notes-content {
-  min-height: 80px;
-  padding: 1rem 1.5rem 1.5rem 1.5rem;
-  background: #fff;
-  border-radius: 0;
-  border: none;
-  font-size: 0.9rem;
-  line-height: 1.4;
-  white-space: pre-wrap;
-  flex: 1;
-  overflow-y: auto;
-}
-
-.search-section .form-control {
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  padding: 0.5rem 1rem;
-}
-
-.btn {
-  padding: 0.5rem 1rem;
-  border-radius: 6px;
-  font-weight: 600;
-  text-decoration: none;
-  border: none;
-  cursor: pointer;
-}
-
-.btn-primary {
-  background: var(--tmobile-magenta);
-  color: white;
-}
-
-.btn-primary:hover {
-  background: var(--tmobile-magenta-dark);
-}
-
-.btn-secondary {
-  background: #6c757d;
-  color: white;
-}
-
-.btn-secondary:hover {
-  background: #5a6268;
-}
-
-/* Responsive design */
 @media (max-width: 1200px) {
-  .reviewer-row {
-    flex-direction: column;
-    gap: 1rem;
-  }
-  
-  .reviewer-section {
-    min-width: unset;
-    min-height: 200px;
-  }
-  
-  .container.wide-container {
-    height: calc(100vh - 100px) !important;
+  .reviewer-grid {
+    grid-template-columns: 1fr 1fr !important;
   }
 }
 
 @media (max-width: 768px) {
-  .detail-grid {
-    grid-template-columns: 1fr;
+  .reviewer-grid {
+    grid-template-columns: 1fr !important;
+    gap: 1rem !important;
+    min-height: 0 !important;
+  }
+  
+  .card.reviewer-section {
+    min-height: 0 !important;
+    height: auto !important;
   }
   
   .detail-item {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.25rem;
-    font-size: 0.85rem;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 0.25rem !important;
+    padding: 0.375rem 0 !important;
   }
   
   .detail-item span {
-    text-align: left;
+    text-align: left !important;
+    font-size: 0.9rem !important;
   }
   
-  .container.wide-container {
-    height: calc(100vh - 80px) !important;
-    padding: 1rem 0.5rem !important;
+  .content-container {
+    padding: 0.5rem !important;
   }
   
-  .reviewer-grid {
-    gap: 1rem;
+  .search-section > div {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 0.75rem !important;
+    padding: 1rem !important;
+  }
+  
+  .search-section input {
+    width: 100% !important;
+  }
+  
+  .reviewer-list {
+    grid-template-columns: 1fr !important;
   }
 }
 </style>
