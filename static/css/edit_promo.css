@@ -62,29 +62,25 @@ html, body {
 
 /* Container & Panels */
 .container, .wide-container {
-  min-height: calc(100vh - 60px); /* Account for footer */
   width: 98vw;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  padding: 2.5rem 1vw calc(4rem + 60px) 1vw; /* Extra padding for footer space */
+  padding: 2.5rem 1vw 2rem 1vw; /* Reduced bottom padding to eliminate scrolling */
 }
 
 /* Panels layout */
 .layout-flex {
   width: 100%;
   max-width: 1800px;
-  min-height: 0;
   display: flex;
-  align-items: stretch;
+  align-items: stretch; /* This ensures equal heights */
   gap: 2rem;
 }
 
 .left-panel, .right-panel {
-  min-height: 0;
-  height: 100%;
   box-sizing: border-box;
   overflow: visible; /* NO individual scrollbars! */
 }
@@ -102,6 +98,9 @@ html, body {
   flex-direction: column;
   gap: 2rem;
   overflow-y: auto !important;
+  /* Force equal height with right panel */
+  align-self: stretch;
+  min-height: fit-content;
 }
 .right-panel {
   flex: 2 1 600px;
@@ -117,6 +116,9 @@ html, body {
   position: relative;
   box-sizing: border-box;
   overflow-x: hidden;
+  /* Force equal height with left panel */
+  align-self: stretch;
+  min-height: fit-content;
 }
 
 .info-box {
