@@ -1,28 +1,22 @@
 {% extends "base.html" %}
 {% block title %}Admin Dashboard - PAM{% endblock %}
+
+{% block header_left %}
+<div class="global-header-promotions">
+  <i class="fas fa-cogs header-icon"></i>
+  <div class="header-text">
+    <h2>Admin Dashboard</h2>
+    <p>Comprehensive system administration and management tools</p>
+  </div>
+</div>
+{% endblock %}
+
 {% block head %}
   <style>
     .admin-dashboard {
       padding: 20px;
       background: #f8f9fa;
       min-height: calc(100vh - 80px);
-    }
-    .admin-header {
-      background: linear-gradient(135deg, #E20074, #b91c5c);
-      color: white;
-      padding: 30px;
-      border-radius: 12px;
-      margin-bottom: 30px;
-      box-shadow: 0 4px 15px rgba(226, 0, 116, 0.2);
-    }
-    .admin-header h1 {
-      font-size: 2.2rem;
-      font-weight: 700;
-      margin-bottom: 8px;
-    }
-    .admin-header p {
-      opacity: 0.9;
-      font-size: 1.1rem;
     }
     .admin-grid {
       display: grid;
@@ -308,11 +302,6 @@
 
 {% block content %}
 <div class="admin-dashboard">
-  <div class="admin-header">
-    <h1><i class="fas fa-cogs"></i> Admin Dashboard</h1>
-    <p>Comprehensive system administration and management tools</p>
-  </div>
-
   <!-- System Status Overview -->
   <div class="system-status">
     <h3 style="margin-bottom: 20px; color: #1e293b;"><i class="fas fa-chart-line"></i> System Status</h3>

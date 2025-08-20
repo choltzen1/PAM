@@ -5,7 +5,7 @@
   --tmobile-border: #e0e0e0;
 }
 
-/* Page layout with fixed footer */
+/* Page layout */
 html, body {
   min-height: 100vh;
   height: 100%;
@@ -27,28 +27,6 @@ html, body {
   font-weight: 600;
   margin-bottom: 1.5rem;
   flex-shrink: 0;
-}
-
-/* Footer (always visible, never overlapped) */
-.footer {
-  width: 100vw;
-  background: var(--tmobile-magenta);
-  color: #fff;
-  font-size: 1.05rem;
-  font-weight: 500;
-  text-align: left;
-  padding: 0 1.5rem;
-  height: 40px;
-  line-height: 40px;
-  box-sizing: border-box;
-  flex-shrink: 0;
-  position: relative;
-  letter-spacing: 0.02em;
-}
-.footer-content {
-  display: flex;
-  align-items: center;
-  height: 100%;
 }
 
 /* MAIN CONTENT scrolls as needed */

@@ -5,7 +5,7 @@
   --tmobile-border: #e0e0e0;
 }
 
-/* 1. Page layout with fixed footer */
+/* 1. Page layout */
 html, body {
   min-height: 100vh;
   height: 100%;
@@ -19,56 +19,11 @@ html, body {
 
 /* Date Mismatch Page Container - scrollable content area */
 .date-mismatch-page {
-  min-height: calc(100vh - 60px); /* Account for footer */
+  min-height: calc(100vh - 120px); /* Account for header and footer */
   padding: 1rem 2rem;
-  padding-bottom: calc(1rem + 60px); /* Extra padding for footer */
+  padding-bottom: 2rem;
   box-sizing: border-box;
   background: #fff;
-}
-
-/* Header styling */
-.header-container {
-  background: var(--tmobile-magenta);
-  color: #fff;
-  padding: 1.5rem 2rem;
-  margin: -1rem -2rem 2rem -2rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-radius: 0 0 8px 8px;
-}
-
-.header-right {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.header-left {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.header-icon {
-  font-size: 2.5rem;
-}
-
-.header-left h1 {
-  margin: 0;
-  font-size: 1.8rem;
-  font-weight: 700;
-}
-
-.subtitle {
-  margin: 0;
-  font-size: 0.9rem;
-  opacity: 0.9;
-}
-
-.user-info {
-  font-size: 1.1rem;
-  font-weight: 500;
 }
 
 /* Controls styling */
@@ -362,45 +317,11 @@ html, body {
   .data-mismatch-page {
     padding: 1rem;
   }
-  
-  .header-container {
-    margin: -1rem -1rem 1.5rem -1rem;
-    padding: 1.2rem 1.5rem;
-    flex-direction: column;
-    text-align: center;
-    gap: 1rem;
-  }
-  
-  .header-left {
-    flex-direction: column;
-    gap: 0.5rem;
-  }
-  
-  .header-icon {
-    font-size: 2rem;
-  }
-  
-  .header-left h1 {
-    font-size: 1.5rem;
-  }
 }
 
 @media (max-width: 600px) {
   .data-mismatch-page {
     padding: 0.5rem;
-  }
-  
-  .header-container {
-    margin: -0.5rem -0.5rem 1rem -0.5rem;
-    padding: 1rem;
-  }
-  
-  .header-icon {
-    font-size: 1.8rem;
-  }
-  
-  .header-left h1 {
-    font-size: 1.3rem;
   }
   
   .card-body {

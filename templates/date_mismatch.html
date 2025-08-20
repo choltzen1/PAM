@@ -3,24 +3,28 @@
 {% block head %}
   <link rel="stylesheet" href="{{ url_for('static', filename='css/date_mismatch.css') }}">
 {% endblock %}
+
+{% block header_left %}
+<div class="global-header-promotions">
+  <i class="fas fa-calendar-exclamation-triangle header-icon"></i>
+  <div class="header-text">
+    <h2>Date Mismatch Analysis</h2>
+    <p>Identify and resolve promotion date discrepancies between ORBIT and PAM</p>
+  </div>
+</div>
+{% endblock %}
+
+{% block header_right %}
+<div style="display: flex; align-items: center; gap: 1rem;">
+  <button class="btn btn-primary" onclick="refreshData()" style="background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3); color: white; padding: 0.5rem 1rem; border-radius: 4px; font-size: 0.9rem;">
+    <i class="fas fa-sync-alt"></i> Refresh Data
+  </button>
+  <span style="color: rgba(255,255,255,0.9); font-size: 0.9rem;">{{ user_name or 'User: Coming Soon' }}</span>
+</div>
+{% endblock %}
+
 {% block content %}
 <div class="date-mismatch-page">
-  <!-- Header -->
-  <div class="header-container">
-    <div class="header-left">
-      <i class="fas fa-calendar-exclamation-triangle header-icon"></i>
-      <div>
-        <h1>Date Mismatch Analysis</h1>
-        <p class="subtitle">Identify and resolve promotion date discrepancies between ORBIT and PAM</p>
-      </div>
-    </div>
-    <div class="header-right">
-      <button class="btn btn-primary" onclick="refreshData()">
-        <i class="fas fa-sync-alt"></i> Refresh Data
-      </button>
-      <span class="user-info">{{ user_name }}</span>
-    </div>
-  </div>
 
   <!-- Controls -->
   <div class="controls-container">

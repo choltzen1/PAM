@@ -8,18 +8,17 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='css/promotions.css') }}">
 {% endblock %}
 
-{% block content %}
-<!-- Styled Header Banner -->
-<div class="styled-header-banner">
-  <div class="styled-header-content">
-    <i class="bi bi-tags-fill styled-header-icon"></i>
-    <div class="styled-header-text">
-      <h2 class="styled-header-title">RDC Promotions</h2>
-      <p class="styled-header-subtitle">Build, launch and monitor device promotions</p>
-    </div>
+{% block header_left %}
+<div class="global-header-promotions">
+  <i class="bi bi-tags-fill header-icon"></i>
+  <div class="header-text">
+    <h2>RDC Promotions</h2>
+    <p>Build, launch and monitor device promotions</p>
   </div>
 </div>
+{% endblock %}
 
+{% block content %}
 <!-- Main content area (scrollable) -->
 <div class="promotions-page">
   <!-- Controls row: filter, search, actions -->
