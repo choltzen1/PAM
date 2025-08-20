@@ -1,34 +1,14 @@
-/* styles.css - Global styles and flexbox layout system */
+/* styles.css - Global styles and utilities */
 :root {
   --tmobile-magenta: #e20074;
   --tmobile-magenta-dark: #b8005a;
   --tmobile-gray: #f4f4f4;
   --tmobile-border: #e0e0e0;
-  --header-height: 5rem;
-  --footer-height: 3.75rem;
 }
 
 /* Global reset and base styling */
 *, *::before, *::after {
   box-sizing: border-box;
-}
-
-html, body {
-  height: 100%;
-  margin: 0;
-  padding: 0;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background-color: var(--tmobile-gray);
-  overflow-x: hidden;
-}
-
-/* App Container - Full Viewport Flexbox Layout */
-.app-container {
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-  width: 100vw;
-  min-height: 100vh;
 }
 
 /* Global Header */
@@ -41,11 +21,11 @@ html, body {
   align-items: center;
   font-size: 1.2rem;
   font-weight: 600;
+  margin-bottom: 0; /* Remove gap */
   flex-shrink: 0;
   position: relative;
   z-index: 100;
-  height: var(--header-height);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  min-height: 60px; /* Ensure consistent height */
 }
 
 .global-header-title {
@@ -92,111 +72,10 @@ html, body {
   opacity: 0.9;
 }
 
-/* Main Content Area - Flexible Container */
-.main-content {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  overflow: hidden;
-  background-color: var(--tmobile-gray);
-}
-
-/* Global Footer */
-.global-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background: var(--tmobile-magenta);
-  color: white;
-  padding: 0.5em 2em;
-  height: var(--footer-height);
-  flex-shrink: 0;
-  box-shadow: 0 -2px 8px rgba(0,0,0,0.15);
-  z-index: 1000;
-  font-size: 1rem;
-}
-
-.footer-links {
-  display: flex;
-  gap: 1.5em;
-  align-items: center;
-}
-
-.footer-links a {
-  color: white;
-  text-decoration: none;
-  font-size: 1.2em;
-  transition: opacity 0.2s ease;
-}
-
-.footer-links a:hover {
-  opacity: 0.8;
-}
-
-/* Content Container for Pages */
-.content-container {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  max-width: 100%;
-  padding: 1em;
-  overflow-y: auto;
-  overflow-x: hidden;
-  height: 100%;
-  min-height: 0;
-}
-
-/* Two-Column Layout for Edit Pages */
-.edit-container {
-  flex: 1;
-  display: flex;
-  gap: 1em;
-  width: 100%;
-  max-width: 100%;
-  overflow: hidden;
-  padding: 1em;
-}
-
-.edit-column {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-  overflow-y: auto;
-  background: white;
-  border-radius: 8px;
-  padding: 1.5em;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-}
-
-/* Card-based Layout System */
-.card-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 1em;
-  width: 100%;
-  padding: 1em;
-  overflow-y: auto;
-}
-
-.card {
-  background: white;
-  border-radius: 8px;
-  padding: 1.5em;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-  transition: box-shadow 0.3s ease;
-}
-
-.card:hover {
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-}
-
 /* Flash messages */
 .flash-messages {
   position: fixed;
-  top: calc(var(--header-height) + 1rem);
+  top: 1rem;
   right: 1rem;
   z-index: 300;
   max-width: 400px;
@@ -246,38 +125,6 @@ html, body {
   }
 }
 
-/* Responsive Design */
-@media (max-width: 768px) {
-  .global-header {
-    padding: 1rem;
-    height: 4.375rem;
-  }
-  
-  .global-header-title {
-    font-size: 1.1rem;
-  }
-  
-  .global-footer {
-    padding: 0.5rem 1rem;
-    height: 3.125rem;
-  }
-  
-  .edit-container {
-    flex-direction: column;
-    padding: 0.5em;
-  }
-  
-  .card-grid {
-    grid-template-columns: 1fr;
-    padding: 0.5em;
-  }
-  
-  :root {
-    --header-height: 4.375rem;
-    --footer-height: 3.125rem;
-  }
-}
-
 /* Utility classes */
 .text-center { text-align: center; }
 .text-muted { color: #6c757d; }
@@ -285,10 +132,6 @@ html, body {
 .mb-3 { margin-bottom: 1rem; }
 .mt-4 { margin-top: 1.5rem; }
 .display-1 { font-size: 4rem; }
-.full-width { width: 100%; }
-.full-height { height: 100%; }
-.scrollable { overflow-y: auto; }
-.no-scroll { overflow: hidden; }
 
 /* Bootstrap-like container and grid */
 .container-fluid {
