@@ -1,12 +1,24 @@
 
 {% extends "base.html" %}
 {% block title %}Edit SPE Promotion – {{ promo.get('code', spe_key) or 'New SPE' }}{% endblock %}
+
+{% block header_left %}
+<div class="global-header-promotions">
+  <i class="fas fa-edit header-icon"></i>
+  <div class="header-text">
+    <h2>Edit SPE Promotion – {{ promo.get('code', spe_key) or 'New SPE' }}</h2>
+    <p>Modify SPE promotion details and settings</p>
+  </div>
+</div>
+{% endblock %}
+
+{% block header_right %}
+<div style="display: flex; align-items: center; gap: 1rem;">
+  <span style="color: rgba(255,255,255,0.9); font-size: 0.9rem;">{{ user_name or 'User: Coming Soon' }}</span>
+</div>
+{% endblock %}
+
 {% block content %}
-  <!-- Header -->
-  <header class="header">
-    <div class="header-title">Edit SPE Promotion – {{ promo.get('code', spe_key) or 'New SPE' }}</div>
-    <div class="user-name">{{ user_name }}</div>
-  </header>
 
   <div class="container wide-container">
     <div class="layout-flex">
