@@ -11,6 +11,67 @@
   box-sizing: border-box;
 }
 
+/* Global Header */
+.global-header {
+  background: var(--tmobile-magenta);
+  color: #fff;
+  padding: 1.2rem 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-bottom: 0; /* Remove gap */
+  flex-shrink: 0;
+  position: relative;
+  z-index: 100;
+  min-height: 60px; /* Ensure consistent height */
+}
+
+.global-header-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+/* Promotions page specific header styling */
+.global-header-promotions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.global-header-promotions .header-icon {
+  font-size: 1.5rem;
+  color: #fff;
+}
+
+.global-header-promotions .header-text h2 {
+  margin: 0;
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: #fff;
+  line-height: 1.2;
+}
+
+.global-header-promotions .header-text p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 400;
+  line-height: 1.1;
+}
+
+.global-header-user {
+  font-size: 1rem;
+  font-weight: 500;
+  color: #fff;
+  opacity: 0.9;
+}
+
 /* Flash messages */
 .flash-messages {
   position: fixed;

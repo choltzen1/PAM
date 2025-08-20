@@ -18,13 +18,13 @@ html, body {
 .sidebar {
   position: fixed;
   left: 0;
-  top: 0;
+  top: 60px; /* Position directly below global header */
   bottom: 45px; /* Account for footer height */
   width: 200px;
   background: var(--tmobile-magenta);
   color: #fff;
-  z-index: 100;
-  padding-top: 46px;
+  z-index: 50; /* Lower than header */
+  padding-top: 20px;
   padding-bottom: 20px;
   overflow-y: auto;
   box-shadow: 2px 0 8px #e2007420;
@@ -69,43 +69,9 @@ html, body {
   color: #fff;
 }
 
-.topbar {
-  position: fixed;
-  left: 0;
-  right: 0;
-  top: 0;
-  height: 44px;
-  background: var(--tmobile-magenta);
-  color: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center; /* Center the content */
-  padding: 0 1.5rem;
-  font-size: 1.1rem;
-  font-weight: 600;
-  z-index: 101;
-  box-shadow: 0 2px 8px #e2007420;
-  border-bottom: 2px solid #fff2;
-  flex-shrink: 0;
-}
-
-.topbar > div:first-child {
-  font-size: 1.35em;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-  text-align: center;
-}
-
-.topbar .text-end {
-  font-size: 0.95em;
-  font-style: italic;
-  opacity: 0.85;
-  margin-left: auto;
-}
-
 .main {
   position: fixed;
-  top: 44px; /* Height of topbar */
+  top: 0; /* No local topbar, global header is outside this container */
   bottom: 92px; /* Height of footer (60px) + disclaimer (~32px) */
   left: 200px;
   right: 0;
@@ -134,19 +100,6 @@ html, body {
   margin-bottom: 2.5em;
 }
 
-.footer-nav {
-  /* Inherit the global fixed positioning from base.html */
-  height: 45px;
-  background: var(--tmobile-magenta) !important;
-  color: #fff !important;
-  font-size: 1rem;
-  border-top: 2px solid #fff2;
-}
-
-.footer-nav #footer-time {
-  margin-left: 200px; /* Align with main content area, not sidebar */
-}
-
 .disclaimer {
   position: fixed;
   bottom: 60px; /* Position above the 60px footer */
@@ -170,17 +123,11 @@ html, body {
 /* Update main content area positioning for responsive */
 @media (max-width: 900px) {  .sidebar {
     width: 140px; /* Reduce width for better space usage */
+    top: 60px; /* Position below global header */
     bottom: 45px;
     padding-bottom: 20px;
-  }.topbar {
-    padding: 0 0.5rem;
-    font-size: 1rem;
-    justify-content: center; /* Keep centered */
-  }
-  .topbar > div:first-child {
-    font-size: 1.2em; /* Slightly smaller but still readable */
   }  .main {
-    top: 44px;
+    top: 0; /* No local topbar */
     bottom: 92px;
     left: 140px;
     padding: 1.5rem 1rem 1.5rem 1rem;
@@ -204,24 +151,15 @@ html, body {
     font-size: 0.7rem;
     padding: 6px 12px;
   }
-  .footer-nav #footer-time {
-    margin-left: 140px; /* Align with sidebar edge */
-  }
 }
 
 @media (max-width: 600px) {  .sidebar {
     width: 120px;
+    top: 60px; /* Position below global header */
     bottom: 45px;
     padding-bottom: 15px;
-  }.topbar {
-    padding: 0 0.3rem;
-    font-size: 0.9rem;
-    justify-content: center; /* Keep centered */
-  }
-  .topbar > div:first-child {
-    font-size: 1.1em; /* Reasonable size for tablets */
   }  .main {
-    top: 44px;
+    top: 0; /* No local topbar */
     bottom: 92px;
     left: 120px;
     padding: 1rem 0.5rem 1rem 0.5rem;
@@ -248,23 +186,14 @@ html, body {
     padding: 4px 8px;
     line-height: 1.1;
   }
-  .footer-nav #footer-time {
-    margin-left: 120px; /* Align with sidebar edge */
-  }
 }
 
 @media (max-width: 400px) {  .sidebar {
     width: 100px;
+    top: 60px; /* Position below global header */
     bottom: 45px;
-  }.topbar {
-    padding: 0 0.2rem;
-    font-size: 0.8rem;
-    justify-content: center; /* Keep centered */
-  }
-  .topbar > div:first-child {
-    font-size: 1em; /* Good size for mobile */
   }  .main {
-    top: 44px;
+    top: 0; /* No local topbar */
     bottom: 92px;
     left: 100px;
     padding: 0.8rem 0.3rem 0.8rem 0.3rem;
@@ -286,27 +215,16 @@ html, body {
     left: 100px;
     font-size: 0.6rem;
     padding: 3px 6px;
-  }  .footer-nav #footer-time {
-    margin-left: 100px; /* Align with sidebar edge */
-    font-size: 0.8rem; /* Smaller footer text */
   }
 }
 
 /* Extra small screens */
 @media (max-width: 320px) {  .sidebar {
     width: 80px;
+    top: 60px; /* Position below global header */
     bottom: 45px;
-  }
-  .topbar {
-    padding: 0 0.1rem;
-    font-size: 0.75rem;
-    justify-content: center; /* Keep centered */
-  }
-  .topbar > div:first-child {
-    font-size: 0.9em; /* Still readable on very small screens */
-    letter-spacing: 0.3px; /* Slightly less letter spacing */
   }  .main {
-    top: 44px;
+    top: 0; /* No local topbar */
     bottom: 92px;
     left: 80px;
     padding: 0.5rem 0.2rem 0.5rem 0.2rem;
@@ -315,10 +233,6 @@ html, body {
     left: 80px;
     font-size: 0.55rem;
     padding: 2px 4px;
-  }
-  .footer-nav #footer-time {
-    margin-left: 80px;
-    font-size: 0.7rem;
   }
   .sidebar a {
     font-size: 0.6rem;

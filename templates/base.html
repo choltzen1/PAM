@@ -21,6 +21,16 @@
 </head>
 <body>
   <div class="page-content">
+    <!-- Global Header -->
+    <header class="global-header">
+      <div class="global-header-title">
+        {% block header_left %}PAM{% endblock %}
+      </div>
+      <div class="global-header-user">
+        {% block header_right %}User: Coming Soon{% endblock %}
+      </div>
+    </header>
+    
     {% block content %}{% endblock %}
   </div>
   
