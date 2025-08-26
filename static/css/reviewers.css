@@ -64,15 +64,97 @@
   align-items: center;
 }
 
-/* Validation Dashboard */
+/* Validation Dashboard - 7 Card Layout */
 .validation-dashboard {
-  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  grid-template-rows: auto auto auto;
+  gap: 1rem;
+  padding: 0;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+/* Row 1: Combined Details Card (Full Width - spans all 12 columns) */
+.combined-details-card {
+  grid-column: 1 / -1;
+  background: #ffffff;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  overflow: hidden;
+}
+
+/* Row 2: Dates & Times, Segmentation, and Devices (3 cards side by side, equal width) */
+.dates-times-section {
+  grid-column: 1 / 5;
+  background: #ffffff;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.segmentation-section {
+  grid-column: 5 / 9;
+  background: #ffffff;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.devices-section {
+  grid-column: 9 / 13;
+  background: #ffffff;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Row 3: Links, Description, Notes and Groupings (4 cards side by side) */
+.links-section {
+  grid-column: 1 / 4;
+  background: #ffffff;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.description-section {
+  grid-column: 4 / 7;
+  background: #ffffff;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.notes-section {
+  grid-column: 7 / 10;
+  background: #ffffff;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.groupings-section {
+  grid-column: 10 / 13;
+  background: #ffffff;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Details Grid - 3 Column Layout */
+.details-grid {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
-  grid-template-rows: auto auto;
-  gap: 1rem;
-  overflow: visible;
-  min-height: 0;
+  gap: 2rem;
+  padding: 1rem;
+}
+
+.details-column {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
 }
 
 .validation-section {
