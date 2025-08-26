@@ -246,12 +246,40 @@ class HybridPromoDataManager:
             return self._rebates_cache
     
     def _load_workflow_data(self) -> Dict[str, Any]:
-        """Load PAM-only workflow data from local storage"""
+        """Load PAM-only workflow data from local storage and promotions.json"""
+        workflow_data = {}
+        
+        # Load from workflow_data.json
         try:
             with open(self.workflow_file, 'r') as f:
-                return json.load(f)
+                workflow_data = json.load(f)
         except (FileNotFoundError, json.JSONDecodeError):
-            return {}
+            workflow_data = {}
+        
+        # Also load from promotions.json for promo_notes and other fields
+        try:
+            promo_file = os.path.join(self.data_dir, "promotions.json")
+            with open(promo_file, 'r') as f:
+                promo_json_data = json.load(f)
+                
+                # Merge promo_notes and other PAM-specific fields
+                for code, promo_data in promo_json_data.items():
+                    if code not in workflow_data:
+                        workflow_data[code] = {}
+                    
+                    # Copy PAM-specific fields from promotions.json
+                    pam_fields = ['promo_notes', 'spe_notes', 'notes', 'generated_sql', 'sql_generated_at', 
+                                 'sql_generation_time', 'sql_length', 'uploaded_files', 'version_history',
+                                 'last_changes', 'created_at', 'updated_at']
+                    
+                    for field in pam_fields:
+                        if field in promo_data:
+                            workflow_data[code][field] = promo_data[field]
+                            
+        except (FileNotFoundError, json.JSONDecodeError):
+            pass
+            
+        return workflow_data
     
     def _save_workflow_data(self, workflow_data: Dict[str, Any]):
         """Save PAM-only workflow data to local storage"""
@@ -303,7 +331,14 @@ class HybridPromoDataManager:
         return self._refresh_cache()
     
     def get_promo(self, promo_code: str) -> Dict[str, Any]:
-        """Get a specific promotion"""
+        """Get a specific promotion - check JSON first (for edits), then database"""
+        # First check JSON file for any edits
+        json_promo = self._original_manager.get_promo(promo_code)
+        if json_promo:
+            # If we have JSON data, use it (this contains any edits)
+            return json_promo
+        
+        # Fall back to database if not in JSON
         all_promos = self.get_all_promos()
         return all_promos.get(promo_code, {})
     
@@ -332,56 +367,95 @@ class HybridPromoDataManager:
         return owners
     
     def get_date_mismatched_promos(self) -> Dict[str, Any]:
-        """Get promotions with date mismatches between ORBIT and PAM using database data"""
-        all_promos = self.get_all_promos()
+        """Get promotions with date mismatches between ORBIT (database) and PAM (JSON) end dates"""
         all_promo_entries = []
         owners = set()  # Track unique owners
         
-        # Sample ORBIT dates to simulate mismatches (only end dates matter)
-        # In a real implementation, this would come from ORBIT database
-        sample_orbit_dates = {
-            'P0472022': {
-                'orbit_end_date': '2025-08-10'    # Different from PAM end date
-            },
-            'R223': {
-                'orbit_end_date': '2025-07-20'    # Different from PAM end date
-            }
-        }
+        # Get all promotions from database (ORBIT data)
+        db_records = self.db_manager.get_all_promos()
+        orbit_data = {}
+        for record in db_records:
+            code = str(record.get('code', ''))
+            if code:
+                orbit_data[code] = {
+                    'orbit_end_date': record.get('promo_end_date', ''),
+                    'orbit_start_date': record.get('promo_start_date', ''),
+                    'orbit_id': record.get('orbit_id', ''),
+                    'bill_facing_name': record.get('bill_facing_name', ''),
+                    'owner': record.get('owner', '')
+                }
         
-        for promo_code, promo_data in all_promos.items():
-            # Get PAM dates from database
-            pam_start = promo_data.get('promo_start_date', '')
-            pam_end = promo_data.get('promo_end_date', '')
-            owner = promo_data.get('owner', '')
+        # Get all promotions from JSON file (PAM data)
+        pam_data = {}
+        try:
+            promo_file = os.path.join(self.data_dir, "promotions.json")
+            with open(promo_file, 'r') as f:
+                pam_data = json.load(f)
+        except (FileNotFoundError, json.JSONDecodeError):
+            pam_data = {}
+        
+        # Compare all promotions that exist in either ORBIT or PAM
+        all_codes = set(orbit_data.keys()) | set(pam_data.keys())
+        
+        for promo_code in all_codes:
+            # Get ORBIT (database) dates
+            orbit_info = orbit_data.get(promo_code, {})
+            orbit_start = orbit_info.get('orbit_start_date', '')
+            orbit_end = orbit_info.get('orbit_end_date', '')
+            orbit_id = orbit_info.get('orbit_id', '')
+            
+            # Get PAM (JSON) dates
+            pam_info = pam_data.get(promo_code, {})
+            pam_start = pam_info.get('promo_start_date', '')
+            pam_end = pam_info.get('promo_end_date', '')
+            
+            # Use ORBIT data for metadata if available, otherwise PAM data
+            bill_facing_name = orbit_info.get('bill_facing_name') or pam_info.get('bill_facing_name', '')
+            owner = orbit_info.get('owner') or pam_info.get('owner', '')
             
             # Track owners for filter
             if owner:
                 owners.add(owner)
             
-            # Get simulated ORBIT dates (in real implementation, this would come from ORBIT database)
-            # Only check end dates since start dates are manually adjusted before launch
-            orbit_dates = sample_orbit_dates.get(promo_code, {})
-            orbit_start = pam_start  # Use PAM start date as ORBIT start (not checked for mismatches)
-            orbit_end = orbit_dates.get('orbit_end_date', pam_end)
+            # Check for end date mismatch
+            end_mismatch = orbit_end != pam_end and orbit_end and pam_end
             
-            # Check for end date mismatch only
-            end_mismatch = orbit_end != pam_end
+            # Determine mismatch type and severity
+            mismatch_type = ''
+            mismatch_severity = ''
+            
+            if end_mismatch:
+                mismatch_type = 'End Date'
+                mismatch_severity = 'warning'
+            elif not orbit_end and pam_end:
+                mismatch_type = 'Missing in ORBIT'
+                mismatch_severity = 'error'
+            elif orbit_end and not pam_end:
+                mismatch_type = 'Missing in PAM'
+                mismatch_severity = 'error'
             
             # Create entry for ALL promos (with or without mismatches)
             promo_entry = {
                 'code': promo_code,
-                'orbit_id': promo_data.get('orbit_id', ''),
+                'orbit_id': orbit_id,
                 'orbit_start_date': orbit_start,
                 'orbit_end_date': orbit_end,
                 'promo_start_date': pam_start,
                 'promo_end_date': pam_end,
-                'mismatch_type': 'End Date' if end_mismatch else '',
-                'mismatch_severity': 'warning' if end_mismatch else '',
-                'bill_facing_name': promo_data.get('bill_facing_name', ''),
+                'mismatch_type': mismatch_type,
+                'mismatch_severity': mismatch_severity,
+                'bill_facing_name': bill_facing_name,
                 'owner': owner
             }
             
             all_promo_entries.append(promo_entry)
+        
+        # Sort by mismatch severity (errors first, then warnings, then no mismatch)
+        def sort_key(entry):
+            severity_order = {'error': 0, 'warning': 1, '': 2}
+            return (severity_order.get(entry['mismatch_severity'], 2), entry['code'])
+        
+        all_promo_entries.sort(key=sort_key)
         
         return {
             'promos': all_promo_entries,
@@ -437,28 +511,28 @@ class HybridPromoDataManager:
         }
     
     def save_promo(self, promo_code: str, promo_data: Dict[str, Any], user_name: str = "System"):
-        """Save promotion data (database + local workflow fields)"""
-        # Split data into database fields and workflow fields
-        db_fields = self._extract_db_fields(promo_data)
-        workflow_fields = self._extract_workflow_fields(promo_data)
+        """Save promotion data (temporarily use JSON until PAM database is ready)"""
+        # TEMPORARY SOLUTION: Until PAM database is implemented,
+        # save everything to JSON file to maintain current functionality
         
-        # Save database fields to SQL
-        # Note: This would require implementing save methods in DatabaseManager
-        # For now, we'll save to local cache and sync later
+        # Use the original manager's save method to maintain current workflow
+        self._original_manager.save_promo(promo_code, promo_data, user_name)
         
-        # Save workflow fields locally
+        # Invalidate cache to force refresh
+        self._cache_timestamp = None
+        
+        # Also update our workflow data cache
         workflow_data = self._load_workflow_data()
         if promo_code not in workflow_data:
             workflow_data[promo_code] = {}
         
+        # Extract workflow-specific fields for our cache
+        workflow_fields = self._extract_workflow_fields(promo_data)
         workflow_data[promo_code].update(workflow_fields)
         workflow_data[promo_code]['updated_at'] = datetime.now().isoformat()
         workflow_data[promo_code]['updated_by'] = user_name
         
         self._save_workflow_data(workflow_data)
-        
-        # Invalidate cache to force refresh
-        self._cache_timestamp = None
     
     def _extract_db_fields(self, promo_data: Dict[str, Any]) -> Dict[str, Any]:
         """Extract fields that belong in the database"""
@@ -573,3 +647,184 @@ class HybridPromoDataManager:
         """Get promotion list (optimized to use cache)"""
         all_promos = self.get_all_promos()
         return [promo for promo in all_promos.values()]
+    
+    def get_soc_groupings(self) -> list:
+        """Return the exact list of SOC grouping codes for the dropdown."""
+        return [
+            "10B", "10C", "15A", "15N", "15S", "17D", "1AS", "1NS", "2AS", "2NS",
+            "69N", "69S", "A3N", "A6N", "A6S", "A7N", "A7S", "A8N", "A8R", "A8S",
+            "ALL", "AN8", "AR3", "AR6", "AR7", "AR8", "AT1", "AT2", "AT3", "AT4",
+            "AT5", "AT6", "AT7", "B1", "B10", "B11", "B2", "B3", "B4", "B5",
+            "B6", "B7", "B8", "B9", "G03", "G04", "G05", "G06", "G07", "G08",
+            "G09", "G10", "G11", "G12", "G13", "G14", "G15", "G16", "G17", "G18",
+            "G19", "G20", "G21", "G22", "G23", "G24", "G25", "G26", "G27", "G28",
+            "G29", "G30", "G31", "G32", "G33", "G34", "G35", "G36", "G37", "G38",
+            "G39", "G40", "G41", "G42", "G43", "G44", "G45", "G46", "G47", "G48",
+            "G49", "G50", "G51", "G52", "G53", "G54", "G55", "G56", "G57", "G58",
+            "G59", "G60", "G61", "G62", "G63", "G64", "G65", "G66", "G67", "G68",
+            "G69", "G70", "G71", "G72", "G73", "G74", "G75", "G76", "G77", "G78",
+            "G79", "G7A", "G80", "G81", "G82", "G99", "G9A", "TB1", "W1", "W10",
+            "W12", "W13", "W1N", "W1S", "W2", "W3", "W3N", "W4", "W5", "W6",
+            "W7", "W7N", "W7S", "W8", "W8N", "W8S", "W9", "WN8", "WR8"
+        ]
+    
+    def get_soc_grouping_details(self) -> str:
+        """Return the full SOC grouping details as formatted text."""
+        import os
+        soc_file_path = os.path.join(os.path.dirname(__file__), '..', 'static', 'soc_grouping.txt')
+        details = []
+        
+        try:
+            with open(soc_file_path, 'r', encoding='utf-8') as file:
+                for line in file:
+                    line = line.strip()
+                    if line and '|' in line:
+                        # Split on the first | to separate group info from details
+                        group_part, details_part = line.split('|', 1)
+                        
+                        # Format the group part
+                        details.append(f"<strong>{group_part.strip()}</strong>")
+                        
+                        # Format the details part if it exists
+                        if details_part.strip():
+                            # Split details by comma and format as bullet points
+                            detail_items = [item.strip() for item in details_part.split(',') if item.strip()]
+                            for item in detail_items:
+                                details.append(f"• {item}")
+                        
+                        details.append("")  # Add blank line between groups
+                    elif line:
+                        # Handle lines without | separator
+                        details.append(f"<strong>{line}</strong>")
+                        details.append("")
+            
+            return "<br>".join(details)
+        
+        except FileNotFoundError:
+            return "SOC Grouping file not found."
+        except Exception as e:
+            return f"Error reading SOC groupings: {str(e)}"
+    
+    def get_account_types(self) -> list:
+        """Get list of account type codes from account_types.txt"""
+        return [
+            "A01", "A02", "A03", "A04", "A05", "A06", "A07", "A08", "A09", "A10",
+            "A11", "A12", "A13", "A14", "A15", "A16", "A17", "ALL", "AT1", "AT2",
+            "AT3", "AT4", "AT5", "AT6", "AT7", "GST"
+        ]
+    
+    def get_account_type_details(self) -> str:
+        """Get detailed account type information from account_types.txt"""
+        import os
+        try:
+            account_types_file = os.path.join(os.path.dirname(__file__), '..', 'static', 'account_types.txt')
+            
+            with open(account_types_file, 'r', encoding='utf-8') as file:
+                content = file.read().strip()
+            
+            if not content:
+                return "No account type information found."
+            
+            details = []
+            lines = content.split('\n')
+            
+            for line in lines:
+                line = line.strip()
+                if not line:
+                    continue
+                    
+                if '|' in line:
+                    parts = line.split('|')
+                    if len(parts) >= 2:
+                        account_type = parts[0].strip()
+                        description = parts[1].strip()
+                        
+                        details.append(f"<strong>{account_type}</strong>")
+                        if description:
+                            details.append(description)
+                        details.append("")
+                else:
+                    if line:
+                        # Handle lines without | separator
+                        details.append(f"<strong>{line}</strong>")
+                        details.append("")
+            
+            return "<br>".join(details)
+        
+        except FileNotFoundError:
+            return "Account Types file not found."
+        except Exception as e:
+            return f"Error reading account types: {str(e)}"
+    
+    def get_sales_applications(self) -> list:
+        """Get list of sales application codes from sales_apps.txt"""
+        import os
+        try:
+            sales_apps_file = os.path.join(os.path.dirname(__file__), '..', 'static', 'sales_apps.txt')
+            
+            with open(sales_apps_file, 'r', encoding='utf-8') as file:
+                content = file.read().strip()
+            
+            if not content:
+                return []
+            
+            sales_apps = []
+            lines = content.split('\n')
+            
+            for line in lines:
+                line = line.strip()
+                if line and ' - ' in line:
+                    code = line.split(' - ')[0].strip()
+                    if code:
+                        sales_apps.append(code)
+            
+            return sales_apps
+        except FileNotFoundError:
+            print(f"Warning: sales_apps.txt file not found.")
+            return []
+        except Exception as e:
+            print(f"Error reading sales applications: {e}")
+            return []
+    
+    def get_sales_application_details(self) -> str:
+        """Get detailed sales application information from sales_apps.txt"""
+        import os
+        try:
+            sales_apps_file = os.path.join(os.path.dirname(__file__), '..', 'static', 'sales_apps.txt')
+            
+            with open(sales_apps_file, 'r', encoding='utf-8') as file:
+                content = file.read().strip()
+            
+            if not content:
+                return "No sales application information found."
+            
+            details = []
+            lines = content.split('\n')
+            
+            for line in lines:
+                line = line.strip()
+                if not line:
+                    continue
+                    
+                if ' - ' in line:
+                    parts = line.split(' - ', 1)
+                    if len(parts) >= 2:
+                        sales_app = parts[0].strip()
+                        description = parts[1].strip()
+                        
+                        details.append(f"<strong>{sales_app}</strong>")
+                        if description:
+                            details.append(description)
+                        details.append("")
+                else:
+                    if line:
+                        # Handle lines without - separator
+                        details.append(f"<strong>{line}</strong>")
+                        details.append("")
+            
+            return "<br>".join(details)
+        
+        except FileNotFoundError:
+            return "Sales Applications file not found."
+        except Exception as e:
+            return f"Error reading sales applications: {str(e)}"

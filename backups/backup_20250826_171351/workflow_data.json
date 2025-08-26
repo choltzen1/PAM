@@ -174,24 +174,12 @@
   },
   "25035": {
     "version_history": [
-      "08/26/2025 05:21 PM - Cade Holtzen - Created promo."
+      "08/26/2025 02:56 PM - Cade Holtzen - Created promo.",
+      "08/26/2025 04:22 PM - Date Mismatch Tool - Updated end date from N/A to 8/6/2025 (synced from ORBIT)"
     ],
     "last_changes": null,
-    "created_at": "2025-08-26T17:21:28.363920",
-    "updated_at": "2025-08-26T17:21:28.363906",
-    "promo_notes": "7/15 - NPP:  confirmed to remove dark status from intake 7/23 - cancelling per Sharon request",
-    "generated_sql": "",
-    "uploaded_files": {},
-    "sku_link": "",
-    "tradein_link": "",
-    "sql_file": {},
-    "jira_ticket": "",
-    "initiative_name": "",
-    "segment_name": "",
-    "sub_segment": "",
-    "segment_group_id": "",
-    "segment_level": "",
-    "updated_by": "Cade Holtzen"
+    "created_at": "2025-08-26T14:56:23.453646",
+    "updated_at": "2025-08-26T16:22:14.208286"
   },
   "P800": {
     "sku_link": "",
@@ -298,12 +286,11 @@
     "generated_sql": "",
     "uploaded_files": {},
     "version_history": [
-      "08/26/2025 05:02 PM - Cade Holtzen - Created promo.",
-      "08/26/2025 05:09 PM - Date Mismatch Tool - Updated end date from 2025-09-06 to 4/9/2025 (synced from ORBIT)"
+      "08/26/2025 05:02 PM - Cade Holtzen - Created promo."
     ],
     "last_changes": "Last save: 08/26/2025 05:02 PM - Cade Holtzen - Changed: Promo Start Date (\u00e2\u2020\u2019 2025-06-09)",
     "created_at": "2025-08-26T17:02:20.585821",
-    "updated_at": "2025-08-26T17:09:19.683041",
+    "updated_at": "2025-08-26T17:02:23.545467",
     "sku_link": "",
     "tradein_link": "",
     "sql_file": {},
@@ -320,12 +307,11 @@
     "generated_sql": "",
     "uploaded_files": {},
     "version_history": [
-      "08/26/2025 05:02 PM - Cade Holtzen - Created promo.",
-      "08/26/2025 05:09 PM - Date Mismatch Tool - Updated end date from 2025-11-13 to 4/2/2025 (synced from ORBIT)"
+      "08/26/2025 05:02 PM - Cade Holtzen - Created promo."
     ],
     "last_changes": null,
     "created_at": "2025-08-26T17:02:36.893782",
-    "updated_at": "2025-08-26T17:09:20.241815",
+    "updated_at": "2025-08-26T17:02:36.893758",
     "sku_link": "",
     "tradein_link": "",
     "sql_file": {},
@@ -342,33 +328,11 @@
     "generated_sql": "",
     "uploaded_files": {},
     "version_history": [
-      "08/26/2025 05:02 PM - Cade Holtzen - Created promo.",
-      "08/26/2025 05:09 PM - Date Mismatch Tool - Updated end date from 2025-08-29 to 3/5/2025 (synced from ORBIT)"
+      "08/26/2025 05:02 PM - Cade Holtzen - Created promo."
     ],
     "last_changes": null,
     "created_at": "2025-08-26T17:02:50.759125",
-    "updated_at": "2025-08-26T17:09:20.792386",
-    "sku_link": "",
-    "tradein_link": "",
-    "sql_file": {},
-    "jira_ticket": "",
-    "initiative_name": "",
-    "segment_name": "",
-    "sub_segment": "",
-    "segment_group_id": "",
-    "segment_level": "",
-    "updated_by": "Cade Holtzen"
-  },
-  "P933": {
-    "promo_notes": "NULL",
-    "generated_sql": "",
-    "uploaded_files": {},
-    "version_history": [
-      "08/26/2025 05:21 PM - Cade Holtzen - Created promo."
-    ],
-    "last_changes": null,
-    "created_at": "2025-08-26T17:21:44.378990",
-    "updated_at": "2025-08-26T17:21:44.561544",
+    "updated_at": "2025-08-26T17:02:50.951765",
     "sku_link": "",
     "tradein_link": "",
     "sql_file": {},

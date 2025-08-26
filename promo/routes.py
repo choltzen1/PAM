@@ -1,13 +1,17 @@
 from flask import Blueprint, request, render_template, redirect, url_for, flash, jsonify, send_file
 from werkzeug.utils import secure_filename
 import os
-from data.storage import PromoDataManager
 
 # Create blueprint for promotion routes
 promo_bp = Blueprint('promo', __name__)
 
-# Initialize data manager
-data_manager = PromoDataManager()
+# Data manager will be set by the main app
+data_manager = None
+
+def init_data_manager(dm):
+    """Initialize the data manager from the main app"""
+    global data_manager
+    data_manager = dm
 
 @promo_bp.route('/edit_promo/<promo_code>', methods=['GET', 'POST'])
 def edit_promo(promo_code):

@@ -7,7 +7,7 @@
   <i class="fas fa-users header-icon"></i>
   <div class="header-text">
     <h2>Reviewers{% if promo_code %} - {{ promo_code }}{% endif %}</h2>
-    <p>Manage promotion reviewers and review assignments</p>
+    <p>Review promotion details and assignments</p>
   </div>
 </div>
 {% endblock %}
@@ -347,11 +347,11 @@ body {
         <div class="section-content">
           <div class="notes-content">
             {% if promo_data.promo_notes %}
-              {{ promo_data.promo_notes }}
+              <div style="white-space: pre-wrap;">{{ promo_data.promo_notes }}</div>
             {% elif promo_data.spe_notes %}
-              {{ promo_data.spe_notes }}
+              <div style="white-space: pre-wrap;">{{ promo_data.spe_notes }}</div>
             {% elif promo_data.notes %}
-              {{ promo_data.notes }}
+              <div style="white-space: pre-wrap;">{{ promo_data.notes }}</div>
             {% else %}
               <em>No notes available</em>
             {% endif %}
