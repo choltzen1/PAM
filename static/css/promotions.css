@@ -1,20 +1,7 @@
-/* promotions.css */
+/* Promotions Page Specific Styles */
 
-:root {
-  --tmobile-magenta: #e20074;
-  --tmobile-magenta-dark: #b8005a;
-  --tmobile-gray: #f4f4f4;
-  --tmobile-border: #e0e0e0;
-}
-
-/* 1. Page layout */
-html, body {
-  min-height: 100vh;
-  height: 100%;
-  margin: 0;
-  padding: 0;
-  background: #f4f4f4;
-  box-sizing: border-box;
+/* Page layout overrides */
+body {
   font-family: 'Inter', Arial, sans-serif;
   overflow-x: hidden;
 }

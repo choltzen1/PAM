@@ -11,6 +11,15 @@
   box-sizing: border-box;
 }
 
+html, body {
+  min-height: 100vh;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  background: var(--tmobile-gray);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
 /* Global Header */
 .global-header {
   background: var(--tmobile-magenta);
@@ -132,6 +141,22 @@
 .mb-3 { margin-bottom: 1rem; }
 .mt-4 { margin-top: 1.5rem; }
 .display-1 { font-size: 4rem; }
+
+/* Global Footer */
+.page-content {
+  padding-bottom: 60px; /* Account for footer height */
+  min-height: calc(100vh - 60px);
+}
+
+.footer-nav {
+  position: fixed !important;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  height: 60px;
+  box-sizing: border-box;
+}
 
 /* Bootstrap-like container and grid */
 .container-fluid {
