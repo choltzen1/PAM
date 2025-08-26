@@ -32,6 +32,10 @@ def get_json_manager():
 # Register blueprints
 app.register_blueprint(promo_bp)
 
+# Initialize data manager in blueprints
+from promo.routes import init_data_manager
+init_data_manager(data_manager)
+
 
 @app.route("/")
 def home():
@@ -171,6 +175,79 @@ def date_mismatch():
     except Exception as e:
         flash(f'Error loading date mismatch data: {str(e)}', 'error')
         return render_template("date_mismatch.html", promos=[], owners=[], user_name="Cade Holtzen")
+
+
+@app.route("/update_pam_date/<promo_code>", methods=['POST'])
+def update_pam_date(promo_code):
+    """Update PAM end date to match ORBIT end date"""
+    try:
+        # Get ORBIT end date from database
+        db_records = data_manager.db_manager.get_all_promos()
+        orbit_end_date = None
+        
+        for record in db_records:
+            if str(record.get('code', '')) == promo_code:
+                orbit_end_date = record.get('promo_end_date', '')
+                break
+        
+        if not orbit_end_date:
+            return jsonify({
+                'success': False, 
+                'message': f'Promotion {promo_code} not found in ORBIT database'
+            }), 404
+        
+        # Update PAM JSON file
+        import json
+        import os
+        
+        promo_file = os.path.join("data", "promotions.json")
+        
+        # Load current PAM data
+        try:
+            with open(promo_file, 'r') as f:
+                pam_data = json.load(f)
+        except (FileNotFoundError, json.JSONDecodeError):
+            return jsonify({
+                'success': False, 
+                'message': 'Could not read PAM promotions file'
+            }), 500
+        
+        # Check if promo exists in PAM
+        if promo_code not in pam_data:
+            return jsonify({
+                'success': False, 
+                'message': f'Promotion {promo_code} not found in PAM data'
+            }), 404
+        
+        # Update the end date
+        old_end_date = pam_data[promo_code].get('promo_end_date', 'N/A')
+        pam_data[promo_code]['promo_end_date'] = orbit_end_date
+        pam_data[promo_code]['updated_at'] = datetime.now().isoformat()
+        
+        # Add version history entry
+        if 'version_history' not in pam_data[promo_code]:
+            pam_data[promo_code]['version_history'] = []
+        
+        pam_data[promo_code]['version_history'].append(
+            f"{datetime.now().strftime('%m/%d/%Y %I:%M %p')} - Date Mismatch Tool - Updated end date from {old_end_date} to {orbit_end_date} (synced from ORBIT)"
+        )
+        
+        # Save updated data
+        with open(promo_file, 'w') as f:
+            json.dump(pam_data, f, indent=2, ensure_ascii=False)
+        
+        return jsonify({
+            'success': True, 
+            'message': f'Successfully updated PAM end date for {promo_code} from {old_end_date} to {orbit_end_date}',
+            'old_date': old_end_date,
+            'new_date': orbit_end_date
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False, 
+            'message': f'Error updating PAM date: {str(e)}'
+        }), 500
 
 
 @app.route("/rebates")
