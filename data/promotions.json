@@ -672,14 +672,14 @@
     "bill_facing_name": "Mobile Internet ID250396",
     "orbit_id": "25616",
     "description": "",
-    "promo_notes": "",
+    "promo_notes": "test notes",
     "discount": "100",
     "amount": "",
     "nseip_drop": "Y",
     "dcd_web_cart": "Y",
     "product_type": "B",
     "bogo": "N",
-    "trade_in_group_id": "M65",
+    "trade_in_group_id": "M66",
     "fpd_display_promo": "Y",
     "on_menu": "N",
     "market_group": "*",
@@ -718,7 +718,7 @@
     "flow_indicator": "NULL",
     "bptcr": "25616",
     "version_history": [],
-    "updated_at": "2025-08-14T13:21:02.039595",
+    "updated_at": "2025-08-26T15:05:52.515687",
     "created_at": "2025-07-24T16:07:32.491773",
     "uploaded_files": {
       "sku_excel": {
@@ -742,7 +742,7 @@
       "path": "data\\uploads\\promotions\\R223\\R223_promo_eligibility_rules.sql",
       "generated_at": "2025-07-30 12:50:41"
     },
-    "last_changes": "Last save: 07/31/2025 01:06 PM - Cade Holtzen - Changed: Segment Name (cleared), Sub Segment (cleared), Segment Group ID (cleared), Segment Level (cleared)",
+    "last_changes": "Last save: 08/26/2025 02:56 PM - Cade Holtzen - Changed: Trade-In Group ID (→ M66)",
     "initiative_name": "BTS H2'25: LINKPORT IK511 - On Us with Go5G Next /Beyond",
     "jira_ticket": "CPO-15988",
     "broken_trade": "N",
@@ -35414,5 +35414,27 @@
     "sales_application": "S01",
     "operator_id": "12350",
     "clawback_indicator": "N"
+  },
+  "25035": {
+    "code": "25035",
+    "owner": "Unknown",
+    "description": "",
+    "start_date": "",
+    "end_date": "",
+    "status": "Draft",
+    "amount": "800",
+    "nseip_drop": "Y",
+    "dcd_web_cart": "Y",
+    "bogo": "Y",
+    "fpd_display_promo": "Y",
+    "on_menu": "Y",
+    "market_group": "*",
+    "store_group": "*",
+    "last_changes": null,
+    "updated_at": "2025-08-26T14:56:23.453625",
+    "created_at": "2025-08-26T14:56:23.453646",
+    "version_history": [
+      "08/26/2025 02:56 PM - Cade Holtzen - Created promo."
+    ]
   }
 }

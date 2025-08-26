@@ -19,8 +19,15 @@ def edit_promo(promo_code):
         # Get current promo data
         promo_data = data_manager.get_promo(promo_code)
         if not promo_data:
-            flash(f"Promotion {promo_code} not found", "error")
-            return redirect(url_for('index'))
+            # Create new promo data if it doesn't exist
+            promo_data = {
+                'code': promo_code,
+                'owner': 'Unknown',
+                'description': '',
+                'start_date': '',
+                'end_date': '',
+                'status': 'Draft'
+            }
         
         # Handle SQL generation
         if request.form.get('generate_sql'):
@@ -149,8 +156,15 @@ def edit_promo(promo_code):
     tab = request.args.get('tab', 'Details')
     promo_data = data_manager.get_promo(promo_code)
     if not promo_data:
-        flash(f"Promotion {promo_code} not found", "error")
-        return redirect(url_for('index'))
+        # Create new promo data if it doesn't exist
+        promo_data = {
+            'code': promo_code,
+            'owner': 'Unknown',
+            'description': '',
+            'start_date': '',
+            'end_date': '',
+            'status': 'Draft'
+        }
     
     return render_template('edit_promo.html', 
                          promo=promo_data, 
@@ -267,7 +281,7 @@ def download_file(promo_code, file_type):
         promo_data = data_manager.get_promo(promo_code)
         if not promo_data:
             flash("Promotion not found", "error")
-            return redirect(url_for('index'))
+            return redirect(url_for('home'))
         
         if not promo_data.get('uploaded_files') or file_type not in promo_data['uploaded_files']:
             flash("File not found", "error")
@@ -292,7 +306,7 @@ def download_sql(promo_code):
         promo_data = data_manager.get_promo(promo_code)
         if not promo_data:
             flash("Promotion not found", "error")
-            return redirect(url_for('index'))
+            return redirect(url_for('home'))
         
         if not promo_data.get('generated_sql'):
             flash("No SQL generated yet", "error")

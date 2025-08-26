@@ -96,8 +96,15 @@ def edit_spe(promo_code):
         # Get current SPE data using unified data manager (now database-powered!)
         spe_data = data_manager.get_spe_promo(promo_code)
         if not spe_data:
-            flash(f"SPE {promo_code} not found", "error")
-            return redirect(url_for('spe'))
+            # Create new SPE data if it doesn't exist
+            spe_data = {
+                'code': promo_code,
+                'owner': 'Unknown',
+                'description': '',
+                'start_date': '',
+                'end_date': '',
+                'status': 'Draft'
+            }
         
         # Get the SPE data from the form
         updated_data = {}
@@ -124,8 +131,15 @@ def edit_spe(promo_code):
     json_manager = get_json_manager()
     spe_data = json_manager.get_spe_promo(promo_code)
     if not spe_data:
-        flash(f"SPE {promo_code} not found", "error")
-        return redirect(url_for('spe'))
+        # Create new SPE data if it doesn't exist
+        spe_data = {
+            'code': promo_code,
+            'owner': 'Unknown',
+            'description': '',
+            'start_date': '',
+            'end_date': '',
+            'status': 'Draft'
+        }
     
     # Ensure the data has the basic structure expected by template
     if not isinstance(spe_data, dict):

@@ -86,7 +86,7 @@ body {
               </div>
               <div class="detail-item">
                 <label>PJ Code:</label>
-                <span>{{ promo_data.code or 'Trade-In: Broken' }}</span>
+                <span>{{ promo_data.pj_code or 'Trade-In: Broken' }}</span>
               </div>
               <div class="detail-item">
                 <label>Trade-In:</label>
@@ -98,11 +98,11 @@ body {
               </div>
               <div class="detail-item">
                 <label>Port In:</label>
-                <span>{{ promo_data.port_in_group_id or '' }}</span>
+                <span>{{ promo_data.for_in or '' }}</span>
               </div>
               <div class="detail-item">
                 <label>Promo Amount:</label>
-                <span>{{ promo_data.amount or '' }}</span>
+                <span>{{ promo_data.promo_amount or '' }}</span>
               </div>
             </div>
             
@@ -110,11 +110,11 @@ body {
             <div class="details-column">
               <div class="detail-item">
                 <label>Promo % Discount:</label>
-                <span>{{ promo_data.discount or '100' }}%</span>
+                <span>{{ promo_data.promo_percent_discount or '100' }}</span>
               </div>
               <div class="detail-item">
                 <label>Stackability:</label>
-                <span></span>
+                <span>{{ promo_data.stackability or 'MEA: 100%' }}</span>
               </div>
               <div class="detail-item">
                 <label>MEA:</label>
@@ -134,7 +134,7 @@ body {
               </div>
               <div class="detail-item">
                 <label>Incremental Lift Total:</label>
-                <span></span>
+                <span>{{ promo_data.incremental_lift_total or 'Total Offer Spend:' }}</span>
               </div>
               <div class="detail-item">
                 <label>Total Offer Spend:</label>
@@ -171,6 +171,10 @@ body {
               <div class="detail-item">
                 <label>Limit Per Ban:</label>
                 <span>{{ promo_data.limit_per_ban or '' }}</span>
+              </div>
+              <div class="detail-item">
+                <label>Additional Info:</label>
+                <span>{{ promo_data.additional_info or '' }}</span>
               </div>
             </div>
           </div>
@@ -236,107 +240,7 @@ body {
         </div>
       </div>
 
-      <div class="devices-section">
-        <div class="section-header">
-          <div class="section-title">
-            <i class="fas fa-mobile-alt"></i>
-            Devices
-          </div>
-        </div>
-        <div class="section-content">
-          <div class="info-grid">
-            <div class="info-item">
-              <label>ELIGIBLE PURCHASE DEVICES:</label>
-              <div class="value">{{ promo_data.eligible_purchase_devices or '' }}</div>
-            </div>
-            <div class="info-item">
-              <label>ELIGIBLE TRADE-IN DEVICES:</label>
-              <div class="value">{{ promo_data.eligible_trade_in_devices or '' }}</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Row 3: Links, Notes, and Groupings -->
-      <div class="links-section">
-        <div class="section-header">
-          <div class="section-title">
-            <i class="fas fa-link"></i>
-            Links
-          </div>
-        </div>
-        <div class="section-content">
-          <div class="info-grid">
-            <div class="info-item">
-              <label>C2 Article:</label>
-              <div class="value">
-                {% if promo_data.c2_article %}
-                  <a href="{{ promo_data.c2_article }}" target="_blank" class="external-link">
-                    <i class="fas fa-external-link-alt"></i> View Article
-                  </a>
-                {% else %}
-                  <span class="text-muted">No article available</span>
-                {% endif %}
-              </div>
-            </div>
-            <div class="info-item">
-              <label>Trade-In Link:</label>
-              <div class="value">
-                {% if promo_data.tradein_link %}
-                  <a href="{{ promo_data.tradein_link }}" target="_blank" class="external-link">
-                    <i class="fas fa-external-link-alt"></i> Trade-In Portal
-                  </a>
-                {% else %}
-                  <span class="text-muted">No trade-in link</span>
-                {% endif %}
-              </div>
-            </div>
-            <div class="info-item">
-              <label>SKU Link:</label>
-              <div class="value">
-                {% if promo_data.sku_link %}
-                  <a href="{{ promo_data.sku_link }}" target="_blank" class="external-link">
-                    <i class="fas fa-external-link-alt"></i> View SKUs
-                  </a>
-                {% else %}
-                  <span class="text-muted">No SKU link</span>
-                {% endif %}
-              </div>
-            </div>
-            <div class="info-item">
-              <label>Legal Disclaimer:</label>
-              <div class="value">
-                {% if promo_data.legal_disclaimer %}
-                  <a href="{{ promo_data.legal_disclaimer }}" target="_blank" class="external-link">
-                    <i class="fas fa-external-link-alt"></i> View Disclaimer
-                  </a>
-                {% else %}
-                  <span class="text-muted">No disclaimer available</span>
-                {% endif %}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="description-section">
-        <div class="section-header">
-          <div class="section-title">
-            <i class="fas fa-file-alt"></i>
-            Description
-          </div>
-        </div>
-        <div class="section-content">
-          <div class="description-content">
-            {% if promo_data.description %}
-              {{ promo_data.description }}
-            {% else %}
-              <em>No description available</em>
-            {% endif %}
-          </div>
-        </div>
-      </div>
-
+      <!-- Row 3: Notes and Groupings -->
       <div class="notes-section">
         <div class="section-header">
           <div class="section-title">
