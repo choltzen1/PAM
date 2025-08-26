@@ -62,39 +62,161 @@ class DatabaseManager:
     
     def get_all_promos(self) -> List[Dict[Hashable, Any]]:
         """Fetch all promotions from PAM_Orbit_Data table"""
+        return self.get_promos_by_execution_type("RDC")
+    
+    def get_promos_by_execution_type(self, execution_type: str) -> List[Dict[Hashable, Any]]:
+        """Fetch promotions filtered by Desired_Execution type (RDC, SPE, Rebate)"""
         sql = """
         SELECT 
             code,
             Owner,
-            description,
-            promo_srart_date,
-            promo_end_date,
-            amount,
-            discount,
-            operator_id,
+            [bill facing name] as bill_facing_name,
             orbit_id,
-            sku_group_id,
-            soc_grouping,
+            description,
+            promo_notes,
+            discount,
+            amount,
+            nseip_drop,
+            dcd_web_cart,
             product_type,
-            active_line_required,
-            maintain_soc,
+            bogo,
+            fpd_display_promo,
+            on_menu,
             market_group,
             store_group,
-            limit_per_ban,
-            account_type,
-            sales_application,
-            activation_type,
-            device_sales_type,
-            clawback_indicator,
-            on_menu,
-            fpd_display_promo,
-            dcd_web_cart,
-            bogo,
-            nseip_drop,
+            promo_srart_date,
+            promo_end_date,
+            comm_end_date,
             promo_duration,
             delay_time,
             application_grace_period,
+            device_sales_type,
+            activation_type,
+            active_line_required,
+            maintain_soc,
+            crffc_maintainactivelinedev,
+            limit_per_ban,
+            soc_grouping,
+            account_type,
+            sales_application,
+            operator_id,
+            sku_group_id,
+            device_status_group_id,
+            clawback_indicator,
             Broken_Trade,
+            Anticipated_volume_take_rates_total,
+            Desired_Execution
+        FROM [RDC].[PAM_Orbit_Data]
+        WHERE Desired_Execution = :execution_type
+        ORDER BY code DESC
+        """
+        
+        try:
+            df = self.get_dataframe(sql, {'execution_type': execution_type})
+            return df.to_dict('records')
+        except Exception as e:
+            logger.error(f"Failed to fetch {execution_type} promotions: {str(e)}")
+            return []
+    
+    def get_all_spe_promos(self) -> List[Dict[Hashable, Any]]:
+        """Fetch all SPE promotions from database"""
+        return self.get_promos_by_execution_type("SPE")
+    
+    def get_all_rebates(self) -> List[Dict[Hashable, Any]]:
+        """Fetch all rebate promotions from database"""
+        return self.get_promos_by_execution_type("Rebate")
+    
+    def get_all_promotions_unified(self) -> List[Dict[Hashable, Any]]:
+        """Fetch ALL promotions regardless of type"""
+        sql = """
+        SELECT 
+            code,
+            Owner,
+            [bill facing name] as bill_facing_name,
+            orbit_id,
+            description,
+            promo_notes,
+            discount,
+            amount,
+            nseip_drop,
+            dcd_web_cart,
+            product_type,
+            bogo,
+            fpd_display_promo,
+            on_menu,
+            market_group,
+            store_group,
+            promo_srart_date,
+            promo_end_date,
+            comm_end_date,
+            promo_duration,
+            delay_time,
+            application_grace_period,
+            device_sales_type,
+            activation_type,
+            active_line_required,
+            maintain_soc,
+            crffc_maintainactivelinedev,
+            limit_per_ban,
+            soc_grouping,
+            account_type,
+            sales_application,
+            operator_id,
+            sku_group_id,
+            device_status_group_id,
+            clawback_indicator,
+            Broken_Trade,
+            Anticipated_volume_take_rates_total,
+            Desired_Execution
+        FROM [RDC].[PAM_Orbit_Data]
+        ORDER BY code DESC
+        """
+        
+        try:
+            df = self.get_dataframe(sql)
+            return df.to_dict('records')
+        except Exception as e:
+            logger.error(f"Failed to fetch all promotions: {str(e)}")
+            return []
+        sql = """
+        SELECT 
+            code,
+            Owner,
+            [bill facing name] as bill_facing_name,
+            orbit_id,
+            description,
+            promo_notes,
+            discount,
+            amount,
+            nseip_drop,
+            dcd_web_cart,
+            product_type,
+            bogo,
+            fpd_display_promo,
+            on_menu,
+            market_group,
+            store_group,
+            promo_srart_date,
+            promo_end_date,
+            comm_end_date,
+            promo_duration,
+            delay_time,
+            application_grace_period,
+            device_sales_type,
+            activation_type,
+            active_line_required,
+            maintain_soc,
+            crffc_maintainactivelinedev,
+            limit_per_ban,
+            soc_grouping,
+            account_type,
+            sales_application,
+            operator_id,
+            sku_group_id,
+            device_status_group_id,
+            clawback_indicator,
+            Broken_Trade,
+            Anticipated_volume_take_rates_total,
             Desired_Execution
         FROM [RDC].[PAM_Orbit_Data]
         ORDER BY code DESC
@@ -113,35 +235,41 @@ class DatabaseManager:
         SELECT 
             code,
             Owner,
-            description,
-            promo_srart_date,
-            promo_end_date,
-            amount,
-            discount,
-            operator_id,
+            [bill facing name] as bill_facing_name,
             orbit_id,
-            sku_group_id,
-            soc_grouping,
+            description,
+            promo_notes,
+            discount,
+            amount,
+            nseip_drop,
+            dcd_web_cart,
             product_type,
-            active_line_required,
-            maintain_soc,
+            bogo,
+            fpd_display_promo,
+            on_menu,
             market_group,
             store_group,
-            limit_per_ban,
-            account_type,
-            sales_application,
-            activation_type,
-            device_sales_type,
-            clawback_indicator,
-            on_menu,
-            fpd_display_promo,
-            dcd_web_cart,
-            bogo,
-            nseip_drop,
+            promo_srart_date,
+            promo_end_date,
+            comm_end_date,
             promo_duration,
             delay_time,
             application_grace_period,
+            device_sales_type,
+            activation_type,
+            active_line_required,
+            maintain_soc,
+            crffc_maintainactivelinedev,
+            limit_per_ban,
+            soc_grouping,
+            account_type,
+            sales_application,
+            operator_id,
+            sku_group_id,
+            device_status_group_id,
+            clawback_indicator,
             Broken_Trade,
+            Anticipated_volume_take_rates_total,
             Desired_Execution
         FROM [RDC].[PAM_Orbit_Data]
         WHERE code = :promo_code
@@ -151,6 +279,9 @@ class DatabaseManager:
             df = self.get_dataframe(sql, {'promo_code': promo_code})
             if not df.empty:
                 return df.iloc[0].to_dict()
+            return None
+        except Exception as e:
+            logger.error(f"Failed to fetch promo {promo_code}: {str(e)}")
             return None
         except Exception as e:
             logger.error(f"Failed to fetch promo {promo_code}: {str(e)}")
@@ -210,15 +341,46 @@ class DatabaseManager:
         SELECT 
             code,
             Owner,
+            [bill facing name] as bill_facing_name,
+            orbit_id,
             description,
+            promo_notes,
+            discount,
+            amount,
+            nseip_drop,
+            dcd_web_cart,
+            product_type,
+            bogo,
+            fpd_display_promo,
+            on_menu,
+            market_group,
+            store_group,
             promo_srart_date,
             promo_end_date,
-            amount,
+            comm_end_date,
+            promo_duration,
+            delay_time,
+            application_grace_period,
+            device_sales_type,
+            activation_type,
+            active_line_required,
+            maintain_soc,
+            crffc_maintainactivelinedev,
+            limit_per_ban,
+            soc_grouping,
+            account_type,
+            sales_application,
             operator_id,
-            orbit_id
+            sku_group_id,
+            device_status_group_id,
+            clawback_indicator,
+            Broken_Trade,
+            Anticipated_volume_take_rates_total,
+            Desired_Execution
         FROM [RDC].[PAM_Orbit_Data]
         WHERE code LIKE :search_term 
            OR description LIKE :search_term
+           OR [bill facing name] LIKE :search_term
         ORDER BY promo_srart_date DESC
         """
         
@@ -236,6 +398,10 @@ class DatabaseManager:
         json_record = {
             "code": db_record.get("code", ""),
             "description": db_record.get("description", ""),
+            "bill_facing_name": db_record.get("bill_facing_name", ""),  # Use actual bill_facing_name field
+            "owner": str(db_record.get("Owner", "Unknown")).strip('"'),  # Remove quotes from owner field
+            "orbit_id": db_record.get("orbit_id", ""),
+            "promo_notes": db_record.get("promo_notes", ""),  # Add promo_notes field
             "promo_start_date": str(db_record.get("promo_srart_date", "")) if db_record.get("promo_srart_date") else "",
             "promo_end_date": str(db_record.get("promo_end_date", "")) if db_record.get("promo_end_date") else "",
             "amount": str(db_record.get("amount", "")),
@@ -246,12 +412,14 @@ class DatabaseManager:
             "soc_grouping": db_record.get("soc_grouping", ""),
             "trade_in_group_id": db_record.get("trade_in_group_id", ""),
             "product_type": db_record.get("product_type", ""),
-            "active_line_required": "Y" if db_record.get("active_line_required") == "Y" else "N",
+            "bogo": "Y" if db_record.get("bogo") == "Y" else "N",  # Add bogo field
+            "on_menu": "Y" if db_record.get("on_menu") == "Y" else "N",  # Add on_menu field
+            "active_line_required": "Y" if str(db_record.get("active_line_required", "")).lower() in ["yes", "y"] else "N",
             "maintain_soc": "Y" if db_record.get("maintain_soc") == "Y" else "N",
             "maintain_active_line": "N",  # Not available in database
             "market_group": db_record.get("market_group", "*"),
             "store_group": db_record.get("store_group", "*"),
-            "limit_per_ban": db_record.get("limit_per_ban", ""),
+            "limit_per_ban": str(db_record.get("limit_per_ban", "")),
             "min_gsm_count": str(db_record.get("min_gsm_count", "")),
             "max_gsm_count": str(db_record.get("max_gsm_count", "")),
             "port_in_group_id": db_record.get("port_in_group_id", ""),
@@ -260,7 +428,11 @@ class DatabaseManager:
             "dcd_web_cart": "Y" if db_record.get("dcd_web_cart") == "Y" else "N",
             "promo_duration": str(db_record.get("promo_duration", "")),
             "delay_time": str(db_record.get("delay_time", "")),
-            "application_grace_period": db_record.get("application_grace_period", ""),
+            "application_grace_period": str(db_record.get("application_grace_period", "")),
+            "device_sales_type": db_record.get("device_sales_type", ""),  # Add device_sales_type
+            "activation_type": db_record.get("activation_type", ""),  # Add activation_type
+            "account_type": db_record.get("account_type", ""),  # Add account_type
+            "sales_application": db_record.get("sales_application", ""),  # Add sales_application
             "mpss_lookback": str(db_record.get("mpss_lookback", "")),
             "device_status_group_id": db_record.get("device_status_group_id", ""),
             "clawback_indicator": "Y" if db_record.get("clawback_indicator") == "Y" else "N",
@@ -274,27 +446,17 @@ class DatabaseManager:
             # Execution type for tab separation
             "Desired_Execution": db_record.get("Desired_Execution", "RDC"),
             
-            # Default values for fields not in database
-            "owner": str(db_record.get("Owner", "Unknown")).strip('"'),  # Remove quotes from owner field
-            "bill_facing_name": db_record.get("description", ""),  # Use description instead
-            "orbit_id": db_record.get("orbit_id", ""),
+            # Default values for fields not in database (PAM-only workflow fields)
             "pj_code": "",
-            "promo_notes": "",
-            "bogo": db_record.get("bogo", "N"),
-            "on_menu": db_record.get("on_menu", "N"),
             "sku_link": "",
             "tradein_link": "",
-            "comm_end_date": "",
+            "comm_end_date": db_record.get("comm_end_date", ""),  # Now available from database
             "promo_grace": "",
             "trade_in_grace": "",
-            "device_sales_type": db_record.get("device_sales_type", ""),
-            "activation_type": db_record.get("activation_type", "*"),
             "segment_name": "",
             "sub_segment": "",
             "segment_group_id": "",
             "segment_level": "",
-            "account_type": db_record.get("account_type", ""),
-            "sales_application": db_record.get("sales_application", ""),
             "flow_indicator": "NULL",
             "version_history": [],
             "uploaded_files": {},
@@ -302,7 +464,11 @@ class DatabaseManager:
             "sql_file": {},
             "last_changes": None,
             "jira_ticket": "",
-            "initiative_name": ""
+            "initiative_name": "",
+            # Additional fields from database sample
+            "crffc_maintainactivelinedev": "Y" if db_record.get("crffc_maintainactivelinedev") == "Y" else "N",
+            "Broken_Trade": db_record.get("Broken_Trade", ""),
+            "Anticipated_volume_take_rates_total": db_record.get("Anticipated_volume_take_rates_total", "")
         }
         
         return json_record

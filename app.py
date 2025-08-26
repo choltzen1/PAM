@@ -3,7 +3,7 @@ import os
 import requests
 import urllib3
 from datetime import datetime
-from data.storage import PromoDataManager
+from data.hybrid_storage import HybridPromoDataManager as PromoDataManager
 from promo.builders import generate_promo_eligibility_sql
 from promo.routes import promo_bp
 
@@ -20,8 +20,14 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 app = Flask(__name__)
 app.secret_key = 'your-secret-key-here'  # Required for flash messages
 
-# Initialize data manager
+# Initialize enhanced data manager with database integration
 data_manager = PromoDataManager()
+print("✅ Enhanced hybrid data manager initialized with database integration")
+
+# Helper function to get JSON manager for SPE and rebates (until they're migrated to database)
+def get_json_manager():
+    from data.storage import PromoDataManager as JSONManager
+    return JSONManager()
 
 # Register blueprints
 app.register_blueprint(promo_bp)
@@ -62,7 +68,7 @@ def promotions():
 @app.route("/spe")
 def spe():
     try:
-        # Load SPE data from data manager
+        # Load SPE data from unified data manager (now database-powered!)
         spe_data_dict = data_manager.get_all_spe_promos()
         
         # Convert to a list and sort by keys for consistent display
@@ -87,7 +93,7 @@ def edit_spe(promo_code):
         # Get the active tab from form
         tab = request.form.get('active_tab', tab)
         
-        # Get current SPE data
+        # Get current SPE data using unified data manager (now database-powered!)
         spe_data = data_manager.get_spe_promo(promo_code)
         if not spe_data:
             flash(f"SPE {promo_code} not found", "error")
@@ -106,16 +112,17 @@ def edit_spe(promo_code):
         spe_data.update(updated_data)
         
         try:
-            # Save the SPE data
-            data_manager.save_spe_promo(promo_code, spe_data, user_name="Cade Holtzen")
+            # Save the SPE data using JSON manager
+            json_manager.save_spe_promo(promo_code, spe_data, user_name="Cade Holtzen")
             flash(f'SPE {promo_code} saved successfully!', 'success')
             # Redirect back to the same tab
             return redirect(url_for('edit_spe', promo_code=promo_code, tab=tab))
         except Exception as e:
             flash(f'Error saving SPE: {str(e)}', 'error')
     
-    # GET request - load SPE data
-    spe_data = data_manager.get_spe_promo(promo_code)
+    # GET request - load SPE data using JSON manager
+    json_manager = get_json_manager()
+    spe_data = json_manager.get_spe_promo(promo_code)
     if not spe_data:
         flash(f"SPE {promo_code} not found", "error")
         return redirect(url_for('spe'))
@@ -129,18 +136,19 @@ def edit_spe(promo_code):
                          spe_data=spe_data, 
                          spe_key=promo_code,
                          active_tab=tab or 'Details',
-                         soc_groupings=data_manager.get_soc_groupings(),
-                         soc_grouping_details=data_manager.get_soc_grouping_details(),
-                         account_types=data_manager.get_account_types(),
-                         account_type_details=data_manager.get_account_type_details(),
-                         sales_applications=data_manager.get_sales_applications(),
-                         sales_application_details=data_manager.get_sales_application_details(),
+                         soc_groupings=json_manager.get_soc_groupings(),
+                         soc_grouping_details=json_manager.get_soc_grouping_details(),
+                         account_types=json_manager.get_account_types(),
+                         account_type_details=json_manager.get_account_type_details(),
+                         sales_applications=json_manager.get_sales_applications(),
+                         sales_application_details=json_manager.get_sales_application_details(),
                          user_name="Cade Holtzen")
 
 
 @app.route("/date_mismatch")
 def date_mismatch():
     try:
+        # Use hybrid data manager for database-powered date mismatch checking
         mismatch_data = data_manager.get_date_mismatched_promos()
         return render_template("date_mismatch.html", 
                              promos=mismatch_data['promos'], 
@@ -153,7 +161,56 @@ def date_mismatch():
 
 @app.route("/rebates")
 def rebates():
-    return render_template("rebates.html")
+    try:
+        # Get search and filter parameters from query string
+        search = request.args.get('search', '', type=str)
+        owner_filter = request.args.get('owner', 'all', type=str)
+        
+        # Load rebate data from unified data manager (now database-powered!)
+        rebates_data_dict = data_manager.get_all_rebates()
+        
+        # Convert to a list for filtering and sorting
+        rebates_data = []
+        for key in sorted(rebates_data_dict.keys()):
+            item = rebates_data_dict[key]
+            item['key'] = key  # Add the key to the item for template use
+            rebates_data.append(item)
+        
+        # Apply search filter
+        if search:
+            search_lower = search.lower()
+            rebates_data = [
+                rebate for rebate in rebates_data 
+                if (search_lower in rebate.get('code', '').lower() or 
+                    search_lower in rebate.get('owner', '').lower() or
+                    search_lower in rebate.get('bill_facing_name', '').lower())
+            ]
+        
+        # Apply owner filter
+        if owner_filter and owner_filter != "all":
+            rebates_data = [rebate for rebate in rebates_data if rebate.get('owner', '') == owner_filter]
+        
+        # Get unique owners for filter dropdown
+        owners = data_manager.get_rebate_owners()
+        
+        return render_template(
+            "rebates.html", 
+            rebates_data=rebates_data, 
+            owners=owners,
+            search_query=search,
+            selected_owner=owner_filter,
+            active_tab='Rebates'
+        )
+    except Exception as e:
+        flash(f'Error loading rebates data: {str(e)}', 'error')
+        return render_template(
+            "rebates.html", 
+            rebates_data=[], 
+            owners=[],
+            search_query='',
+            selected_owner='all',
+            active_tab='Rebates'
+        )
 
 
 @app.route("/test")
@@ -167,11 +224,14 @@ def approvers():
         # Get the promo_code parameter if provided
         target_promo_code = request.args.get('promo_code', '').strip()
         
-        # Load promotion data
-        data_manager = PromoDataManager()
+        # Load promotion data using the global database-connected manager
         rdc_data = data_manager.get_all_promos()
-        spe_data = data_manager.get_all_spe_promos()
-        rebates_data = data_manager.get_all_rebates()
+        
+        # SPE still uses JSON files (for now)
+        from data.storage import PromoDataManager as JSONManager
+        json_manager = JSONManager()
+        spe_data = json_manager.get_all_spe_promos()
+        rebates_data = json_manager.get_all_rebates()
         
         # Combine all promo codes and owners
         all_promos = []
@@ -663,19 +723,20 @@ def admin_backup():
         backup_dir = f"backups/backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
         os.makedirs(backup_dir, exist_ok=True)
         
-        # Copy data files
-        if os.path.exists("data/promotions.json"):
-            shutil.copy2("data/promotions.json", backup_dir)
+        # Copy remaining data files (SPE and rebates still use JSON)
+        # Note: Regular promotions are now in database, no longer backed up as JSON
         if os.path.exists("data/spe_promotions.json"):
             shutil.copy2("data/spe_promotions.json", backup_dir)
         if os.path.exists("data/rebates.json"):
             shutil.copy2("data/rebates.json", backup_dir)
+        if os.path.exists("data/workflow_data.json"):
+            shutil.copy2("data/workflow_data.json", backup_dir)  # PAM workflow data
             
         # Copy uploads directory
         if os.path.exists("data/uploads"):
             shutil.copytree("data/uploads", os.path.join(backup_dir, "uploads"))
         
-        return jsonify({"success": True, "message": f"Backup created successfully in {backup_dir}"})
+        return jsonify({"success": True, "message": f"Backup created successfully in {backup_dir} (Note: Promotions are now in database)"})
     except Exception as e:
         return jsonify({"success": False, "message": f"Backup failed: {str(e)}"})
 
@@ -684,12 +745,20 @@ def admin_backup():
 def admin_stats():
     """Get detailed system statistics"""
     try:
+        # Get data from database-powered manager
         promotions_data = data_manager.get_all_promos()
-        spe_data = data_manager.get_all_spe_promos()
         
-        # Calculate file sizes
-        promo_file_size = os.path.getsize("data/promotions.json") if os.path.exists("data/promotions.json") else 0
+        # SPE still uses JSON files (for now)
+        from data.storage import PromoDataManager
+        json_manager = PromoDataManager()
+        spe_data = json_manager.get_all_spe_promos()
+        
+        # Calculate cache status
+        cache_status = data_manager.get_cache_status()
+        
+        # Calculate file sizes (remaining JSON files only)
         spe_file_size = os.path.getsize("data/spe_promotions.json") if os.path.exists("data/spe_promotions.json") else 0
+        workflow_file_size = os.path.getsize("data/workflow_data.json") if os.path.exists("data/workflow_data.json") else 0
         
         # Count uploads
         uploads_count = 0
@@ -701,12 +770,13 @@ def admin_stats():
             "promotions_count": len(promotions_data),
             "spe_count": len(spe_data),
             "total_records": len(promotions_data) + len(spe_data),
-            "promo_file_size": f"{promo_file_size / 1024:.1f} KB",
+            "data_source": "Database + JSON hybrid",
+            "cache_status": cache_status,
             "spe_file_size": f"{spe_file_size / 1024:.1f} KB",
+            "workflow_file_size": f"{workflow_file_size / 1024:.1f} KB",
             "uploads_count": uploads_count,
-            "last_modified": datetime.fromtimestamp(
-                os.path.getmtime("data/promotions.json") if os.path.exists("data/promotions.json") else 0
-            ).strftime("%Y-%m-%d %H:%M:%S") if os.path.exists("data/promotions.json") else "Never"
+            "database_connected": True,
+            "last_cache_refresh": cache_status.get('last_refresh', 'Never')
         }
         
         return jsonify({"success": True, "stats": stats})
@@ -784,6 +854,35 @@ def download_sql(promo_code):
     except Exception as e:
         flash(f'Error generating SQL download: {str(e)}', 'error')
         return redirect(url_for('promo.edit_promo', promo_code=promo_code))
+
+
+@app.route("/admin/cache-status")
+def admin_cache_status():
+    """Get cache performance status"""
+    try:
+        cache_status = data_manager.get_cache_status()
+        return jsonify({"success": True, "cache_status": cache_status})
+    except Exception as e:
+        return jsonify({"success": False, "message": f"Failed to get cache status: {str(e)}"})
+
+
+@app.route("/admin/cache-refresh", methods=["POST"])
+def admin_cache_refresh():
+    """Manually refresh the cache"""
+    try:
+        start_time = datetime.now()
+        data_manager.force_refresh()
+        refresh_time = (datetime.now() - start_time).total_seconds()
+        
+        cache_status = data_manager.get_cache_status()
+        
+        return jsonify({
+            "success": True, 
+            "message": f"Cache refreshed successfully in {refresh_time:.2f} seconds",
+            "cache_status": cache_status
+        })
+    except Exception as e:
+        return jsonify({"success": False, "message": f"Failed to refresh cache: {str(e)}"})
 
 
 @app.route("/create_jira_ticket", methods=["POST"])

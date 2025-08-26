@@ -1,8 +1,5 @@
 {% extends "base.html" %}
 {% block title %}Links{% if promo_code %} - {{ promo_code }}{% endif %} - PAM{% endblock %}
-{% block head %}
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/date_mismatch.css') }}">
-{% endblock %}
 {% block content %}
 <div class="date-mismatch-page">
   <!-- Header -->

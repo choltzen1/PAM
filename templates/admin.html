@@ -131,6 +131,39 @@
       font-weight: 600;
       letter-spacing: 0.5px;
     }
+    .metric-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+      border-bottom: 1px solid #f1f5f9;
+    }
+    .metric-row:last-child {
+      border-bottom: none;
+    }
+    .metric-label {
+      font-weight: 500;
+      color: #374151;
+    }
+    .metric-value {
+      font-weight: 600;
+      color: #1f2937;
+    }
+    .metric-value.status-good {
+      color: #10b981;
+    }
+    .metric-value.status-warn {
+      color: #f59e0b;
+    }
+    .metric-value.status-error {
+      color: #ef4444;
+    }
+    #cache-status-display {
+      background: #f8fafc;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
     .recent-activity {
       background: white;
       border-radius: 12px;
@@ -441,14 +474,31 @@
         <div class="card-title">Performance Monitoring</div>
       </div>
       <div class="card-content">
-        Monitor system performance, view metrics, and analyze usage patterns and bottlenecks.
+        <div id="cache-status-display">
+          <div class="metric-row">
+            <span class="metric-label">Cache Status:</span>
+            <span class="metric-value" id="cache-valid">Loading...</span>
+          </div>
+          <div class="metric-row">
+            <span class="metric-label">Hit Ratio:</span>
+            <span class="metric-value" id="cache-hit-ratio">Loading...</span>
+          </div>
+          <div class="metric-row">
+            <span class="metric-label">Cached Items:</span>
+            <span class="metric-value" id="cached-items">Loading...</span>
+          </div>
+          <div class="metric-row">
+            <span class="metric-label">Cache Age:</span>
+            <span class="metric-value" id="cache-age">Loading...</span>
+          </div>
+        </div>
       </div>
       <div class="card-actions">
-        <button class="btn-admin" onclick="showPerformanceMetrics()">
-          <i class="fas fa-chart-line"></i> View Metrics
+        <button class="btn-admin" onclick="showDetailedMetrics()" id="metrics-btn">
+          <i class="fas fa-chart-line"></i> View Detailed Metrics
         </button>
-        <button class="btn-admin secondary" onclick="clearCache()">
-          <i class="fas fa-trash"></i> Clear Cache
+        <button class="btn-admin secondary" onclick="refreshCache()" id="refresh-btn">
+          <i class="fas fa-sync"></i> Refresh Cache
         </button>
       </div>
     </div>
@@ -789,12 +839,97 @@ function testIntegrations() {
   showAlert('Integration test completed. 2/3 services healthy.', 'warning');
 }
 
-function showPerformanceMetrics() {
-  showAlert('CPU: 23% | Memory: 67% | Storage: 45% | Response Time: 150ms', 'success');
+function showDetailedMetrics() {
+  const btn = document.getElementById('metrics-btn');
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading...';
+  btn.disabled = true;
+  
+  fetch('/admin/cache-status')
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        const cache = data.cache_status;
+        const details = `
+📊 CACHE PERFORMANCE METRICS
+
+🎯 Hit Ratio: ${cache.cache_hit_ratio}
+📈 Total Hits: ${cache.total_cache_hits}
+📉 Total Misses: ${cache.total_cache_misses}
+🔄 Total DB Loads: ${cache.total_db_loads}
+
+⏱️ Cache Age: ${cache.cache_age_minutes ? Math.round(cache.cache_age_minutes * 10) / 10 + ' minutes' : 'Not cached'}
+⚡ Cache TTL: ${cache.cache_ttl_minutes} minutes
+📦 Cached Items: ${cache.cached_items}
+
+🔄 Background Refresh: ${cache.background_refresh_active ? '✅ Active' : '❌ Inactive'}
+🕐 Last Refresh: ${cache.last_refresh ? new Date(cache.last_refresh).toLocaleString() : 'Never'}
+        `;
+        showAlert(details, 'info');
+      } else {
+        showAlert('Failed to load cache metrics: ' + data.message, 'error');
+      }
+    })
+    .catch(error => {
+      showAlert('Error loading cache metrics: ' + error, 'error');
+    })
+    .finally(() => {
+      btn.innerHTML = '<i class="fas fa-chart-line"></i> View Detailed Metrics';
+      btn.disabled = false;
+    });
 }
 
-function clearCache() {
-  showAlert('Application cache cleared successfully!', 'success');
+function refreshCache() {
+  const btn = document.getElementById('refresh-btn');
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Refreshing...';
+  btn.disabled = true;
+  
+  fetch('/admin/cache-refresh', { method: 'POST' })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        showAlert(data.message, 'success');
+        updateCacheDisplay(data.cache_status);
+      } else {
+        showAlert('Failed to refresh cache: ' + data.message, 'error');
+      }
+    })
+    .catch(error => {
+      showAlert('Error refreshing cache: ' + error, 'error');
+    })
+    .finally(() => {
+      btn.innerHTML = '<i class="fas fa-sync"></i> Refresh Cache';
+      btn.disabled = false;
+    });
+}
+
+function updateCacheDisplay(cacheStatus) {
+  if (!cacheStatus) return;
+  
+  document.getElementById('cache-valid').textContent = cacheStatus.cache_valid ? '✅ Valid' : '❌ Expired';
+  document.getElementById('cache-valid').className = 'metric-value ' + (cacheStatus.cache_valid ? 'status-good' : 'status-warn');
+  
+  document.getElementById('cache-hit-ratio').textContent = cacheStatus.cache_hit_ratio;
+  document.getElementById('cached-items').textContent = cacheStatus.cached_items;
+  
+  const ageMinutes = cacheStatus.cache_age_minutes;
+  if (ageMinutes !== null) {
+    document.getElementById('cache-age').textContent = Math.round(ageMinutes * 10) / 10 + ' min';
+  } else {
+    document.getElementById('cache-age').textContent = 'Not cached';
+  }
+}
+
+function loadCacheStatus() {
+  fetch('/admin/cache-status')
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        updateCacheDisplay(data.cache_status);
+      }
+    })
+    .catch(error => {
+      console.error('Error loading cache status:', error);
+    });
 }
 
 function saveConfig() {
@@ -814,9 +949,13 @@ function updateStatus() {
 // Update status every 30 seconds
 setInterval(updateStatus, 30000);
 
+// Update cache status every 60 seconds
+setInterval(loadCacheStatus, 60000);
+
 // Initialize
 document.addEventListener('DOMContentLoaded', function() {
   console.log('Admin Dashboard loaded successfully');
+  loadCacheStatus(); // Load cache status immediately
 });
 </script>
 

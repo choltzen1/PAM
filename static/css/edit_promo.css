@@ -1,33 +1,4 @@
-:root {
-  --tmobile-magenta: #E20074;
-  --tmobile-magenta-dark: #b8005a;
-  --tmobile-gray: #f4f4f4;
-  --tmobile-border: #e0e0e0;
-}
-
-/* Page layout */
-html, body {
-  min-height: 100vh;
-  height: 100%;
-  margin: 0;
-  padding: 0;
-  background: var(--tmobile-gray);
-  box-sizing: border-box;
-}
-
-/* Header (always visible) */
-.header {
-  background: var(--tmobile-magenta);
-  color: #fff;
-  padding: 1.2rem 2rem 1.2rem 2rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 1.2rem;
-  font-weight: 600;
-  margin-bottom: 1.5rem;
-  flex-shrink: 0;
-}
+/* Edit Promo Page Specific Styles */
 
 /* MAIN CONTENT scrolls as needed */
 .main-content-area {

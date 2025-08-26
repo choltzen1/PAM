@@ -1,8 +1,5 @@
 {% extends "base.html" %}
 {% block title %}Date Mismatch - PAM{% endblock %}
-{% block head %}
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/date_mismatch.css') }}">
-{% endblock %}
 
 {% block header_left %}
 <div class="global-header-promotions">
@@ -90,9 +87,11 @@
             <td class="orbit-end-date">{{ promo.orbit_end_date or 'N/A' }}</td>
             <td class="pam-end-date">{{ promo.promo_end_date or 'N/A' }}</td>
             <td class="mismatch-type">
-              <span class="badge badge-{{ promo.mismatch_severity }}">
-                {{ promo.mismatch_type }}
-              </span>
+              {% if promo.mismatch_type %}
+                <span class="badge badge-{{ promo.mismatch_severity }}">
+                  {{ promo.mismatch_type }}
+                </span>
+              {% endif %}
             </td>
             <td class="actions">
               <button class="btn btn-sm btn-outline-primary" onclick="syncFromOrbit('{{ promo.code }}')">

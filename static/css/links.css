@@ -1,0 +1,41 @@
+/* Links Page Specific Styles */
+
+.links-page {
+  padding: 2rem;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.links-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+  margin-top: 2rem;
+}
+
+.link-card {
+  background: white;
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  transition: transform 0.2s;
+}
+
+.link-card:hover {
+  transform: translateY(-2px);
+}
+
+.link-card h3 {
+  color: var(--tmobile-magenta);
+  margin-bottom: 1rem;
+}
+
+.link-card a {
+  color: var(--tmobile-magenta);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.link-card a:hover {
+  text-decoration: underline;
+}

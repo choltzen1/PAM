@@ -1,10 +1,6 @@
-/* spe.css - Modern styles for the SPE page */
+/* SPE Page Specific Styles */
 :root {
   --spe-color: #e20074;  /* T-Mobile magenta as default */
-  --tmobile-magenta: #e20074;
-  --tmobile-magenta-dark: #b8005a;
-  --tmobile-gray: #f4f4f4;
-  --tmobile-border: #e0e0e0;
   --spe-row-bg: #dadada;
   --spe-row-bg-alt: #f3f3f3;
   --spe-header-bg: var(--spe-color);
@@ -14,14 +10,8 @@
   --spe-table-shadow: 0 2px 16px #0001;
 }
 
-/* 1. Page layout */
-html, body {
-  min-height: 100vh;
-  height: 100%;
-  margin: 0;
-  padding: 0;
-  background: #f4f4f4;
-  box-sizing: border-box;
+/* Page layout overrides */
+body {
   font-family: 'Inter', Arial, sans-serif;
   overflow-x: hidden;
 }
