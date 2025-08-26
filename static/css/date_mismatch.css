@@ -122,7 +122,7 @@ html, body {
 .date-mismatch-table th:nth-child(4) { width: 15%; } /* ORBIT End Date */
 .date-mismatch-table th:nth-child(5) { width: 15%; } /* PAM End Date */
 .date-mismatch-table th:nth-child(6) { width: 12%; } /* Mismatch Type */
-.date-mismatch-table th:nth-child(7) { width: 19%; text-align: right; } /* Actions */
+.date-mismatch-table th:nth-child(7) { width: 15%; text-align: right; } /* Actions */
 
 .date-mismatch-table td {
   padding: 0.75rem;
