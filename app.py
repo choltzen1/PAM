@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, session
 import os
 import requests
 import urllib3
@@ -319,6 +319,85 @@ def generate_date_sql():
         }), 500
 
 
+@app.route("/generate_sql_for_promo/<promo_code>")
+def generate_sql_for_promo(promo_code):
+    """Generate and download SQL file for updating a single promotion's end date"""
+    operator_id = request.args.get('operator_id', '')
+    orbit_end_date = request.args.get('orbit_end_date', '')
+    
+    sql = generate_sql_content(promo_code, operator_id, orbit_end_date)
+    if sql.startswith('Error:'):
+        flash(sql, 'error')
+        return redirect(url_for('date_mismatch'))
+    
+    # Save SQL to temporary file for download
+    import tempfile
+    import os
+    temp_dir = tempfile.gettempdir()
+    sql_filename = f"{promo_code}_end_date_update.sql"
+    temp_file_path = os.path.join(temp_dir, sql_filename)
+    
+    with open(temp_file_path, 'w', encoding='utf-8') as f:
+        f.write(sql)
+    
+    from flask import send_file
+    return send_file(temp_file_path, as_attachment=True, download_name=sql_filename)
+
+
+@app.route("/preview_sql_for_promo/<promo_code>")
+def preview_sql_for_promo(promo_code):
+    """Preview SQL for updating a single promotion's end date"""
+    operator_id = request.args.get('operator_id', '')
+    orbit_end_date = request.args.get('orbit_end_date', '')
+    
+    sql = generate_sql_content(promo_code, operator_id, orbit_end_date)
+    if sql.startswith('Error:'):
+        return jsonify({'error': sql}), 400
+    
+    return jsonify({'sql': sql})
+
+
+def generate_sql_content(promo_code, operator_id, orbit_end_date):
+    """Helper function to generate SQL content"""
+    try:
+        # Validate operator ID
+        if not operator_id or not operator_id.isdigit() or len(operator_id) != 5:
+            return f'Error: Operator ID must be exactly 5 digits. Received: {operator_id}'
+        
+        if not orbit_end_date or orbit_end_date == 'N/A':
+            return f'Error: No valid ORBIT end date found for promotion {promo_code}'
+        
+        # Parse the ORBIT end date and calculate other dates
+        from datetime import datetime, timedelta
+        try:
+            # ORBIT end date is in format like "08/20/25" - convert to full year
+            if len(orbit_end_date.split('/')[-1]) == 2:
+                # Convert 2-digit year to 4-digit year
+                month, day, year = orbit_end_date.split('/')
+                year = '20' + year if int(year) < 50 else '19' + year  # Assume 00-49 = 2000-2049, 50-99 = 1950-1999
+                orbit_end_date = f"{month}/{day}/{year}"
+            
+            end_date_obj = datetime.strptime(orbit_end_date, '%m/%d/%Y')
+            exp_date_obj = end_date_obj  # Same as end date, not 3 years later
+            display_end_obj = end_date_obj - timedelta(days=1)  # 1 day before
+            
+            # Format for SQL
+            promo_end_formatted = end_date_obj.strftime('%m/%d/%Y') + ' 05:00:00'
+            exp_end_formatted = exp_date_obj.strftime('%m/%d/%Y') + ' 05:00:00'
+            display_end_formatted = display_end_obj.strftime('%m/%d/%Y') + ' 00:00:00'
+            
+            # Generate SQL statement
+            sql = f"""update promo_eligibility_rules set SYS_UPDATE_DATE = sysdate, APPLICATION_ID = 'CPO', OPERATOR_ID = '{operator_id}', PROMO_END_DATE = to_date('{promo_end_formatted}','MM/DD/YYYY HH24:MI:SS'), EXPIRATION_DATE = to_date('{exp_end_formatted}','MM/DD/YYYY HH24:MI:SS'), DISPLAY_PROMO_END_DATE = to_date('{display_end_formatted}','MM/DD/YYYY HH24:MI:SS') where promo_code = '{promo_code}';"""
+            
+            return sql
+            
+        except ValueError as e:
+            return f'Error: Invalid date format "{orbit_end_date}". Expected MM/DD/YY or MM/DD/YYYY format. Error: {str(e)}'
+        
+    except Exception as e:
+        return f'Error generating SQL: {str(e)}'
+
+
 @app.route("/generate_sql_form/<promo_code>")
 def generate_sql_form(promo_code):
     """Show form for generating SQL for a single promo"""
@@ -398,6 +477,124 @@ def generate_sql_submit():
         
     except Exception as e:
         flash(f'Error generating SQL: {str(e)}', 'error')
+        return redirect(url_for('date_mismatch'))
+
+
+@app.route("/generate_batch_sql", methods=['POST'])
+def generate_batch_sql():
+    """Generate SQL file for batch date updates with file preview response"""
+    try:
+        data = request.get_json()
+        promotions = data.get('promotions', [])
+        operator_id = data.get('operator_id', '')
+        
+        # Validate operator ID
+        if not operator_id or not operator_id.isdigit() or len(operator_id) != 5:
+            return jsonify({
+                'success': False,
+                'error': 'Operator ID must be exactly 5 digits'
+            }), 400
+        
+        if not promotions:
+            return jsonify({
+                'success': False,
+                'error': 'No promotions provided'
+            }), 400
+        
+        # Generate SQL statements
+        sql_statements = []
+        successful_promos = []
+        failed_promos = []
+        
+        for promo in promotions:
+            promo_code = promo.get('code', '')
+            orbit_end_date = promo.get('orbit_end_date', '')
+            
+            sql = generate_sql_content(promo_code, operator_id, orbit_end_date)
+            
+            if sql.startswith('Error:'):
+                failed_promos.append({'code': promo_code, 'error': sql})
+            else:
+                sql_statements.append(sql)
+                successful_promos.append(promo_code)
+        
+        if not sql_statements:
+            return jsonify({
+                'success': False,
+                'error': 'No valid SQL statements could be generated',
+                'failed_promos': failed_promos
+            }), 400
+        
+        # Create filename with current date
+        from datetime import datetime
+        today = datetime.now().strftime('%Y-%m-%d')
+        filename = f"End_date_updates_{today}.sql"
+        
+        # Combine all SQL statements
+        full_sql_content = '\n'.join(sql_statements)
+        
+        # Store the SQL content temporarily (in a real app, you might use a temporary file or database)
+        import tempfile
+        import os
+        temp_file = tempfile.NamedTemporaryFile(mode='w', suffix='.sql', delete=False)
+        temp_file.write(full_sql_content)
+        temp_file.close()
+        
+        # Store the temp file path for download
+        session[f'sql_file_{operator_id}_{today}'] = temp_file.name
+        
+        return jsonify({
+            'success': True,
+            'filename': filename,
+            'generated_at': datetime.now().strftime('%Y-%m-%d %I:%M %p'),
+            'character_count': len(full_sql_content),
+            'statement_count': len(sql_statements),
+            'download_url': f'/download_batch_sql/{operator_id}/{today}',
+            'sql_content': full_sql_content,
+            'successful_promos': successful_promos,
+            'failed_promos': failed_promos
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'Error generating batch SQL: {str(e)}'
+        }), 500
+
+
+@app.route("/download_batch_sql/<operator_id>/<date>")
+def download_batch_sql(operator_id, date):
+    """Download the generated batch SQL file"""
+    try:
+        # Get the temp file path from session
+        temp_file_path = session.get(f'sql_file_{operator_id}_{date}')
+        
+        if not temp_file_path or not os.path.exists(temp_file_path):
+            flash('SQL file not found or has expired. Please regenerate the SQL.', 'error')
+            return redirect(url_for('date_mismatch'))
+        
+        # Read the file content
+        with open(temp_file_path, 'r') as f:
+            sql_content = f.read()
+        
+        # Clean up the temp file
+        os.unlink(temp_file_path)
+        del session[f'sql_file_{operator_id}_{date}']
+        
+        # Create response with file download
+        from flask import Response
+        filename = f"End_date_updates_{date}.sql"
+        
+        response = Response(
+            sql_content,
+            mimetype='text/plain',
+            headers={'Content-Disposition': f'attachment; filename="{filename}"'}
+        )
+        
+        return response
+        
+    except Exception as e:
+        flash(f'Error downloading SQL file: {str(e)}', 'error')
         return redirect(url_for('date_mismatch'))
 
 
