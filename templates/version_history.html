@@ -1,0 +1,184 @@
+{% extends "base.html" %}
+{% block title %}Version History - PAM{% endblock %}
+
+{% block head %}
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/version_history.css') }}">
+{% endblock %}
+
+{% block header_left %}
+<div class="global-header-promotions">
+  <i class="fas fa-clock-rotate-left header-icon"></i>
+  <div class="header-text">
+    <h2>Version History</h2>
+    <p>Track changes and updates to promotions</p>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="version-history-page">
+  <!-- Controls row: filter, search, actions -->
+  <div class="version-controls">
+    <div class="filter-group">
+      <select id="owner-filter" name="owner">
+        <option value="all">All Owners</option>
+        {% for promo in promotions %}
+          <option value="{{ promo.promo_owner }}">{{ promo.promo_owner }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="search-group">
+      <label class="visually-hidden" for="search-input">Search</label>
+      <input
+        type="text"
+        id="search-input"
+        name="search"
+        placeholder="Promo Code, Owner, or Name"
+        onkeyup="debounceSearch()"
+      />
+    </div>
+
+    <div class="action-buttons">
+      <button class="btn"><i class="fas fa-download"></i> Export History</button>
+      <button class="btn" onclick="expandAllRows()"><i class="fas fa-expand-arrows-alt"></i> Expand All</button>
+      <button class="btn" onclick="collapseAllRows()"><i class="fas fa-compress-arrows-alt"></i> Collapse All</button>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="table-container">
+    {% if promotions %}
+      <table class="version-table">
+        <thead>
+          <tr>
+            <th width="40px"></th>
+            <th>Promo Code</th>
+            <th>Orbit ID</th>
+            <th>Status</th>
+            <th>Bill Facing Name</th>
+            <th>Start Date</th>
+            <th>End Date</th>
+            <th>Promo Owner</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for promo in promotions %}
+          <tr class="promo-row" data-promo="{{ promo.promo_code }}">
+            <td class="expand-cell">
+              <button class="expand-btn" onclick="toggleRow('{{ promo.promo_code }}')">
+                <i class="fas fa-chevron-right"></i>
+              </button>
+            </td>
+            <td class="promo-code">{{ promo.promo_code }}</td>
+            <td>{{ promo.orbit_id }}</td>
+            <td>
+              <span class="status-badge status-{{ promo.status.lower() }}">{{ promo.status }}</span>
+            </td>
+            <td class="bill-facing-name">{{ promo.bill_facing_name }}</td>
+            <td>{{ promo.start_date }}</td>
+            <td>{{ promo.end_date }}</td>
+            <td class="promo-owner">{{ promo.promo_owner }}</td>
+          </tr>
+          <tr class="change-history-row" id="history-{{ promo.promo_code }}" style="display: none;">
+            <td colspan="8">
+              <div class="change-history-container">
+                <h4><i class="fas fa-history"></i> Change History for {{ promo.promo_code }}</h4>
+                <div class="changes-timeline">
+                  {% for change in promo.changes %}
+                  <div class="change-item">
+                    <div class="change-icon">
+                      <i class="fas fa-{{ 'plus' if change.change_type == 'Created' else 'edit' if change.change_type == 'Modified' else 'file-upload' if change.change_type == 'File Upload' else 'code' if change.change_type == 'SQL Generated' else 'trash' }}"></i>
+                    </div>
+                    <div class="change-content">
+                      <div class="change-header">
+                        <span class="change-type-badge change-{{ change.change_type.lower().replace(' ', '-') }}">
+                          {{ change.change_type }}
+                        </span>
+                        <span class="change-timestamp">{{ change.timestamp }}</span>
+                        <span class="change-user">by {{ change.changed_by }}</span>
+                      </div>
+                      <div class="change-description">
+                        {{ change.description }}
+                      </div>
+                    </div>
+                  </div>
+                  {% endfor %}
+                </div>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <div class="empty-state">
+        <i class="fas fa-exclamation-circle"></i>
+        <h3>No Promotion History Available</h3>
+        <p>No promotion changes have been recorded yet.</p>
+      </div>
+    {% endif %}
+  </div>
+
+  <div class="version-footer">
+    <div class="footer-info">
+      <p><strong>Tracking Status:</strong> Active</p>
+      <p><strong>Last Updated:</strong> {{ current_datetime }}</p>
+    </div>
+    <div class="footer-actions">
+      <a href="{{ url_for('admin') }}" class="btn btn-secondary">
+        <i class="fas fa-cogs"></i>
+        Back to Admin
+      </a>
+      <a href="{{ url_for('promotions') }}" class="btn btn-primary">
+        <i class="fas fa-tags"></i>
+        View Promotions
+      </a>
+    </div>
+  </div>
+</div>
+
+<script>
+  let searchTimeout;
+  function debounceSearch() {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => {
+      // Implement search functionality here
+      console.log('Search triggered');
+    }, 300);
+  }
+
+  function toggleRow(promoCode) {
+    const historyRow = document.getElementById('history-' + promoCode);
+    const expandBtn = document.querySelector(`[data-promo="${promoCode}"] .expand-btn i`);
+    
+    if (historyRow.style.display === 'none') {
+      historyRow.style.display = 'table-row';
+      expandBtn.className = 'fas fa-chevron-down';
+    } else {
+      historyRow.style.display = 'none';
+      expandBtn.className = 'fas fa-chevron-right';
+    }
+  }
+
+  function expandAllRows() {
+    document.querySelectorAll('.change-history-row').forEach(row => {
+      row.style.display = 'table-row';
+    });
+    document.querySelectorAll('.expand-btn i').forEach(icon => {
+      icon.className = 'fas fa-chevron-down';
+    });
+  }
+
+  function collapseAllRows() {
+    document.querySelectorAll('.change-history-row').forEach(row => {
+      row.style.display = 'none';
+    });
+    document.querySelectorAll('.expand-btn i').forEach(icon => {
+      icon.className = 'fas fa-chevron-right';
+    });
+  }
+</script>
+{% endblock %}

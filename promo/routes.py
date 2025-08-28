@@ -59,6 +59,9 @@ def edit_promo(promo_code):
                 promo_data['sql_length'] = len(sql_content)
                 data_manager.save_promo(promo_code, promo_data, user_name="Cade Holtzen")
                 
+                # Record SQL generation in version history
+                data_manager.record_sql_generation(promo_code, "Cade Holtzen", generation_time, len(sql_content))
+                
                 # Flash message with performance info
                 flash(f"SQL generated successfully in {generation_time:.2f} seconds ({len(sql_content):,} characters)", "success")
                 
@@ -130,6 +133,10 @@ def edit_promo(promo_code):
                                     flash(f"Error processing trade-in Excel: {str(e)}", "warning")
                             
                             data_manager.save_promo(promo_code, promo_data)
+                            
+                            # Record file upload in version history
+                            data_manager.record_file_upload(promo_code, "Cade Holtzen", file_key, file.filename)
+                            
                             flash(f"{file_key.replace('_', ' ').title()} uploaded successfully", "success")
                         else:
                             flash(f"Failed to save {file_key.replace('_', ' ')}", "error")

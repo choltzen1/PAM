@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}SQL Results - PAM{% endblock %}
+
+{% block header_left %}
+<div class="global-header-promotions">
+  <i class="fas fa-code header-icon"></i>
+  <div class="header-text">
+    <h2>Generated SQL Statements</h2>
+    <p>Copy and paste these SQL statements to update promotion end dates</p>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+  <div class="row justify-content-center">
+    <div class="col-md-10">
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h5 class="mb-0">SQL Statements for {{ promo_codes|join(', ') }}</h5>
+          <button type="button" class="btn btn-sm btn-secondary" onclick="copyToClipboard()">
+            <i class="fas fa-copy"></i> Copy All SQL
+          </button>
+        </div>
+        <div class="card-body">
+          <pre id="sqlOutput" class="bg-dark text-light p-3 rounded" style="max-height: 400px; overflow-y: auto; white-space: pre-wrap;">{{ sql_statements|join('\n\n') }}</pre>
+          
+          <div class="mt-3">
+            <p class="text-muted">
+              <strong>Generated {{ sql_statements|length }} SQL statement(s)</strong><br>
+              These statements will update the end dates, expiration dates, and display end dates for the selected promotions.
+            </p>
+          </div>
+          
+          <div class="d-flex gap-2 mt-3">
+            <a href="{{ url_for('date_mismatch') }}" class="btn btn-primary">
+              <i class="fas fa-arrow-left"></i> Back to Date Mismatch
+            </a>
+            <button type="button" class="btn btn-success" onclick="copyToClipboard()">
+              <i class="fas fa-copy"></i> Copy SQL to Clipboard
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function copyToClipboard() {
+  const sqlText = document.getElementById('sqlOutput').textContent;
+  navigator.clipboard.writeText(sqlText).then(() => {
+    // Show brief success message
+    const button = event.target;
+    const originalText = button.innerHTML;
+    button.innerHTML = '<i class="fas fa-check"></i> Copied!';
+    button.classList.remove('btn-secondary', 'btn-success');
+    button.classList.add('btn-success');
+    
+    setTimeout(() => {
+      button.innerHTML = originalText;
+      button.classList.remove('btn-success');
+      button.classList.add('btn-secondary');
+    }, 2000);
+  }).catch(err => {
+    alert('Failed to copy to clipboard: ' + err.message);
+  });
+}
+</script>
+{% endblock %}
