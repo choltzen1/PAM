@@ -378,7 +378,7 @@ def generate_sql_content(promo_code, operator_id, orbit_end_date):
                 orbit_end_date = f"{month}/{day}/{year}"
             
             end_date_obj = datetime.strptime(orbit_end_date, '%m/%d/%Y')
-            exp_date_obj = end_date_obj  # Same as end date, not 3 years later
+            exp_date_obj = end_date_obj.replace(year=end_date_obj.year + 3)  # Same month/day, 3 years later
             display_end_obj = end_date_obj - timedelta(days=1)  # 1 day before
             
             # Format for SQL
