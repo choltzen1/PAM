@@ -36,6 +36,11 @@ app.register_blueprint(promo_bp)
 from promo.routes import init_data_manager
 init_data_manager(data_manager)
 
+# Add context processor for current datetime
+@app.context_processor
+def inject_current_datetime():
+    return {'current_datetime': datetime.now().strftime("%B %d, %Y at %I:%M:%S %p")}
+
 
 @app.route("/")
 def home():
@@ -248,6 +253,152 @@ def update_pam_date(promo_code):
             'success': False, 
             'message': f'Error updating PAM date: {str(e)}'
         }), 500
+
+
+@app.route("/generate_date_sql", methods=['POST'])
+def generate_date_sql():
+    """Generate SQL for updating promotion end dates"""
+    try:
+        data = request.get_json()
+        promo_codes = data.get('promo_codes', [])
+        operator_id = data.get('operator_id', '')
+        new_end_date = data.get('new_end_date', '')
+        
+        # Validate operator ID (5 digits only)
+        if not operator_id or not operator_id.isdigit() or len(operator_id) != 5:
+            return jsonify({
+                'success': False,
+                'message': 'Operator ID must be exactly 5 digits'
+            }), 400
+        
+        if not promo_codes:
+            return jsonify({
+                'success': False,
+                'message': 'No promotion codes provided'
+            }), 400
+        
+        if not new_end_date:
+            return jsonify({
+                'success': False,
+                'message': 'New end date is required'
+            }), 400
+        
+        # Generate SQL statements
+        sql_statements = []
+        for promo_code in promo_codes:
+            # Calculate expiration date (3 years after end date)
+            from datetime import datetime, timedelta
+            try:
+                end_date_obj = datetime.strptime(new_end_date, '%m/%d/%Y')
+                exp_date_obj = end_date_obj + timedelta(days=3*365)  # 3 years
+                
+                # Format for SQL
+                promo_end_formatted = end_date_obj.strftime('%m/%d/%Y') + ' 05:00:00'
+                exp_end_formatted = exp_date_obj.strftime('%m/%d/%Y') + ' 05:00:00'
+                display_end_formatted = (end_date_obj - timedelta(days=1)).strftime('%m/%d/%Y') + ' 00:00:00'
+                
+                sql = f"""update promo_eligibility_rules set SYS_UPDATE_DATE = sysdate, APPLICATION_ID = 'CPO', OPERATOR_ID = '{operator_id}', PROMO_END_DATE = to_date('{promo_end_formatted}','MM/DD/YYYY HH24:MI:SS'), EXPIRATION_DATE = to_date('{exp_end_formatted}','MM/DD/YYYY HH24:MI:SS'), DISPLAY_PROMO_END_DATE = to_date('{display_end_formatted}','MM/DD/YYYY HH24:MI:SS') where promo_code = '{promo_code}';"""
+                
+                sql_statements.append(sql)
+                
+            except ValueError:
+                return jsonify({
+                    'success': False,
+                    'message': f'Invalid date format: {new_end_date}. Use MM/DD/YYYY format.'
+                }), 400
+        
+        return jsonify({
+            'success': True,
+            'sql_statements': sql_statements
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'Error generating SQL: {str(e)}'
+        }), 500
+
+
+@app.route("/generate_sql_form/<promo_code>")
+def generate_sql_form(promo_code):
+    """Show form for generating SQL for a single promo"""
+    return render_template("generate_sql_form.html", 
+                         promo_codes=[promo_code], 
+                         is_batch=False)
+
+
+@app.route("/generate_batch_sql_form", methods=['POST'])
+def generate_batch_sql_form():
+    """Show form for generating SQL for multiple promos"""
+    # Get selected promo codes from checkboxes
+    # For now, return to date mismatch with message to select promos first
+    flash('Please select promotions first by checking the boxes, then click Batch Generate SQL', 'info')
+    return redirect(url_for('date_mismatch'))
+
+
+@app.route("/generate_sql_submit", methods=['POST'])
+def generate_sql_submit():
+    """Process the SQL generation form"""
+    try:
+        promo_codes = request.form.getlist('promo_codes')
+        operator_id = request.form.get('operator_id', '')
+        new_end_date = request.form.get('new_end_date', '')
+        
+        # Validate operator ID (5 digits only)
+        if not operator_id or not operator_id.isdigit() or len(operator_id) != 5:
+            flash('Operator ID must be exactly 5 digits', 'error')
+            return render_template("generate_sql_form.html", 
+                                 promo_codes=promo_codes, 
+                                 is_batch=len(promo_codes) > 1,
+                                 operator_id=operator_id,
+                                 new_end_date=new_end_date)
+        
+        if not promo_codes:
+            flash('No promotion codes provided', 'error')
+            return redirect(url_for('date_mismatch'))
+        
+        if not new_end_date:
+            flash('New end date is required', 'error')
+            return render_template("generate_sql_form.html", 
+                                 promo_codes=promo_codes, 
+                                 is_batch=len(promo_codes) > 1,
+                                 operator_id=operator_id,
+                                 new_end_date=new_end_date)
+        
+        # Generate SQL statements
+        sql_statements = []
+        for promo_code in promo_codes:
+            # Calculate expiration date (3 years after end date)
+            from datetime import datetime, timedelta
+            try:
+                end_date_obj = datetime.strptime(new_end_date, '%Y-%m-%d')  # HTML date input format
+                exp_date_obj = end_date_obj + timedelta(days=3*365)  # 3 years
+                
+                # Format for SQL
+                promo_end_formatted = end_date_obj.strftime('%m/%d/%Y') + ' 05:00:00'
+                exp_end_formatted = exp_date_obj.strftime('%m/%d/%Y') + ' 05:00:00'
+                display_end_formatted = (end_date_obj - timedelta(days=1)).strftime('%m/%d/%Y') + ' 00:00:00'
+                
+                sql = f"""update promo_eligibility_rules set SYS_UPDATE_DATE = sysdate, APPLICATION_ID = 'CPO', OPERATOR_ID = '{operator_id}', PROMO_END_DATE = to_date('{promo_end_formatted}','MM/DD/YYYY HH24:MI:SS'), EXPIRATION_DATE = to_date('{exp_end_formatted}','MM/DD/YYYY HH24:MI:SS'), DISPLAY_PROMO_END_DATE = to_date('{display_end_formatted}','MM/DD/YYYY HH24:MI:SS') where promo_code = '{promo_code}';"""
+                
+                sql_statements.append(sql)
+                
+            except ValueError:
+                flash(f'Invalid date format: {new_end_date}', 'error')
+                return render_template("generate_sql_form.html", 
+                                     promo_codes=promo_codes, 
+                                     is_batch=len(promo_codes) > 1,
+                                     operator_id=operator_id,
+                                     new_end_date=new_end_date)
+        
+        # Show the results
+        return render_template("sql_results.html", 
+                             sql_statements=sql_statements,
+                             promo_codes=promo_codes)
+        
+    except Exception as e:
+        flash(f'Error generating SQL: {str(e)}', 'error')
+        return redirect(url_for('date_mismatch'))
 
 
 @app.route("/rebates")
@@ -801,6 +952,19 @@ def admin():
                              promotions_count=847,
                              spe_count=234,
                              pending_reviews=12)
+
+
+@app.route("/version-history")
+def version_history():
+    """Version History page - tracks changes to promotions"""
+    try:
+        # Get real promotion data with version history
+        promotions_with_history = data_manager.get_all_promotions_with_history()
+        
+        return render_template("version_history.html", promotions=promotions_with_history)
+    except Exception as e:
+        flash(f'Error loading version history: {str(e)}', 'error')
+        return render_template("version_history.html", promotions=[])
 
 
 @app.route("/admin/backup", methods=["POST"])

@@ -29,6 +29,8 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/links.css') }}">
   {% elif request.path == '/test' %}
     <link rel="stylesheet" href="{{ url_for('static', filename='css/test.css') }}">
+  {% elif request.path == '/version-history' %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/version_history.css') }}">
   {% endif %}
   {% block extra_css %}{% endblock %}
   <script defer src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>

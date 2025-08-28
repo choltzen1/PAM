@@ -7,6 +7,7 @@ Features:
 - Manual refresh capability
 - Optimized 30-minute cache TTL
 - Performance monitoring
+- Version history tracking
 
 SPE promotions are excluded and will be handled by a separate system.
 """
@@ -20,6 +21,7 @@ from datetime import datetime, timedelta
 from threading import Lock, Timer
 from data.database import DatabaseManager
 from data.storage import PromoDataManager  # Import original for file management and utilities
+from data.version_history import VersionHistoryManager
 
 class HybridPromoDataManager:
     """
@@ -35,6 +37,9 @@ class HybridPromoDataManager:
         
         # Initialize original data manager for file management and utility functions
         self._original_manager = PromoDataManager(data_dir)
+        
+        # Initialize version history manager
+        self.version_history = VersionHistoryManager(data_dir)
         
         # Cache configuration - Optimized for promotion data patterns
         self._cache = {}
@@ -511,12 +516,34 @@ class HybridPromoDataManager:
         }
     
     def save_promo(self, promo_code: str, promo_data: Dict[str, Any], user_name: str = "System"):
-        """Save promotion data (temporarily use JSON until PAM database is ready)"""
+        """Save promotion data with version history tracking"""
+        # Get existing data for comparison
+        existing_data = self.get_promo(promo_code)
+        is_new_promo = existing_data is None
+        
         # TEMPORARY SOLUTION: Until PAM database is implemented,
         # save everything to JSON file to maintain current functionality
         
         # Use the original manager's save method to maintain current workflow
         self._original_manager.save_promo(promo_code, promo_data, user_name)
+        
+        # Track version history
+        if is_new_promo:
+            # Record creation
+            self.version_history.record_promo_creation(promo_code, user_name, promo_data)
+        else:
+            # Compare data and record changes
+            changed_fields = {}
+            for key, new_value in promo_data.items():
+                old_value = existing_data.get(key)
+                if old_value != new_value:
+                    changed_fields[key] = {
+                        'old': old_value,
+                        'new': new_value
+                    }
+            
+            if changed_fields:
+                self.version_history.record_promo_modification(promo_code, user_name, changed_fields)
         
         # Invalidate cache to force refresh
         self._cache_timestamp = None
@@ -533,6 +560,51 @@ class HybridPromoDataManager:
         workflow_data[promo_code]['updated_by'] = user_name
         
         self._save_workflow_data(workflow_data)
+    
+    def record_sql_generation(self, promo_code: str, user_name: str, generation_time: float, sql_length: int):
+        """Record SQL generation in version history"""
+        self.version_history.record_sql_generation(promo_code, user_name, generation_time, sql_length)
+    
+    def record_file_upload(self, promo_code: str, user_name: str, file_type: str, filename: str):
+        """Record file upload in version history"""
+        self.version_history.record_file_upload(promo_code, user_name, file_type, filename)
+    
+    def get_promo_version_history(self, promo_code: str) -> List[Dict[str, Any]]:
+        """Get version history for a specific promotion"""
+        return self.version_history.get_promo_history(promo_code)
+    
+    def get_all_promotions_with_history(self) -> List[Dict[str, Any]]:
+        """Get all promotions with version history for the version history page"""
+        # Get promotions with history from version history DB
+        history_data = self.version_history.get_all_promotions_with_history()
+        
+        # Get current promotion data
+        current_promos = self.get_all_promos()
+        
+        # Combine the data
+        promotions_with_history = []
+        for history_item in history_data:
+            promo_code = history_item['promo_code']
+            
+            # Find current promo data
+            current_promo = current_promos.get(promo_code)
+            if current_promo:
+                # Get detailed change history
+                changes = self.get_promo_version_history(promo_code)
+                
+                promo_with_history = {
+                    'promo_code': promo_code,
+                    'orbit_id': current_promo.get('orbit_id', ''),
+                    'status': current_promo.get('status', 'Active'),
+                    'bill_facing_name': current_promo.get('bill_facing_name', ''),
+                    'start_date': current_promo.get('promo_start_date', current_promo.get('promo_srart_date', '')),
+                    'end_date': current_promo.get('promo_end_date', ''),
+                    'promo_owner': current_promo.get('owner', current_promo.get('Owner', '')),
+                    'changes': changes
+                }
+                promotions_with_history.append(promo_with_history)
+        
+        return promotions_with_history
     
     def _extract_db_fields(self, promo_data: Dict[str, Any]) -> Dict[str, Any]:
         """Extract fields that belong in the database"""
