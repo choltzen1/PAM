@@ -26,11 +26,12 @@
     "generated_sql": "",
     "uploaded_files": {},
     "version_history": [
-      "08/28/2025 10:12 AM - Cade Holtzen - Created promo."
+      "08/28/2025 10:12 AM - Cade Holtzen - Created promo.",
+      "08/29/2025 12:37 PM - Date Mismatch Tool - Updated end date from 2025-08-28 to 7/23/2025 (synced from ORBIT)"
     ],
     "last_changes": "Last save: 08/28/2025 12:53 PM - Cade Holtzen - Changed: Promo Start Date (cleared), Promo End Date (\u00e2\u2020\u2019 2025-08-28), Comm End Date (cleared), Delay Time (cleared)",
     "created_at": "2025-08-28T10:12:22.146410",
-    "updated_at": "2025-08-28T12:53:11.649392",
+    "updated_at": "2025-08-29T12:37:33.222561",
     "sku_link": "",
     "tradein_link": "",
     "sql_file": {},
@@ -358,7 +359,7 @@
     ],
     "last_changes": null,
     "created_at": "2025-08-28T12:54:07.691714",
-    "updated_at": "2025-08-28T14:16:38.442677",
+    "updated_at": "2025-08-28T14:16:38.406644",
     "sku_link": "",
     "tradein_link": "",
     "sql_file": {},
@@ -494,6 +495,27 @@
     "updated_at": "2025-08-28T14:15:48.740298",
     "sku_link": "",
     "tradein_link": "",
+    "sql_file": {},
+    "jira_ticket": "",
+    "initiative_name": "",
+    "segment_name": "",
+    "sub_segment": "",
+    "segment_group_id": "",
+    "segment_level": "",
+    "updated_by": "Cade Holtzen"
+  },
+  "R223": {
+    "promo_notes": "DVC_STS_GRP_ID = 'DS1'",
+    "generated_sql": "",
+    "uploaded_files": {},
+    "version_history": [
+      "09/02/2025 11:05 AM - Current User - Created promo."
+    ],
+    "last_changes": null,
+    "created_at": "2025-09-02T11:05:18.106781",
+    "updated_at": "2025-09-02T11:14:49.915463",
+    "sku_link": "https://apps.powerapps.com/play/9f175d7a-fd5e-47ea-a998-2bff5de64661?tenantId=be0f980b-dd99-4b19-bd7b-bc71a09b026c&RecordID=eaa9ee30-1722-f011-9989-6045bd08a828&NavScreen=Attachments",
+    "tradein_link": "https://apps.powerapps.com/play/9f175d7a-fd5e-47ea-a998-2bff5de64661?tenantId=be0f980b-dd99-4b19-bd7b-bc71a09b026c&RecordID=eaa9ee30-1722-f011-9989-6045bd08a828&NavScreen=Attachments",
     "sql_file": {},
     "jira_ticket": "",
     "initiative_name": "",
