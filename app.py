@@ -799,7 +799,7 @@ def links(promo_code):
             promo_data['tradein_link'] = request.form.get('tradeLink', '')
             promo_data['orbit_link'] = request.form.get('orbitLink', '')
             promo_data['legal_link'] = request.form.get('legalLink', '')
-            promo_data['legal_link'] = request.form.get('legalLink', '')
+            promo_data['c2_article_link'] = request.form.get('c2ArticleLink', '')
             
             # Save the updated promotion data
             try:
