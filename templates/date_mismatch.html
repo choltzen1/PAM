@@ -33,6 +33,35 @@
   padding: 0.25rem 0.5rem;
 }
 
+/* Table Container Styles */
+.table-container {
+  width: 100%;
+  overflow-x: auto;
+  position: relative;
+}
+
+.date-mismatch-table {
+  width: 100%;
+  table-layout: fixed;
+}
+
+/* Fix dropdown width issues */
+.form-select {
+  max-width: 200px;
+  width: 100%;
+}
+
+/* Ensure dropdowns don't overflow the page */
+.table-container .form-select {
+  position: relative;
+}
+
+.date-mismatch-table th,
+.date-mismatch-table td {
+  position: relative;
+  overflow: visible;
+}
+
 /* File Preview Styles */
 .file-info-card {
   background: #ffffff;
@@ -657,21 +686,21 @@ function syncToPam(promoCode, button) {
             // Show success message
             showMessage(data.message, 'success');
             
-            // Update the PAM End Date in the table
+            // Update the PAM End Date in the table (6th column)
             const row = button.closest('tr');
-            const pamDateCell = row.querySelector('td:nth-child(4)'); // PAM End Date column
+            const pamDateCell = row.querySelector('td:nth-child(6)'); // PAM End Date column
             if (pamDateCell) {
                 pamDateCell.textContent = data.new_date;
             }
             
+            // Update the mismatch type to show it's now synced (7th column)
+            const mismatchTypeCell = row.querySelector('td:nth-child(7)'); // Mismatch Type column
+            if (mismatchTypeCell) {
+                mismatchTypeCell.innerHTML = '<span class="status-match">Synced</span>';
+            }
+            
             // Hide the button since dates now match
             button.style.display = 'none';
-            
-            // Update the mismatch status in the row
-            const statusCell = row.querySelector('td:nth-child(5)'); // Status column
-            if (statusCell) {
-                statusCell.innerHTML = '<span class="status-match">Synced</span>';
-            }
             
         } else {
             showMessage(data.message, 'error');

@@ -4,12 +4,11 @@
     "generated_sql": "",
     "uploaded_files": {},
     "version_history": [
-      "08/28/2025 10:11 AM - Cade Holtzen - Created promo.",
-      "08/28/2025 01:04 PM - Date Mismatch Tool - Updated end date from 2025-08-28 to 8/6/2025 (synced from ORBIT)"
+      "08/28/2025 10:11 AM - Cade Holtzen - Created promo."
     ],
     "last_changes": "Last save: 08/28/2025 12:44 PM - Cade Holtzen - Changed: Promo Start Date (cleared), Promo End Date (\u00e2\u2020\u2019 2025-08-28), Comm End Date (cleared), Delay Time (cleared)",
     "created_at": "2025-08-28T10:11:58.676977",
-    "updated_at": "2025-08-28T13:04:32.395615",
+    "updated_at": "2025-08-28T12:44:34.615357",
     "sku_link": "",
     "tradein_link": "",
     "sql_file": {},
@@ -311,12 +310,11 @@
     "generated_sql": "",
     "uploaded_files": {},
     "version_history": [
-      "08/28/2025 12:53 PM - Cade Holtzen - Created promo.",
-      "08/28/2025 01:05 PM - Date Mismatch Tool - Updated end date from 2025-08-28 to 10/1/2025 (synced from ORBIT)"
+      "08/28/2025 12:53 PM - Cade Holtzen - Created promo."
     ],
     "last_changes": null,
     "created_at": "2025-08-28T12:53:50.250801",
-    "updated_at": "2025-08-28T13:05:02.305269",
+    "updated_at": "2025-08-28T12:53:50.250772",
     "sku_link": "",
     "tradein_link": "",
     "sql_file": {},
@@ -358,7 +356,7 @@
     ],
     "last_changes": null,
     "created_at": "2025-08-28T12:54:07.691714",
-    "updated_at": "2025-08-28T14:16:38.442677",
+    "updated_at": "2025-08-28T12:54:11.181980",
     "sku_link": "",
     "tradein_link": "",
     "sql_file": {},
@@ -369,8 +367,8 @@
     "segment_group_id": "",
     "segment_level": "",
     "updated_by": "Cade Holtzen",
-    "sql_generated_at": "2025-08-28 14:16:38",
-    "sql_generation_time": "0.0006",
+    "sql_generated_at": "2025-08-28 12:54:11",
+    "sql_generation_time": "0.0007",
     "sql_length": 1808
   },
   "P967": {
@@ -441,12 +439,11 @@
     "generated_sql": "",
     "uploaded_files": {},
     "version_history": [
-      "08/28/2025 12:55 PM - Cade Holtzen - Created promo.",
-      "08/28/2025 01:08 PM - Date Mismatch Tool - Updated end date from 2025-08-28 to 5/21/2025 (synced from ORBIT)"
+      "08/28/2025 12:55 PM - Cade Holtzen - Created promo."
     ],
     "last_changes": null,
     "created_at": "2025-08-28T12:55:11.135043",
-    "updated_at": "2025-08-28T13:08:02.766635",
+    "updated_at": "2025-08-28T12:55:11.135028",
     "sku_link": "",
     "tradein_link": "",
     "sql_file": {},
@@ -467,31 +464,7 @@
     ],
     "last_changes": null,
     "created_at": "2025-08-28T12:55:18.699239",
-    "updated_at": "2025-08-28T12:55:18.699229",
-    "sku_link": "",
-    "tradein_link": "",
-    "sql_file": {},
-    "jira_ticket": "",
-    "initiative_name": "",
-    "segment_name": "",
-    "sub_segment": "",
-    "segment_group_id": "",
-    "segment_level": "",
-    "updated_by": "Cade Holtzen"
-  },
-  "P996": {
-    "promo_notes": "- Can be combined with Carrier Freedom while 17493 is active - Eligible for forever upgrade redemption  - Customer type Business w/Tax ID >13 Lines is only qualified for customers that have the Yearly Upgrade SOC  - Removed devices from trade-in tiers with FMV higher than promo value to accommodate 100% RDC ",
-    "generated_sql": "-- User Story No. \t\t\t= CPO-NULL\n-- Requested By \t\t\t= Cade Holtzen\n-- Request Date(DD/MM/YYYY) = DAY BEFORE LAUNCH DATE\n-- Project \t\t\t\t\t= EFPE Promo Device - New Promo - Promo P996 - 23332 -  - Launch Date TBD\n-------------------------------------------------------------------------\n\n--PROD / ZLAB\nBEGIN\n\n--PROMO_ELIGIBILITY_RULES \nINSERT INTO PROMO_ELIGIBILITY_RULES (RULE_ID,PROMO_CODE,PROMO_START_DATE,PROMO_END_DATE,SYS_CREATION_DATE,OPERATOR_ID,APPLICATION_ID,DL_SERVICE_CODE,PROMO_DESCRIPTION,PROMO_DURATION,PROMO_AMOUNT,EFFECTIVE_DATE,EXPIRATION_DATE,SKU_GROUP_ID,PRIM_SKU_GROUP_ID,SOC_GROUP_ID,ATST_GROUP_ID,APPL_GROUP_ID,DEVICE_ST_GROUP_ID,FINANCE_TYPE,ACT_LINE_REQ_IND,APP_GRACE_GROUP_ID,TRADE_IN_GRP_ID,TRADE_IN_GRACE_PERIOD,MAINT_ACT_LINE_CHK_IND,MAINT_SOC_CHK_IND,STORE_GRP_ID,MARKET_GRP_ID,LIMIT_PER_BAN,TENURE_GROUP_ID,PORTIN_GROUP_ID,PROMO_PERC_DISC,C2_LINK,MIN_GSM_COUNT,MAX_GSM_COUNT,DISPLAY_PROMO,TIERED_GRP_ID,SEGMENT_GRP_ID,BOLTON_TRADE_IN_GRP_ID,PRODUCT_TYPE,PR_DATE,PROMO_GRACE_PERIOD,LINE_ST_GROUP_ID,NSEIP_DROP_IND,DELAY_TIME,DISPLAY_PROMO_START_DATE,DISPLAY_PROMO_END_DATE,MPSS_LOOKBACK,FLOW_INDICATOR,DOCUMENT_ID,DVC_STS_GRP_ID,CLAWBACK_IND) VALUES (PROMO_ELIGIBILITY_RULES_1SQ.NEXTVAL,'P996',NULL,NULL,sysdate,NULL,'CPO','USRST','Apple Trade ID250124',24,NULL,NULL,NULL,'V96',NULL,'W7','A17','S07','S01',NULL,'Y',NULL,NULL,NULL,'Y','Y','*','*',4,NULL,NULL,NULL,'https://c2.t-mobile.com/offers/23332',NULL,NULL,'Y',NULL,NULL,NULL,'G',NULL,NULL,NULL,'N',NULL,NULL,NULL,NULL,NULL,'23332',NULL,'N');\n\n--PROMO_DEVICE_GROUPS\n\n\n--PROMO_TRADEIN_GROUPS\n\n\n--PROMO_TIERED_GROUPS\n\n\n--PROMO_MK_MDL_GROUPS \n\n\n--Promo Segment \n\n\nEND;",
-    "sql_generated_at": "2025-08-28 14:15:48",
-    "sql_generation_time": "0.0010",
-    "sql_length": 1646,
-    "uploaded_files": {},
-    "version_history": [
-      "08/28/2025 02:15 PM - Cade Holtzen - Created promo."
-    ],
-    "last_changes": null,
-    "created_at": "2025-08-28T14:15:48.740315",
-    "updated_at": "2025-08-28T14:15:48.740298",
+    "updated_at": "2025-08-28T12:55:18.740231",
     "sku_link": "",
     "tradein_link": "",
     "sql_file": {},

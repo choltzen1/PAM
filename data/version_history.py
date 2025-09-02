@@ -121,7 +121,7 @@ class VersionHistoryManager:
     
     def record_sql_generation(self, promo_code: str, changed_by: str, generation_time: float, sql_length: int):
         """Record SQL generation for a promotion"""
-        description = f"Generated SQL ({sql_length:,} characters in {generation_time:.2f} seconds)"
+        description = "Generated SQL (PROMO_ELIGIBILITY_RULES)"
         
         self.record_change(
             promo_code=promo_code,
