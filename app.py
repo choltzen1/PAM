@@ -1124,6 +1124,108 @@ def capacity():
                              selected_week='08/10/2025-08/16/2025')
 
 
+# User Management System
+import json
+
+USER_DATA_FILE = os.path.join("data", "users.json")
+USER_GROUPS_FILE = os.path.join("data", "user_groups.json")
+
+def get_user_groups():
+    """Get all user groups and their permissions"""
+    try:
+        if os.path.exists(USER_GROUPS_FILE):
+            with open(USER_GROUPS_FILE, 'r') as f:
+                return json.load(f)
+        else:
+            # Default groups if file doesn't exist
+            default_groups = {
+                "admin": {
+                    "name": "Administrator", 
+                    "permissions": ["view_all", "edit_all", "delete_all", "edit_promotions", "create_promotions", "date_mismatch", "sql_generation", "user_management", "system_admin"],
+                    "description": "Full system access including user management"
+                },
+                "promo_owner": {
+                    "name": "Promo Owner",
+                    "permissions": ["view_all", "edit_promotions", "create_promotions", "date_mismatch", "sql_generation"],
+                    "description": "Can view, edit, create promotions, handle date mismatches and generate SQL"
+                },
+                "reviewer": {
+                    "name": "Reviewer",
+                    "permissions": ["view_all"],
+                    "description": "Read-only access to all promotions"
+                }
+            }
+            # Save default groups
+            save_user_groups(default_groups)
+            return default_groups
+    except Exception as e:
+        print(f"Error loading user groups: {e}")
+        return {}
+
+def save_user_groups(groups):
+    """Save user groups to file"""
+    try:
+        os.makedirs(os.path.dirname(USER_GROUPS_FILE), exist_ok=True)
+        with open(USER_GROUPS_FILE, 'w') as f:
+            json.dump(groups, f, indent=2)
+    except Exception as e:
+        print(f"Error saving user groups: {e}")
+
+def get_all_users():
+    """Get all users from the user data file"""
+    try:
+        if os.path.exists(USER_DATA_FILE):
+            with open(USER_DATA_FILE, 'r') as f:
+                return json.load(f)
+        else:
+            # Default users if file doesn't exist
+            default_users = {
+                "choltzen": {
+                    "username": "choltzen",
+                    "display_name": "Cade Holtzen",
+                    "email": "cade.holtzen@example.com",
+                    "group": "admin",
+                    "active": True,
+                    "created_date": datetime.now().isoformat()
+                },
+                "demo_user": {
+                    "username": "demo_user",
+                    "display_name": "Demo User",
+                    "email": "demo@example.com",
+                    "group": "viewer",
+                    "active": True,
+                    "created_date": datetime.now().isoformat()
+                }
+            }
+            # Save default users
+            save_users(default_users)
+            return default_users
+    except Exception as e:
+        print(f"Error loading users: {e}")
+        return {}
+
+def save_users(users):
+    """Save users to file"""
+    try:
+        os.makedirs(os.path.dirname(USER_DATA_FILE), exist_ok=True)
+        with open(USER_DATA_FILE, 'w') as f:
+            json.dump(users, f, indent=2)
+    except Exception as e:
+        print(f"Error saving users: {e}")
+
+def get_user_permissions(username):
+    """Get permissions for a specific user"""
+    users = get_all_users()
+    groups = get_user_groups()
+    
+    if username in users:
+        user_group = users[username].get('group', 'viewer')
+        if user_group in groups:
+            return groups[user_group].get('permissions', [])
+    
+    return []
+
+
 @app.route("/admin")
 def admin():
     # Get system statistics for the admin dashboard
@@ -1139,16 +1241,28 @@ def admin():
         pending_reviews = sum(1 for promo in promotions_data.values() 
                             if promo.get('status', '').lower() in ['pending', 'review'])
         
+        # Get user management data
+        users = get_all_users()
+        user_groups = get_user_groups()
+        
         return render_template("admin.html", 
                              promotions_count=promotions_count,
                              spe_count=spe_count,
-                             pending_reviews=pending_reviews)
+                             pending_reviews=pending_reviews,
+                             users=users,
+                             user_groups=user_groups)
     except Exception as e:
         # Fallback to default values if data loading fails
         return render_template("admin.html", 
                              promotions_count=847,
                              spe_count=234,
                              pending_reviews=12)
+
+
+@app.route("/admin/user-management")
+def admin_user_management():
+    """User Management page - separate page for managing users and groups"""
+    return render_template("admin_user_management.html")
 
 
 @app.route("/version-history")
@@ -1486,6 +1600,123 @@ def clear_segment_data(promo_code):
     
     except Exception as e:
         return jsonify({"success": False, "error": str(e)})
+
+
+# User Management Routes
+@app.route("/admin/users", methods=["GET"])
+def admin_users():
+    """Get all users for admin management"""
+    try:
+        users = get_all_users()
+        groups = get_user_groups()
+        return jsonify({"success": True, "users": users, "groups": groups})
+    except Exception as e:
+        return jsonify({"success": False, "message": f"Failed to get users: {str(e)}"})
+
+@app.route("/admin/users", methods=["POST"])
+def admin_create_user():
+    """Create a new user"""
+    try:
+        data = request.get_json()
+        users = get_all_users()
+        
+        username = data.get('username', '').strip().lower()
+        if not username:
+            return jsonify({"success": False, "message": "Username is required"})
+        
+        if username in users:
+            return jsonify({"success": False, "message": "Username already exists"})
+        
+        # Create new user
+        new_user = {
+            "username": username,
+            "display_name": data.get('display_name', ''),
+            "email": data.get('email', ''),
+            "group": data.get('group', 'viewer'),
+            "active": data.get('active', True),
+            "created_date": datetime.now().isoformat()
+        }
+        
+        users[username] = new_user
+        save_users(users)
+        
+        return jsonify({"success": True, "message": f"User {username} created successfully", "user": new_user})
+    except Exception as e:
+        return jsonify({"success": False, "message": f"Failed to create user: {str(e)}"})
+
+@app.route("/admin/users/<username>", methods=["PUT"])
+def admin_update_user(username):
+    """Update an existing user"""
+    try:
+        data = request.get_json()
+        users = get_all_users()
+        
+        if username not in users:
+            return jsonify({"success": False, "message": "User not found"})
+        
+        # Update user data
+        if 'display_name' in data:
+            users[username]['display_name'] = data['display_name']
+        if 'email' in data:
+            users[username]['email'] = data['email']
+        if 'group' in data:
+            users[username]['group'] = data['group']
+        if 'active' in data:
+            users[username]['active'] = data['active']
+        
+        users[username]['updated_date'] = datetime.now().isoformat()
+        
+        save_users(users)
+        
+        return jsonify({"success": True, "message": f"User {username} updated successfully", "user": users[username]})
+    except Exception as e:
+        return jsonify({"success": False, "message": f"Failed to update user: {str(e)}"})
+
+@app.route("/admin/users/<username>", methods=["DELETE"])
+def admin_delete_user(username):
+    """Delete a user"""
+    try:
+        users = get_all_users()
+        
+        if username not in users:
+            return jsonify({"success": False, "message": "User not found"})
+        
+        if username == "choltzen":  # Protect admin user
+            return jsonify({"success": False, "message": "Cannot delete the main admin user"})
+        
+        del users[username]
+        save_users(users)
+        
+        return jsonify({"success": True, "message": f"User {username} deleted successfully"})
+    except Exception as e:
+        return jsonify({"success": False, "message": f"Failed to delete user: {str(e)}"})
+
+@app.route("/admin/groups", methods=["POST"])
+def admin_create_group():
+    """Create a new user group"""
+    try:
+        data = request.get_json()
+        groups = get_user_groups()
+        
+        group_id = data.get('id', '').strip().lower()
+        if not group_id:
+            return jsonify({"success": False, "message": "Group ID is required"})
+        
+        if group_id in groups:
+            return jsonify({"success": False, "message": "Group already exists"})
+        
+        new_group = {
+            "name": data.get('name', ''),
+            "description": data.get('description', ''),
+            "permissions": data.get('permissions', [])
+        }
+        
+        groups[group_id] = new_group
+        save_user_groups(groups)
+        
+        return jsonify({"success": True, "message": f"Group {group_id} created successfully", "group": new_group})
+    except Exception as e:
+        return jsonify({"success": False, "message": f"Failed to create group: {str(e)}"})
 
 
 if __name__ == "__main__":

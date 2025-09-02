@@ -48,7 +48,7 @@ class HybridPromoDataManager:
         self._spe_cache_timestamp = None
         self._rebates_cache = {}
         self._rebates_cache_timestamp = None
-        self._cache_ttl = timedelta(minutes=30)  # 30-minute cache for stable promo data
+        self._cache_ttl = timedelta(hours=2)  # 2-hour cache for stable promo data
         self._cache_lock = Lock()
         self._last_db_check = None
         self._background_timer = None

@@ -30,11 +30,6 @@
       padding: 24px;
       box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
       border: 1px solid #e9ecef;
-      transition: all 0.3s;
-    }
-    .admin-card:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
     }
     .card-header {
       display: flex;
@@ -330,6 +325,173 @@
       background: #fef2f2;
       color: #991b1b;
     }
+    /* User Management Styles */
+    .user-management-tabs {
+      display: flex;
+      border-bottom: 2px solid #e9ecef;
+      margin-bottom: 20px;
+    }
+    .tab-btn {
+      padding: 12px 24px;
+      border: none;
+      background: none;
+      cursor: pointer;
+      font-weight: 500;
+      color: #6c757d;
+      border-bottom: 2px solid transparent;
+      transition: all 0.3s;
+    }
+    .tab-btn.active {
+      color: #E20074;
+      border-bottom-color: #E20074;
+    }
+    .tab-content {
+      display: none;
+    }
+    .tab-content.active {
+      display: block;
+    }
+    .user-management-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    .user-form {
+      background: #f8f9fa;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+    .form-group {
+      display: flex;
+      flex-direction: column;
+    }
+    .form-group label {
+      font-weight: 600;
+      margin-bottom: 5px;
+      color: #333;
+    }
+    .form-group input, .form-group select {
+      padding: 8px 12px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+    .form-actions {
+      display: flex;
+      gap: 10px;
+    }
+    .groups-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+    }
+    .group-card {
+      background: white;
+      border: 1px solid #e9ecef;
+      border-radius: 8px;
+      padding: 20px;
+    }
+    .group-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+    .group-title {
+      font-weight: 600;
+      font-size: 18px;
+      color: #333;
+    }
+    .group-description {
+      color: #666;
+      margin-bottom: 15px;
+      font-size: 14px;
+    }
+    .permissions-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .permissions-list li {
+      padding: 5px 0;
+      border-bottom: 1px solid #f1f1f1;
+      font-size: 14px;
+    }
+    .permissions-list li:before {
+      content: "✓";
+      color: #10b981;
+      font-weight: bold;
+      margin-right: 8px;
+    }
+    .user-actions {
+      display: flex;
+      gap: 5px;
+    }
+    .user-actions button {
+      padding: 5px 10px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    .btn-edit {
+      background: #3b82f6;
+      color: white;
+    }
+    .btn-delete {
+      background: #ef4444;
+      color: white;
+    }
+    .badge {
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+    .badge-success {
+      background: #d1fae5;
+      color: #065f46;
+    }
+    .badge-danger {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+    
+    /* Responsive Modal Styles */
+    @media (max-width: 1200px) {
+      .modal-content {
+        max-width: 95% !important;
+        margin: 2% auto;
+      }
+    }
+    @media (max-width: 768px) {
+      .modal-content {
+        max-width: 98% !important;
+        margin: 1% auto;
+        padding: 15px;
+        max-height: 95vh;
+      }
+      .user-management-header {
+        flex-direction: column;
+        gap: 10px;
+        align-items: flex-start;
+      }
+      .user-table {
+        font-size: 12px;
+      }
+      .tab-btn {
+        padding: 8px 16px;
+        font-size: 14px;
+      }
+    }
   </style>
 {% endblock %}
 
@@ -372,12 +534,9 @@
         Manage user accounts, permissions, and access levels. View active sessions and audit user activity.
       </div>
       <div class="card-actions">
-        <button class="btn-admin" onclick="openModal('usersModal')">
-          <i class="fas fa-eye"></i> View Users
-        </button>
-        <button class="btn-admin secondary" onclick="showAlert('Feature coming soon!', 'warning')">
-          <i class="fas fa-plus"></i> Add User
-        </button>
+        <a href="/admin/user-management" class="btn-admin">
+          <i class="fas fa-users"></i> Manage Users
+        </a>
       </div>
     </div>
 
@@ -549,46 +708,93 @@
 <!-- Modals -->
 <!-- Users Modal -->
 <div id="usersModal" class="modal">
-  <div class="modal-content">
+  <div class="modal-content" style="max-width: 900px; max-height: 85vh; overflow-y: auto;">
     <div class="modal-header">
       <h2 class="modal-title">User Management</h2>
       <span class="close" onclick="closeModal('usersModal')">&times;</span>
     </div>
-    <div class="table-responsive">
-      <table class="admin-table">
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Email</th>
-            <th>Role</th>
-            <th>Last Login</th>
-            <th>Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>Cade Holtzen</td>
-            <td>choltzen@t-mobile.com</td>
-            <td>Admin</td>
-            <td>Today, 2:30 PM</td>
-            <td><span class="badge badge-success">Active</span></td>
-          </tr>
-          <tr>
-            <td>Alejandro Ferrer</td>
-            <td>aferrer@t-mobile.com</td>
-            <td>Manager</td>
-            <td>Today, 1:15 PM</td>
-            <td><span class="badge badge-success">Active</span></td>
-          </tr>
-          <tr>
-            <td>Sarah Chen</td>
-            <td>schen@t-mobile.com</td>
-            <td>Analyst</td>
-            <td>Yesterday, 5:45 PM</td>
-            <td><span class="badge badge-warning">Away</span></td>
-          </tr>
-        </tbody>
-      </table>
+    
+    <div class="user-management-tabs">
+      <button class="tab-btn active" onclick="showUserTab('users')">Users</button>
+      <button class="tab-btn" onclick="showUserTab('groups')">Groups & Permissions</button>
+    </div>
+    
+    <!-- Users Tab -->
+    <div id="usersTab" class="tab-content active">
+      <div class="user-management-header">
+        <h3>Manage Users</h3>
+        <button class="btn-admin" onclick="showCreateUserForm()">
+          <i class="fas fa-plus"></i> Add New User
+        </button>
+      </div>
+      
+      <!-- Create/Edit User Form -->
+      <div id="userForm" class="user-form" style="display: none;">
+        <h4 id="userFormTitle">Add New User</h4>
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="username">Username:</label>
+            <input type="text" id="username" required>
+          </div>
+          <div class="form-group">
+            <label for="displayName">Display Name:</label>
+            <input type="text" id="displayName" required>
+          </div>
+          <div class="form-group">
+            <label for="email">Email:</label>
+            <input type="email" id="email" required>
+          </div>
+          <div class="form-group">
+            <label for="userGroup">Group:</label>
+            <select id="userGroup" required>
+              {% for group_id, group in user_groups.items() %}
+              <option value="{{ group_id }}">{{ group.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="userActive">Active:</label>
+            <select id="userActive">
+              <option value="true">Yes</option>
+              <option value="false">No</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-actions">
+          <button class="btn-admin" onclick="saveUser()">Save User</button>
+          <button class="btn-admin secondary" onclick="cancelUserForm()">Cancel</button>
+        </div>
+      </div>
+      
+      <!-- Users Table -->
+      <div class="table-responsive">
+        <table class="admin-table" id="usersTable">
+          <thead>
+            <tr>
+              <th>Username</th>
+              <th>Display Name</th>
+              <th>Email</th>
+              <th>Group</th>
+              <th>Status</th>
+              <th>Created</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="usersTableBody">
+            <!-- Users will be loaded dynamically -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+    
+    <!-- Groups Tab -->
+    <div id="groupsTab" class="tab-content">
+      <div class="groups-section">
+        <h3>User Groups & Permissions</h3>
+        <div class="groups-grid" id="groupsGrid">
+          <!-- Groups will be loaded dynamically -->
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -951,6 +1157,198 @@ setInterval(updateStatus, 30000);
 
 // Update cache status every 60 seconds
 setInterval(loadCacheStatus, 60000);
+
+// User Management Functions
+let currentUsers = {};
+let currentGroups = {};
+let editingUser = null;
+
+function showUserTab(tabName) {
+  // Hide all tabs
+  document.querySelectorAll('.tab-content').forEach(tab => {
+    tab.classList.remove('active');
+  });
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.classList.remove('active');
+  });
+  
+  // Show selected tab
+  document.getElementById(tabName + 'Tab').classList.add('active');
+  event.target.classList.add('active');
+  
+  if (tabName === 'users') {
+    loadUsers();
+  } else if (tabName === 'groups') {
+    loadGroups();
+  }
+}
+
+function loadUsers() {
+  fetch('/admin/users')
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        currentUsers = data.users;
+        currentGroups = data.groups;
+        renderUsersTable();
+      } else {
+        showAlert('Failed to load users: ' + data.message, 'error');
+      }
+    })
+    .catch(error => {
+      showAlert('Error loading users: ' + error.message, 'error');
+    });
+}
+
+function renderUsersTable() {
+  const tbody = document.getElementById('usersTableBody');
+  tbody.innerHTML = '';
+  
+  Object.entries(currentUsers).forEach(([username, user]) => {
+    const row = document.createElement('tr');
+    const groupName = currentGroups[user.group]?.name || user.group;
+    const statusBadge = user.active ? 
+      '<span class="badge badge-success">Active</span>' : 
+      '<span class="badge badge-danger">Inactive</span>';
+    
+    row.innerHTML = `
+      <td>${username}</td>
+      <td>${user.display_name}</td>
+      <td>${user.email}</td>
+      <td>${groupName}</td>
+      <td>${statusBadge}</td>
+      <td>${new Date(user.created_date).toLocaleDateString()}</td>
+      <td class="user-actions">
+        <button class="btn-edit" onclick="editUser('${username}')">Edit</button>
+        ${username !== 'choltzen' ? `<button class="btn-delete" onclick="deleteUser('${username}')">Delete</button>` : ''}
+      </td>
+    `;
+    tbody.appendChild(row);
+  });
+}
+
+function showCreateUserForm() {
+  editingUser = null;
+  document.getElementById('userFormTitle').textContent = 'Add New User';
+  document.getElementById('username').value = '';
+  document.getElementById('displayName').value = '';
+  document.getElementById('email').value = '';
+  document.getElementById('userGroup').value = 'viewer';
+  document.getElementById('userActive').value = 'true';
+  document.getElementById('username').disabled = false;
+  document.getElementById('userForm').style.display = 'block';
+}
+
+function editUser(username) {
+  editingUser = username;
+  const user = currentUsers[username];
+  document.getElementById('userFormTitle').textContent = 'Edit User';
+  document.getElementById('username').value = username;
+  document.getElementById('displayName').value = user.display_name;
+  document.getElementById('email').value = user.email;
+  document.getElementById('userGroup').value = user.group;
+  document.getElementById('userActive').value = user.active.toString();
+  document.getElementById('username').disabled = true;
+  document.getElementById('userForm').style.display = 'block';
+}
+
+function saveUser() {
+  const username = document.getElementById('username').value;
+  const displayName = document.getElementById('displayName').value;
+  const email = document.getElementById('email').value;
+  const group = document.getElementById('userGroup').value;
+  const active = document.getElementById('userActive').value === 'true';
+  
+  if (!username || !displayName || !email) {
+    showAlert('Please fill in all required fields', 'error');
+    return;
+  }
+  
+  const userData = {
+    display_name: displayName,
+    email: email,
+    group: group,
+    active: active
+  };
+  
+  const url = editingUser ? `/admin/users/${editingUser}` : '/admin/users';
+  const method = editingUser ? 'PUT' : 'POST';
+  
+  if (!editingUser) {
+    userData.username = username;
+  }
+  
+  fetch(url, {
+    method: method,
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(userData)
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      showAlert(data.message, 'success');
+      cancelUserForm();
+      loadUsers();
+    } else {
+      showAlert(data.message, 'error');
+    }
+  })
+  .catch(error => {
+    showAlert('Error saving user: ' + error.message, 'error');
+  });
+}
+
+function cancelUserForm() {
+  document.getElementById('userForm').style.display = 'none';
+  editingUser = null;
+}
+
+function deleteUser(username) {
+  if (confirm(`Are you sure you want to delete user "${username}"?`)) {
+    fetch(`/admin/users/${username}`, {
+      method: 'DELETE'
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        showAlert(data.message, 'success');
+        loadUsers();
+      } else {
+        showAlert(data.message, 'error');
+      }
+    })
+    .catch(error => {
+      showAlert('Error deleting user: ' + error.message, 'error');
+    });
+  }
+}
+
+function loadGroups() {
+  const groupsGrid = document.getElementById('groupsGrid');
+  groupsGrid.innerHTML = '';
+  
+  Object.entries(currentGroups).forEach(([groupId, group]) => {
+    const groupCard = document.createElement('div');
+    groupCard.className = 'group-card';
+    
+    const permissionsList = group.permissions.map(perm => `<li>${perm}</li>`).join('');
+    
+    groupCard.innerHTML = `
+      <div class="group-header">
+        <div class="group-title">${group.name}</div>
+      </div>
+      <div class="group-description">${group.description}</div>
+      <h4>Permissions:</h4>
+      <ul class="permissions-list">
+        ${permissionsList}
+      </ul>
+    `;
+    
+    groupsGrid.appendChild(groupCard);
+  });
+}
 
 // Initialize
 document.addEventListener('DOMContentLoaded', function() {

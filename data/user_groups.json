@@ -1,0 +1,35 @@
+{
+  "admin": {
+    "name": "Administrator",
+    "permissions": [
+      "view_all",
+      "edit_all",
+      "delete_all",
+      "edit_promotions",
+      "create_promotions",
+      "date_mismatch",
+      "sql_generation",
+      "user_management",
+      "system_admin"
+    ],
+    "description": "Full system access including user management"
+  },
+  "promo_owner": {
+    "name": "Promo Owner",
+    "permissions": [
+      "view_all",
+      "edit_promotions",
+      "create_promotions",
+      "date_mismatch",
+      "sql_generation"
+    ],
+    "description": "Can view, edit, create promotions, handle date mismatches and generate SQL"
+  },
+  "reviewer": {
+    "name": "Reviewer",
+    "permissions": [
+      "view_all"
+    ],
+    "description": "Read-only access to all promotions"
+  }
+}

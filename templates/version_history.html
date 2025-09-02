@@ -45,6 +45,14 @@
       <button class="btn"><i class="fas fa-download"></i> Export History</button>
       <button class="btn" onclick="expandAllRows()"><i class="fas fa-expand-arrows-alt"></i> Expand All</button>
       <button class="btn" onclick="collapseAllRows()"><i class="fas fa-compress-arrows-alt"></i> Collapse All</button>
+      <a href="{{ url_for('admin') }}" class="btn btn-secondary">
+        <i class="fas fa-cogs"></i>
+        Back to Admin
+      </a>
+      <a href="{{ url_for('promotions') }}" class="btn btn-primary">
+        <i class="fas fa-tags"></i>
+        View Promotions
+      </a>
     </div>
   </div>
 
@@ -72,7 +80,11 @@
                 <i class="fas fa-chevron-right"></i>
               </button>
             </td>
-            <td class="promo-code">{{ promo.promo_code }}</td>
+            <td class="promo-code">
+              <a href="/edit_promo/{{ promo.promo_code }}" class="promo-code-link">
+                {{ promo.promo_code }}
+              </a>
+            </td>
             <td>{{ promo.orbit_id }}</td>
             <td>
               <span class="status-badge status-{{ promo.status.lower() }}">{{ promo.status }}</span>
@@ -120,23 +132,6 @@
         <p>No promotion changes have been recorded yet.</p>
       </div>
     {% endif %}
-  </div>
-
-  <div class="version-footer">
-    <div class="footer-info">
-      <p><strong>Tracking Status:</strong> Active</p>
-      <p><strong>Last Updated:</strong> {{ current_datetime }}</p>
-    </div>
-    <div class="footer-actions">
-      <a href="{{ url_for('admin') }}" class="btn btn-secondary">
-        <i class="fas fa-cogs"></i>
-        Back to Admin
-      </a>
-      <a href="{{ url_for('promotions') }}" class="btn btn-primary">
-        <i class="fas fa-tags"></i>
-        View Promotions
-      </a>
-    </div>
   </div>
 </div>
 
