@@ -252,4 +252,9 @@
     font-size: 0.7rem;
     padding: 0.375rem 0.75rem;
   }
+/* Header Actions (moved from template) */
+.approvers-header-actions { display:flex; align-items:center; gap:1rem; }
+.approvers-refresh-btn { background: rgba(255,255,255,0.2); border:1px solid rgba(255,255,255,0.3); color:#fff; }
+.approvers-refresh-btn:hover { background: rgba(255,255,255,0.3); }
+.approvers-user-label { color: rgba(255,255,255,0.9); font-size:0.9rem; }
 }

@@ -1,5 +1,33 @@
 /* Test Page Specific Styles */
 
+/* Header actions */
+.test-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.test-refresh-btn {
+  background: rgba(255,255,255,0.2);
+  border: 1px solid rgba(255,255,255,0.3);
+  color: #fff;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.test-refresh-btn:hover {
+  background: rgba(255,255,255,0.35);
+}
+
+.test-user-label {
+  color: rgba(255,255,255,0.9);
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
 .test-page {
   padding: 2rem;
   max-width: 1000px;

@@ -23,8 +23,8 @@
 {% endblock %}
 
 {% block header_right %}
-<div style="display: flex; align-items: center; gap: 1rem;">
-  <span style="color: rgba(255,255,255,0.9); font-size: 0.9rem;">{{ user_name or 'User: Coming Soon' }}</span>
+<div class="links-header-actions">
+  <span class="links-user-label">{{ user_name or 'User: Coming Soon' }}</span>
 </div>
 {% endblock %}
 
@@ -179,9 +179,8 @@ document.addEventListener('DOMContentLoaded', function() {
       // Add message after form submits successfully
       setTimeout(() => {
         const messageEl = document.createElement('span');
-        messageEl.className = 'inline-save-message';
-        messageEl.textContent = 'Links saved successfully';
-        messageEl.style.cssText = 'color: #e20074; font-size: 14px; font-weight: 500; margin-left: 15px;';
+  messageEl.className = 'inline-save-message links-save-message';
+  messageEl.textContent = 'Links saved successfully';
         
         // Insert after the save button
         saveBtn.parentNode.insertBefore(messageEl, saveBtn.nextSibling);

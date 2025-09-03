@@ -12,212 +12,12 @@
 {% endblock %}
 
 {% block header_right %}
-<div style="display: flex; align-items: center; gap: 1rem;">
-  <button class="btn btn-primary" onclick="refreshData()" style="background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3); color: white; padding: 0.5rem 1rem; border-radius: 4px; font-size: 0.9rem;">
+<div class="dm-header-actions">
+  <button class="btn dm-refresh-btn" onclick="refreshData()">
     <i class="fas fa-sync-alt"></i> Refresh Data
   </button>
-  <span style="color: rgba(255,255,255,0.9); font-size: 0.9rem;">{{ user_name or 'User: Coming Soon' }}</span>
+  <span class="dm-user-label">{{ user_name or 'User: Coming Soon' }}</span>
 </div>
-{% endblock %}
-
-{% block extra_css %}
-<style>
-.sql-actions {
-  display: flex;
-  gap: 0.25rem;
-  flex-wrap: wrap;
-}
-
-.sql-actions .btn {
-  font-size: 0.75rem;
-  padding: 0.25rem 0.5rem;
-}
-
-/* Table Container Styles */
-.table-container {
-  width: 100%;
-  overflow-x: auto;
-  position: relative;
-}
-
-.date-mismatch-table {
-  width: 100%;
-  table-layout: fixed;
-}
-
-/* Fix dropdown width issues */
-.form-select {
-  max-width: 200px;
-  width: 100%;
-}
-
-/* Ensure dropdowns don't overflow the page */
-.table-container .form-select {
-  position: relative;
-}
-
-.date-mismatch-table th,
-.date-mismatch-table td {
-  position: relative;
-  overflow: visible;
-}
-
-/* File Preview Styles */
-.file-info-card {
-  background: #ffffff;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  padding: 1rem;
-  margin-bottom: 1rem;
-  transition: box-shadow 0.2s ease, border-color 0.2s ease;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-}
-
-.file-info-card:hover {
-  box-shadow: 0 3px 12px rgba(0,0,0,0.15);
-  border-color: #bbb;
-}
-
-.file-info {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.file-info i {
-  font-size: 1.5rem;
-  color: #e20074;
-  min-width: 24px;
-  flex-shrink: 0;
-}
-
-.file-details {
-  flex: 1;
-  min-width: 0;
-}
-
-.file-name {
-  font-weight: 600;
-  color: #333;
-  font-size: 1rem;
-  margin-bottom: 0.25rem;
-  word-break: break-word;
-}
-
-.file-meta {
-  font-size: 0.85rem;
-  color: #666;
-  display: flex;
-  gap: 1rem;
-  flex-wrap: wrap;
-}
-
-.file-actions {
-  display: flex;
-  gap: 0.5rem;
-  align-items: center;
-}
-
-.file-actions .btn {
-  color: #e20074;
-  text-decoration: none;
-  font-size: 0.9rem;
-  font-weight: 500;
-  padding: 0.4rem 0.8rem;
-  border-radius: 4px;
-  border: 1px solid #e20074;
-  background: #ffffff;
-  transition: background-color 0.2s ease, color 0.2s ease;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3rem;
-}
-
-.file-actions .btn:hover {
-  background-color: #e20074;
-  color: #ffffff;
-}
-
-.sql-preview-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 0.5rem;
-  padding: 0.5rem;
-  background: #e9ecef;
-  border-radius: 4px;
-  font-size: 0.9rem;
-  font-weight: 500;
-}
-
-.sql-preview-header .btn-link {
-  padding: 0.25rem 0.5rem;
-  color: #e20074;
-  text-decoration: none;
-  font-size: 0.8rem;
-  border: none;
-  background: none;
-  cursor: pointer;
-}
-
-.sql-preview-header .btn-link:hover {
-  text-decoration: underline;
-  color: #b8005a;
-}
-
-#sqlPreviewArea {
-  max-height: 400px;
-  min-height: 200px;
-  width: 100%;
-  resize: vertical;
-  font-family: monospace;
-  font-size: 12px;
-  background-color: #f8f9fa;
-  overflow-y: auto;
-  white-space: pre;
-  word-wrap: break-word;
-}
-
-.operator-id-section {
-  background: #f8f9fa;
-  border: 1px solid #dee2e6;
-  border-radius: 8px;
-  padding: 1rem;
-}
-
-.operator-id-section .form-label {
-  font-weight: 600;
-  color: #333;
-  margin-bottom: 0.5rem;
-}
-
-.operator-id-section .form-label i {
-  color: #e20074;
-  margin-right: 0.5rem;
-}
-
-/* SQL Preview Container Styles */
-#sql-preview-container {
-  border: 1px solid #17a2b8;
-}
-
-#sql-preview-container .card-header {
-  background: linear-gradient(135deg, #17a2b8, #138496);
-}
-
-#sql-preview-content textarea {
-  border: 1px solid #dee2e6;
-  background-color: #f8f9fa;
-}
-
-.actions {
-  white-space: nowrap;
-}
-
-.actions button, .actions a {
-  margin: 0.1rem;
-}
-</style>
 {% endblock %}
 
 {% block content %}
@@ -278,13 +78,13 @@
     {% if promos %}
     
     <!-- Batch Actions -->
-    <div class="batch-actions" id="batchActions" style="display: none; margin-bottom: 20px;">
+  <div class="batch-actions hidden mb-20" id="batchActions">
       <div class="alert alert-info">
         <span id="selectedCount">0</span> promotion(s) selected
       </div>
       
       <!-- Operator ID Input inside batch actions -->
-      <div class="operator-id-section" style="margin-bottom: 15px;">
+  <div class="operator-id-section mb-15">
         <div class="row">
           <div class="col-md-4">
             <label for="operatorId" class="form-label">
@@ -298,7 +98,7 @@
                    pattern="[0-9]{5}"
                    title="Must be exactly 5 digits">
             <div class="form-text">Must be exactly 5 numeric characters</div>
-            <div id="operatorIdError" class="text-danger" style="display: none;"></div>
+            <div id="operatorIdError" class="text-danger hidden"></div>
           </div>
         </div>
       </div>
@@ -317,7 +117,7 @@
     </div>
     
     <!-- Generated SQL File Preview -->
-    <div id="sqlFilePreview" style="display: none; margin-bottom: 20px;">
+  <div id="sqlFilePreview" class="hidden mb-20">
       <div class="file-info-card">
         <div class="file-info">
           <i class="fas fa-database"></i>
@@ -335,14 +135,14 @@
             <i class="fas fa-download"></i> Download SQL
           </a>
           <button type="button" onclick="toggleSqlPreview()" id="sqlPreviewBtn"
-                  class="btn btn-sm btn-outline" style="margin-left: 0.5rem;">
+                  class="btn btn-sm btn-outline ml-5">
             <i class="fas fa-eye"></i> Preview
           </button>
         </div>
       </div>
       
       <!-- SQL Preview (initially hidden) -->
-      <div id="sqlPreviewContainer" style="display: none;">
+  <div id="sqlPreviewContainer" class="hidden">
         <div class="sql-preview-header">
           <span>SQL Preview</span>
           <button type="button" onclick="clearSqlPreview()" class="btn btn-sm btn-link">
@@ -358,27 +158,27 @@
       <table class="date-mismatch-table">
         <thead>
           <tr>
-            <th style="text-align: center;">
+            <th class="txt-center">
               <input type="checkbox" id="selectAll" onchange="toggleSelectAll()">
             </th>
-            <th style="text-align: left;">Promo Owner</th>
-            <th style="text-align: center;">ORBIT Number</th>
-            <th style="text-align: center;">Promo Code</th>
-            <th style="text-align: center;">ORBIT End Date</th>
-            <th style="text-align: center;">PAM End Date</th>
-            <th style="text-align: center;">Mismatch Type</th>
-            <th style="text-align: center;">Actions</th>
+            <th class="txt-left">Promo Owner</th>
+            <th class="txt-center">ORBIT Number</th>
+            <th class="txt-center">Promo Code</th>
+            <th class="txt-center">ORBIT End Date</th>
+            <th class="txt-center">PAM End Date</th>
+            <th class="txt-center">Mismatch Type</th>
+            <th class="txt-center">Actions</th>
           </tr>
         </thead>
         <tbody>
           {% for promo in promos %}
           <tr class="mismatch-row" data-mismatch-type="{{ promo.mismatch_type }}" data-owner="{{ promo.owner }}" data-promo-code="{{ promo.code }}">
-            <td style="text-align: center;">
+            <td class="txt-center">
               <input type="checkbox" class="row-checkbox" value="{{ promo.code }}" onchange="updateBatchActions()">
             </td>
-            <td class="promo-owner" style="text-align: left;">{{ promo.owner or 'N/A' }}</td>
-            <td class="orbit-number" style="text-align: center;">{{ promo.orbit_id or 'N/A' }}</td>
-            <td class="promo-code" style="text-align: center;">
+            <td class="promo-owner txt-left">{{ promo.owner or 'N/A' }}</td>
+            <td class="orbit-number txt-center">{{ promo.orbit_id or 'N/A' }}</td>
+            <td class="promo-code txt-center">
               <a href="{{ url_for('promo.edit_promo', promo_code=promo.code) }}" class="promo-link">
                 {{ promo.code }}
               </a>

@@ -86,6 +86,7 @@
 }
 .mb-sm { margin-bottom: 0.5rem; }
 .pre-line { white-space: pre-line; }
+.recent-changes-text { color:#666; font-size:0.9em; }
 
 /* Tabs */
 .tabs {
@@ -559,6 +560,38 @@ h5 {
   max-width: 100%;
   box-sizing: border-box;
 }
+
+/* Utility spacing & visibility */
+.mt-2 { margin-top:2rem; }
+.mb-1 { margin-bottom:1rem !important; }
+.ml-sm { margin-left:0.5rem; }
+.ml { margin-left:1em; }
+.hidden { display:none; }
+.icon-inline { margin-right:0.5rem; }
+
+/* Trade / Tier grids */
+.trade-tiers-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:0.5rem; }
+.tier-title { grid-column:1 / -1; font-weight:bold; font-size:1.1em; color:#2c3e50; margin-top:1rem; margin-bottom:0.5rem; border-bottom:2px solid #e91e63; padding-bottom:0.3rem; }
+
+/* Action buttons row (replaces inline flex containers) */
+.action-buttons-row { display:flex; justify-content:flex-end; align-items:center; gap:15px; }
+
+/* Danger outline button variant */
+.btn-danger-outline { background:#fff; border:1px solid #dc3545; color:#dc3545; }
+.btn-danger-outline:hover { background:#dc3545; color:#fff; }
+
+/* SQL preview area */
+.sql-preview-area { font-family:monospace; font-size:12px; background-color:#f8f9fa; resize:vertical; overflow-y:auto; }
+
+/* Delete confirmation modal extracted styles */
+.delete-confirm-modal { background:#fff; border-radius:8px; padding:2rem; max-width:400px; margin:1rem; }
+.delete-confirm-title { margin-top:0; color:#333; }
+.delete-confirm-text { color:#666; margin-bottom:2rem; }
+.delete-confirm-actions { display:flex; gap:1rem; justify-content:flex-end; }
+.btn-cancel-inline { padding:0.5rem 1rem; border:1px solid #ddd; background:#fff; border-radius:4px; cursor:pointer; }
+.btn-cancel-inline:hover { background:#f4f4f4; }
+.btn-delete-inline { padding:0.5rem 1rem; border:1px solid #dc3545; background:#dc3545; color:#fff; border-radius:4px; cursor:pointer; }
+.btn-delete-inline:hover { background:#b71d34; }
 
 /* Remove any min-widths that could cause overflow */
 .grid-form label,

@@ -13,8 +13,8 @@
 {% endblock %}
 
 {% block header_right %}
-<div style="display: flex; align-items: center; gap: 1rem;">
-  <span style="color: rgba(255,255,255,0.9); font-size: 0.9rem;">{{ user_name or 'User: Coming Soon' }}</span>
+<div class="edit-spe-header-actions">
+  <span class="edit-spe-user-label">{{ user_name or 'User: Coming Soon' }}</span>
 </div>
 {% endblock %}
 
@@ -50,7 +50,7 @@
         <div class="info-box">
           <div class="info-title">Recent Changes</div>
           <div class="last-changes">
-            <div style="color: #666; font-size: 0.9em;">{{ promo.get('last_changes') }}</div>
+            <div>{{ promo.get('last_changes') }}</div>
           </div>
         </div>
         {% endif %}
