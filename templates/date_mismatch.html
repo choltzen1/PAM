@@ -358,41 +358,41 @@
       <table class="date-mismatch-table">
         <thead>
           <tr>
-            <th>
+            <th style="text-align: center;">
               <input type="checkbox" id="selectAll" onchange="toggleSelectAll()">
             </th>
-            <th>Promo Owner</th>
-            <th>ORBIT Number</th>
-            <th>Promo Code</th>
-            <th>ORBIT End Date</th>
-            <th>PAM End Date</th>
-            <th>Mismatch Type</th>
-            <th>Actions</th>
+            <th style="text-align: left;">Promo Owner</th>
+            <th style="text-align: center;">ORBIT Number</th>
+            <th style="text-align: center;">Promo Code</th>
+            <th style="text-align: center;">ORBIT End Date</th>
+            <th style="text-align: center;">PAM End Date</th>
+            <th style="text-align: center;">Mismatch Type</th>
+            <th style="text-align: center;">Actions</th>
           </tr>
         </thead>
         <tbody>
           {% for promo in promos %}
           <tr class="mismatch-row" data-mismatch-type="{{ promo.mismatch_type }}" data-owner="{{ promo.owner }}" data-promo-code="{{ promo.code }}">
-            <td>
+            <td style="text-align: center;">
               <input type="checkbox" class="row-checkbox" value="{{ promo.code }}" onchange="updateBatchActions()">
             </td>
-            <td class="promo-owner">{{ promo.owner or 'N/A' }}</td>
-            <td class="orbit-number">{{ promo.orbit_id or 'N/A' }}</td>
-            <td class="promo-code">
+            <td class="promo-owner" style="text-align: left;">{{ promo.owner or 'N/A' }}</td>
+            <td class="orbit-number" style="text-align: center;">{{ promo.orbit_id or 'N/A' }}</td>
+            <td class="promo-code" style="text-align: center;">
               <a href="{{ url_for('promo.edit_promo', promo_code=promo.code) }}" class="promo-link">
                 {{ promo.code }}
               </a>
             </td>
-            <td class="orbit-end-date">{{ promo.orbit_end_date or 'N/A' }}</td>
-            <td class="pam-end-date">{{ promo.promo_end_date or 'N/A' }}</td>
-            <td class="mismatch-type">
+            <td class="orbit-end-date" style="text-align: center;">{{ promo.orbit_end_date or 'N/A' }}</td>
+            <td class="pam-end-date" style="text-align: center;">{{ promo.promo_end_date or 'N/A' }}</td>
+            <td class="mismatch-type" style="text-align: center;">
               {% if promo.mismatch_type %}
                 <span class="badge badge-{{ promo.mismatch_severity }}">
                   {{ promo.mismatch_type }}
                 </span>
               {% endif %}
             </td>
-            <td class="actions">
+            <td class="actions" style="text-align: center;">
               <button class="btn btn-sm btn-outline-secondary" onclick="syncToPam('{{ promo.code }}', this)">
                 <i class="fas fa-upload"></i> Update PAM
               </button>
