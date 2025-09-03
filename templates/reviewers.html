@@ -407,6 +407,182 @@ body {
     {% endif %}
   </div>
 
+<<<<<<< HEAD
+=======
+<style>
+.reviewer-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+}
+
+.reviewer-row {
+  display: flex;
+  gap: 1.5rem;
+  width: 100%;
+  min-height: 0;
+  flex: 1;
+}
+
+.reviewer-section {
+  flex: 1;
+  min-width: 300px;
+  min-height: 0;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  border: 1px solid #e0e0e0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.reviewer-section .info-box {
+  border-bottom: none;
+  padding: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.reviewer-section .info-title {
+  background: var(--tmobile-magenta);
+  color: white;
+  font-weight: bold;
+  font-size: 1.1rem;
+  margin-bottom: 0;
+  padding: 0.75rem 1.5rem; /* Reduced from 1rem to 0.75rem */
+  border-bottom: none;
+}
+
+.reviewer-section .detail-grid {
+  padding: 1rem 1.5rem 1.5rem 1.5rem;
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+}
+
+/* Single column layout for groupings section */
+.groupings-grid {
+  grid-template-columns: 1fr !important;
+}
+
+.detail-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 0.4rem 0;
+  border-bottom: 1px solid #eee;
+  font-size: 0.9rem;
+}
+
+.detail-item:last-child {
+  border-bottom: none !important;
+}
+
+/* Remove any trailing borders from info boxes */
+.info-box:last-child {
+  border-bottom: none !important;
+}
+
+.info-box .detail-grid .detail-item:last-child {
+  border-bottom: none !important;
+}
+
+.detail-item label {
+  font-weight: 600;
+  color: #333;
+  margin-right: 1rem;
+  min-width: fit-content;
+}
+
+.detail-item span {
+  color: #666;
+  text-align: right;
+  word-break: break-word;
+}
+
+.detail-item a {
+  color: var(--tmobile-magenta);
+  text-decoration: none;
+}
+
+.detail-item a:hover {
+  text-decoration: underline;
+}
+
+.sku-link {
+  background: var(--tmobile-magenta);
+  color: white !important;
+  padding: 0.25rem 0.75rem;
+  border-radius: 4px;
+  text-decoration: none !important;
+  font-size: 0.9rem;
+}
+
+.sku-link:hover {
+  background: var(--tmobile-magenta-dark);
+}
+
+.notes-content {
+  min-height: 80px;
+  padding: 1rem 1.5rem 1.5rem 1.5rem;
+  background: #fff;
+  border-radius: 0;
+  border: none;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  white-space: pre-wrap;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.search-section .form-control {
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 0.5rem 1rem;
+}
+
+.btn {
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-weight: 600;
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+}
+
+.btn-primary {
+  background: var(--tmobile-magenta);
+  color: white;
+}
+
+.btn-primary:hover {
+  background: var(--tmobile-magenta-dark);
+}
+
+.btn-secondary {
+  background: #6c757d;
+  color: white;
+}
+
+.btn-secondary:hover {
+  background: #5a6268;
+}
+
+/* Removed responsive design - content maintains size, just scroll when screen is smaller */
+</style>
+
+>>>>>>> c53897883820dc9432b8c23ba78d35b5be905fd8
 <script>
 function searchPromo() {
   const promoCode = document.getElementById('promo-search').value.trim().toUpperCase();
