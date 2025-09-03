@@ -135,6 +135,17 @@ html, body {
   z-index: 10;
 }
 
+<<<<<<< HEAD
+=======
+.date-mismatch-table th:nth-child(1) { width: 15%; } /* Promo Owner */
+.date-mismatch-table th:nth-child(2) { width: 12%; } /* ORBIT Number */
+.date-mismatch-table th:nth-child(3) { width: 12%; } /* Promo Code */
+.date-mismatch-table th:nth-child(4) { width: 15%; } /* ORBIT End Date */
+.date-mismatch-table th:nth-child(5) { width: 15%; } /* PAM End Date */
+.date-mismatch-table th:nth-child(6) { width: 12%; } /* Mismatch Type */
+.date-mismatch-table th:nth-child(7) { width: 15%; text-align: right; } /* Actions */
+
+>>>>>>> c53897883820dc9432b8c23ba78d35b5be905fd8
 .date-mismatch-table td {
   padding: 0.75rem 0.5rem;
   border-bottom: none;
