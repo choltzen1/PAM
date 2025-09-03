@@ -11,16 +11,43 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/promotions.css') }}">
   {% elif request.path == '/spe' %}
     <link rel="stylesheet" href="{{ url_for('static', filename='css/spe.css') }}">
-  {% elif request.path == '/data_mismatch' %}
+  {% elif request.path == '/date_mismatch' %}
     <link rel="stylesheet" href="{{ url_for('static', filename='css/date_mismatch.css') }}">
+  {% elif request.path.startswith('/reviewers') %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/reviewers.css') }}">
+  {% elif request.path.startswith('/edit') %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/edit_promo.css') }}">
+  {% elif request.path == '/rebates' %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/promotions.css') }}">
+  {% elif request.path == '/capacity' %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/capacity.css') }}">
+  {% elif request.path == '/admin' %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+  {% elif request.path == '/approvers' %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/approvers.css') }}">
+  {% elif request.path == '/links' %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/links.css') }}">
+  {% elif request.path == '/test' %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/test.css') }}">
+  {% elif request.path == '/version-history' %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/version_history.css') }}">
   {% endif %}
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/edit_promo.css') }}">
   {% block extra_css %}{% endblock %}
   <script defer src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
   {% block head %}{% endblock %}
 </head>
 <body>
   <div class="page-content">
+    <!-- Global Header -->
+    <header class="global-header">
+      <div class="global-header-title">
+        {% block header_left %}PAM{% endblock %}
+      </div>
+      <div class="global-header-user">
+        {% block header_right %}User: Coming Soon{% endblock %}
+      </div>
+    </header>
+    
     {% block content %}{% endblock %}
   </div>
   
@@ -46,29 +73,5 @@
   </script>
   {% block extra_js %}{% endblock %}
   {% block scripts %}{% endblock %}
-  
-  <style>
-    /* Global footer positioning - footer always visible at bottom */
-    html, body {
-      height: 100%;
-      margin: 0;
-      padding: 0;
-    }
-    
-    .page-content {
-      padding-bottom: 60px; /* Account for footer height */
-      min-height: calc(100vh - 60px);
-    }
-    
-    .footer-nav {
-      position: fixed !important;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      z-index: 1000;
-      height: 60px;
-      box-sizing: border-box;
-    }
-  </style>
 </body>
 </html>

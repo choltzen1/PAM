@@ -1,0 +1,201 @@
+{% extends "base.html" %}
+{% block title %}Links{% if promo_code %} - {{ promo_code }}{% endif %} - PAM{% endblock %}
+
+{% block head %}
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/links.css') }}">
+{% endblock %}
+
+{% block header_left %}
+<div class="global-header-promotions">
+  <i class="fas fa-link header-icon"></i>
+  <div class="header-text">
+    {% if promo_code %}
+    <h2>Links - {{ promo_code }}</h2>
+    <p>{% if promo_data and promo_data.promotion_name %}{{ promo_data.promotion_name }}{% else %}Promotion links management{% endif %}</p>
+    {% else %}
+    <h2>Links Management</h2>
+    <p>Manage promotion links and resources</p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+
+{% block header_right %}
+<div style="display: flex; align-items: center; gap: 1rem;">
+  <span style="color: rgba(255,255,255,0.9); font-size: 0.9rem;">{{ user_name or 'User: Coming Soon' }}</span>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="links-page">
+  <!-- Controls row: search, actions -->
+  <div class="version-controls">
+    <div class="search-group">
+      <label class="visually-hidden" for="promoSearch">Search</label>
+      <input
+        type="text"
+        id="promoSearch"
+        name="search"
+        placeholder="Enter promo code"
+        value="{{ promo_code or '' }}"
+        onkeypress="handleSearchKeyPress(event)"
+      />
+    </div>
+
+    <div class="action-buttons">
+      <button class="btn" onclick="searchPromo()">
+        <i class="fas fa-search"></i> Search
+      </button>
+      <button class="btn" onclick="refreshData()">
+        <i class="fas fa-sync-alt"></i> Refresh Data
+      </button>
+      <a href="{{ url_for('promotions') }}" class="btn btn-primary">
+        <i class="fas fa-tags"></i>
+        View Promotions
+      </a>
+    </div>
+  </div>
+
+  <!-- Content Container -->
+  <div class="content-container">
+    {% if error_message %}
+    <div class="alert alert-warning alert-dismissible fade show" role="alert">
+      <i class="fas fa-exclamation-triangle"></i> {{ error_message }}
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endif %}
+
+    {% if promo_code and promo_data %}
+    <!-- Promotion-specific links content -->
+    <div class="promotion-info">
+      <!-- Links Management Form -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <div class="promotion-header-info">
+            <p><strong>Promotion Code:</strong> {{ promo_data.code }} &nbsp;&nbsp;&nbsp; <strong>Orbit ID:</strong> {{ promo_data.orbit_id or 'N/A' }} &nbsp;&nbsp;&nbsp; <strong>Bill Name:</strong> {{ promo_data.bill_facing_name or 'N/A' }} &nbsp;&nbsp;&nbsp; <strong>Start Date:</strong> {{ promo_data.promo_start_date or 'N/A' }} &nbsp;&nbsp;&nbsp; <strong>End Date:</strong> {{ promo_data.promo_end_date or 'N/A' }} &nbsp;&nbsp;&nbsp; <strong>Status:</strong> {{ promo_data.status or 'Active' }}</p>
+          </div>
+        </div>
+        <div class="card-body">
+          <form id="linksForm" method="post">
+            <!-- Link to Orbit -->
+            <div class="mb-3">
+              <label for="orbitLink" class="form-label">Link to Orbit:</label>
+              <input type="text" class="form-control" id="orbitLink" name="orbitLink" 
+                     value="{{ promo_data.orbit_link or '' }}"
+                     placeholder="Enter Orbit link URL">
+            </div>
+
+            <!-- SKU Link Address -->
+            <div class="mb-3">
+              <label for="skuLink" class="form-label">SKU Link Address:</label>
+              <input type="text" class="form-control" id="skuLink" name="skuLink" 
+                     value="{{ promo_data.sku_link or '' }}" 
+                     placeholder="Enter SKU link address">
+            </div>
+
+            <!-- Trade Link Address -->
+            <div class="mb-3">
+              <label for="tradeLink" class="form-label">Trade Link Address:</label>
+              <input type="text" class="form-control" id="tradeLink" name="tradeLink" 
+                     value="{{ promo_data.tradein_link or '' }}" 
+                     placeholder="Enter Trade link address">
+            </div>
+
+            <!-- Legal Disclaimer -->
+            <div class="mb-3">
+              <label for="legalLink" class="form-label">Legal Disclaimer:</label>
+              <input type="text" class="form-control" id="legalLink" name="legalLink" 
+                     value="{{ promo_data.legal_link or '' }}"
+                     placeholder="Enter Legal disclaimer URL">
+            </div>
+
+            <!-- C2 Article -->
+            <div class="mb-3">
+              <label for="c2ArticleLink" class="form-label">C2 Article:</label>
+              <input type="text" class="form-control" id="c2ArticleLink" name="c2ArticleLink" 
+                     value="{{ promo_data.c2_article_link or '' }}"
+                     placeholder="Enter C2 Article link URL">
+            </div>
+
+            <!-- Save Button -->
+            <div class="text-end">
+              <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save"></i> Save Links
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+    {% elif promo_code and not promo_data %}
+    <!-- Promo code searched but not found -->
+    <div class="alert alert-warning" role="alert">
+      <i class="fas fa-exclamation-triangle"></i> No promotion found with code "{{ promo_code }}"
+    </div>
+    {% endif %}
+  </div>
+</div>
+</div>
+
+<script>
+function refreshData() {
+  window.location.reload();
+}
+
+function searchPromo() {
+  const promoCode = document.getElementById('promoSearch').value.trim().toUpperCase();
+  if (promoCode) {
+    window.location.href = `/links/${promoCode}`;
+  } else {
+    window.location.href = `/links`;
+  }
+}
+
+function handleSearchKeyPress(event) {
+  if (event.key === 'Enter') {
+    searchPromo();
+  }
+}
+
+// Focus on search box when page loads
+document.addEventListener('DOMContentLoaded', function() {
+  document.getElementById('promoSearch').focus();
+  
+  // Add submit handler to show save message
+  const form = document.getElementById('linksForm');
+  if (form) {
+    form.addEventListener('submit', function(e) {
+      // Let the form submit normally, but show message on successful save
+      const saveBtn = form.querySelector('button[type="submit"]');
+      
+      // Remove any existing message
+      const existingMessage = document.querySelector('.inline-save-message');
+      if (existingMessage) {
+        existingMessage.remove();
+      }
+      
+      // Add message after form submits successfully
+      setTimeout(() => {
+        const messageEl = document.createElement('span');
+        messageEl.className = 'inline-save-message';
+        messageEl.textContent = 'Links saved successfully';
+        messageEl.style.cssText = 'color: #e20074; font-size: 14px; font-weight: 500; margin-left: 15px;';
+        
+        // Insert after the save button
+        saveBtn.parentNode.insertBefore(messageEl, saveBtn.nextSibling);
+        
+        // Remove message after 5 seconds
+        setTimeout(() => {
+          if (messageEl.parentNode) {
+            messageEl.remove();
+          }
+        }, 5000);
+      }, 100); // Small delay to ensure form submitted
+    });
+  }
+});
+</script>
+
+{% endblock %}

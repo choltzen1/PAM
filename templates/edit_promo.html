@@ -5,12 +5,23 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/jira_modal.css') }}">
 {% endblock %}
 
+{% block header_left %}
+<div class="global-header-promotions">
+  <i class="fas fa-edit header-icon"></i>
+  <div class="header-text">
+    <h2>Edit Promotion – {{ promo.code }}</h2>
+    <p>Modify promotion details and settings</p>
+  </div>
+</div>
+{% endblock %}
+
+{% block header_right %}
+<div style="display: flex; align-items: center; gap: 1rem;">
+  <span style="color: rgba(255,255,255,0.9); font-size: 0.9rem;">{{ user_name or 'User: Coming Soon' }}</span>
+</div>
+{% endblock %}
+
 {% block content %}
-  <!-- Header -->
-  <header class="header">
-    <div class="header-title">Edit Promotion – {{ promo.code }}</div>
-    <div class="user-name">{{ user_name }}</div>
-  </header>
 
   <div class="container wide-container">
     <div class="layout-flex">
@@ -59,7 +70,7 @@
       <!-- RIGHT PANEL -->
       <div class="right-panel">
         <div class="tabs">
-          {% for tab in ['Details','Dates & Times','Requirements','Trade','Tiers','Segmentation','Groupings','BPTCR','SQL Generation'] %}
+          {% for tab in ['Details','Dates & Times','Requirements','Trade','Tiers','Segmentation','Groupings','BPTCR','Notes','SQL Generation'] %}
             <a href="{{ url_for('promo.edit_promo', promo_code=promo.code, tab=tab) }}"
                class="tab {% if tab == active_tab %}active{% endif %}">
               {{ tab }}
@@ -488,7 +499,23 @@
             </div>
             
             <div class="save-footer">
-              <button type="submit" class="btn btn-primary">Save BPTCR</button>            </div>          {% elif active_tab == 'SQL Generation' %}
+              <button type="submit" class="btn btn-primary">Save BPTCR</button>
+            </div>
+          
+          {% elif active_tab == 'Notes' %}
+            <div class="grid-form two-col">
+              <div class="col-span-2">
+                <label class="section-label">Promo Notes</label>
+                <textarea class="form-control" name="promo_notes" rows="15" placeholder="Enter your promo notes here...">{{ promo.promo_notes or '' }}</textarea>
+                <small class="form-text text-muted">Use this area to add any additional notes, observations, or documentation about this promotion.</small>
+              </div>
+            </div>
+            
+            <div class="save-footer">
+              <button type="submit" class="btn btn-primary">Save Notes</button>
+            </div>
+          
+          {% elif active_tab == 'SQL Generation' %}
             <div class="grid-form two-col">
               <!-- SKU List Section -->
               <div class="col-span-1">
@@ -667,7 +694,7 @@
       </div>
       
       <div class="form-group">
-        <label>Parent (optional):</label>
+        <label>Parent:</label>
         <select id="jiraParent" class="form-select">
           <option value="">None</option>
           <option value="CPO-2">CPO-2 - Device</option>

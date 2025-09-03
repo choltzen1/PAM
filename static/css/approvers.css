@@ -1,0 +1,255 @@
+/* Approvers Page Specific Styles */
+
+/* Root Variables for consistency */
+:root {
+  --tmobile-magenta: #E20074;
+  --tmobile-light-gray: #f8f9fa;
+  --tmobile-border: #dee2e6;
+  --tmobile-dark-gray: #495057;
+}
+
+/* Page Layout */
+.date-mismatch-page {
+  min-height: calc(100vh - 120px);
+  padding: 1rem;
+  background: var(--tmobile-light-gray);
+  box-sizing: border-box;
+  overflow-x: hidden;
+}
+
+/* Controls Container */
+.controls-container {
+  background: white;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  max-width: calc(100vw - 2rem);
+  box-sizing: border-box;
+}
+
+.filters-section {
+  display: flex;
+  gap: 2rem;
+  align-items: end;
+  flex-wrap: wrap;
+}
+
+.filter-group, .search-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 200px;
+}
+
+.filter-group label, .search-group label {
+  font-weight: 600;
+  color: var(--tmobile-dark-gray);
+  font-size: 0.9rem;
+}
+
+.form-select, .form-control {
+  padding: 0.5rem;
+  border: 1px solid var(--tmobile-border);
+  border-radius: 4px;
+  font-size: 0.9rem;
+  background: white;
+}
+
+/* Table Container - responsive, no horizontal scroll */
+.table-container {
+  width: 100%;
+  max-width: calc(100vw - 2rem);
+  overflow-x: auto;
+  border: 1px solid var(--tmobile-border);
+  border-radius: 8px;
+  background: white;
+  margin-bottom: 2rem;
+  box-sizing: border-box;
+}
+
+/* Table Styling - responsive columns */
+.approvers-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  min-width: 100%; /* Fill container width */
+  font-size: 0.875rem;
+}
+
+/* Column widths optimized for responsive design using percentages */
+.approvers-table th:nth-child(1) { width: 12%; } /* Promo Code */
+.approvers-table th:nth-child(2) { width: 15%; } /* Promo Owner */
+.approvers-table th:nth-child(3) { width: 30%; } /* Device Finance */
+.approvers-table th:nth-child(4) { width: 30%; } /* Revenue Accounting */
+.approvers-table th:nth-child(5) { width: 13%; text-align: center; } /* Actions */
+
+.approvers-table th {
+  background: var(--tmobile-magenta);
+  color: white;
+  font-weight: 600;
+  padding: 1rem 0.75rem;
+  text-align: left;
+  border-bottom: 2px solid #c7005f;
+  font-size: 0.875rem;
+}
+
+.approvers-table td {
+  padding: 0.75rem;
+  border-bottom: 1px solid var(--tmobile-border);
+  vertical-align: middle;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.approvers-table tbody tr {
+  transition: background-color 0.2s ease;
+}
+
+.approvers-table tbody tr:hover {
+  background-color: #f8f9fa;
+}
+
+.approvers-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Dropdown Styling */
+.dropdown-container {
+  width: 100%;
+}
+
+.device-finance-select, .revenue-accounting-select {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid var(--tmobile-border);
+  border-radius: 4px;
+  font-size: 0.8rem;
+  background: white;
+  box-sizing: border-box;
+}
+
+/* Actions Column */
+.approvers-table td:last-child {
+  text-align: center;
+  padding: 0.75rem 0.5rem;
+}
+
+.actions {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Button Styling */
+.btn {
+  padding: 0.5rem 1rem;
+  border: 1px solid;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  text-decoration: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 0.5rem;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.btn-primary {
+  background: var(--tmobile-magenta);
+  border-color: var(--tmobile-magenta);
+  color: #fff;
+}
+
+.btn-primary:hover {
+  background: #c7005f;
+  border-color: #c7005f;
+}
+
+/* Promo Code Link */
+.promo-link {
+  color: var(--tmobile-magenta);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.promo-link:hover {
+  text-decoration: underline;
+}
+
+/* No Data Container */
+.no-data-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.no-data-content {
+  text-align: center;
+  color: var(--tmobile-dark-gray);
+  font-size: 1.1rem;
+}
+
+/* Responsive Media Queries */
+@media (max-width: 1200px) {
+  .approvers-table th:nth-child(1) { width: 15%; } /* Promo Code - wider */
+  .approvers-table th:nth-child(2) { width: 18%; } /* Promo Owner - wider */
+  .approvers-table th:nth-child(3) { width: 28%; } /* Device Finance */
+  .approvers-table th:nth-child(4) { width: 28%; } /* Revenue Accounting */
+  .approvers-table th:nth-child(5) { width: 11%; } /* Actions */
+}
+
+@media (max-width: 768px) {
+  .date-mismatch-page {
+    padding: 0.5rem;
+  }
+  
+  .controls-container {
+    margin: 0 -0.5rem 1rem -0.5rem;
+    border-radius: 0;
+    padding: 1rem;
+  }
+  
+  .filters-section {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .filter-group, .search-group {
+    min-width: auto;
+    width: 100%;
+  }
+  
+  .table-container {
+    margin: 0 -0.5rem;
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+  }
+  
+  .approvers-table {
+    font-size: 0.75rem;
+  }
+  
+  .approvers-table th, .approvers-table td {
+    padding: 0.5rem 0.25rem;
+  }
+  
+  .device-finance-select, .revenue-accounting-select {
+    font-size: 0.7rem;
+    padding: 0.375rem;
+  }
+  
+  .btn {
+    font-size: 0.7rem;
+    padding: 0.375rem 0.75rem;
+  }
+}

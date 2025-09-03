@@ -1,89 +1,599 @@
 {% extends "base.html" %}
-{% block title %}Reviewers - PAM{% endblock %}
-{% block head %}
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/date_mismatch.css') }}">
-{% endblock %}
-{% block content %}
-<div class="date-mismatch-page">
-  <!-- Header -->
-  <div class="header-container">
-    <div class="header-left">
-      <i class="fas fa-user-check header-icon"></i>
-      <div>
-        <h1>Reviewers Management</h1>
-        <p class="subtitle">Manage promotion reviewers and approval workflows</p>
-      </div>
-    </div>
-    <div class="header-right">
-      <button class="btn btn-primary" onclick="refreshData()">
-        <i class="fas fa-sync-alt"></i> Refresh Data
-      </button>
-      <span class="user-info">{{ user_name }}</span>
-    </div>
-  </div>
 
-  <!-- Content -->
-  <div class="content-container">
-    <div class="placeholder-content">
-      <div class="placeholder-icon">
-        <i class="fas fa-user-check display-1 text-muted mb-3"></i>
-      </div>
-      <h3 class="text-muted mb-3">Reviewers Management</h3>
-      <p class="text-muted mb-4">This page is under development. Reviewer management functionality will be available soon.</p>
-      
-      <div class="feature-preview">
-        <h5 class="mb-3">Planned Features:</h5>
-        <ul class="text-left">
-          <li>Assign reviewers to promotion types</li>
-          <li>Manage reviewer permissions and roles</li>
-          <li>Track review status and progress</li>
-          <li>Configure approval workflows</li>
-          <li>Reviewer workload balancing</li>
-          <li>Review history and audit trails</li>
-        </ul>
-      </div>
-    </div>
+{% block title %}Reviewers{% if promo_code %} - {{ promo_code }}{% endif %} - PAM{% endblock %}
+
+{% block header_left %}
+<div class="global-header-promotions">
+  <i class="fas fa-users header-icon"></i>
+  <div class="header-text">
+    <h2>Reviewers{% if promo_code %} - {{ promo_code }}{% endif %}</h2>
+    <p>Review promotion details and assignments</p>
   </div>
 </div>
+{% endblock %}
 
+{% block header_right %}
+<div style="display: flex; align-items: center; gap: 1rem;">
+  <span style="color: rgba(255,255,255,0.9); font-size: 0.9rem;">{{ user_name or 'User: Coming Soon' }}</span>
+</div>
+{% endblock %}
+
+{% block content %}
 <style>
-.placeholder-content {
-  text-align: center;
-  padding: 4rem 2rem;
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  max-width: 600px;
-  margin: 2rem auto;
-}
-
-.placeholder-icon {
-  margin-bottom: 1rem;
-}
-
-.feature-preview {
-  background: #f8f9fa;
-  padding: 1.5rem;
-  border-radius: 6px;
-  margin-top: 2rem;
-}
-
-.feature-preview ul {
-  display: inline-block;
-  text-align: left;
-  margin: 0;
-}
-
-.feature-preview li {
-  margin-bottom: 0.5rem;
-  color: #6c757d;
+body {
+  overflow: hidden;
 }
 </style>
 
+  <div class="container wide-container" style="height: calc(100vh - 160px); overflow-y: auto; overflow-x: hidden; padding: 1.5rem 1vw; box-sizing: border-box;">
+    <!-- Search controls -->
+    <div class="search-section" style="margin-bottom: 1.5rem; width: 100%; display: flex; justify-content: flex-start; flex-shrink: 0;">
+      <div style="display: flex; gap: 1rem; align-items: center; background: #fff; padding: 1.25rem 2rem; border-radius: 10px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); max-width: fit-content; min-height: 60px;">
+        <label for="promo-search" style="font-weight: 600; color: var(--tmobile-magenta); margin: 0; line-height: 1; display: flex; align-items: center;">Search Promo Code</label>
+        <input
+          type="text"
+          id="promo-search"
+          name="promo_code"
+          class="form-control"
+          style="width: 300px; height: 38px; margin: 0; box-sizing: border-box;"
+          placeholder="Enter promo code"
+          value="{{ promo_code or '' }}"
+          onkeypress="handleSearchKeyPress(event)"
+        />
+        <button 
+          class="btn btn-primary" 
+          onclick="searchPromo()" 
+          style="height: 38px; padding: 0 1.5rem; display: flex; align-items: center; justify-content: center; margin: 0; background: var(--tmobile-magenta); border: 1px solid var(--tmobile-magenta); color: white; border-radius: 5px; font-weight: 500; cursor: pointer; transition: all 0.2s ease;"
+          onmouseover="this.style.background='#c41e56'"
+          onmouseout="this.style.background='var(--tmobile-magenta)'"
+        >
+          Search
+        </button>
+        <a 
+          href="{{ url_for('promotions') }}" 
+          class="btn btn-secondary" 
+          style="height: 38px; padding: 0 1.5rem; display: flex; align-items: center; justify-content: center; margin: 0; background: #6c757d; border: 1px solid #6c757d; color: white; border-radius: 5px; font-weight: 500; cursor: pointer; transition: all 0.2s ease; text-decoration: none;"
+          onmouseover="this.style.background='#5a6268'"
+          onmouseout="this.style.background='#6c757d'"
+        >
+          <i class="fas fa-arrow-left" style="margin-right: 0.5rem;"></i>
+          Back to Promotions
+        </a>
+      </div>
+    </div>
+
+    {% if error_message %}
+    <div class="alert alert-warning" style="background: #fff3cd; border: 1px solid #ffeaa7; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; flex-shrink: 0;">
+      <i class="bi bi-exclamation-triangle" style="color: #856404;"></i> {{ error_message }}
+    </div>
+    {% endif %}
+
+    {% if promo_code and promo_data %}
+    <div class="validation-dashboard">
+      <!-- Row 1: Details (Full Width) -->
+      <div class="combined-details-card">
+        <div class="section-header">
+          <div class="section-title">
+            <i class="fas fa-info-circle"></i>
+            Details
+          </div>
+        </div>
+        <div class="section-content">
+          <div class="details-grid">
+            <!-- Column 1 -->
+            <div class="details-column">
+              <div class="detail-item">
+                <label>Promo Owner:</label>
+                <span>{{ promo_data.owner or 'Holtzen, Cade' }}</span>
+              </div>
+              <div class="detail-item">
+                <label>Bill Facing Name:</label>
+                <span>{{ promo_data.bill_facing_name or 'Mobile Internet ID250396' }}</span>
+              </div>
+              <div class="detail-item">
+                <label>Orbit ID:</label>
+                <span>{{ promo_data.orbit_id or '25616' }}</span>
+              </div>
+              <div class="detail-item">
+                <label>PJ Code:</label>
+                <span>{{ promo_data.code or 'Trade-In: Broken' }}</span>
+              </div>
+              <div class="detail-item">
+                <label>Trade-In:</label>
+                <span>{{ promo_data.trade_in_group_id or 'Broken' }}</span>
+              </div>
+              <div class="detail-item">
+                <label>Broken Trade:</label>
+                <span>{{ promo_data.broken_trade or 'N' }}</span>
+              </div>
+              <div class="detail-item">
+                <label>Port In:</label>
+                <span>{{ promo_data.port_in_group_id or '' }}</span>
+              </div>
+              <div class="detail-item">
+                <label>Promo Amount:</label>
+                <span>{{ promo_data.amount or '' }}</span>
+              </div>
+            </div>
+            
+            <!-- Column 2 -->
+            <div class="details-column">
+              <div class="detail-item">
+                <label>Promo % Discount:</label>
+                <span>{{ promo_data.discount or '100' }}%</span>
+              </div>
+              <div class="detail-item">
+                <label>Stackability:</label>
+                <span></span>
+              </div>
+              <div class="detail-item">
+                <label>MEA:</label>
+                <span>{{ promo_data.mea or '100%' }}</span>
+              </div>
+              <div class="detail-item">
+                <label>Finance Type:</label>
+                <span>{{ promo_data.finance_type or 'LOAN' }}</span>
+              </div>
+              <div class="detail-item">
+                <label>Carrier Freedom:</label>
+                <span>{{ promo_data.carrier_freedom or 'No' }}</span>
+              </div>
+              <div class="detail-item">
+                <label>GOOTR:</label>
+                <span>{{ promo_data.gqtr or 'No' }}</span>
+              </div>
+              <div class="detail-item">
+                <label>Incremental Lift Total:</label>
+                <span></span>
+              </div>
+              <div class="detail-item">
+                <label>Total Offer Spend:</label>
+                <span>{{ promo_data.total_offer_spend or '120000' }}</span>
+              </div>
+            </div>
+            
+            <!-- Column 3 -->
+            <div class="details-column">
+              <div class="detail-item">
+                <label>Device Sales Type:</label>
+                <span>{{ promo_data.device_sales_type or 'S01' }}</span>
+              </div>
+              <div class="detail-item">
+                <label>Active Line Required:</label>
+                <span>{{ promo_data.active_line_required or 'Y' }}</span>
+              </div>
+              <div class="detail-item">
+                <label>Maintain Active Line:</label>
+                <span>{{ promo_data.maintain_active_line or 'N' }}</span>
+              </div>
+              <div class="detail-item">
+                <label>Maintain SOC:</label>
+                <span>{{ promo_data.maintain_soc or 'Y' }}</span>
+              </div>
+              <div class="detail-item">
+                <label>Product Type:</label>
+                <span>{{ promo_data.product_type or 'B' }}</span>
+              </div>
+              <div class="detail-item">
+                <label>Activation Type:</label>
+                <span>{{ promo_data.activation_type or 'All - New, AAL & Upgrades' }}</span>
+              </div>
+              <div class="detail-item">
+                <label>Limit Per Ban:</label>
+                <span>{{ promo_data.limit_per_ban or '' }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Row 2: Dates & Times and Segmentation -->
+      <div class="dates-times-section">
+        <div class="section-header">
+          <div class="section-title">
+            <i class="fas fa-calendar-alt"></i>
+            Dates & Times
+          </div>
+        </div>
+        <div class="section-content">
+          <div class="info-grid">
+            <div class="info-item">
+              <label>PROMO START DATE:</label>
+              <div class="value">{{ promo_data.promo_start_date or '7/17/2025' }}</div>
+            </div>
+            <div class="info-item">
+              <label>PROMO END DATE:</label>
+              <div class="value">{{ promo_data.promo_end_date or '1/14/2026' }}</div>
+            </div>
+            <div class="info-item">
+              <label>PROMO DURATION:</label>
+              <div class="value">{{ promo_data.promo_duration or '24' }}</div>
+            </div>
+            <div class="info-item">
+              <label>APPLICATION GRACE PERIOD:</label>
+              <div class="value">{{ promo_data.application_grace_period or 'NULL' }}</div>
+            </div>
+            <div class="info-item">
+              <label>TRADE-IN GRACE PERIOD:</label>
+              <div class="value">{{ promo_data.trade_in_grace_period or '' }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="segmentation-section">
+        <div class="section-header">
+          <div class="section-title">
+            <i class="fas fa-users"></i>
+            Segmentation
+          </div>
+        </div>
+        <div class="section-content">
+          <div class="info-grid">
+            <div class="info-item">
+              <label>SEGMENT NAME:</label>
+              <div class="value">{{ promo_data.segment_name or '(' }}</div>
+            </div>
+            <div class="info-item">
+              <label>SEGMENT LEVEL:</label>
+              <div class="value">{{ promo_data.segment_level or '(' }}</div>
+            </div>
+            <div class="info-item">
+              <label>SUB SEGMENT:</label>
+              <div class="value">{{ promo_data.sub_segment or '(' }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="devices-section">
+        <div class="section-header">
+          <div class="section-title">
+            <i class="fas fa-mobile-alt"></i>
+            Devices
+          </div>
+        </div>
+        <div class="section-content">
+          <div class="info-grid">
+            <div class="info-item">
+              <label>ELIGIBLE PURCHASE DEVICES:</label>
+              <div class="value">{{ promo_data.eligible_purchase_devices or '' }}</div>
+            </div>
+            <div class="info-item">
+              <label>ELIGIBLE TRADE-IN DEVICES:</label>
+              <div class="value">{{ promo_data.eligible_trade_in_devices or '' }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Row 3: Links, Notes, and Groupings -->
+      <div class="links-section">
+        <div class="section-header">
+          <div class="section-title">
+            <i class="fas fa-link"></i>
+            Links
+          </div>
+        </div>
+        <div class="section-content">
+          <div class="info-grid">
+            <div class="info-item">
+              <label>Trade-In Link:</label>
+              <div class="value">
+                {% if promo_data.tradein_link %}
+                  <a href="{{ promo_data.tradein_link }}" target="_blank" class="external-link">
+                    <i class="fas fa-external-link-alt"></i> Trade-In Portal
+                  </a>
+                {% else %}
+                  <span class="text-muted">No trade-in link</span>
+                {% endif %}
+              </div>
+            </div>
+            <div class="info-item">
+              <label>SKU Link:</label>
+              <div class="value">
+                {% if promo_data.sku_link %}
+                  <a href="{{ promo_data.sku_link }}" target="_blank" class="external-link">
+                    <i class="fas fa-external-link-alt"></i> View SKUs
+                  </a>
+                {% else %}
+                  <span class="text-muted">No SKU link</span>
+                {% endif %}
+              </div>
+            </div>
+            <div class="info-item">
+              <label>Legal Disclaimer:</label>
+              <div class="value">
+                {% if promo_data.legal_link %}
+                  <a href="{{ promo_data.legal_link }}" target="_blank" class="external-link">
+                    <i class="fas fa-external-link-alt"></i> View Disclaimer
+                  </a>
+                {% else %}
+                  <span class="text-muted">No disclaimer available</span>
+                {% endif %}
+              </div>
+            </div>
+            <div class="info-item">
+              <label>C2 Article:</label>
+              <div class="value">
+                {% if promo_data.c2_article_link %}
+                  <a href="{{ promo_data.c2_article_link }}" target="_blank" class="external-link">
+                    <i class="fas fa-external-link-alt"></i> View C2 Article
+                  </a>
+                {% else %}
+                  <span class="text-muted">No C2 article available</span>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="description-section">
+        <div class="section-header">
+          <div class="section-title">
+            <i class="fas fa-file-alt"></i>
+            Description
+          </div>
+        </div>
+        <div class="section-content">
+          <div class="description-content">
+            {% if promo_data.description %}
+              {% if promo_data.orbit_link %}
+                <a href="{{ promo_data.orbit_link }}" target="_blank" class="external-link">
+                  {{ promo_data.description }}
+                </a>
+              {% else %}
+                {{ promo_data.description }}
+              {% endif %}
+            {% else %}
+              <em>No description available</em>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <div class="notes-section">
+        <div class="section-header">
+          <div class="section-title">
+            <i class="fas fa-sticky-note"></i>
+            Notes
+          </div>
+        </div>
+        <div class="section-content">
+          <div class="notes-content">
+            {% if promo_data.promo_notes %}
+              <div style="white-space: pre-wrap;">{{ promo_data.promo_notes }}</div>
+            {% elif promo_data.spe_notes %}
+              <div style="white-space: pre-wrap;">{{ promo_data.spe_notes }}</div>
+            {% elif promo_data.notes %}
+              <div style="white-space: pre-wrap;">{{ promo_data.notes }}</div>
+            {% else %}
+              <em>No notes available</em>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <div class="groupings-section">
+        <div class="section-header">
+          <div class="section-title">
+            <i class="fas fa-layer-group"></i>
+            Groupings
+          </div>
+        </div>
+        <div class="section-content">
+          <div class="info-grid">
+            <div class="info-item">
+              <label>SOC GROUPING:</label>
+              <div class="value">{{ promo_data.soc_grouping or '' }}</div>
+            </div>
+            <div class="info-item">
+              <label>ACCOUNT TYPE:</label>
+              <div class="value">{{ promo_data.account_type or '' }}</div>
+            </div>
+            <div class="info-item">
+              <label>SALES APPLICATION:</label>
+              <div class="value">{{ promo_data.sales_application or '' }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% else %}
+    <div class="alert alert-info" style="background: #d1ecf1; border: 1px solid #bee5eb; padding: 1rem; border-radius: 8px; text-align: center;">
+      <i class="bi bi-info-circle" style="color: #0c5460;"></i> Enter a promo code above to view promotion details for review
+    </div>
+    {% endif %}
+  </div>
+
+<style>
+.reviewer-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+}
+
+.reviewer-row {
+  display: flex;
+  gap: 1.5rem;
+  width: 100%;
+  min-height: 0;
+  flex: 1;
+}
+
+.reviewer-section {
+  flex: 1;
+  min-width: 300px;
+  min-height: 0;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  border: 1px solid #e0e0e0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.reviewer-section .info-box {
+  border-bottom: none;
+  padding: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.reviewer-section .info-title {
+  background: var(--tmobile-magenta);
+  color: white;
+  font-weight: bold;
+  font-size: 1.1rem;
+  margin-bottom: 0;
+  padding: 0.75rem 1.5rem; /* Reduced from 1rem to 0.75rem */
+  border-bottom: none;
+}
+
+.reviewer-section .detail-grid {
+  padding: 1rem 1.5rem 1.5rem 1.5rem;
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+}
+
+/* Single column layout for groupings section */
+.groupings-grid {
+  grid-template-columns: 1fr !important;
+}
+
+.detail-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 0.4rem 0;
+  border-bottom: 1px solid #eee;
+  font-size: 0.9rem;
+}
+
+.detail-item:last-child {
+  border-bottom: none !important;
+}
+
+/* Remove any trailing borders from info boxes */
+.info-box:last-child {
+  border-bottom: none !important;
+}
+
+.info-box .detail-grid .detail-item:last-child {
+  border-bottom: none !important;
+}
+
+.detail-item label {
+  font-weight: 600;
+  color: #333;
+  margin-right: 1rem;
+  min-width: fit-content;
+}
+
+.detail-item span {
+  color: #666;
+  text-align: right;
+  word-break: break-word;
+}
+
+.detail-item a {
+  color: var(--tmobile-magenta);
+  text-decoration: none;
+}
+
+.detail-item a:hover {
+  text-decoration: underline;
+}
+
+.sku-link {
+  background: var(--tmobile-magenta);
+  color: white !important;
+  padding: 0.25rem 0.75rem;
+  border-radius: 4px;
+  text-decoration: none !important;
+  font-size: 0.9rem;
+}
+
+.sku-link:hover {
+  background: var(--tmobile-magenta-dark);
+}
+
+.notes-content {
+  min-height: 80px;
+  padding: 1rem 1.5rem 1.5rem 1.5rem;
+  background: #fff;
+  border-radius: 0;
+  border: none;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  white-space: pre-wrap;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.search-section .form-control {
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 0.5rem 1rem;
+}
+
+.btn {
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-weight: 600;
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+}
+
+.btn-primary {
+  background: var(--tmobile-magenta);
+  color: white;
+}
+
+.btn-primary:hover {
+  background: var(--tmobile-magenta-dark);
+}
+
+.btn-secondary {
+  background: #6c757d;
+  color: white;
+}
+
+.btn-secondary:hover {
+  background: #5a6268;
+}
+
+/* Removed responsive design - content maintains size, just scroll when screen is smaller */
+</style>
+
 <script>
-function refreshData() {
-  window.location.reload();
+function searchPromo() {
+  const promoCode = document.getElementById('promo-search').value.trim().toUpperCase();
+  if (promoCode) {
+    window.location.href = `/reviewers/${promoCode}`;
+  } else {
+    window.location.href = `/reviewers`;
+  }
+}
+
+function handleSearchKeyPress(event) {
+  if (event.key === 'Enter') {
+    searchPromo();
+  }
 }
 </script>
-
 {% endblock %}
