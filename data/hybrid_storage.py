@@ -275,7 +275,7 @@ class HybridPromoDataManager:
                     # Copy PAM-specific fields from promotions.json
                     pam_fields = ['promo_notes', 'spe_notes', 'notes', 'generated_sql', 'sql_generated_at', 
                                  'sql_generation_time', 'sql_length', 'uploaded_files', 'version_history',
-                                 'last_changes', 'created_at', 'updated_at']
+                                 'last_changes', 'created_at', 'updated_at', 'test_status', 'zlab_status']
                     
                     for field in pam_fields:
                         if field in promo_data:

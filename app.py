@@ -93,6 +93,286 @@ def spe():
         return render_template("spe.html", spe_data=[], active_tab='SPE')
 
 
+@app.route("/get_promo_codes", methods=["GET", "POST"])
+def get_promo_codes():
+    """Get promo codes page for both RDC and SPE"""
+    try:
+        if request.method == "POST":
+            # Get form data
+            promo_type = request.form.get('promoType', 'rdc')
+            promo_prefix = request.form.get('promoPrefix', '').strip().upper()
+            promo_year = request.form.get('promoYear', '')
+            bill_facing_name = request.form.get('billFacingName', '').strip()
+            promo_owner = request.form.get('promoOwner', '').strip()
+            start_date = request.form.get('startDate', '')
+            end_date = request.form.get('endDate', '')
+            description = request.form.get('description', '').strip()
+            
+            # Generate promo code
+            generated_code = f"{promo_prefix}{promo_year}"
+            
+            # Create promo data structure
+            promo_data = {
+                'code': generated_code,
+                'bill_facing_name': bill_facing_name,
+                'promo_owner': promo_owner,
+                'promo_start_date': start_date,
+                'promo_end_date': end_date,
+                'description': description,
+                'status': 'Draft',
+                'created_date': datetime.now().strftime('%Y-%m-%d'),
+                'created_by': 'System'
+            }
+            
+            # Add SPE specific fields if SPE type
+            if promo_type == 'spe':
+                promo_data['spe_category'] = request.form.get('speCategory', '')
+                promo_data['spe_type'] = request.form.get('speType', '')
+                
+                # Save as SPE promo using JSON manager
+                json_manager = get_json_manager()
+                json_manager.save_spe_promo(generated_code, promo_data, user_name="System")
+                flash(f'SPE promo code {generated_code} created successfully!', 'success')
+                return redirect(url_for('spe'))
+            else:
+                # Save as regular promo
+                data_manager.save_promo(generated_code, promo_data, user_name="System")
+                flash(f'RDC promo code {generated_code} created successfully!', 'success')
+                return redirect(url_for('promotions'))
+        
+        # GET request - show the form
+        current_year = datetime.now().year
+        return render_template("get_promo_codes.html", current_year=current_year)
+        
+    except Exception as e:
+        flash(f"Error creating promo code: {str(e)}", "error")
+        current_year = datetime.now().year
+        return render_template("get_promo_codes.html", current_year=current_year)
+
+
+@app.route("/api/get_promo_details/<promo_code>", methods=["GET"])
+def get_promo_details(promo_code):
+    """Get detailed promo information by promo code"""
+    try:
+        # Search in promotions (RDC)
+        promotions_data = data_manager.get_all_promos()
+        if promo_code in promotions_data:
+            promo_data = promotions_data[promo_code]
+            return jsonify({
+                'found': True,
+                'type': 'RDC',
+                'promo_code': promo_code,
+                'owner': promo_data.get('owner', ''),
+                'description': promo_data.get('description', ''),
+                'bill_facing_name': promo_data.get('bill_facing_name', ''),
+                'orbit_id': promo_data.get('orbit_id', ''),
+                'bptcr': promo_data.get('bptcr', ''),
+                'initiative_name': promo_data.get('initiative_name', ''),
+                'jira_ticket': promo_data.get('jira_ticket', ''),
+                'promo_start_date': promo_data.get('promo_start_date', ''),
+                'promo_end_date': promo_data.get('promo_end_date', ''),
+                'account_type': promo_data.get('account_type', ''),
+                'activation_type': promo_data.get('activation_type', ''),
+                'active_line_required': promo_data.get('active_line_required', ''),
+                'dcd_web_cart': promo_data.get('dcd_web_cart', ''),
+                'device_sales_type': promo_data.get('device_sales_type', ''),
+                'finance_type': promo_data.get('finance_type', ''),
+                'fpd_display': promo_data.get('fpd_display', ''),
+                'maintain_active_line': promo_data.get('maintain_active_line', ''),
+                'maintain_soc': promo_data.get('maintain_soc', ''),
+                'market_group': promo_data.get('market_group', ''),
+                'msip_drogs': promo_data.get('msip_drogs', ''),
+                'product_type': promo_data.get('product_type', ''),
+                'promo_duration': promo_data.get('promo_duration', ''),
+                'sales_application': promo_data.get('sales_application', ''),
+                'soc_grouping': promo_data.get('soc_grouping', ''),
+                'store_group': promo_data.get('store_group', ''),
+                'trade_in_grace': promo_data.get('trade_in_grace', ''),
+                'trade_in': promo_data.get('bogo', ''),
+                'broken_trade': promo_data.get('Broken_Trade', ''),
+                'on_menu': promo_data.get('on_menu', ''),
+                'mpss_lookback': promo_data.get('mpss_lookback', ''),
+                'version_history': promo_data.get('version_history', []),
+                'promo_notes': promo_data.get('promo_notes', ''),
+                'status': 'Launched' if promo_data.get('promo_end_date') else 'In Progress'
+            })
+        
+        # Search in SPE promotions
+        spe_data = data_manager.get_all_spe_promos()
+        if promo_code in spe_data:
+            spe_promo = spe_data[promo_code]
+            return jsonify({
+                'found': True,
+                'type': 'SPE',
+                'promo_code': promo_code,
+                'owner': spe_promo.get('owner', ''),
+                'promo_start_date': spe_promo.get('promo_start_date', ''),
+                'promo_end_date': spe_promo.get('promo_end_date', ''),
+                'account_type': spe_promo.get('account_type', ''),
+                'activation_type': spe_promo.get('activation_type', ''),
+                'active_line_required': spe_promo.get('active_line_required', ''),
+                'dcd_web_cart': spe_promo.get('dcd_web_cart', ''),
+                'device_sales_type': spe_promo.get('device_sales_type', ''),
+                'finance_type': spe_promo.get('finance_type', ''),
+                'fpd_display': spe_promo.get('fpd_display', ''),
+                'maintain_active_line': spe_promo.get('maintain_line_count_days', ''),
+                'maintain_soc': spe_promo.get('maintain_soc', ''),
+                'market_group': spe_promo.get('market_group', ''),
+                'msip_drogs': spe_promo.get('msip_drogs', ''),
+                'product_type': spe_promo.get('product_type', ''),
+                'promo_duration': spe_promo.get('promo_duration', ''),
+                'sales_application': spe_promo.get('sales_application', ''),
+                'soc_grouping': spe_promo.get('soc_grouping', ''),
+                'store_group': spe_promo.get('store_group', ''),
+                'trade_in_grace': spe_promo.get('channel_grace_period', ''),
+                'trade_in': spe_promo.get('trade_in', ''),
+                'broken_trade': spe_promo.get('broken_trade', ''),
+                'mpss_lookback': spe_promo.get('mpss_lookback', '')
+            })
+        
+        # Not found
+        return jsonify({
+            'found': False,
+            'message': f'Promo code {promo_code} not found'
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'found': False,
+            'error': str(e)
+        })
+
+
+@app.route("/api/search_orbit/<orbit_id>", methods=["GET"])
+def search_orbit(orbit_id):
+    """Search for orbit data by orbit ID"""
+    try:
+        # Search in promotions (RDC)
+        promotions_data = data_manager.get_all_promos()
+        for promo_code, promo_data in promotions_data.items():
+            if promo_data.get('orbit_id') == orbit_id:
+                return jsonify({
+                    'found': True,
+                    'type': 'RDC',
+                    'promo_code': promo_code,
+                    'initiative_name': promo_data.get('bill_facing_name', promo_data.get('description', 'Unknown')),
+                    'description': promo_data.get('description', ''),
+                    'owner': promo_data.get('owner', ''),
+                    'start_date': promo_data.get('promo_start_date', ''),
+                    'end_date': promo_data.get('promo_end_date', '')
+                })
+        
+        # Search in SPE promotions
+        spe_data = data_manager.get_all_spe_promos()
+        for spe_code, spe_promo in spe_data.items():
+            if spe_promo.get('orbit_id') == orbit_id:
+                return jsonify({
+                    'found': True,
+                    'type': 'SPE',
+                    'promo_code': spe_code,
+                    'initiative_name': spe_promo.get('bill_facing_name', spe_promo.get('description', 'Unknown')),
+                    'description': spe_promo.get('description', ''),
+                    'owner': spe_promo.get('owner', ''),
+                    'start_date': spe_promo.get('promo_start_date', ''),
+                    'end_date': spe_promo.get('promo_end_date', '')
+                })
+        
+        # Not found
+        return jsonify({
+            'found': False,
+            'message': f'Orbit ID {orbit_id} not found in promotions data'
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'found': False,
+            'error': str(e)
+        })
+
+
+@app.route("/api/update_testing_status", methods=["POST"])
+def update_testing_status():
+    """Update testing status for a promotion"""
+    try:
+        data = request.get_json()
+        promo_code = data.get('promo_code')
+        test_type = data.get('test_type')  # 'functional' or 'zlab'
+        status = data.get('status')  # 'Complete' or 'Incomplete'
+        
+        print(f"API called with: promo_code={promo_code}, test_type={test_type}, status={status}")
+        
+        if not all([promo_code, test_type, status]):
+            return jsonify({
+                'success': False,
+                'error': 'Missing required parameters'
+            }), 400
+        
+        # Get promotion data
+        promotions_data = data_manager.get_all_promos()
+        
+        if promo_code not in promotions_data:
+            return jsonify({
+                'success': False,
+                'error': f'Promotion {promo_code} not found'
+            }), 404
+        
+        # Update the promotion data
+        promo_data = promotions_data[promo_code].copy()
+        
+        print(f"Original promo_data keys: {list(promo_data.keys())}")
+        
+        # Map test types to field names
+        if test_type == 'functional':
+            promo_data['test_status'] = status
+            print(f"Set test_status = {status}")
+        elif test_type == 'zlab':
+            promo_data['zlab_status'] = status
+            print(f"Set zlab_status = {status}")
+        else:
+            return jsonify({
+                'success': False,
+                'error': f'Unknown test type: {test_type}'
+            }), 400
+        
+        print(f"Updated promo_data keys: {list(promo_data.keys())}")
+        print(f"test_status in promo_data: {'test_status' in promo_data}")
+        print(f"zlab_status in promo_data: {'zlab_status' in promo_data}")
+        
+        # Save the updated promotion data
+        print(f"Calling data_manager.save_promo for {promo_code}")
+        data_manager.save_promo(promo_code, promo_data, user_name="System")
+        print(f"Save completed successfully")
+        
+        # Verify the save worked by reading it back
+        updated_data = data_manager.get_promo(promo_code)
+        field_name = 'test_status' if test_type == 'functional' else 'zlab_status'
+        saved_value = updated_data.get(field_name)
+        print(f"Verification - field saved: {field_name} = {saved_value}")
+        
+        if saved_value != status:
+            return jsonify({
+                'success': False,
+                'error': f'Save verification failed. Expected {status}, got {saved_value}'
+            }), 500
+        
+        return jsonify({
+            'success': True,
+            'message': f'{test_type.title()} testing status updated to {status}',
+            'updated_field': field_name,
+            'new_value': status,
+            'verification': saved_value
+        })
+        
+    except Exception as e:
+        print(f"API Error: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
 @app.route("/edit_spe/<promo_code>", methods=["GET", "POST"])
 def edit_spe(promo_code):
     # Get the active tab from query parameter or form, default to 'Details'
@@ -655,6 +935,45 @@ def rebates():
 @app.route("/test")
 def test():
     return render_template("test.html")
+
+
+@app.route("/updates")
+def updates():
+    """Updates page for promotion refresh functionality"""
+    # Get search parameter from query string
+    search = request.args.get('search', '', type=str)
+    
+    # Load promotions data from data manager
+    all_promos = data_manager.get_all_promos()
+    
+    # Filter promotions based on search if provided
+    if search:
+        filtered_promos = {}
+        search_lower = search.lower()
+        for code, promo in all_promos.items():
+            if (search_lower in code.lower() or 
+                search_lower in promo.get('description', '').lower() or
+                search_lower in promo.get('bill_facing_name', '').lower() or
+                search_lower in promo.get('owner', '').lower()):
+                filtered_promos[code] = promo
+        all_promos = filtered_promos
+    
+    # Get the first promo for default display
+    default_promo = None
+    if all_promos:
+        first_code = next(iter(all_promos))
+        default_promo = all_promos[first_code]
+        default_promo['code'] = first_code
+        
+        # Debug: print what we're passing to template
+        print(f"Passing to template - Promo: {first_code}")
+        print(f"test_status: {default_promo.get('test_status')}")
+        print(f"zlab_status: {default_promo.get('zlab_status')}")
+    
+    return render_template("updates.html", 
+                         search_query=search,
+                         default_promo=default_promo,
+                         total_results=len(all_promos))
 
 
 @app.route("/approvers")

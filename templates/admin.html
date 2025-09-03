@@ -624,6 +624,30 @@
       </div>
     </div>
 
+    <!-- Promo Editing -->
+    <div class="admin-card">
+      <div class="card-header">
+        <div class="card-icon">
+          <i class="fas fa-edit"></i>
+        </div>
+        <div class="card-title">Promo Editing</div>
+      </div>
+      <div class="card-content">
+        Create, edit, and manage promotions. Access promotion forms, link management, and SQL generation tools.
+      </div>
+      <div class="card-actions">
+        <a href="{{ url_for('promotions') }}" class="btn-admin">
+          <i class="fas fa-tags"></i> View Promotions
+        </a>
+        <a href="{{ url_for('links_main') }}" class="btn-admin secondary">
+          <i class="fas fa-link"></i> Manage Links
+        </a>
+        <a href="{{ url_for('version_history') }}" class="btn-admin secondary">
+          <i class="fas fa-history"></i> Version History
+        </a>
+      </div>
+    </div>
+
     <!-- Performance Monitoring -->
     <div class="admin-card">
       <div class="card-header">
