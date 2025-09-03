@@ -191,6 +191,7 @@ body {
   text-align: center;
   padding: 1em 0.5em;
   font-size: 1.12em;
+  white-space: nowrap; /* Keep header labels on a single line */
 }
 .promo-table tbody tr {
   border-bottom: 1px solid #dee2e6;
@@ -344,4 +345,17 @@ body {
     padding: 0.4rem 0.6rem;
     font-size: 0.8rem;
   }
+}
+
+/* Header right actions (user label) */
+.promotions-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.promotions-user-label {
+  color: #fff;
+  font-size: 0.95rem;
+  font-weight: 500;
 }

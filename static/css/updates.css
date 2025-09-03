@@ -7,6 +7,25 @@ body.updates-page {
     overflow-y: auto;
 }
 
+/* Header right actions */
+.updates-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+.updates-user-label {
+    color: rgba(255,255,255,0.9);
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+/* Reusable check icon */
+.updates-check-icon {
+    color: #28a745;
+    margin-left: 8px;
+    font-size: 1rem;
+}
+
 /* Universal header styling for updates */
 .global-header-updates {
     display: flex;

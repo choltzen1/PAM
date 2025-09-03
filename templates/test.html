@@ -12,11 +12,11 @@
 {% endblock %}
 
 {% block header_right %}
-<div style="display: flex; align-items: center; gap: 1rem;">
-  <button class="btn btn-primary" onclick="refreshData()" style="background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3); color: white; padding: 0.5rem 1rem; border-radius: 4px; font-size: 0.9rem;">
-    <i class="fas fa-sync-alt"></i> Refresh Data
+<div class="test-header-actions">
+  <button class="btn btn-primary test-refresh-btn" onclick="refreshData()">
+    <i class="fas fa-sync-alt icon-inline"></i> Refresh Data
   </button>
-  <span style="color: rgba(255,255,255,0.9); font-size: 0.9rem;">{{ user_name or 'User: Coming Soon' }}</span>
+  <span class="test-user-label">{{ user_name or 'User: Coming Soon' }}</span>
 </div>
 {% endblock %}
 
