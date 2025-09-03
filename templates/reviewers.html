@@ -13,58 +13,47 @@
 {% endblock %}
 
 {% block header_right %}
-<div style="display: flex; align-items: center; gap: 1rem;">
-  <span style="color: rgba(255,255,255,0.9); font-size: 0.9rem;">{{ user_name or 'User: Coming Soon' }}</span>
+<div class="reviewers-header-actions">
+  <span class="reviewers-user-label">{{ user_name or 'User: Coming Soon' }}</span>
 </div>
 {% endblock %}
 
 {% block content %}
-<style>
-body {
-  overflow: hidden;
-}
-</style>
 
-  <div class="container wide-container" style="height: calc(100vh - 160px); overflow-y: auto; overflow-x: hidden; padding: 1.5rem 1vw; box-sizing: border-box;">
+  <div class="container wide-container reviewers-scroll-container">
     <!-- Search controls -->
-    <div class="search-section" style="margin-bottom: 1.5rem; width: 100%; display: flex; justify-content: flex-start; flex-shrink: 0;">
-      <div style="display: flex; gap: 1rem; align-items: center; background: #fff; padding: 1.25rem 2rem; border-radius: 10px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); max-width: fit-content; min-height: 60px;">
-        <label for="promo-search" style="font-weight: 600; color: var(--tmobile-magenta); margin: 0; line-height: 1; display: flex; align-items: center;">Search Promo Code</label>
+    <div class="search-section reviewers-search-section">
+      <div class="reviewers-search-card">
+        <label for="promo-search" class="reviewers-search-label">Search Promo Code</label>
         <input
           type="text"
           id="promo-search"
           name="promo_code"
           class="form-control"
-          style="width: 300px; height: 38px; margin: 0; box-sizing: border-box;"
+          class="reviewers-search-input"
           placeholder="Enter promo code"
           value="{{ promo_code or '' }}"
           onkeypress="handleSearchKeyPress(event)"
         />
         <button 
-          class="btn btn-primary" 
-          onclick="searchPromo()" 
-          style="height: 38px; padding: 0 1.5rem; display: flex; align-items: center; justify-content: center; margin: 0; background: var(--tmobile-magenta); border: 1px solid var(--tmobile-magenta); color: white; border-radius: 5px; font-weight: 500; cursor: pointer; transition: all 0.2s ease;"
-          onmouseover="this.style.background='#c41e56'"
-          onmouseout="this.style.background='var(--tmobile-magenta)'"
+          class="btn btn-primary reviewers-search-btn" 
+          onclick="searchPromo()"
         >
           Search
         </button>
         <a 
           href="{{ url_for('promotions') }}" 
-          class="btn btn-secondary" 
-          style="height: 38px; padding: 0 1.5rem; display: flex; align-items: center; justify-content: center; margin: 0; background: #6c757d; border: 1px solid #6c757d; color: white; border-radius: 5px; font-weight: 500; cursor: pointer; transition: all 0.2s ease; text-decoration: none;"
-          onmouseover="this.style.background='#5a6268'"
-          onmouseout="this.style.background='#6c757d'"
+          class="btn btn-secondary reviewers-back-btn"
         >
-          <i class="fas fa-arrow-left" style="margin-right: 0.5rem;"></i>
+          <i class="fas fa-arrow-left icon-inline"></i>
           Back to Promotions
         </a>
       </div>
     </div>
 
     {% if error_message %}
-    <div class="alert alert-warning" style="background: #fff3cd; border: 1px solid #ffeaa7; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; flex-shrink: 0;">
-      <i class="bi bi-exclamation-triangle" style="color: #856404;"></i> {{ error_message }}
+    <div class="alert alert-warning reviewers-warning-alert">
+      <i class="bi bi-exclamation-triangle reviewers-warning-icon"></i> {{ error_message }}
     </div>
     {% endif %}
 
@@ -401,8 +390,8 @@ body {
       </div>
     </div>
     {% else %}
-    <div class="alert alert-info" style="background: #d1ecf1; border: 1px solid #bee5eb; padding: 1rem; border-radius: 8px; text-align: center;">
-      <i class="bi bi-info-circle" style="color: #0c5460;"></i> Enter a promo code above to view promotion details for review
+    <div class="alert alert-info reviewers-info-alert">
+      <i class="bi bi-info-circle reviewers-info-icon"></i> Enter a promo code above to view promotion details for review
     </div>
     {% endif %}
   </div>

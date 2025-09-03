@@ -17,6 +17,12 @@
 </div>
 {% endblock %}
 
+{% block header_right %}
+<div class="version-history-header-actions">
+  <span class="version-history-user-label">{{ user_name or 'User: Coming Soon' }}</span>
+</div>
+{% endblock %}
+
 {% block content %}
 <div class="version-history-page">
   <!-- Controls row: filter, search, actions -->
@@ -94,7 +100,7 @@
             <td>{{ promo.end_date }}</td>
             <td class="promo-owner">{{ promo.promo_owner }}</td>
           </tr>
-          <tr class="change-history-row" id="history-{{ promo.promo_code }}" style="display: none;">
+          <tr class="change-history-row hidden-row" id="history-{{ promo.promo_code }}">
             <td colspan="8">
               <div class="change-history-container">
                 <h4><i class="fas fa-history"></i> Change History for {{ promo.promo_code }}</h4>
