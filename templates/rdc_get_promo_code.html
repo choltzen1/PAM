@@ -1,0 +1,250 @@
+{% extends "base.html" %}
+{% block title %}Get Promo Code - PAM{% endblock %}
+
+{% block head %}
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet" />
+  <style>
+    .get-promo-page {
+      display: flex;
+      flex-direction: column;
+      height: calc(100vh - 140px);
+      background: #f8f9fa;
+    }
+    
+    .content-container {
+      flex: 1;
+      padding: 2rem;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+    }
+    
+    .promo-code-form {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      padding: 3rem;
+      max-width: 600px;
+      width: 100%;
+    }
+    
+    .form-header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+    
+    .form-header h2 {
+      color: #E20074;
+      margin-bottom: 0.5rem;
+      font-weight: 600;
+    }
+    
+    .form-header p {
+      color: #6c757d;
+      margin: 0;
+    }
+    
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+    
+    .form-label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      color: #495057;
+    }
+    
+    .form-control {
+      width: 100%;
+      padding: 0.75rem;
+      border: 2px solid #dee2e6;
+      border-radius: 8px;
+      font-size: 1rem;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    
+    .form-control:focus {
+      outline: none;
+      border-color: #E20074;
+      box-shadow: 0 0 0 0.2rem rgba(226, 0, 116, 0.25);
+    }
+    
+    .btn-group {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      margin-top: 2rem;
+    }
+    
+    .btn {
+      padding: 0.75rem 2rem;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    
+    .btn-primary {
+      background: #E20074;
+      color: white;
+    }
+    
+    .btn-primary:hover {
+      background: #c1005f;
+      color: white;
+      text-decoration: none;
+    }
+    
+    .btn-secondary {
+      background: #6c757d;
+      color: white;
+    }
+    
+    .btn-secondary:hover {
+      background: #5a6268;
+      color: white;
+      text-decoration: none;
+    }
+    
+    .alert {
+      padding: 1rem;
+      border-radius: 8px;
+      margin-bottom: 1.5rem;
+    }
+    
+    .alert-success {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+    
+    .alert-danger {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+    
+    .result-section {
+      margin-top: 2rem;
+      padding: 1.5rem;
+      background: #f8f9fa;
+      border-radius: 8px;
+      border-left: 4px solid #E20074;
+    }
+    
+    .generated-code {
+      font-family: 'Courier New', monospace;
+      font-size: 1.25rem;
+      font-weight: bold;
+      color: #E20074;
+      padding: 1rem;
+      background: white;
+      border-radius: 6px;
+      text-align: center;
+      margin: 1rem 0;
+    }
+  </style>
+{% endblock %}
+
+{% block header_left %}
+<div class="global-header-promotions">
+  <i class="fas fa-code-branch header-icon"></i>
+  <div class="header-text">
+    <h2>Get Promo Code</h2>
+    <p>Generate a new promotion code</p>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="get-promo-page">
+  <div class="content-container">
+    <div class="promo-code-form">
+      <div class="form-header">
+        <h2><i class="fas fa-magic"></i> Generate Promo Code</h2>
+        <p>Enter the details to generate a new promotion code</p>
+      </div>
+      
+      {% if error_message %}
+      <div class="alert alert-danger">
+        <i class="fas fa-exclamation-triangle"></i> {{ error_message }}
+      </div>
+      {% endif %}
+      
+      {% if success_message %}
+      <div class="alert alert-success">
+        <i class="fas fa-check-circle"></i> {{ success_message }}
+      </div>
+      {% endif %}
+      
+      <form method="post">
+        <div class="form-group">
+          <label for="promotion_name" class="form-label">Promotion Name:</label>
+          <input type="text" 
+                 class="form-control" 
+                 id="promotion_name" 
+                 name="promotion_name" 
+                 placeholder="Enter promotion name"
+                 value="{{ request.form.promotion_name or '' }}"
+                 required>
+        </div>
+        
+        <div class="form-group">
+          <label for="promotion_type" class="form-label">Promotion Type:</label>
+          <select class="form-control" id="promotion_type" name="promotion_type" required>
+            <option value="">Select promotion type</option>
+            <option value="DEVICE" {{ 'selected' if request.form.promotion_type == 'DEVICE' else '' }}>Device</option>
+            <option value="SERVICE" {{ 'selected' if request.form.promotion_type == 'SERVICE' else '' }}>Service</option>
+            <option value="ACCESSORY" {{ 'selected' if request.form.promotion_type == 'ACCESSORY' else '' }}>Accessory</option>
+            <option value="BUNDLE" {{ 'selected' if request.form.promotion_type == 'BUNDLE' else '' }}>Bundle</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label for="start_date" class="form-label">Start Date:</label>
+          <input type="date" 
+                 class="form-control" 
+                 id="start_date" 
+                 name="start_date" 
+                 value="{{ request.form.start_date or '' }}"
+                 required>
+        </div>
+        
+        <div class="form-group">
+          <label for="end_date" class="form-label">End Date:</label>
+          <input type="date" 
+                 class="form-control" 
+                 id="end_date" 
+                 name="end_date" 
+                 value="{{ request.form.end_date or '' }}"
+                 required>
+        </div>
+        
+        {% if generated_code %}
+        <div class="result-section">
+          <h4><i class="fas fa-star"></i> Generated Promo Code:</h4>
+          <div class="generated-code">{{ generated_code }}</div>
+          <p class="text-muted">Your new promotion code has been generated successfully!</p>
+        </div>
+        {% endif %}
+        
+        <div class="btn-group">
+          <button type="submit" class="btn btn-primary">
+            <i class="fas fa-magic"></i> Generate Code
+          </button>
+          <a href="{{ url_for('promotions') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Promotions
+          </a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,363 @@
+/* Layout allowing natural scrolling */
+.layout-container {
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100vh - 140px);
+  background: #f8f9fa;
+}
+
+/* Main content area */
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Controls section - styled like version_history.css */
+.version-controls {
+  display: flex;
+  align-items: center;
+  padding: 1rem 2rem;
+  background: white;
+  border-bottom: 1px solid #dee2e6;
+  flex-shrink: 0;
+  min-height: 80px;
+  position: relative;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.left-side-controls {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  width: auto;
+}
+
+.search-section {
+  display: flex;
+  align-items: center;
+}
+
+.search-section label {
+  font-size: 0.8rem;
+  color: #6c757d;
+  font-weight: 500;
+  margin-bottom: 0.25rem;
+}
+
+.version-controls .search-input {
+  padding: 0.5rem !important;
+  border: 1px solid #ced4da !important;
+  border-radius: 4px !important;
+  background: white !important;
+  font-size: 0.9rem !important;
+  height: 38px !important;
+  min-width: 150px !important;
+  box-sizing: border-box !important;
+  display: flex !important;
+  align-items: center !important;
+  line-height: 1 !important;
+  vertical-align: middle !important;
+}
+
+.promo-info {
+  display: flex;
+  align-items: center;
+  height: 38px;
+  box-sizing: border-box;
+}
+
+.version-controls .promo-title {
+  font-size: 1rem !important;
+  font-weight: 600 !important;
+  color: #495057 !important;
+  height: 38px !important;
+  line-height: 38px !important;
+  display: flex !important;
+  align-items: center !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.version-controls .apple-dropdown {
+  padding: 0.5rem !important;
+  border: none !important;
+  border-radius: 4px !important;
+  background: #E20074 !important;
+  color: white !important;
+  font-size: 0.9rem !important;
+  height: 38px !important;
+  box-sizing: border-box !important;
+  display: flex !important;
+  align-items: center !important;
+  line-height: 1 !important;
+  vertical-align: middle !important;
+  cursor: pointer !important;
+}
+
+.version-controls .btn {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.5rem !important;
+  padding: 0.5rem 1rem !important;
+  background: #E20074 !important;
+  color: white !important;
+  border: none !important;
+  border-radius: 4px !important;
+  font-size: 0.9rem !important;
+  cursor: pointer !important;
+  text-decoration: none !important;
+  transition: background-color 0.2s !important;
+  height: 38px !important;
+  box-sizing: border-box !important;
+  line-height: 1 !important;
+  vertical-align: middle !important;
+}
+
+.btn:hover {
+  background: #c1006a;
+  color: white;
+  text-decoration: none;
+}
+
+.search-section {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  padding: 0 15px;
+  font-weight: bold;
+}
+
+.search-input-section {
+  flex: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.search-number {
+  background: white;
+  border: none;
+  padding: 8px 15px;
+  font-size: 14px;
+  font-weight: bold;
+  color: #333;
+  text-align: center;
+  width: 100px;
+}
+
+.orbit-section {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 15px;
+}
+
+.orbit-label {
+  font-weight: bold;
+}
+
+.search-btn {
+  background: white;
+  color: #E20074;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+/* Header row */
+.header-row {
+  display: flex;
+  background: #E20074;
+  color: white;
+  height: 35px;
+  border-top: 1px solid rgba(255,255,255,0.3);
+}
+
+.orbit-header, .description-header {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 16px;
+}
+
+.description-header {
+  border-left: 1px solid rgba(255,255,255,0.3);
+}
+
+/* Main content row */
+.content-row {
+  display: flex;
+  background: #f5f5f5;
+  min-height: 150px;
+}
+
+.left-content {
+  flex: 1;
+  padding: 15px;
+  border-right: 1px solid #ddd;
+}
+
+.controls-section {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+}
+
+.get-promo-btn {
+  background: #E20074;
+  color: white;
+  border: none;
+  padding: 8px 20px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+/* Description section */
+.description-section {
+  padding: 1rem 2rem;
+  background: #f8f9fa;
+}
+
+.right-content {
+  background: #e8e8e8;
+  padding: 1rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  border: 1px solid #dee2e6;
+}
+
+.description-text {
+  font-size: 13px;
+  line-height: 1.4;
+  color: #333;
+}
+
+/* Table section with card styling - now underneath description */
+.table-section {
+  display: flex;
+  gap: 1rem;
+  padding: 0 2rem 1rem 2rem;
+}
+
+.pdt-section {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  border: 1px solid #dee2e6;
+  overflow: hidden;
+  min-height: 400px;
+}
+
+.pdt-header {
+  background: #E20074;
+  color: white;
+  text-align: center;
+  padding: 1rem;
+  font-weight: bold;
+  font-size: 16px;
+  margin: 0;
+}
+
+.table-container {
+  flex: 1;
+  overflow-y: auto;
+  background: white;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  background: white;
+}
+
+.data-table thead th {
+  background: #E20074;
+  color: white;
+  padding: 8px 6px;
+  text-align: left;
+  font-weight: 600;
+  font-size: 11px;
+  border: none;
+  position: sticky;
+  top: 0;
+}
+
+.data-table tbody td {
+  padding: 6px;
+  border-bottom: 1px solid #eee;
+  font-size: 11px;
+  vertical-align: top;
+}
+
+.data-table tbody tr {
+  cursor: pointer;
+}
+
+.data-table tbody tr:hover {
+  background-color: #f8f9fa;
+}
+
+.data-table tbody tr.selected {
+  background-color: #e3f2fd;
+}
+
+/* Details section with card styling - matches PDT width */
+.details-section {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  border: 1px solid #dee2e6;
+  overflow: hidden;
+  min-height: 400px;
+}
+
+.details-header {
+  background: #E20074;
+  color: white;
+  text-align: center;
+  padding: 1rem;
+  font-weight: bold;
+  font-size: 16px;
+  margin: 0;
+}
+
+.details-content {
+  flex: 1;
+  padding: 1rem;
+  overflow-y: auto;
+  background: white;
+}
+
+.detail-line {
+  margin-bottom: 0.75rem;
+  font-size: 12px;
+  color: #495057;
+  line-height: 1.4;
+}
+
+.detail-line strong {
+  color: #212529;
+  font-weight: 600;
+}

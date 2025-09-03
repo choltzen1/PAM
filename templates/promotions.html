@@ -47,7 +47,7 @@
     </div>
 
     <div class="action-buttons">
-      <button class="btn"><i class="fas fa-wrench"></i> Get Promo Code</button>
+      <a href="{{ url_for('get_promo_codes') }}" class="btn"><i class="fas fa-wrench"></i> Get Promo Code</a>
     </div>
   </div>
 
@@ -89,7 +89,7 @@
             <a href="{{ url_for('promo.edit_promo', promo_code=promo.code) }}" class="icon-button" title="Edit"><i class="fas fa-edit"></i></a>
             <a href="{{ url_for('reviewers', promo_code=promo.code) }}" class="icon-button" title="Reviewers"><i class="fas fa-users"></i></a>
             <a href="{{ url_for('approvers', promo_code=promo.code) }}" class="icon-button" title="Approvers"><i class="fas fa-file-signature"></i></a>
-            <button class="icon-button" title="Refresh"><i class="fas fa-sync-alt"></i></button>
+            <a href="{{ url_for('updates') }}?search={{ promo.code }}" class="icon-button" title="Updates"><i class="fas fa-sync-alt"></i></a>
             <a href="{{ url_for('links', promo_code=promo.code) }}" class="icon-button" title="Links"><i class="fas fa-link"></i></a>
           </td>
         </tr>
