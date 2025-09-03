@@ -18,6 +18,12 @@
 </div>
 {% endblock %}
 
+{% block header_right %}
+<div class="updates-header-actions">
+  <span class="updates-user-label">{{ user_name or 'User: Coming Soon' }}</span>
+</div>
+{% endblock %}
+
 {% block content %}
 <div class="updates-page">
   <!-- Control group with search bar and promo details -->
@@ -74,7 +80,7 @@
         <div class="section-header">
           Functional Testing
           {% if default_promo and default_promo.test_status and default_promo.test_status.lower() == 'complete' %}
-            <i class="bi bi-check-circle-fill" style="color: #28a745; margin-left: 8px;"></i>
+            <i class="bi bi-check-circle-fill updates-check-icon"></i>
           {% endif %}
         </div>
         <div class="button-group" id="functionalTestGroup">
@@ -88,7 +94,7 @@
         <div class="section-header">
           ZLab Validation
           {% if default_promo and default_promo.zlab_status and default_promo.zlab_status.lower() == 'complete' %}
-            <i class="bi bi-check-circle-fill" style="color: #28a745; margin-left: 8px;"></i>
+            <i class="bi bi-check-circle-fill updates-check-icon"></i>
           {% endif %}
         </div>
         <div class="button-group" id="zlabValidationGroup">

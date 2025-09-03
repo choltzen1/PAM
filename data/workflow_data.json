@@ -4,12 +4,11 @@
     "generated_sql": "",
     "uploaded_files": {},
     "version_history": [
-      "08/28/2025 10:11 AM - Cade Holtzen - Created promo.",
-      "08/28/2025 01:04 PM - Date Mismatch Tool - Updated end date from 2025-08-28 to 8/6/2025 (synced from ORBIT)"
+      "09/03/2025 03:45 PM - Cade Holtzen - Created promo."
     ],
-    "last_changes": "Last save: 08/28/2025 12:44 PM - Cade Holtzen - Changed: Promo Start Date (cleared), Promo End Date (\u00e2\u2020\u2019 2025-08-28), Comm End Date (cleared), Delay Time (cleared)",
-    "created_at": "2025-08-28T10:11:58.676977",
-    "updated_at": "2025-08-28T13:04:32.395615",
+    "last_changes": null,
+    "created_at": "2025-09-03T15:45:29.182477",
+    "updated_at": "2025-09-03T15:45:29.182462",
     "sku_link": "",
     "tradein_link": "",
     "sql_file": {},
@@ -506,14 +505,22 @@
   },
   "R223": {
     "promo_notes": "DVC_STS_GRP_ID = 'DS1'",
-    "generated_sql": "",
-    "uploaded_files": {},
+    "generated_sql": "-- User Story No. \t\t\t= CPO-NULL\n-- Requested By \t\t\t= Cade Holtzen\n-- Request Date(DD/MM/YYYY) = DAY BEFORE LAUNCH DATE\n-- Project \t\t\t\t\t= EFPE Promo Device - New Promo - Promo R223 - 25616 -  - Launch Date TBD\n-------------------------------------------------------------------------\n\n--PROD / ZLAB\nBEGIN\n\n--PROMO_ELIGIBILITY_RULES \nINSERT INTO PROMO_ELIGIBILITY_RULES (RULE_ID,PROMO_CODE,PROMO_START_DATE,PROMO_END_DATE,SYS_CREATION_DATE,OPERATOR_ID,APPLICATION_ID,DL_SERVICE_CODE,PROMO_DESCRIPTION,PROMO_DURATION,PROMO_AMOUNT,EFFECTIVE_DATE,EXPIRATION_DATE,SKU_GROUP_ID,PRIM_SKU_GROUP_ID,SOC_GROUP_ID,ATST_GROUP_ID,APPL_GROUP_ID,DEVICE_ST_GROUP_ID,FINANCE_TYPE,ACT_LINE_REQ_IND,APP_GRACE_GROUP_ID,TRADE_IN_GRP_ID,TRADE_IN_GRACE_PERIOD,MAINT_ACT_LINE_CHK_IND,MAINT_SOC_CHK_IND,STORE_GRP_ID,MARKET_GRP_ID,LIMIT_PER_BAN,TENURE_GROUP_ID,PORTIN_GROUP_ID,PROMO_PERC_DISC,C2_LINK,MIN_GSM_COUNT,MAX_GSM_COUNT,DISPLAY_PROMO,TIERED_GRP_ID,SEGMENT_GRP_ID,BOLTON_TRADE_IN_GRP_ID,PRODUCT_TYPE,PR_DATE,PROMO_GRACE_PERIOD,LINE_ST_GROUP_ID,NSEIP_DROP_IND,DELAY_TIME,DISPLAY_PROMO_START_DATE,DISPLAY_PROMO_END_DATE,MPSS_LOOKBACK,FLOW_INDICATOR,DOCUMENT_ID,DVC_STS_GRP_ID,CLAWBACK_IND) VALUES (PROMO_ELIGIBILITY_RULES_1SQ.NEXTVAL,'R223',NULL,NULL,sysdate,NULL,'CPO','USRST','Mobile Internet ID250396',24,NULL,NULL,NULL,'Y28',NULL,'W12','A13','S02','S01',NULL,'Y',NULL,NULL,NULL,'Y','Y','*','*',NULL,NULL,NULL,100,'https://c2.t-mobile.com/offers/25616',NULL,NULL,'Y',NULL,NULL,NULL,'B',NULL,NULL,NULL,'Y',NULL,NULL,NULL,NULL,NULL,'25616',NULL,'N');\n\n--PROMO_DEVICE_GROUPS\nInsert into PROMO_DEVICE_GROUPS (SKU_GROUP_ID,SKU,SYS_CREATION_DATE,OPERATOR_ID,APPLICATION_ID,DL_SERVICE_CODE,SKU_DESCRIPTION,SKU_GROUP_DESCRIPTION) values ('Y28','610214682031',sysdate,NULL,'CPO','USRST','TCL LINKPORT IK511 BLK KIT','NEW PROMO R223 - CPO-NULL Orbit 25616 - Mobile Internet ID250396');\nInsert into PROMO_DEVICE_GROUPS (SKU_GROUP_ID,SKU,SYS_CREATION_DATE,OPERATOR_ID,APPLICATION_ID,DL_SERVICE_CODE,SKU_DESCRIPTION,SKU_GROUP_DESCRIPTION) values ('Y28','000000610214682031',sysdate,NULL,'CPO','USRST','TCL LINKPORT IK511 BLK KIT','NEW PROMO R223 - CPO-NULL Orbit 25616 - Mobile Internet ID250396');\nInsert into PROMO_DEVICE_GROUPS (SKU_GROUP_ID,SKU,SYS_CREATION_DATE,OPERATOR_ID,APPLICATION_ID,DL_SERVICE_CODE,SKU_DESCRIPTION,SKU_GROUP_DESCRIPTION) values ('Y28','610214685926',sysdate,NULL,'CPO','USRST','TCL LINKPORT IK511 BLK SI KIT','NEW PROMO R223 - CPO-NULL Orbit 25616 - Mobile Internet ID250396');\nInsert into PROMO_DEVICE_GROUPS (SKU_GROUP_ID,SKU,SYS_CREATION_DATE,OPERATOR_ID,APPLICATION_ID,DL_SERVICE_CODE,SKU_DESCRIPTION,SKU_GROUP_DESCRIPTION) values ('Y28','000000610214685926',sysdate,NULL,'CPO','USRST','TCL LINKPORT IK511 BLK SI KIT','NEW PROMO R223 - CPO-NULL Orbit 25616 - Mobile Internet ID250396');\nInsert into PROMO_DEVICE_GROUPS (SKU_GROUP_ID,SKU,SYS_CREATION_DATE,OPERATOR_ID,APPLICATION_ID,DL_SERVICE_CODE,SKU_DESCRIPTION,SKU_GROUP_DESCRIPTION) values ('Y28','610214719836',sysdate,NULL,'CPO','USRST','TCL LINKPORT IK511 BLK CPO','NEW PROMO R223 - CPO-NULL Orbit 25616 - Mobile Internet ID250396');\nInsert into PROMO_DEVICE_GROUPS (SKU_GROUP_ID,SKU,SYS_CREATION_DATE,OPERATOR_ID,APPLICATION_ID,DL_SERVICE_CODE,SKU_DESCRIPTION,SKU_GROUP_DESCRIPTION) values ('Y28','000000610214719836',sysdate,NULL,'CPO','USRST','TCL LINKPORT IK511 BLK CPO','NEW PROMO R223 - CPO-NULL Orbit 25616 - Mobile Internet ID250396');\nInsert into PROMO_DEVICE_GROUPS (SKU_GROUP_ID,SKU,SYS_CREATION_DATE,OPERATOR_ID,APPLICATION_ID,DL_SERVICE_CODE,SKU_DESCRIPTION,SKU_GROUP_DESCRIPTION) values ('Y28','PRI82031',sysdate,NULL,'CPO','USRST','TCL LINKPORT IK511 BLK PR INSUR','NEW PROMO R223 - CPO-NULL Orbit 25616 - Mobile Internet ID250396');\nInsert into PROMO_DEVICE_GROUPS (SKU_GROUP_ID,SKU,SYS_CREATION_DATE,OPERATOR_ID,APPLICATION_ID,DL_SERVICE_CODE,SKU_DESCRIPTION,SKU_GROUP_DESCRIPTION) values ('Y28','X82031',sysdate,NULL,'CPO','USRST','TCL LINKPORT IK511 BLK EXCH','NEW PROMO R223 - CPO-NULL Orbit 25616 - Mobile Internet ID250396');\n\n--PROMO_TRADEIN_GROUPS\n\n\n--PROMO_TIERED_GROUPS\n\n\n--PROMO_MK_MDL_GROUPS \n\n\n--Promo Segment \n\n\nEND;",
+    "uploaded_files": {
+      "sku_excel": {
+        "filename": "sku_list.xlsx",
+        "original_name": "Orbit 25616 SKU List.xlsx",
+        "upload_date": "2025-09-03T15:59:37.291493",
+        "file_size": 10608,
+        "file_path": "data\\uploads\\promotions\\R223\\sku_list.xlsx"
+      }
+    },
     "version_history": [
-      "09/02/2025 11:05 AM - Current User - Created promo."
+      "09/03/2025 03:58 PM - Cade Holtzen - Created promo."
     ],
-    "last_changes": null,
-    "created_at": "2025-09-02T11:05:18.106781",
-    "updated_at": "2025-09-02T11:14:49.878172",
+    "last_changes": "Last save: 09/03/2025 03:59 PM - Cade Holtzen - Changed: Promo % Discount (\u2192 100)",
+    "created_at": "2025-09-03T15:58:59.117379",
+    "updated_at": "2025-09-03T15:59:41.142704",
     "sku_link": "https://apps.powerapps.com/play/9f175d7a-fd5e-47ea-a998-2bff5de64661?tenantId=be0f980b-dd99-4b19-bd7b-bc71a09b026c&RecordID=eaa9ee30-1722-f011-9989-6045bd08a828&NavScreen=Attachments",
     "tradein_link": "https://apps.powerapps.com/play/9f175d7a-fd5e-47ea-a998-2bff5de64661?tenantId=be0f980b-dd99-4b19-bd7b-bc71a09b026c&RecordID=eaa9ee30-1722-f011-9989-6045bd08a828&NavScreen=Attachments",
     "sql_file": {},
@@ -523,7 +530,10 @@
     "sub_segment": "",
     "segment_group_id": "",
     "segment_level": "",
-    "updated_by": "Cade Holtzen"
+    "updated_by": "Cade Holtzen",
+    "sql_generated_at": "2025-09-03 15:59:41",
+    "sql_generation_time": "0.5037",
+    "sql_length": 4104
   },
   "R311": {
     "promo_notes": "NULL",
@@ -547,5 +557,26 @@
     "updated_by": "System",
     "test_status": "Complete",
     "zlab_status": "Complete"
+  },
+  "P972": {
+    "promo_notes": "Promo callout on TFB eComm requested",
+    "generated_sql": "",
+    "uploaded_files": {},
+    "version_history": [
+      "09/03/2025 03:45 PM - Cade Holtzen - Created promo."
+    ],
+    "last_changes": null,
+    "created_at": "2025-09-03T15:45:49.993350",
+    "updated_at": "2025-09-03T15:45:49.993332",
+    "sku_link": "",
+    "tradein_link": "",
+    "sql_file": {},
+    "jira_ticket": "",
+    "initiative_name": "",
+    "segment_name": "",
+    "sub_segment": "",
+    "segment_group_id": "",
+    "segment_level": "",
+    "updated_by": "Cade Holtzen"
   }
 }

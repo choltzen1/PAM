@@ -518,3 +518,23 @@ html, body {
     justify-content: center;
   }
 }
+
+/* === Added from template refactor === */
+.dm-header-actions { display:flex; align-items:center; gap:1rem; }
+.dm-refresh-btn { background:rgba(255,255,255,0.2); border:1px solid rgba(255,255,255,0.3); color:#fff; padding:0.5rem 1rem; border-radius:4px; font-size:0.9rem; }
+.dm-refresh-btn:hover { background:rgba(255,255,255,0.3); }
+.dm-user-label { color:rgba(255,255,255,0.9); font-size:0.9rem; }
+.hidden { display:none !important; }
+.mb-20 { margin-bottom:20px !important; }
+.mb-15 { margin-bottom:15px !important; }
+.ml-5 { margin-left:0.5rem !important; }
+.txt-center { text-align:center !important; }
+.txt-left { text-align:left !important; }
+#sql-preview-container { border:1px solid #17a2b8; }
+#sql-preview-container .card-header { background:linear-gradient(135deg,#17a2b8,#138496); }
+#sql-preview-content textarea { border:1px solid #dee2e6; background:#f8f9fa; }
+.operator-id-section { background:#f8f9fa; border:1px solid #dee2e6; border-radius:8px; padding:1rem; }
+.operator-id-section .form-label { font-weight:600; color:#333; margin-bottom:0.5rem; }
+.operator-id-section .form-label i { color:#e20074; margin-right:0.5rem; }
+.actions { white-space:nowrap; }
+.actions button, .actions a { margin:0.1rem; }

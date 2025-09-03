@@ -1,4 +1,17 @@
 /* Version History Page Styles - Expandable Row Format */
+.version-history-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+.version-history-user-label {
+  color: rgba(255,255,255,0.9);
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+.hidden-row {
+  display: none;
+}
 .version-history-page {
   display: flex;
   flex-direction: column;

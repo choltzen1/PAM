@@ -1,5 +1,117 @@
 /* Reviewers Page Specific Styles */
 
+/* Header actions */
+.reviewers-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+.reviewers-user-label {
+  color: rgba(255,255,255,0.9);
+  font-size: 0.9rem;
+}
+
+/* Scroll container (replaces inline height/padding styles) */
+.reviewers-scroll-container {
+  height: calc(100vh - 160px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 1.5rem 1vw;
+  box-sizing: border-box;
+}
+
+/* Search section */
+.reviewers-search-section {
+  margin-bottom: 1.5rem;
+  width: 100%;
+  display: flex;
+  justify-content: flex-start;
+  flex-shrink: 0;
+}
+.reviewers-search-card {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  background: #fff;
+  padding: 1.25rem 2rem;
+  border-radius: 10px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  max-width: fit-content;
+  min-height: 60px;
+}
+.reviewers-search-label {
+  font-weight: 600;
+  color: var(--tmobile-magenta);
+  margin: 0;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+}
+.reviewers-search-input {
+  width: 300px;
+  height: 38px;
+  margin: 0;
+  box-sizing: border-box;
+}
+.reviewers-search-btn, .reviewers-back-btn {
+  height: 38px;
+  padding: 0 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  border-radius: 5px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.reviewers-search-btn {
+  background: var(--tmobile-magenta);
+  border: 1px solid var(--tmobile-magenta);
+  color: #fff;
+}
+.reviewers-search-btn:hover {
+  background: #c41e56;
+}
+.reviewers-back-btn {
+  background: #6c757d;
+  border: 1px solid #6c757d;
+  color: #fff;
+  text-decoration: none;
+}
+.reviewers-back-btn:hover {
+  background: #5a6268;
+}
+
+/* Alerts */
+.reviewers-warning-alert {
+  background: #fff3cd;
+  border: 1px solid #ffeaa7;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+  flex-shrink: 0;
+}
+.reviewers-warning-icon {
+  color: #856404;
+}
+.reviewers-info-alert {
+  background: #d1ecf1;
+  border: 1px solid #bee5eb;
+  padding: 1rem;
+  border-radius: 8px;
+  text-align: center;
+}
+.reviewers-info-icon {
+  color: #0c5460;
+}
+
+/* Notes area (pre-wrap) */
+.notes-content div[style*="white-space: pre-wrap"],
+.notes-content .pre-wrap {
+  white-space: pre-wrap;
+}
+
 /* Main Layout */
 .main-content {
   display: flex;

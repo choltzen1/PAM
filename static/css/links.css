@@ -1,4 +1,7 @@
 /* Links Page Styles - Based on Version History Control Group */
+.links-header-actions { display:flex; align-items:center; gap:1rem; }
+.links-user-label { color:rgba(255,255,255,0.9); font-size:0.9rem; }
+.links-save-message { color:#e20074; font-size:14px; font-weight:500; margin-left:15px; }
 .links-page {
   display: flex;
   flex-direction: column;

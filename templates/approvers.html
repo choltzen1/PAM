@@ -12,11 +12,11 @@
 {% endblock %}
 
 {% block header_right %}
-<div style="display: flex; align-items: center; gap: 1rem;">
-  <button class="btn btn-primary" onclick="refreshData()" style="background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3); color: white; padding: 0.5rem 1rem; border-radius: 4px; font-size: 0.9rem;">
+<div class="approvers-header-actions">
+  <button class="btn btn-primary approvers-refresh-btn" onclick="refreshData()">
     <i class="fas fa-sync-alt"></i> Refresh Data
   </button>
-  <span style="color: rgba(255,255,255,0.9); font-size: 0.9rem;">{{ user_name or 'User: Coming Soon' }}</span>
+  <span class="approvers-user-label">{{ user_name or 'User: Coming Soon' }}</span>
 </div>
 {% endblock %}
 
@@ -110,137 +110,9 @@
   </div>
 </div>
 
-<style>
-/* Table Styling */
-.table-container {
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  overflow: hidden;
-  margin-top: 1rem;
-}
-
-.approvers-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.9rem;
-}
-
-.approvers-table thead th {
-  background: var(--tmobile-magenta);
-  color: white;
-  padding: 1rem 0.75rem;
-  text-align: left;
-  font-weight: 600;
-  border: none;
-}
-
-.approvers-table tbody td {
-  padding: 1rem 0.75rem;
-  vertical-align: middle;
-  border: none !important; /* Force remove ALL borders from cells */
-}
-
-.approvers-table tbody tr {
-  border-bottom: 1px solid #e9ecef !important; /* Single continuous line per row */
-}
-
-.approvers-table tbody tr:last-child {
-  border-bottom: none !important; /* Remove border from last row */
-}
-
-.approvers-table tbody tr:hover {
-  background-color: #f8f9fa;
-}
-
-.promo-link {
-  color: var(--tmobile-magenta);
-  text-decoration: none;
-  font-weight: 600;
-}
-
-.promo-link:hover {
-  text-decoration: underline;
-}
-
-.dropdown-container {
-  min-width: 200px;
-}
-
-.form-select {
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  padding: 0.5rem;
-  font-size: 0.85rem;
-  width: 100%;
-}
-
-.form-select:focus {
-  border-color: var(--tmobile-magenta);
-  box-shadow: 0 0 0 0.2rem rgba(226, 0, 116, 0.25);
-  outline: none;
-}
-
-.send-btn {
-  background: var(--tmobile-magenta);
-  border: 1px solid var(--tmobile-magenta);
-  color: white;
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
-  font-size: 0.85rem;
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-.send-btn:hover {
-  background: #c41e3a;
-  border-color: #c41e3a;
-}
-
-.send-btn:disabled {
-  background: #6c757d;
-  border-color: #6c757d;
-  cursor: not-allowed;
-}
-
-/* No data styling */
-.no-data-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 400px;
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  margin-top: 1rem;
-}
-
-.no-data-content {
-  text-align: center;
-  padding: 2rem;
-}
-
-/* Responsive design */
-@media (max-width: 768px) {
-  .approvers-table {
-    font-size: 0.8rem;
-  }
-  
-  .approvers-table thead th,
-  .approvers-table tbody td {
-    padding: 0.5rem 0.25rem;
-  }
-  
-  .dropdown-container {
-    min-width: 150px;
-  }
-  
-  .send-btn {
-    padding: 0.4rem 0.6rem;
-    font-size: 0.75rem;
-  }
-}
-</style>
+{% block head %}
+<link rel="stylesheet" href="/static/css/approvers.css">
+{% endblock %}
 
 <script>
 function refreshData() {
