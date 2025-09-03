@@ -4,11 +4,12 @@
     "generated_sql": "",
     "uploaded_files": {},
     "version_history": [
-      "09/03/2025 03:45 PM - Cade Holtzen - Created promo."
+      "09/03/2025 03:45 PM - Cade Holtzen - Created promo.",
+      "09/03/2025 04:26 PM - Date Mismatch Tool - Updated end date from 2025-09-03 to 8/6/2025 (synced from ORBIT)"
     ],
     "last_changes": null,
     "created_at": "2025-09-03T15:45:29.182477",
-    "updated_at": "2025-09-03T15:45:29.182462",
+    "updated_at": "2025-09-03T16:26:29.375103",
     "sku_link": "",
     "tradein_link": "",
     "sql_file": {},
@@ -25,12 +26,12 @@
     "generated_sql": "",
     "uploaded_files": {},
     "version_history": [
-      "08/28/2025 10:12 AM - Cade Holtzen - Created promo.",
-      "08/29/2025 12:37 PM - Date Mismatch Tool - Updated end date from 2025-08-28 to 7/23/2025 (synced from ORBIT)"
+      "09/03/2025 04:28 PM - Cade Holtzen - Created promo.",
+      "09/03/2025 04:29 PM - Date Mismatch Tool - Updated end date from 2025-09-03 to 7/23/2025 (synced from ORBIT)"
     ],
-    "last_changes": "Last save: 08/28/2025 12:53 PM - Cade Holtzen - Changed: Promo Start Date (cleared), Promo End Date (\u00e2\u2020\u2019 2025-08-28), Comm End Date (cleared), Delay Time (cleared)",
-    "created_at": "2025-08-28T10:12:22.146410",
-    "updated_at": "2025-08-29T12:37:33.222561",
+    "last_changes": "Last save: 09/03/2025 04:30 PM - Cade Holtzen - Changed: Promo End Date (\u00e2\u2020\u2019 2025-09-03)",
+    "created_at": "2025-09-03T16:28:46.744764",
+    "updated_at": "2025-09-03T16:30:39.419144",
     "sku_link": "",
     "tradein_link": "",
     "sql_file": {},
@@ -563,11 +564,162 @@
     "generated_sql": "",
     "uploaded_files": {},
     "version_history": [
-      "09/03/2025 03:45 PM - Cade Holtzen - Created promo."
+      "09/03/2025 03:45 PM - Cade Holtzen - Created promo.",
+      "09/03/2025 04:26 PM - Date Mismatch Tool - Updated end date from 2025-09-03 to 4/2/2025 (synced from ORBIT)"
     ],
     "last_changes": null,
     "created_at": "2025-09-03T15:45:49.993350",
-    "updated_at": "2025-09-03T15:45:49.993332",
+    "updated_at": "2025-09-03T16:26:29.723845",
+    "sku_link": "",
+    "tradein_link": "",
+    "sql_file": {},
+    "jira_ticket": "",
+    "initiative_name": "",
+    "segment_name": "",
+    "sub_segment": "",
+    "segment_group_id": "",
+    "segment_level": "",
+    "updated_by": "Cade Holtzen"
+  },
+  "P973": {
+    "promo_notes": "3/5: Corrected marketing names/formatting issues in Eligibile trade-in devices",
+    "generated_sql": "",
+    "uploaded_files": {},
+    "version_history": [
+      "09/03/2025 04:28 PM - Cade Holtzen - Created promo.",
+      "09/03/2025 04:29 PM - Date Mismatch Tool - Updated end date from 2025-09-03 to 10/1/2025 (synced from ORBIT)"
+    ],
+    "last_changes": null,
+    "created_at": "2025-09-03T16:28:58.262716",
+    "updated_at": "2025-09-03T16:29:36.712003",
+    "sku_link": "",
+    "tradein_link": "",
+    "sql_file": {},
+    "jira_ticket": "",
+    "initiative_name": "",
+    "segment_name": "",
+    "sub_segment": "",
+    "segment_group_id": "",
+    "segment_level": "",
+    "updated_by": "Cade Holtzen"
+  },
+  "P974": {
+    "promo_notes": "- Can be combined with Carrier Freedom while 17493 is active - Eligible for forever upgrade redemption  - Customer type Business w/Tax ID >13 Lines is only qualified for customers that have the Yearly Upgrade SOC  - Removed devices from trade-in tiers with FMV higher than promo value to accommodate 100% RDC ",
+    "generated_sql": "",
+    "uploaded_files": {},
+    "version_history": [
+      "09/03/2025 04:29 PM - Cade Holtzen - Created promo.",
+      "09/03/2025 04:29 PM - Date Mismatch Tool - Updated end date from 2025-09-03 to 2/13/2025 (synced from ORBIT)"
+    ],
+    "last_changes": null,
+    "created_at": "2025-09-03T16:29:06.179869",
+    "updated_at": "2025-09-03T16:29:37.057848",
+    "sku_link": "",
+    "tradein_link": "",
+    "sql_file": {},
+    "jira_ticket": "",
+    "initiative_name": "",
+    "segment_name": "",
+    "sub_segment": "",
+    "segment_group_id": "",
+    "segment_level": "",
+    "updated_by": "Cade Holtzen"
+  },
+  "P975": {
+    "promo_notes": "NULL",
+    "generated_sql": "",
+    "uploaded_files": {},
+    "version_history": [
+      "09/03/2025 04:29 PM - Cade Holtzen - Created promo.",
+      "09/03/2025 04:29 PM - Date Mismatch Tool - Updated end date from 2025-09-03 to 4/2/2025 (synced from ORBIT)"
+    ],
+    "last_changes": null,
+    "created_at": "2025-09-03T16:29:14.503882",
+    "updated_at": "2025-09-03T16:29:37.420155",
+    "sku_link": "",
+    "tradein_link": "",
+    "sql_file": {},
+    "jira_ticket": "",
+    "initiative_name": "",
+    "segment_name": "",
+    "sub_segment": "",
+    "segment_group_id": "",
+    "segment_level": "",
+    "updated_by": "Cade Holtzen"
+  },
+  "P976": {
+    "promo_notes": "12.2.24 - Initiative name - updated to include Next to match the description of the promo.",
+    "generated_sql": "",
+    "uploaded_files": {},
+    "version_history": [
+      "09/03/2025 04:30 PM - Cade Holtzen - Created promo."
+    ],
+    "last_changes": null,
+    "created_at": "2025-09-03T16:30:47.643318",
+    "updated_at": "2025-09-03T16:30:47.643304",
+    "sku_link": "",
+    "tradein_link": "",
+    "sql_file": {},
+    "jira_ticket": "",
+    "initiative_name": "",
+    "segment_name": "",
+    "sub_segment": "",
+    "segment_group_id": "",
+    "segment_level": "",
+    "updated_by": "Cade Holtzen"
+  },
+  "P977": {
+    "promo_notes": "1.2.25 - Active Line Required - updated to Yes.",
+    "generated_sql": "",
+    "uploaded_files": {},
+    "version_history": [
+      "09/03/2025 04:30 PM - Cade Holtzen - Created promo."
+    ],
+    "last_changes": null,
+    "created_at": "2025-09-03T16:30:54.593491",
+    "updated_at": "2025-09-03T16:30:54.593477",
+    "sku_link": "",
+    "tradein_link": "",
+    "sql_file": {},
+    "jira_ticket": "",
+    "initiative_name": "",
+    "segment_name": "",
+    "sub_segment": "",
+    "segment_group_id": "",
+    "segment_level": "",
+    "updated_by": "Cade Holtzen"
+  },
+  "P993": {
+    "promo_notes": "Steelthread is eligible channel TCL Flip 4 5G launch was pushed for TFB from May to June 2025 ",
+    "generated_sql": "",
+    "uploaded_files": {},
+    "version_history": [
+      "09/03/2025 04:31 PM - Cade Holtzen - Created promo."
+    ],
+    "last_changes": null,
+    "created_at": "2025-09-03T16:31:02.995134",
+    "updated_at": "2025-09-03T16:31:02.995119",
+    "sku_link": "",
+    "tradein_link": "",
+    "sql_file": {},
+    "jira_ticket": "",
+    "initiative_name": "",
+    "segment_name": "",
+    "sub_segment": "",
+    "segment_group_id": "",
+    "segment_level": "",
+    "updated_by": "Cade Holtzen"
+  },
+  "P994": {
+    "promo_notes": "SteelThread channel should be included as eligible. ",
+    "generated_sql": "",
+    "uploaded_files": {},
+    "version_history": [
+      "09/03/2025 04:31 PM - Cade Holtzen - Created promo."
+    ],
+    "last_changes": null,
+    "created_at": "2025-09-03T16:31:11.614832",
+    "updated_at": "2025-09-03T16:31:11.637282",
     "sku_link": "",
     "tradein_link": "",
     "sql_file": {},
