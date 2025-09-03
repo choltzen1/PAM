@@ -7,7 +7,7 @@
     "orbit_id": "NULL",
     "promo_notes": "7/15 - NPP:  confirmed to remove dark status from intake 7/23 - cancelling per Sharon request",
     "promo_start_date": "",
-    "promo_end_date": "2025-09-03",
+    "promo_end_date": "8/6/2025",
     "amount": "NULL",
     "discount": "NULL",
     "operator_id": "NULL",
@@ -43,7 +43,7 @@
     "data_source": "database",
     "last_sync": "2025-09-03T15:01:27.319114",
     "created_at": "2025-09-03T15:45:29.182477",
-    "updated_at": "2025-09-03T15:45:29.182462",
+    "updated_at": "2025-09-03T16:26:29.375103",
     "Desired_Execution": "RDC",
     "pj_code": "",
     "sku_link": "",
@@ -57,7 +57,8 @@
     "segment_level": "",
     "flow_indicator": "NULL",
     "version_history": [
-      "09/03/2025 03:45 PM - Cade Holtzen - Created promo."
+      "09/03/2025 03:45 PM - Cade Holtzen - Created promo.",
+      "09/03/2025 04:26 PM - Date Mismatch Tool - Updated end date from 2025-09-03 to 8/6/2025 (synced from ORBIT)"
     ],
     "uploaded_files": {},
     "generated_sql": "",
@@ -78,7 +79,7 @@
     "orbit_id": "23419",
     "promo_notes": "Promo callout on TFB eComm requested",
     "promo_start_date": "",
-    "promo_end_date": "2025-09-03",
+    "promo_end_date": "4/2/2025",
     "amount": "NULL",
     "discount": "NULL",
     "operator_id": "NULL",
@@ -114,7 +115,7 @@
     "data_source": "database",
     "last_sync": "2025-09-03T15:45:44.254630",
     "created_at": "2025-09-03T15:45:49.993350",
-    "updated_at": "2025-09-03T15:45:49.993332",
+    "updated_at": "2025-09-03T16:26:29.723845",
     "Desired_Execution": "RDC",
     "pj_code": "",
     "sku_link": "",
@@ -128,7 +129,8 @@
     "segment_level": "",
     "flow_indicator": "NULL",
     "version_history": [
-      "09/03/2025 03:45 PM - Cade Holtzen - Created promo."
+      "09/03/2025 03:45 PM - Cade Holtzen - Created promo.",
+      "09/03/2025 04:26 PM - Date Mismatch Tool - Updated end date from 2025-09-03 to 4/2/2025 (synced from ORBIT)"
     ],
     "uploaded_files": {},
     "generated_sql": "",
@@ -223,6 +225,83 @@
     "sql_generation_time": "0.5037",
     "sql_length": 4104
   },
+<<<<<<< HEAD
+=======
+  "P800": {
+    "code": "P800",
+    "description": "NR x Apple iPhone 16 Pro On Us ($1000) w/ Trade on Go5G Next",
+    "bill_facing_name": "Apple Retail Trade ID250092",
+    "owner": "Swartz, Jeanie",
+    "orbit_id": "21226",
+    "promo_notes": "\"can be combined with Carrier Freedom while 17493 is active   9/4 - corrected typo in trade tiers  9/18 - no longer dark so initiative name and desc is updated 10/16 - removed dark status and added actual device names  12/16:  Submitted CRs, revised intake to make specific to National Retail - Apple  2/19: Added in Apple spring NPI name of device \"\"iPhone 16e\"\" 4/25: updating desc/name to include new Exp plans\"",
+    "promo_start_date": "",
+    "promo_end_date": "7/23/2025",
+    "amount": "NULL",
+    "discount": "NULL",
+    "operator_id": "15199",
+    "bptcr": "21226",
+    "sku_group_id": "S95",
+    "soc_grouping": "W8N",
+    "trade_in_group_id": "",
+    "product_type": "G",
+    "bogo": "N",
+    "on_menu": "N",
+    "active_line_required": "Y",
+    "maintain_soc": "Y",
+    "maintain_active_line": "N",
+    "market_group": "*",
+    "store_group": "*",
+    "limit_per_ban": "4",
+    "min_gsm_count": "",
+    "max_gsm_count": "",
+    "port_in_group_id": "",
+    "fpd_display_promo": "Y",
+    "nseip_drop": "N",
+    "dcd_web_cart": "N",
+    "promo_duration": "24",
+    "delay_time": "",
+    "application_grace_period": "NULL",
+    "device_sales_type": "S01",
+    "activation_type": "",
+    "account_type": "A13",
+    "sales_application": "S15",
+    "mpss_lookback": "",
+    "device_status_group_id": "NULL",
+    "clawback_indicator": "N",
+    "data_source": "database",
+    "last_sync": "2025-09-03T16:00:08.412717",
+    "created_at": "2025-09-03T16:28:46.744764",
+    "updated_at": "2025-09-03T16:31:54.924191",
+    "Desired_Execution": "RDC",
+    "pj_code": "",
+    "sku_link": "",
+    "tradein_link": "",
+    "comm_end_date": "",
+    "promo_grace": "",
+    "trade_in_grace": "",
+    "segment_name": "",
+    "sub_segment": "",
+    "segment_group_id": "",
+    "segment_level": "",
+    "flow_indicator": "NULL",
+    "version_history": [
+      "09/03/2025 04:28 PM - Cade Holtzen - Created promo.",
+      "09/03/2025 04:29 PM - Date Mismatch Tool - Updated end date from 2025-09-03 to 7/23/2025 (synced from ORBIT)",
+      "09/03/2025 04:31 PM - Date Mismatch Tool - Updated end date from 2025-09-03 to 7/23/2025 (synced from ORBIT)",
+      "09/03/2025 04:31 PM - Date Mismatch Tool - Updated end date from 7/23/2025 to 7/23/2025 (synced from ORBIT)"
+    ],
+    "uploaded_files": {},
+    "generated_sql": "",
+    "sql_file": {},
+    "last_changes": "Last save: 09/03/2025 04:30 PM - Cade Holtzen - Changed: Promo End Date (→ 2025-09-03)",
+    "jira_ticket": "",
+    "initiative_name": "",
+    "crffc_maintainactivelinedev": "Y",
+    "Broken_Trade": "No",
+    "Anticipated_volume_take_rates_total": "76000",
+    "updated_by": "Cade Holtzen"
+  },
+>>>>>>> 2d5aac4 (restored date mismatch batch actions)
   "P973": {
     "code": "P973",
     "description": "iPhone 16 On Us ($830) with New Line and Trade on Most Plans",
@@ -230,10 +309,17 @@
     "owner": "Holtzen, Cade",
     "orbit_id": "23461",
     "promo_notes": "3/5: Corrected marketing names/formatting issues in Eligibile trade-in devices",
+<<<<<<< HEAD
     "promo_start_date": "4/3/2025",
     "promo_end_date": "10/1/2025",
     "amount": "830",
     "discount": "",
+=======
+    "promo_start_date": "",
+    "promo_end_date": "10/1/2025",
+    "amount": "NULL",
+    "discount": "NULL",
+>>>>>>> 2d5aac4 (restored date mismatch batch actions)
     "operator_id": "NULL",
     "bptcr": "23461",
     "sku_group_id": "V73",
@@ -255,7 +341,11 @@
     "nseip_drop": "N",
     "dcd_web_cart": "Y",
     "promo_duration": "24",
+<<<<<<< HEAD
     "delay_time": "NULL",
+=======
+    "delay_time": "",
+>>>>>>> 2d5aac4 (restored date mismatch batch actions)
     "application_grace_period": "NULL",
     "device_sales_type": "S01",
     "activation_type": "Voice",
@@ -265,14 +355,24 @@
     "device_status_group_id": "NULL",
     "clawback_indicator": "N",
     "data_source": "database",
+<<<<<<< HEAD
     "last_sync": "2025-09-04T16:15:07.584937",
     "created_at": "2025-09-04T16:22:07.256063",
     "updated_at": "2025-09-04T16:22:10.679004",
+=======
+    "last_sync": "2025-09-03T16:28:52.936902",
+    "created_at": "2025-09-03T16:28:58.262716",
+    "updated_at": "2025-09-03T16:29:36.712003",
+>>>>>>> 2d5aac4 (restored date mismatch batch actions)
     "Desired_Execution": "RDC",
     "pj_code": "",
     "sku_link": "",
     "tradein_link": "",
+<<<<<<< HEAD
     "comm_end_date": "NULL",
+=======
+    "comm_end_date": "",
+>>>>>>> 2d5aac4 (restored date mismatch batch actions)
     "promo_grace": "",
     "trade_in_grace": "",
     "segment_name": "",
@@ -281,14 +381,25 @@
     "segment_level": "",
     "flow_indicator": "NULL",
     "version_history": [
+<<<<<<< HEAD
       "09/04/2025 04:22 PM - Cade Holtzen - Created promo."
+=======
+      "09/03/2025 04:28 PM - Cade Holtzen - Created promo.",
+      "09/03/2025 04:29 PM - Date Mismatch Tool - Updated end date from 2025-09-03 to 10/1/2025 (synced from ORBIT)"
+>>>>>>> 2d5aac4 (restored date mismatch batch actions)
     ],
     "uploaded_files": {},
     "generated_sql": "",
     "sql_file": {},
+<<<<<<< HEAD
     "last_changes": "Last save: 09/04/2025 04:22 PM - Cade Holtzen - Changed: Promo Amount (→ 830)",
     "jira_ticket": "",
     "initiative_name": "iPhone 16 On Us ($830) with New Line and Trade on Most Plans",
+=======
+    "last_changes": null,
+    "jira_ticket": "",
+    "initiative_name": "",
+>>>>>>> 2d5aac4 (restored date mismatch batch actions)
     "crffc_maintainactivelinedev": "Y",
     "Broken_Trade": "No",
     "Anticipated_volume_take_rates_total": "50000"
@@ -300,10 +411,17 @@
     "owner": "Barfield, Jennifer",
     "orbit_id": "23331",
     "promo_notes": "- Can be combined with Carrier Freedom while 17493 is active - Eligible for forever upgrade redemption  - Customer type Business w/Tax ID >13 Lines is only qualified for customers that have the Yearly Upgrade SOC  - Removed devices from trade-in tiers with FMV higher than promo value to accommodate 100% RDC ",
+<<<<<<< HEAD
     "promo_start_date": "1/3/2025",
     "promo_end_date": "2/13/2025",
     "amount": "830",
     "discount": "100",
+=======
+    "promo_start_date": "",
+    "promo_end_date": "2/13/2025",
+    "amount": "NULL",
+    "discount": "NULL",
+>>>>>>> 2d5aac4 (restored date mismatch batch actions)
     "operator_id": "15576",
     "bptcr": "23331",
     "sku_group_id": "V74",
@@ -325,7 +443,11 @@
     "nseip_drop": "N",
     "dcd_web_cart": "Y",
     "promo_duration": "24",
+<<<<<<< HEAD
     "delay_time": "NULL",
+=======
+    "delay_time": "",
+>>>>>>> 2d5aac4 (restored date mismatch batch actions)
     "application_grace_period": "NULL",
     "device_sales_type": "S01",
     "activation_type": "",
@@ -335,14 +457,24 @@
     "device_status_group_id": "NULL",
     "clawback_indicator": "N",
     "data_source": "database",
+<<<<<<< HEAD
     "last_sync": "2025-09-09T13:41:50.624746",
     "created_at": "2025-09-09T13:41:36.130287",
     "updated_at": "2025-09-09T13:59:30.095689",
+=======
+    "last_sync": "2025-09-03T16:28:59.800265",
+    "created_at": "2025-09-03T16:29:06.179869",
+    "updated_at": "2025-09-03T16:29:37.057848",
+>>>>>>> 2d5aac4 (restored date mismatch batch actions)
     "Desired_Execution": "RDC",
     "pj_code": "",
     "sku_link": "",
     "tradein_link": "",
+<<<<<<< HEAD
     "comm_end_date": "NULL",
+=======
+    "comm_end_date": "",
+>>>>>>> 2d5aac4 (restored date mismatch batch actions)
     "promo_grace": "",
     "trade_in_grace": "",
     "segment_name": "",
@@ -351,14 +483,25 @@
     "segment_level": "",
     "flow_indicator": "NULL",
     "version_history": [
+<<<<<<< HEAD
       "09/09/2025 01:41 PM - Cade Holtzen - Created promo."
+=======
+      "09/03/2025 04:29 PM - Cade Holtzen - Created promo.",
+      "09/03/2025 04:29 PM - Date Mismatch Tool - Updated end date from 2025-09-03 to 2/13/2025 (synced from ORBIT)"
+>>>>>>> 2d5aac4 (restored date mismatch batch actions)
     ],
     "uploaded_files": {},
     "generated_sql": "",
     "sql_file": {},
+<<<<<<< HEAD
     "last_changes": "Last save: 09/09/2025 01:59 PM - Cade Holtzen - Changed: Promo Amount (→ 830)",
     "jira_ticket": "",
     "initiative_name": "iPhone 16 On Us ($830) w/Trade on Go5G Plus / Next",
+=======
+    "last_changes": null,
+    "jira_ticket": "",
+    "initiative_name": "",
+>>>>>>> 2d5aac4 (restored date mismatch batch actions)
     "crffc_maintainactivelinedev": "Y",
     "Broken_Trade": "No",
     "Anticipated_volume_take_rates_total": "66000"
@@ -367,11 +510,19 @@
     "code": "P975",
     "description": "iPhone 15 On Us ($730) with New Line and Trade on Most Plans",
     "bill_facing_name": "Apple Activate ID250079",
+<<<<<<< HEAD
     "owner": "Holtzen, Cade",
     "orbit_id": "23465",
     "promo_notes": "NULL",
     "promo_start_date": "2025-09-11",
     "promo_end_date": "2025-09-06",
+=======
+    "owner": "Barfield, Jennifer",
+    "orbit_id": "23465",
+    "promo_notes": "NULL",
+    "promo_start_date": "",
+    "promo_end_date": "4/2/2025",
+>>>>>>> 2d5aac4 (restored date mismatch batch actions)
     "amount": "NULL",
     "discount": "NULL",
     "operator_id": "NULL",
@@ -405,9 +556,15 @@
     "device_status_group_id": "NULL",
     "clawback_indicator": "N",
     "data_source": "database",
+<<<<<<< HEAD
     "last_sync": "2025-09-09T14:03:44.572208",
     "created_at": "2025-09-09T14:03:44.855493",
     "updated_at": "2025-09-09T14:03:44.855479",
+=======
+    "last_sync": "2025-09-03T16:29:07.466183",
+    "created_at": "2025-09-03T16:29:14.503882",
+    "updated_at": "2025-09-03T16:29:37.420155",
+>>>>>>> 2d5aac4 (restored date mismatch batch actions)
     "Desired_Execution": "RDC",
     "pj_code": "",
     "sku_link": "",
@@ -421,14 +578,23 @@
     "segment_level": "",
     "flow_indicator": "NULL",
     "version_history": [
+<<<<<<< HEAD
       "09/09/2025 02:03 PM - Cade Holtzen - Created promo."
+=======
+      "09/03/2025 04:29 PM - Cade Holtzen - Created promo.",
+      "09/03/2025 04:29 PM - Date Mismatch Tool - Updated end date from 2025-09-03 to 4/2/2025 (synced from ORBIT)"
+>>>>>>> 2d5aac4 (restored date mismatch batch actions)
     ],
     "uploaded_files": {},
     "generated_sql": "",
     "sql_file": {},
     "last_changes": null,
     "jira_ticket": "",
+<<<<<<< HEAD
     "initiative_name": "iPhone 15 On Us ($730) with New Line and Trade on Most Plans",
+=======
+    "initiative_name": "",
+>>>>>>> 2d5aac4 (restored date mismatch batch actions)
     "crffc_maintainactivelinedev": "Y",
     "Broken_Trade": "No",
     "Anticipated_volume_take_rates_total": "20000"
@@ -440,8 +606,13 @@
     "owner": "Sislow, Cara",
     "orbit_id": "23342",
     "promo_notes": "12.2.24 - Initiative name - updated to include Next to match the description of the promo.",
+<<<<<<< HEAD
     "promo_start_date": "2025-01-03",
     "promo_end_date": "2025-02-26",
+=======
+    "promo_start_date": "",
+    "promo_end_date": "2/26/2025",
+>>>>>>> 2d5aac4 (restored date mismatch batch actions)
     "amount": "NULL",
     "discount": "NULL",
     "operator_id": "NULL",
@@ -465,7 +636,11 @@
     "nseip_drop": "N",
     "dcd_web_cart": "N",
     "promo_duration": "24",
+<<<<<<< HEAD
     "delay_time": "NULL",
+=======
+    "delay_time": "",
+>>>>>>> 2d5aac4 (restored date mismatch batch actions)
     "application_grace_period": "NULL",
     "device_sales_type": "S01",
     "activation_type": "",
@@ -475,14 +650,24 @@
     "device_status_group_id": "NULL",
     "clawback_indicator": "N",
     "data_source": "database",
+<<<<<<< HEAD
     "last_sync": "2025-09-10T12:19:32.574133",
     "created_at": "2025-09-10T12:19:32.860030",
     "updated_at": "2025-09-10T12:19:32.860022",
+=======
+    "last_sync": "2025-09-03T16:30:41.352754",
+    "created_at": "2025-09-03T16:30:47.643318",
+    "updated_at": "2025-09-03T16:31:55.265067",
+>>>>>>> 2d5aac4 (restored date mismatch batch actions)
     "Desired_Execution": "RDC",
     "pj_code": "",
     "sku_link": "",
     "tradein_link": "",
+<<<<<<< HEAD
     "comm_end_date": "NULL",
+=======
+    "comm_end_date": "",
+>>>>>>> 2d5aac4 (restored date mismatch batch actions)
     "promo_grace": "",
     "trade_in_grace": "",
     "segment_name": "",
@@ -491,14 +676,25 @@
     "segment_level": "",
     "flow_indicator": "NULL",
     "version_history": [
+<<<<<<< HEAD
       "09/10/2025 12:19 PM - System - Created promo."
+=======
+      "09/03/2025 04:30 PM - Cade Holtzen - Created promo.",
+      "09/03/2025 04:31 PM - Date Mismatch Tool - Updated end date from 2025-09-03 to 2/26/2025 (synced from ORBIT)",
+      "09/03/2025 04:31 PM - Date Mismatch Tool - Updated end date from 2/26/2025 to 2/26/2025 (synced from ORBIT)"
+>>>>>>> 2d5aac4 (restored date mismatch batch actions)
     ],
     "uploaded_files": {},
     "generated_sql": "",
     "sql_file": {},
     "last_changes": null,
+<<<<<<< HEAD
     "jira_ticket": "CPO-16304",
     "initiative_name": "NR X Apple: $600 Off iPhone 16 w/Trade on Go5G Plus/Next - SEGMENT PLANS",
+=======
+    "jira_ticket": "",
+    "initiative_name": "",
+>>>>>>> 2d5aac4 (restored date mismatch batch actions)
     "crffc_maintainactivelinedev": "Y",
     "Broken_Trade": "No",
     "Anticipated_volume_take_rates_total": "3800"
@@ -510,8 +706,13 @@
     "owner": "Sislow, Cara",
     "orbit_id": "23446",
     "promo_notes": "1.2.25 - Active Line Required - updated to Yes.",
+<<<<<<< HEAD
     "promo_start_date": "2025-01-03",
     "promo_end_date": "2025-04-23",
+=======
+    "promo_start_date": "",
+    "promo_end_date": "4/23/2025",
+>>>>>>> 2d5aac4 (restored date mismatch batch actions)
     "amount": "NULL",
     "discount": "NULL",
     "operator_id": "NULL",
@@ -535,7 +736,11 @@
     "nseip_drop": "N",
     "dcd_web_cart": "N",
     "promo_duration": "24",
+<<<<<<< HEAD
     "delay_time": "NULL",
+=======
+    "delay_time": "",
+>>>>>>> 2d5aac4 (restored date mismatch batch actions)
     "application_grace_period": "NULL",
     "device_sales_type": "S01",
     "activation_type": "Voice",
@@ -545,14 +750,24 @@
     "device_status_group_id": "NULL",
     "clawback_indicator": "N",
     "data_source": "database",
+<<<<<<< HEAD
     "last_sync": "2025-09-10T12:44:41.342912",
     "created_at": "2025-09-10T12:44:41.636815",
     "updated_at": "2025-09-10T12:44:41.636803",
+=======
+    "last_sync": "2025-09-03T16:30:48.388535",
+    "created_at": "2025-09-03T16:30:54.593491",
+    "updated_at": "2025-09-03T16:31:55.611877",
+>>>>>>> 2d5aac4 (restored date mismatch batch actions)
     "Desired_Execution": "RDC",
     "pj_code": "",
     "sku_link": "",
     "tradein_link": "",
+<<<<<<< HEAD
     "comm_end_date": "NULL",
+=======
+    "comm_end_date": "",
+>>>>>>> 2d5aac4 (restored date mismatch batch actions)
     "promo_grace": "",
     "trade_in_grace": "",
     "segment_name": "",
@@ -561,14 +776,25 @@
     "segment_level": "",
     "flow_indicator": "NULL",
     "version_history": [
+<<<<<<< HEAD
       "09/10/2025 12:44 PM - System - Created promo."
+=======
+      "09/03/2025 04:30 PM - Cade Holtzen - Created promo.",
+      "09/03/2025 04:31 PM - Date Mismatch Tool - Updated end date from 2025-09-03 to 4/23/2025 (synced from ORBIT)",
+      "09/03/2025 04:31 PM - Date Mismatch Tool - Updated end date from 4/23/2025 to 4/23/2025 (synced from ORBIT)"
+>>>>>>> 2d5aac4 (restored date mismatch batch actions)
     ],
     "uploaded_files": {},
     "generated_sql": "",
     "sql_file": {},
     "last_changes": null,
+<<<<<<< HEAD
     "jira_ticket": "CPO-16307",
     "initiative_name": "NR x Apple: iPhone on Us ($800) w/ New Line and Trade on Most Plans",
+=======
+    "jira_ticket": "",
+    "initiative_name": "",
+>>>>>>> 2d5aac4 (restored date mismatch batch actions)
     "crffc_maintainactivelinedev": "Y",
     "Broken_Trade": "No",
     "Anticipated_volume_take_rates_total": "400"
@@ -580,8 +806,13 @@
     "owner": "Swartz, Jeanie",
     "orbit_id": "23413",
     "promo_notes": "Steelthread is eligible channel TCL Flip 4 5G launch was pushed for TFB from May to June 2025 ",
+<<<<<<< HEAD
     "promo_start_date": "2025-01-09",
     "promo_end_date": "2026-01-07",
+=======
+    "promo_start_date": "",
+    "promo_end_date": "1/7/2026",
+>>>>>>> 2d5aac4 (restored date mismatch batch actions)
     "amount": "NULL",
     "discount": "100",
     "operator_id": "NULL",
@@ -605,7 +836,11 @@
     "nseip_drop": "N",
     "dcd_web_cart": "N",
     "promo_duration": "24",
+<<<<<<< HEAD
     "delay_time": "NULL",
+=======
+    "delay_time": "",
+>>>>>>> 2d5aac4 (restored date mismatch batch actions)
     "application_grace_period": "NULL",
     "device_sales_type": "S01",
     "activation_type": "Voice",
@@ -615,14 +850,24 @@
     "device_status_group_id": "NULL",
     "clawback_indicator": "N",
     "data_source": "database",
+<<<<<<< HEAD
     "last_sync": "2025-09-10T13:42:47.727376",
     "created_at": "2025-09-10T13:42:48.016622",
     "updated_at": "2025-09-10T13:42:48.016613",
+=======
+    "last_sync": "2025-09-03T16:30:57.077983",
+    "created_at": "2025-09-03T16:31:02.995134",
+    "updated_at": "2025-09-03T16:31:55.945495",
+>>>>>>> 2d5aac4 (restored date mismatch batch actions)
     "Desired_Execution": "RDC",
     "pj_code": "",
     "sku_link": "",
     "tradein_link": "",
+<<<<<<< HEAD
     "comm_end_date": "NULL",
+=======
+    "comm_end_date": "",
+>>>>>>> 2d5aac4 (restored date mismatch batch actions)
     "promo_grace": "",
     "trade_in_grace": "",
     "segment_name": "",
@@ -631,13 +876,20 @@
     "segment_level": "",
     "flow_indicator": "NULL",
     "version_history": [
+<<<<<<< HEAD
       "09/10/2025 01:42 PM - System - Created promo."
+=======
+      "09/03/2025 04:31 PM - Cade Holtzen - Created promo.",
+      "09/03/2025 04:31 PM - Date Mismatch Tool - Updated end date from 2025-09-03 to 1/7/2026 (synced from ORBIT)",
+      "09/03/2025 04:31 PM - Date Mismatch Tool - Updated end date from 1/7/2026 to 1/7/2026 (synced from ORBIT)"
+>>>>>>> 2d5aac4 (restored date mismatch batch actions)
     ],
     "uploaded_files": {},
     "generated_sql": "",
     "sql_file": {},
     "last_changes": null,
     "jira_ticket": "",
+<<<<<<< HEAD
     "initiative_name": "TFB Affordables On Us - AAL Select Plan",
     "crffc_maintainactivelinedev": "Y",
     "Broken_Trade": "No",
@@ -660,6 +912,29 @@
     "sku_group_id": "X22",
     "soc_grouping": "W7",
     "trade_in_group_id": "2",
+=======
+    "initiative_name": "",
+    "crffc_maintainactivelinedev": "Y",
+    "Broken_Trade": "No",
+    "Anticipated_volume_take_rates_total": "6100"
+  },
+  "P994": {
+    "code": "P994",
+    "description": "TFB Q1 25 Upgrade Samsung & Google up to $500 off w/Trade",
+    "bill_facing_name": "Bus Phone Trade ID250019",
+    "owner": "Swartz, Jeanie",
+    "orbit_id": "23444",
+    "promo_notes": "SteelThread channel should be included as eligible. ",
+    "promo_start_date": "",
+    "promo_end_date": "4/2/2025",
+    "amount": "NULL",
+    "discount": "NULL",
+    "operator_id": "NULL",
+    "bptcr": "23444",
+    "sku_group_id": "V94",
+    "soc_grouping": "G50",
+    "trade_in_group_id": "",
+>>>>>>> 2d5aac4 (restored date mismatch batch actions)
     "product_type": "G",
     "bogo": "N",
     "on_menu": "N",
@@ -668,6 +943,7 @@
     "maintain_active_line": "N",
     "market_group": "*",
     "store_group": "*",
+<<<<<<< HEAD
     "limit_per_ban": "4",
     "min_gsm_count": "",
     "max_gsm_count": "",
@@ -682,17 +958,40 @@
     "activation_type": "AE1",
     "account_type": "A13",
     "sales_application": "S07",
+=======
+    "limit_per_ban": "NULL",
+    "min_gsm_count": "",
+    "max_gsm_count": "",
+    "port_in_group_id": "",
+    "fpd_display_promo": "Y",
+    "nseip_drop": "N",
+    "dcd_web_cart": "N",
+    "promo_duration": "24",
+    "delay_time": "",
+    "application_grace_period": "NULL",
+    "device_sales_type": "S01",
+    "activation_type": "",
+    "account_type": "A03",
+    "sales_application": "S28",
+>>>>>>> 2d5aac4 (restored date mismatch batch actions)
     "mpss_lookback": "",
     "device_status_group_id": "NULL",
     "clawback_indicator": "N",
     "data_source": "database",
+<<<<<<< HEAD
     "last_sync": "2025-09-10T15:29:25.729191",
     "created_at": "2025-09-10T15:29:25.445353",
     "updated_at": "2025-09-11T11:18:04.657447",
+=======
+    "last_sync": "2025-09-03T16:31:04.419138",
+    "created_at": "2025-09-03T16:31:11.614832",
+    "updated_at": "2025-09-03T16:31:56.286895",
+>>>>>>> 2d5aac4 (restored date mismatch batch actions)
     "Desired_Execution": "RDC",
     "pj_code": "",
     "sku_link": "",
     "tradein_link": "",
+<<<<<<< HEAD
     "comm_end_date": "NULL",
     "promo_grace": "",
     "trade_in_grace": "",
@@ -703,10 +1002,25 @@
     "flow_indicator": "NULL",
     "version_history": [
       "09/10/2025 03:29 PM - Cade Holtzen - Created promo."
+=======
+    "comm_end_date": "",
+    "promo_grace": "",
+    "trade_in_grace": "",
+    "segment_name": "",
+    "sub_segment": "",
+    "segment_group_id": "",
+    "segment_level": "",
+    "flow_indicator": "NULL",
+    "version_history": [
+      "09/03/2025 04:31 PM - Cade Holtzen - Created promo.",
+      "09/03/2025 04:31 PM - Date Mismatch Tool - Updated end date from 2025-09-03 to 4/2/2025 (synced from ORBIT)",
+      "09/03/2025 04:31 PM - Date Mismatch Tool - Updated end date from 4/2/2025 to 4/2/2025 (synced from ORBIT)"
+>>>>>>> 2d5aac4 (restored date mismatch batch actions)
     ],
     "uploaded_files": {},
     "generated_sql": "",
     "sql_file": {},
+<<<<<<< HEAD
     "last_changes": "Last save: 09/11/2025 10:43 AM - Cade Holtzen - Changed: Activation Type (→ AE1)",
     "jira_ticket": "",
     "initiative_name": "A36 On Us w/ Trade on Go5G Plus/Next",
@@ -745,5 +1059,13 @@
     "dcd_trade_intent": "YU1",
     "dcd_reward_disposition": "ZERO_FMV",
     "dcd_jira_ticket": "DCOMM-18379"
+=======
+    "last_changes": null,
+    "jira_ticket": "",
+    "initiative_name": "",
+    "crffc_maintainactivelinedev": "Y",
+    "Broken_Trade": "No",
+    "Anticipated_volume_take_rates_total": "540"
+>>>>>>> 2d5aac4 (restored date mismatch batch actions)
   }
 }
