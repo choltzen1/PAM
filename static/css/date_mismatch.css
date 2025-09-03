@@ -113,20 +113,74 @@ html, body {
 }
 
 /* Column widths optimized for responsive design with checkbox column */
-.date-mismatch-table th:nth-child(1) { width: 5%; }  /* Checkbox */
-.date-mismatch-table th:nth-child(2) { width: 14%; } /* Promo Owner */
-.date-mismatch-table th:nth-child(3) { width: 10%; } /* ORBIT Number */
-.date-mismatch-table th:nth-child(4) { width: 10%; } /* Promo Code */
-.date-mismatch-table th:nth-child(5) { width: 12%; } /* ORBIT End Date */
-.date-mismatch-table th:nth-child(6) { width: 12%; } /* PAM End Date */
-.date-mismatch-table th:nth-child(7) { width: 11%; } /* Mismatch Type */
-.date-mismatch-table th:nth-child(8) { width: 26%; text-align: right; } /* Actions */
+.date-mismatch-table th:nth-child(1),
+.date-mismatch-table td:nth-child(1) { 
+  width: 60px; 
+  min-width: 60px; 
+  max-width: 60px;
+  text-align: center;
+}
+
+.date-mismatch-table th:nth-child(2),
+.date-mismatch-table td:nth-child(2) { 
+  width: 140px; 
+  min-width: 140px; 
+  max-width: 140px;
+  text-align: left;
+}
+
+.date-mismatch-table th:nth-child(3),
+.date-mismatch-table td:nth-child(3) { 
+  width: 120px; 
+  min-width: 120px; 
+  max-width: 120px;
+  text-align: center;
+}
+
+.date-mismatch-table th:nth-child(4),
+.date-mismatch-table td:nth-child(4) { 
+  width: 120px; 
+  min-width: 120px; 
+  max-width: 120px;
+  text-align: center;
+}
+
+.date-mismatch-table th:nth-child(5),
+.date-mismatch-table td:nth-child(5) { 
+  width: 140px; 
+  min-width: 140px; 
+  max-width: 140px;
+  text-align: center;
+}
+
+.date-mismatch-table th:nth-child(6),
+.date-mismatch-table td:nth-child(6) { 
+  width: 140px; 
+  min-width: 140px; 
+  max-width: 140px;
+  text-align: center;
+}
+
+.date-mismatch-table th:nth-child(7),
+.date-mismatch-table td:nth-child(7) { 
+  width: 140px; 
+  min-width: 140px; 
+  max-width: 140px;
+  text-align: center;
+}
+
+.date-mismatch-table th:nth-child(8),
+.date-mismatch-table td:nth-child(8) { 
+  width: 180px; 
+  min-width: 180px; 
+  max-width: 180px;
+  text-align: center;
+}
 
 .date-mismatch-table th {
   background: var(--tmobile-magenta);
   color: white;
   padding: 0.75rem 0.5rem;
-  text-align: left;
   font-weight: 600;
   font-size: 0.875rem;
   border-bottom: none;
@@ -134,18 +188,6 @@ html, body {
   top: 0;
   z-index: 10;
 }
-
-<<<<<<< HEAD
-=======
-.date-mismatch-table th:nth-child(1) { width: 15%; } /* Promo Owner */
-.date-mismatch-table th:nth-child(2) { width: 12%; } /* ORBIT Number */
-.date-mismatch-table th:nth-child(3) { width: 12%; } /* Promo Code */
-.date-mismatch-table th:nth-child(4) { width: 15%; } /* ORBIT End Date */
-.date-mismatch-table th:nth-child(5) { width: 15%; } /* PAM End Date */
-.date-mismatch-table th:nth-child(6) { width: 12%; } /* Mismatch Type */
-.date-mismatch-table th:nth-child(7) { width: 15%; text-align: right; } /* Actions */
-
->>>>>>> c53897883820dc9432b8c23ba78d35b5be905fd8
 .date-mismatch-table td {
   padding: 0.75rem 0.5rem;
   border-bottom: none;
@@ -154,6 +196,8 @@ html, body {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+/* Ensure td columns match th widths */
 
 .date-mismatch-table tbody tr {
   transition: background-color 0.2s ease;
@@ -175,13 +219,27 @@ html, body {
   white-space: normal;
 }
 
-.actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.25rem;
-  align-items: center;
-  flex-wrap: wrap;
+/* Specific column styling for better alignment */
+.date-mismatch-table .promo-owner {
+  text-align: left;
+  padding-left: 0.75rem;
 }
+
+.date-mismatch-table .orbit-number,
+.date-mismatch-table .promo-code {
+  text-align: center;
+}
+
+.date-mismatch-table .orbit-end-date,
+.date-mismatch-table .pam-end-date {
+  text-align: center;
+}
+
+.date-mismatch-table .mismatch-type {
+  text-align: center;
+}
+
+
 
 /* Compact Button Styling for better fit */
 .btn {

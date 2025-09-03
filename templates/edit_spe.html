@@ -96,13 +96,8 @@
               </div>
 
               <label class="section-label col-span-4">Account Type</label>
-              <div class="input-group vertical-radio col-span-4">
-                {% for val in ['A01','A02','A03','A04','A05','A06','A08','A09','*'] %}
-                  <label >
-                    {{ val }}
-                    <input type="radio" name="account_type" value="{{ val }}" {% if promo.account_type == val %}checked{% endif %}>
-                  </label>
-                {% endfor %}
+              <div class="input-group col-span-4">
+                <input type="text" name="account_type" value="{{ promo.account_type or '' }}" class="form-control" placeholder="Enter account type (e.g., A01, A02, A03, etc.)">
               </div>
 
               <label class="section-label">Sales Application</label>
@@ -149,24 +144,31 @@
 
           {% elif active_tab == 'Dates & Times' %}
             <div class="grid-form four-col">
+              <!-- Row 1: Labels -->
               <label class="section-label">Promo Start Date</label>
               <label class="section-label">Promo End Date</label>
               <label class="section-label">PR Date</label>
               <label class="section-label">BAN Tenure Start</label>
+              
+              <!-- Row 2: Inputs -->
               <input class="form-control" name="promo_start_date" type="date" value="{{ promo.promo_start_date }}">
               <input class="form-control" name="promo_end_date" type="date" value="{{ promo.promo_end_date }}">
               <input class="form-control" name="pr_date" type="date" value="{{ promo.pr_date }}">
               <input class="form-control" name="ban_tenure_start" type="date" value="{{ promo.ban_tenure_start }}">
 
+              <!-- Row 3: Labels -->
               <label class="section-label">BAN Tenure End</label>
-              <label class="section-label">Maintain Line Count Days</label>
+              <label class="section-label">MLC Days</label>
               <label class="section-label">Re-enroll Period</label>
               <label class="section-label">Promo Duration</label>
+              
+              <!-- Row 4: Inputs -->
               <input class="form-control" name="ban_tenure_end" type="date" value="{{ promo.ban_tenure_end }}">
               <input class="form-control" name="maintain_line_count_days" value="{{ promo.maintain_line_count_days if promo.maintain_line_count_days is not none else '' }}">
               <input class="form-control" name="re_enroll_period" placeholder="Re-enroll Period" value="{{ promo.re_enroll_period }}">
               <input class="form-control" name="promo_duration" placeholder="Promo Duration" value="{{ promo.promo_duration }}">
 
+              <!-- Row 5: Port Duration and Channel Grace Period -->
               <label class="section-label">Port Duration</label>
               <label class="section-label col-span-3">Channel Grace Period</label>
               <input class="form-control" name="port_duration" placeholder="Port Duration" value="{{ promo.port_duration }}">
@@ -365,7 +367,7 @@
               <label class="section-label">GO Line Maintenance</label>
               <label class="section-label">BO Line Maintenance</label>
               <label class="section-label">Paid Line Maintenance</label>
-              <label class="section-label">Min Paid Line GSM Count</label>
+              <label class="section-label">Min Paid Line GSM Cnt</label>
               <select class="form-select" name="go_line_maintenance">
                 <option value="A57" {% if promo.go_line_maintenance == 'A57' %}selected{% endif %}>A57</option>
                 <option value="A56">A56</option>
