@@ -1,0 +1,651 @@
+{% extends "base.html" %}
+{% block title %}User Management - PAM{% endblock %}
+
+{% block header_left %}
+<h1 style="margin: 0; font-size: 24px; font-weight: 600; color: white;">User Management</h1>
+{% endblock %}
+
+{% block head %}
+<style>
+  .user-management-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+  
+  .user-management-tabs {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid #e9ecef;
+    margin-bottom: 30px;
+    padding-bottom: 5px;
+  }
+  
+  .tabs-left {
+    display: flex;
+    gap: 5px;
+  }
+  
+  .tabs-right {
+    display: flex;
+  }
+  
+  .tab-btn {
+    padding: 15px 30px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    font-weight: 500;
+    color: #6c757d;
+    border-bottom: 3px solid transparent;
+    transition: all 0.3s;
+    font-size: 16px;
+    text-decoration: none;
+  }
+  
+  .tab-btn.active {
+    color: #E20074;
+    border-bottom-color: #E20074;
+  }
+  
+  .tab-btn:hover {
+    color: #E20074;
+    text-decoration: none;
+  }
+  
+  .tab-btn.back-btn {
+    background: #6c757d;
+    color: white;
+    border-radius: 8px;
+    border-bottom: 3px solid transparent;
+  }
+  
+  .tab-btn.back-btn:hover {
+    background: #5a6268;
+    color: white;
+    text-decoration: none;
+  }
+  
+  .tab-content {
+    display: none;
+  }
+  
+  .tab-content.active {
+    display: block;
+  }
+  
+  .user-management-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+  }
+  
+  .section-title {
+    font-size: 24px;
+    font-weight: 600;
+    color: #1e293b;
+    margin: 0;
+  }
+  
+  .btn-primary {
+    background: #E20074;
+    color: white;
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 500;
+    font-size: 16px;
+    transition: background 0.3s;
+  }
+  
+  .btn-primary:hover {
+    background: #c1005f;
+  }
+  
+  .user-form {
+    background: #f8f9fa;
+    padding: 25px;
+    border-radius: 12px;
+    margin-bottom: 25px;
+    display: none;
+  }
+  
+  .form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+    margin-bottom: 20px;
+  }
+  
+  .form-group {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .form-group label {
+    font-weight: 500;
+    margin-bottom: 8px;
+    color: #374151;
+  }
+  
+  .form-group input,
+  .form-group select {
+    padding: 10px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 14px;
+  }
+  
+  .form-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+  }
+  
+  .btn-secondary {
+    background: #6c757d;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+  }
+  
+  .btn-secondary:hover {
+    background: #5a6268;
+  }
+  
+  .user-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  .user-table th {
+    background: #f8f9fa;
+    padding: 15px;
+    text-align: left;
+    font-weight: 600;
+    color: #374151;
+    border-bottom: 1px solid #e9ecef;
+  }
+  
+  .user-table td {
+    padding: 15px;
+    border-bottom: 1px solid #f1f1f1;
+    font-size: 14px;
+  }
+  
+  .user-table tr:hover {
+    background: #f8f9fa;
+  }
+  
+  .badge {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+  }
+  
+  .badge-success {
+    background: #d1fae5;
+    color: #065f46;
+  }
+  
+  .badge-danger {
+    background: #fee2e2;
+    color: #991b1b;
+  }
+  
+  .user-actions {
+    display: flex;
+    gap: 8px;
+  }
+  
+  .user-actions button {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 500;
+  }
+  
+  .btn-edit {
+    background: #3b82f6;
+    color: white;
+  }
+  
+  .btn-edit:hover {
+    background: #2563eb;
+  }
+  
+  .btn-delete {
+    background: #ef4444;
+    color: white;
+  }
+  
+  .btn-delete:hover {
+    background: #dc2626;
+  }
+  
+  .groups-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+  }
+  
+  .group-card {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  .group-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+  }
+  
+  .group-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #1e293b;
+  }
+  
+  .group-description {
+    color: #6b7280;
+    margin-bottom: 15px;
+    font-size: 14px;
+  }
+  
+  .permissions-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  
+  .permissions-list li {
+    padding: 6px 0;
+    border-bottom: 1px solid #f1f1f1;
+    font-size: 14px;
+  }
+  
+  .permissions-list li:before {
+    content: "✓";
+    color: #10b981;
+    font-weight: bold;
+    margin-right: 8px;
+  }
+  
+  .alert {
+    padding: 12px 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    font-weight: 500;
+  }
+  
+  .alert-success {
+    background: #d1fae5;
+    color: #065f46;
+    border: 1px solid #a7f3d0;
+  }
+  
+  .alert-error {
+    background: #fee2e2;
+    color: #991b1b;
+    border: 1px solid #fca5a5;
+  }
+  
+  .breadcrumb {
+    display: flex;
+    align-items: center;
+    font-size: 14px;
+  }
+  
+  .breadcrumb-link {
+    color: #6b7280;
+    text-decoration: none;
+  }
+  
+  .breadcrumb-link:hover {
+    color: #E20074;
+    text-decoration: none;
+  }
+  
+  .breadcrumb-separator {
+    margin: 0 10px;
+    color: #9ca3af;
+  }
+  
+  .breadcrumb-current {
+    color: #E20074;
+    font-weight: 500;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="user-management-container">
+  <div id="alertContainer"></div>
+  
+  <div class="user-management-tabs">
+    <div class="tabs-left">
+      <button class="tab-btn active" onclick="showUserTab('users')">Users</button>
+      <button class="tab-btn" onclick="showUserTab('groups')">Groups & Permissions</button>
+    </div>
+    <div class="tabs-right">
+      <a href="/admin" class="tab-btn back-btn">← Back to Admin Dashboard</a>
+    </div>
+  </div>
+  
+  <!-- Users Tab -->
+  <div id="usersTab" class="tab-content active">
+    <div class="user-management-header">
+      <h2 class="section-title">Manage Users</h2>
+      <button class="btn-primary" onclick="showCreateUserForm()">+ Add New User</button>
+    </div>
+    
+    <!-- User Form -->
+    <div id="userForm" class="user-form">
+      <h3 id="userFormTitle">Add New User</h3>
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="username">Username *</label>
+          <input type="text" id="username" required>
+        </div>
+        <div class="form-group">
+          <label for="displayName">Display Name *</label>
+          <input type="text" id="displayName" required>
+        </div>
+        <div class="form-group">
+          <label for="email">Email *</label>
+          <input type="email" id="email" required>
+        </div>
+        <div class="form-group">
+          <label for="userGroup">Group</label>
+          <select id="userGroup">
+            <option value="admin">Administrator</option>
+            <option value="promo_owner">Promo Owner</option>
+            <option value="reviewer">Reviewer</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="userActive">Status</label>
+          <select id="userActive">
+            <option value="true">Active</option>
+            <option value="false">Inactive</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-actions">
+        <button type="button" class="btn-secondary" onclick="cancelUserForm()">Cancel</button>
+        <button type="button" class="btn-primary" onclick="saveUser()">Save User</button>
+      </div>
+    </div>
+    
+    <!-- Users Table -->
+    <table class="user-table">
+      <thead>
+        <tr>
+          <th>USERNAME</th>
+          <th>DISPLAY NAME</th>
+          <th>EMAIL</th>
+          <th>GROUP</th>
+          <th>STATUS</th>
+          <th>CREATED</th>
+          <th>ACTIONS</th>
+        </tr>
+      </thead>
+      <tbody id="usersTableBody">
+        <!-- Users will be loaded here -->
+      </tbody>
+    </table>
+  </div>
+  
+  <!-- Groups Tab -->
+  <div id="groupsTab" class="tab-content">
+    <div class="user-management-header">
+      <h2 class="section-title">Groups & Permissions</h2>
+    </div>
+    
+    <div id="groupsGrid" class="groups-grid">
+      <!-- Groups will be loaded here -->
+    </div>
+  </div>
+</div>
+
+<script>
+// User Management Functions
+let currentUsers = {};
+let currentGroups = {};
+let editingUser = null;
+
+function showUserTab(tabName) {
+  // Hide all tabs
+  document.querySelectorAll('.tab-content').forEach(tab => {
+    tab.classList.remove('active');
+  });
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.classList.remove('active');
+  });
+  
+  // Show selected tab
+  document.getElementById(tabName + 'Tab').classList.add('active');
+  event.target.classList.add('active');
+  
+  if (tabName === 'users') {
+    loadUsers();
+  } else if (tabName === 'groups') {
+    loadGroups();
+  }
+}
+
+function loadUsers() {
+  fetch('/admin/users')
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        currentUsers = data.users;
+        currentGroups = data.groups;
+        renderUsersTable();
+      } else {
+        showAlert('Failed to load users: ' + data.message, 'error');
+      }
+    })
+    .catch(error => {
+      showAlert('Error loading users: ' + error.message, 'error');
+    });
+}
+
+function renderUsersTable() {
+  const tbody = document.getElementById('usersTableBody');
+  tbody.innerHTML = '';
+  
+  Object.entries(currentUsers).forEach(([username, user]) => {
+    const row = document.createElement('tr');
+    const groupName = currentGroups[user.group]?.name || user.group;
+    const statusBadge = user.active ? 
+      '<span class="badge badge-success">Active</span>' : 
+      '<span class="badge badge-danger">Inactive</span>';
+    
+    row.innerHTML = `
+      <td>${username}</td>
+      <td>${user.display_name}</td>
+      <td>${user.email}</td>
+      <td>${groupName}</td>
+      <td>${statusBadge}</td>
+      <td>${new Date(user.created_date).toLocaleDateString()}</td>
+      <td class="user-actions">
+        <button class="btn-edit" onclick="editUser('${username}')">Edit</button>
+        ${username !== 'choltzen' ? `<button class="btn-delete" onclick="deleteUser('${username}')">Delete</button>` : ''}
+      </td>
+    `;
+    tbody.appendChild(row);
+  });
+}
+
+function showCreateUserForm() {
+  editingUser = null;
+  document.getElementById('userFormTitle').textContent = 'Add New User';
+  document.getElementById('username').value = '';
+  document.getElementById('displayName').value = '';
+  document.getElementById('email').value = '';
+  document.getElementById('userGroup').value = 'promo_owner';
+  document.getElementById('userActive').value = 'true';
+  document.getElementById('username').disabled = false;
+  document.getElementById('userForm').style.display = 'block';
+  
+  // Scroll to form
+  document.getElementById('userForm').scrollIntoView({ behavior: 'smooth' });
+}
+
+function editUser(username) {
+  editingUser = username;
+  const user = currentUsers[username];
+  document.getElementById('userFormTitle').textContent = 'Edit User';
+  document.getElementById('username').value = username;
+  document.getElementById('displayName').value = user.display_name;
+  document.getElementById('email').value = user.email;
+  document.getElementById('userGroup').value = user.group;
+  document.getElementById('userActive').value = user.active.toString();
+  document.getElementById('username').disabled = true;
+  document.getElementById('userForm').style.display = 'block';
+  
+  // Scroll to form
+  document.getElementById('userForm').scrollIntoView({ behavior: 'smooth' });
+}
+
+function saveUser() {
+  const username = document.getElementById('username').value;
+  const displayName = document.getElementById('displayName').value;
+  const email = document.getElementById('email').value;
+  const group = document.getElementById('userGroup').value;
+  const active = document.getElementById('userActive').value === 'true';
+  
+  if (!username || !displayName || !email) {
+    showAlert('Please fill in all required fields', 'error');
+    return;
+  }
+  
+  const userData = {
+    display_name: displayName,
+    email: email,
+    group: group,
+    active: active
+  };
+  
+  const url = editingUser ? `/admin/users/${editingUser}` : '/admin/users';
+  const method = editingUser ? 'PUT' : 'POST';
+  
+  if (!editingUser) {
+    userData.username = username;
+  }
+  
+  fetch(url, {
+    method: method,
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(userData)
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      showAlert(data.message, 'success');
+      cancelUserForm();
+      loadUsers();
+    } else {
+      showAlert(data.message, 'error');
+    }
+  })
+  .catch(error => {
+    showAlert('Error saving user: ' + error.message, 'error');
+  });
+}
+
+function cancelUserForm() {
+  document.getElementById('userForm').style.display = 'none';
+  editingUser = null;
+}
+
+function deleteUser(username) {
+  if (confirm(`Are you sure you want to delete user "${username}"?`)) {
+    fetch(`/admin/users/${username}`, {
+      method: 'DELETE'
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        showAlert(data.message, 'success');
+        loadUsers();
+      } else {
+        showAlert(data.message, 'error');
+      }
+    })
+    .catch(error => {
+      showAlert('Error deleting user: ' + error.message, 'error');
+    });
+  }
+}
+
+function loadGroups() {
+  const groupsGrid = document.getElementById('groupsGrid');
+  groupsGrid.innerHTML = '';
+  
+  Object.entries(currentGroups).forEach(([groupId, group]) => {
+    const groupCard = document.createElement('div');
+    groupCard.className = 'group-card';
+    
+    const permissionsList = group.permissions.map(perm => `<li>${perm}</li>`).join('');
+    
+    groupCard.innerHTML = `
+      <div class="group-header">
+        <div class="group-title">${group.name}</div>
+      </div>
+      <div class="group-description">${group.description}</div>
+      <h4>Permissions:</h4>
+      <ul class="permissions-list">
+        ${permissionsList}
+      </ul>
+    `;
+    
+    groupsGrid.appendChild(groupCard);
+  });
+}
+
+function showAlert(message, type = 'success') {
+  const alertContainer = document.getElementById('alertContainer');
+  const alert = document.createElement('div');
+  alert.className = `alert alert-${type}`;
+  alert.textContent = message;
+  
+  alertContainer.innerHTML = '';
+  alertContainer.appendChild(alert);
+  
+  // Auto-remove after 5 seconds
+  setTimeout(() => {
+    alert.remove();
+  }, 5000);
+  
+  // Scroll to alert
+  alertContainer.scrollIntoView({ behavior: 'smooth' });
+}
+
+// Initialize
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('User Management page loaded');
+  loadUsers();
+});
+</script>
+
+{% endblock %}

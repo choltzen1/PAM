@@ -1,13 +1,17 @@
 from flask import Blueprint, request, render_template, redirect, url_for, flash, jsonify, send_file
 from werkzeug.utils import secure_filename
 import os
-from data.storage import PromoDataManager
 
 # Create blueprint for promotion routes
 promo_bp = Blueprint('promo', __name__)
 
-# Initialize data manager
-data_manager = PromoDataManager()
+# Data manager will be set by the main app
+data_manager = None
+
+def init_data_manager(dm):
+    """Initialize the data manager from the main app"""
+    global data_manager
+    data_manager = dm
 
 @promo_bp.route('/edit_promo/<promo_code>', methods=['GET', 'POST'])
 def edit_promo(promo_code):
@@ -19,8 +23,15 @@ def edit_promo(promo_code):
         # Get current promo data
         promo_data = data_manager.get_promo(promo_code)
         if not promo_data:
-            flash(f"Promotion {promo_code} not found", "error")
-            return redirect(url_for('index'))
+            # Create new promo data if it doesn't exist
+            promo_data = {
+                'code': promo_code,
+                'owner': 'Unknown',
+                'description': '',
+                'start_date': '',
+                'end_date': '',
+                'status': 'Draft'
+            }
         
         # Handle SQL generation
         if request.form.get('generate_sql'):
@@ -47,6 +58,9 @@ def edit_promo(promo_code):
                 promo_data['sql_generation_time'] = f"{generation_time:.4f}"
                 promo_data['sql_length'] = len(sql_content)
                 data_manager.save_promo(promo_code, promo_data, user_name="Cade Holtzen")
+                
+                # Record SQL generation in version history
+                data_manager.record_sql_generation(promo_code, "Cade Holtzen", generation_time, len(sql_content))
                 
                 # Flash message with performance info
                 flash(f"SQL generated successfully in {generation_time:.2f} seconds ({len(sql_content):,} characters)", "success")
@@ -119,6 +133,10 @@ def edit_promo(promo_code):
                                     flash(f"Error processing trade-in Excel: {str(e)}", "warning")
                             
                             data_manager.save_promo(promo_code, promo_data)
+                            
+                            # Record file upload in version history
+                            data_manager.record_file_upload(promo_code, "Cade Holtzen", file_key, file.filename)
+                            
                             flash(f"{file_key.replace('_', ' ').title()} uploaded successfully", "success")
                         else:
                             flash(f"Failed to save {file_key.replace('_', ' ')}", "error")
@@ -149,8 +167,15 @@ def edit_promo(promo_code):
     tab = request.args.get('tab', 'Details')
     promo_data = data_manager.get_promo(promo_code)
     if not promo_data:
-        flash(f"Promotion {promo_code} not found", "error")
-        return redirect(url_for('index'))
+        # Create new promo data if it doesn't exist
+        promo_data = {
+            'code': promo_code,
+            'owner': 'Unknown',
+            'description': '',
+            'start_date': '',
+            'end_date': '',
+            'status': 'Draft'
+        }
     
     return render_template('edit_promo.html', 
                          promo=promo_data, 
@@ -267,7 +292,7 @@ def download_file(promo_code, file_type):
         promo_data = data_manager.get_promo(promo_code)
         if not promo_data:
             flash("Promotion not found", "error")
-            return redirect(url_for('index'))
+            return redirect(url_for('home'))
         
         if not promo_data.get('uploaded_files') or file_type not in promo_data['uploaded_files']:
             flash("File not found", "error")
@@ -292,7 +317,7 @@ def download_sql(promo_code):
         promo_data = data_manager.get_promo(promo_code)
         if not promo_data:
             flash("Promotion not found", "error")
-            return redirect(url_for('index'))
+            return redirect(url_for('home'))
         
         if not promo_data.get('generated_sql'):
             flash("No SQL generated yet", "error")

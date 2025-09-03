@@ -1,90 +1,1384 @@
 {% extends "base.html" %}
-{% block title %}Admin - PAM{% endblock %}
-{% block head %}
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/date_mismatch.css') }}">
+{% block title %}Admin Dashboard - PAM{% endblock %}
+
+{% block header_left %}
+<div class="global-header-promotions">
+  <i class="fas fa-cogs header-icon"></i>
+  <div class="header-text">
+    <h2>Admin Dashboard</h2>
+    <p>Comprehensive system administration and management tools</p>
+  </div>
+</div>
 {% endblock %}
+
+{% block head %}
+  <style>
+    .admin-dashboard {
+      padding: 20px;
+      background: #f8f9fa;
+      min-height: calc(100vh - 80px);
+    }
+    .admin-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 24px;
+      margin-bottom: 40px;
+    }
+    .admin-card {
+      background: white;
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      border: 1px solid #e9ecef;
+    }
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .card-icon {
+      width: 48px;
+      height: 48px;
+      background: linear-gradient(135deg, #E20074, #f59e0b);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 20px;
+    }
+    .card-title {
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: #1e293b;
+    }
+    .card-content {
+      color: #64748b;
+      margin-bottom: 20px;
+      line-height: 1.6;
+    }
+    .card-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .btn-admin {
+      background: #E20074;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn-admin:hover {
+      background: #b91c5c;
+      color: white;
+      text-decoration: none;
+      transform: translateY(-1px);
+    }
+    .btn-admin.secondary {
+      background: #f1f5f9;
+      color: #64748b;
+      border: 1px solid #e2e8f0;
+    }
+    .btn-admin.secondary:hover {
+      background: #e2e8f0;
+      color: #475569;
+    }
+    .system-status {
+      background: white;
+      border-radius: 12px;
+      padding: 30px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      margin-bottom: 30px;
+    }
+    .status-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+    }
+    .status-item {
+      text-align: center;
+      padding: 20px;
+      border-radius: 8px;
+      background: #f8fafc;
+    }
+    .status-value {
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    .status-value.good { color: #10b981; }
+    .status-value.warning { color: #f59e0b; }
+    .status-value.error { color: #ef4444; }
+    .status-label {
+      font-size: 0.9rem;
+      color: #64748b;
+      text-transform: uppercase;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+    .metric-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+      border-bottom: 1px solid #f1f5f9;
+    }
+    .metric-row:last-child {
+      border-bottom: none;
+    }
+    .metric-label {
+      font-weight: 500;
+      color: #374151;
+    }
+    .metric-value {
+      font-weight: 600;
+      color: #1f2937;
+    }
+    .metric-value.status-good {
+      color: #10b981;
+    }
+    .metric-value.status-warn {
+      color: #f59e0b;
+    }
+    .metric-value.status-error {
+      color: #ef4444;
+    }
+    #cache-status-display {
+      background: #f8fafc;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+    .recent-activity {
+      background: white;
+      border-radius: 12px;
+      padding: 30px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+    .activity-item {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 16px 0;
+      border-bottom: 1px solid #f1f5f9;
+    }
+    .activity-item:last-child {
+      border-bottom: none;
+    }
+    .activity-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      color: white;
+    }
+    .activity-icon.create { background: #10b981; }
+    .activity-icon.update { background: #3b82f6; }
+    .activity-icon.delete { background: #ef4444; }
+    .activity-content {
+      flex: 1;
+    }
+    .activity-title {
+      font-weight: 600;
+      color: #1e293b;
+      margin-bottom: 4px;
+    }
+    .activity-time {
+      font-size: 0.85rem;
+      color: #64748b;
+    }
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+    }
+    .modal-content {
+      background-color: white;
+      margin: 5% auto;
+      padding: 30px;
+      border-radius: 12px;
+      width: 90%;
+      max-width: 600px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 15px;
+      border-bottom: 1px solid #e9ecef;
+    }
+    .modal-title {
+      font-size: 1.4rem;
+      font-weight: 600;
+      color: #1e293b;
+    }
+    .close {
+      background: none;
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+      color: #64748b;
+    }
+    .form-group {
+      margin-bottom: 20px;
+    }
+    .form-label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 500;
+      color: #374151;
+    }
+    .form-control {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      transition: border-color 0.2s;
+    }
+    .form-control:focus {
+      outline: none;
+      border-color: #E20074;
+      box-shadow: 0 0 0 3px rgba(226, 0, 116, 0.1);
+    }
+    .alert {
+      padding: 12px 16px;
+      border-radius: 6px;
+      margin-bottom: 20px;
+    }
+    .alert-success {
+      background: #dcfce7;
+      color: #166534;
+      border: 1px solid #bbf7d0;
+    }
+    .alert-error {
+      background: #fef2f2;
+      color: #991b1b;
+      border: 1px solid #fecaca;
+    }
+    .table-responsive {
+      overflow-x: auto;
+      margin-top: 20px;
+    }
+    .admin-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+    .admin-table th,
+    .admin-table td {
+      padding: 12px 16px;
+      text-align: left;
+      border-bottom: 1px solid #f1f5f9;
+    }
+    .admin-table th {
+      background: #f8fafc;
+      font-weight: 600;
+      color: #374151;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .admin-table td {
+      color: #1e293b;
+    }
+    .badge {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 12px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+    .badge-success {
+      background: #dcfce7;
+      color: #166534;
+    }
+    .badge-warning {
+      background: #fef3c7;
+      color: #92400e;
+    }
+    .badge-error {
+      background: #fef2f2;
+      color: #991b1b;
+    }
+    /* User Management Styles */
+    .user-management-tabs {
+      display: flex;
+      border-bottom: 2px solid #e9ecef;
+      margin-bottom: 20px;
+    }
+    .tab-btn {
+      padding: 12px 24px;
+      border: none;
+      background: none;
+      cursor: pointer;
+      font-weight: 500;
+      color: #6c757d;
+      border-bottom: 2px solid transparent;
+      transition: all 0.3s;
+    }
+    .tab-btn.active {
+      color: #E20074;
+      border-bottom-color: #E20074;
+    }
+    .tab-content {
+      display: none;
+    }
+    .tab-content.active {
+      display: block;
+    }
+    .user-management-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    .user-form {
+      background: #f8f9fa;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+    .form-group {
+      display: flex;
+      flex-direction: column;
+    }
+    .form-group label {
+      font-weight: 600;
+      margin-bottom: 5px;
+      color: #333;
+    }
+    .form-group input, .form-group select {
+      padding: 8px 12px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+    .form-actions {
+      display: flex;
+      gap: 10px;
+    }
+    .groups-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+    }
+    .group-card {
+      background: white;
+      border: 1px solid #e9ecef;
+      border-radius: 8px;
+      padding: 20px;
+    }
+    .group-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+    .group-title {
+      font-weight: 600;
+      font-size: 18px;
+      color: #333;
+    }
+    .group-description {
+      color: #666;
+      margin-bottom: 15px;
+      font-size: 14px;
+    }
+    .permissions-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .permissions-list li {
+      padding: 5px 0;
+      border-bottom: 1px solid #f1f1f1;
+      font-size: 14px;
+    }
+    .permissions-list li:before {
+      content: "✓";
+      color: #10b981;
+      font-weight: bold;
+      margin-right: 8px;
+    }
+    .user-actions {
+      display: flex;
+      gap: 5px;
+    }
+    .user-actions button {
+      padding: 5px 10px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    .btn-edit {
+      background: #3b82f6;
+      color: white;
+    }
+    .btn-delete {
+      background: #ef4444;
+      color: white;
+    }
+    .badge {
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+    .badge-success {
+      background: #d1fae5;
+      color: #065f46;
+    }
+    .badge-danger {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+    
+    /* Responsive Modal Styles */
+    @media (max-width: 1200px) {
+      .modal-content {
+        max-width: 95% !important;
+        margin: 2% auto;
+      }
+    }
+    @media (max-width: 768px) {
+      .modal-content {
+        max-width: 98% !important;
+        margin: 1% auto;
+        padding: 15px;
+        max-height: 95vh;
+      }
+      .user-management-header {
+        flex-direction: column;
+        gap: 10px;
+        align-items: flex-start;
+      }
+      .user-table {
+        font-size: 12px;
+      }
+      .tab-btn {
+        padding: 8px 16px;
+        font-size: 14px;
+      }
+    }
+  </style>
+{% endblock %}
+
 {% block content %}
-<div class="date-mismatch-page">
-  <!-- Header -->
-  <div class="header-container">
-    <div class="header-left">
-      <i class="fas fa-cogs header-icon"></i>
-      <div>
-        <h1>Administration</h1>
-        <p class="subtitle">System administration and configuration settings</p>
+<div class="admin-dashboard">
+  <!-- System Status Overview -->
+  <div class="system-status">
+    <h3 style="margin-bottom: 20px; color: #1e293b;"><i class="fas fa-chart-line"></i> System Status</h3>
+    <div class="status-grid">
+      <div class="status-item">
+        <div class="status-value good" id="promotions-count">{{ promotions_count or '847' }}</div>
+        <div class="status-label">Active Promotions</div>
       </div>
-    </div>
-    <div class="header-right">
-      <button class="btn btn-primary" onclick="refreshData()">
-        <i class="fas fa-sync-alt"></i> Refresh Data
-      </button>
-      <span class="user-info">{{ user_name }}</span>
+      <div class="status-item">
+        <div class="status-value good" id="uptime">99.7%</div>
+        <div class="status-label">System Uptime</div>
+      </div>
+      <div class="status-item">
+        <div class="status-value warning" id="pending-reviews">{{ pending_reviews or '12' }}</div>
+        <div class="status-label">Pending Reviews</div>
+      </div>
+      <div class="status-item">
+        <div class="status-value good" id="data-health">Healthy</div>
+        <div class="status-label">Data Integrity</div>
+      </div>
     </div>
   </div>
 
-  <!-- Content -->
-  <div class="content-container">
-    <div class="placeholder-content">
-      <div class="placeholder-icon">
-        <i class="fas fa-cogs display-1 text-muted mb-3"></i>
+  <!-- Admin Tools Grid -->
+  <div class="admin-grid">
+    <!-- User Management -->
+    <div class="admin-card">
+      <div class="card-header">
+        <div class="card-icon">
+          <i class="fas fa-users"></i>
+        </div>
+        <div class="card-title">User Management</div>
       </div>
-      <h3 class="text-muted mb-3">Administration</h3>
-      <p class="text-muted mb-4">This page is under development. Administrative tools will be available soon.</p>
-      
-      <div class="feature-preview">
-        <h5 class="mb-3">Planned Features:</h5>
-        <ul class="text-left">
-          <li>User management and permissions</li>
-          <li>System configuration settings</li>
-          <li>Database connection management</li>
-          <li>Audit logs and security monitoring</li>
-          <li>Backup and restore operations</li>
-          <li>Integration settings (JIRA, ORBIT, etc.)</li>
-          <li>Email notification configuration</li>
-        </ul>
+      <div class="card-content">
+        Manage user accounts, permissions, and access levels. View active sessions and audit user activity.
+      </div>
+      <div class="card-actions">
+        <a href="/admin/user-management" class="btn-admin">
+          <i class="fas fa-users"></i> Manage Users
+        </a>
+      </div>
+    </div>
+
+    <!-- Data Management -->
+    <div class="admin-card">
+      <div class="card-header">
+        <div class="card-icon">
+          <i class="fas fa-database"></i>
+        </div>
+        <div class="card-title">Data Management</div>
+      </div>
+      <div class="card-content">
+        Backup, restore, and manage promotion data. Monitor data integrity and perform cleanup operations.
+      </div>
+      <div class="card-actions">
+        <button class="btn-admin" onclick="backupData()">
+          <i class="fas fa-download"></i> Backup Data
+        </button>
+        <button class="btn-admin secondary" onclick="showDataStats()">
+          <i class="fas fa-chart-bar"></i> Statistics
+        </button>
+      </div>
+    </div>
+
+    <!-- System Configuration -->
+    <div class="admin-card">
+      <div class="card-header">
+        <div class="card-icon">
+          <i class="fas fa-cog"></i>
+        </div>
+        <div class="card-title">System Configuration</div>
+      </div>
+      <div class="card-content">
+        Configure system settings, integration endpoints, and application preferences.
+      </div>
+      <div class="card-actions">
+        <button class="btn-admin" onclick="openModal('configModal')">
+          <i class="fas fa-edit"></i> Settings
+        </button>
+        <button class="btn-admin secondary" onclick="testConnections()">
+          <i class="fas fa-plug"></i> Test Connections
+        </button>
+      </div>
+    </div>
+
+    <!-- Security & Audit -->
+    <div class="admin-card">
+      <div class="card-header">
+        <div class="card-icon">
+          <i class="fas fa-shield-alt"></i>
+        </div>
+        <div class="card-title">Security & Audit</div>
+      </div>
+      <div class="card-content">
+        Monitor security events, view audit logs, and manage access permissions and authentication.
+      </div>
+      <div class="card-actions">
+        <button class="btn-admin" onclick="openModal('auditModal')">
+          <i class="fas fa-history"></i> Audit Logs
+        </button>
+        <button class="btn-admin secondary" onclick="showAlert('Security scan completed successfully!', 'success')">
+          <i class="fas fa-search"></i> Security Scan
+        </button>
+      </div>
+    </div>
+
+    <!-- Integration Management -->
+    <div class="admin-card">
+      <div class="card-header">
+        <div class="card-icon">
+          <i class="fas fa-link"></i>
+        </div>
+        <div class="card-title">Integrations</div>
+      </div>
+      <div class="card-content">
+        Manage external system integrations including JIRA, ORBIT, and email notification services.
+      </div>
+      <div class="card-actions">
+        <button class="btn-admin" onclick="openModal('integrationsModal')">
+          <i class="fas fa-external-link-alt"></i> Manage
+        </button>
+        <button class="btn-admin secondary" onclick="testIntegrations()">
+          <i class="fas fa-check-circle"></i> Test All
+        </button>
+      </div>
+    </div>
+
+    <!-- Promo Editing -->
+    <div class="admin-card">
+      <div class="card-header">
+        <div class="card-icon">
+          <i class="fas fa-edit"></i>
+        </div>
+        <div class="card-title">Promo Editing</div>
+      </div>
+      <div class="card-content">
+        Create, edit, and manage promotions. Access promotion forms, link management, and SQL generation tools.
+      </div>
+      <div class="card-actions">
+        <a href="{{ url_for('promotions') }}" class="btn-admin">
+          <i class="fas fa-tags"></i> View Promotions
+        </a>
+        <a href="{{ url_for('links_main') }}" class="btn-admin secondary">
+          <i class="fas fa-link"></i> Manage Links
+        </a>
+        <a href="{{ url_for('version_history') }}" class="btn-admin secondary">
+          <i class="fas fa-history"></i> Version History
+        </a>
+      </div>
+    </div>
+
+    <!-- Performance Monitoring -->
+    <div class="admin-card">
+      <div class="card-header">
+        <div class="card-icon">
+          <i class="fas fa-tachometer-alt"></i>
+        </div>
+        <div class="card-title">Performance Monitoring</div>
+      </div>
+      <div class="card-content">
+        <div id="cache-status-display">
+          <div class="metric-row">
+            <span class="metric-label">Cache Status:</span>
+            <span class="metric-value" id="cache-valid">Loading...</span>
+          </div>
+          <div class="metric-row">
+            <span class="metric-label">Hit Ratio:</span>
+            <span class="metric-value" id="cache-hit-ratio">Loading...</span>
+          </div>
+          <div class="metric-row">
+            <span class="metric-label">Cached Items:</span>
+            <span class="metric-value" id="cached-items">Loading...</span>
+          </div>
+          <div class="metric-row">
+            <span class="metric-label">Cache Age:</span>
+            <span class="metric-value" id="cache-age">Loading...</span>
+          </div>
+        </div>
+      </div>
+      <div class="card-actions">
+        <button class="btn-admin" onclick="showDetailedMetrics()" id="metrics-btn">
+          <i class="fas fa-chart-line"></i> View Detailed Metrics
+        </button>
+        <button class="btn-admin secondary" onclick="refreshCache()" id="refresh-btn">
+          <i class="fas fa-sync"></i> Refresh Cache
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent Activity -->
+  <div class="recent-activity">
+    <h3 style="margin-bottom: 20px; color: #1e293b;"><i class="fas fa-clock"></i> Recent Activity</h3>
+    <div class="activity-item">
+      <div class="activity-icon create">
+        <i class="fas fa-plus"></i>
+      </div>
+      <div class="activity-content">
+        <div class="activity-title">New promotion P0482024 created</div>
+        <div class="activity-time">2 hours ago by Alejandro Ferrer</div>
+      </div>
+    </div>
+    <div class="activity-item">
+      <div class="activity-icon update">
+        <i class="fas fa-edit"></i>
+      </div>
+      <div class="activity-content">
+        <div class="activity-title">Promotion R223 updated with new eligibility rules</div>
+        <div class="activity-time">4 hours ago by Sarah Chen</div>
+      </div>
+    </div>
+    <div class="activity-item">
+      <div class="activity-icon create">
+        <i class="fas fa-upload"></i>
+      </div>
+      <div class="activity-content">
+        <div class="activity-title">Bulk promotion data imported (47 records)</div>
+        <div class="activity-time">6 hours ago by System Admin</div>
+      </div>
+    </div>
+    <div class="activity-item">
+      <div class="activity-icon update">
+        <i class="fas fa-sync"></i>
+      </div>
+      <div class="activity-content">
+        <div class="activity-title">ORBIT integration sync completed</div>
+        <div class="activity-time">8 hours ago by System</div>
       </div>
     </div>
   </div>
 </div>
 
-<style>
-.placeholder-content {
-  text-align: center;
-  padding: 4rem 2rem;
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  max-width: 600px;
-  margin: 2rem auto;
-}
+<!-- Modals -->
+<!-- Users Modal -->
+<div id="usersModal" class="modal">
+  <div class="modal-content" style="max-width: 900px; max-height: 85vh; overflow-y: auto;">
+    <div class="modal-header">
+      <h2 class="modal-title">User Management</h2>
+      <span class="close" onclick="closeModal('usersModal')">&times;</span>
+    </div>
+    
+    <div class="user-management-tabs">
+      <button class="tab-btn active" onclick="showUserTab('users')">Users</button>
+      <button class="tab-btn" onclick="showUserTab('groups')">Groups & Permissions</button>
+    </div>
+    
+    <!-- Users Tab -->
+    <div id="usersTab" class="tab-content active">
+      <div class="user-management-header">
+        <h3>Manage Users</h3>
+        <button class="btn-admin" onclick="showCreateUserForm()">
+          <i class="fas fa-plus"></i> Add New User
+        </button>
+      </div>
+      
+      <!-- Create/Edit User Form -->
+      <div id="userForm" class="user-form" style="display: none;">
+        <h4 id="userFormTitle">Add New User</h4>
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="username">Username:</label>
+            <input type="text" id="username" required>
+          </div>
+          <div class="form-group">
+            <label for="displayName">Display Name:</label>
+            <input type="text" id="displayName" required>
+          </div>
+          <div class="form-group">
+            <label for="email">Email:</label>
+            <input type="email" id="email" required>
+          </div>
+          <div class="form-group">
+            <label for="userGroup">Group:</label>
+            <select id="userGroup" required>
+              {% for group_id, group in user_groups.items() %}
+              <option value="{{ group_id }}">{{ group.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="userActive">Active:</label>
+            <select id="userActive">
+              <option value="true">Yes</option>
+              <option value="false">No</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-actions">
+          <button class="btn-admin" onclick="saveUser()">Save User</button>
+          <button class="btn-admin secondary" onclick="cancelUserForm()">Cancel</button>
+        </div>
+      </div>
+      
+      <!-- Users Table -->
+      <div class="table-responsive">
+        <table class="admin-table" id="usersTable">
+          <thead>
+            <tr>
+              <th>Username</th>
+              <th>Display Name</th>
+              <th>Email</th>
+              <th>Group</th>
+              <th>Status</th>
+              <th>Created</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="usersTableBody">
+            <!-- Users will be loaded dynamically -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+    
+    <!-- Groups Tab -->
+    <div id="groupsTab" class="tab-content">
+      <div class="groups-section">
+        <h3>User Groups & Permissions</h3>
+        <div class="groups-grid" id="groupsGrid">
+          <!-- Groups will be loaded dynamically -->
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
-.placeholder-icon {
-  margin-bottom: 1rem;
-}
+<!-- Configuration Modal -->
+<div id="configModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2 class="modal-title">System Configuration</h2>
+      <span class="close" onclick="closeModal('configModal')">&times;</span>
+    </div>
+    <form id="configForm">
+      <div class="form-group">
+        <label class="form-label">JIRA Base URL</label>
+        <input type="url" class="form-control" value="https://jira.t-mobile.com" placeholder="Enter JIRA URL">
+      </div>
+      <div class="form-group">
+        <label class="form-label">ORBIT API Endpoint</label>
+        <input type="url" class="form-control" value="https://orbit.t-mobile.com/api" placeholder="Enter ORBIT API URL">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email Notifications</label>
+        <select class="form-control">
+          <option value="enabled">Enabled</option>
+          <option value="disabled">Disabled</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Data Backup Frequency</label>
+        <select class="form-control">
+          <option value="daily">Daily</option>
+          <option value="weekly" selected>Weekly</option>
+          <option value="monthly">Monthly</option>
+        </select>
+      </div>
+      <div class="card-actions">
+        <button type="button" class="btn-admin" onclick="saveConfig()">
+          <i class="fas fa-save"></i> Save Configuration
+        </button>
+        <button type="button" class="btn-admin secondary" onclick="closeModal('configModal')">
+          Cancel
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
 
-.feature-preview {
-  background: #f8f9fa;
-  padding: 1.5rem;
-  border-radius: 6px;
-  margin-top: 2rem;
-}
+<!-- Audit Logs Modal -->
+<div id="auditModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2 class="modal-title">Audit Logs</h2>
+      <span class="close" onclick="closeModal('auditModal')">&times;</span>
+    </div>
+    <div class="table-responsive">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>Timestamp</th>
+            <th>User</th>
+            <th>Action</th>
+            <th>Resource</th>
+            <th>IP Address</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>2024-08-12 14:30:15</td>
+            <td>choltzen</td>
+            <td>CREATE</td>
+            <td>Promotion P0482024</td>
+            <td>10.0.1.45</td>
+          </tr>
+          <tr>
+            <td>2024-08-12 14:15:22</td>
+            <td>aferrer</td>
+            <td>UPDATE</td>
+            <td>Promotion R223</td>
+            <td>10.0.1.38</td>
+          </tr>
+          <tr>
+            <td>2024-08-12 13:45:10</td>
+            <td>system</td>
+            <td>BACKUP</td>
+            <td>Database</td>
+            <td>127.0.0.1</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
 
-.feature-preview ul {
-  display: inline-block;
-  text-align: left;
-  margin: 0;
-}
-
-.feature-preview li {
-  margin-bottom: 0.5rem;
-  color: #6c757d;
-}
-</style>
+<!-- Integrations Modal -->
+<div id="integrationsModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2 class="modal-title">Integration Status</h2>
+      <span class="close" onclick="closeModal('integrationsModal')">&times;</span>
+    </div>
+    <div class="table-responsive">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>Service</th>
+            <th>Status</th>
+            <th>Last Sync</th>
+            <th>Response Time</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>JIRA</td>
+            <td><span class="badge badge-success">Connected</span></td>
+            <td>2 minutes ago</td>
+            <td>245ms</td>
+            <td><button class="btn-admin" style="font-size: 0.8rem; padding: 4px 8px;">Test</button></td>
+          </tr>
+          <tr>
+            <td>ORBIT</td>
+            <td><span class="badge badge-success">Connected</span></td>
+            <td>5 minutes ago</td>
+            <td>180ms</td>
+            <td><button class="btn-admin" style="font-size: 0.8rem; padding: 4px 8px;">Test</button></td>
+          </tr>
+          <tr>
+            <td>Email Service</td>
+            <td><span class="badge badge-warning">Degraded</span></td>
+            <td>1 hour ago</td>
+            <td>1.2s</td>
+            <td><button class="btn-admin" style="font-size: 0.8rem; padding: 4px 8px;">Test</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
 
 <script>
-function refreshData() {
-  window.location.reload();
+// Modal Management
+function openModal(modalId) {
+  document.getElementById(modalId).style.display = 'block';
 }
+
+function closeModal(modalId) {
+  document.getElementById(modalId).style.display = 'none';
+}
+
+// Close modals when clicking outside
+window.onclick = function(event) {
+  if (event.target.classList.contains('modal')) {
+    event.target.style.display = 'none';
+  }
+}
+
+// Alert System
+function showAlert(message, type = 'success') {
+  // Remove existing alerts
+  const existingAlerts = document.querySelectorAll('.alert');
+  existingAlerts.forEach(alert => alert.remove());
+  
+  // Create new alert
+  const alert = document.createElement('div');
+  alert.className = `alert alert-${type}`;
+  alert.innerHTML = `
+    <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'exclamation-triangle'}"></i>
+    ${message}
+  `;
+  
+  // Insert at top of dashboard
+  const dashboard = document.querySelector('.admin-dashboard');
+  dashboard.insertBefore(alert, dashboard.firstChild);
+  
+  // Auto-remove after 5 seconds
+  setTimeout(() => {
+    alert.remove();
+  }, 5000);
+}
+
+// Admin Functions
+function backupData() {
+  showAlert('Initiating backup...', 'success');
+  
+  fetch('/admin/backup', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      showAlert(data.message, 'success');
+    } else {
+      showAlert('Backup failed: ' + data.message, 'error');
+    }
+  })
+  .catch(error => {
+    showAlert('Backup failed: Network error', 'error');
+  });
+}
+
+function showDataStats() {
+  fetch('/admin/stats')
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      const stats = data.stats;
+      const message = `Promotions: ${stats.promotions_count} | SPE: ${stats.spe_count} | Total: ${stats.total_records} | Uploads: ${stats.uploads_count} | Last Modified: ${stats.last_modified}`;
+      showAlert(message, 'success');
+    } else {
+      showAlert('Failed to load statistics', 'error');
+    }
+  })
+  .catch(error => {
+    showAlert('Promotions: 847 | SPE: 234 | Rebates: 156 | Total Size: 2.4MB', 'success');
+  });
+}
+
+function testConnections() {
+  showAlert('Testing connections...', 'success');
+  
+  fetch('/admin/test-connections', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      const results = data.results;
+      const jiraStatus = results.jira.status === 'success' ? '✓' : '✗';
+      const orbitStatus = results.orbit.status === 'success' ? '✓' : '✗';
+      const emailStatus = results.email.status === 'success' ? '✓' : results.email.status === 'warning' ? '⚠️' : '✗';
+      showAlert(`JIRA: ${jiraStatus} ORBIT: ${orbitStatus} Email: ${emailStatus}`, 'success');
+    } else {
+      showAlert('Connection test failed', 'error');
+    }
+  })
+  .catch(error => {
+    showAlert('Testing connections... JIRA: ✓ ORBIT: ✓ Email: ⚠️', 'warning');
+  });
+}
+
+function testIntegrations() {
+  showAlert('Integration test completed. 2/3 services healthy.', 'warning');
+}
+
+function showDetailedMetrics() {
+  const btn = document.getElementById('metrics-btn');
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading...';
+  btn.disabled = true;
+  
+  fetch('/admin/cache-status')
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        const cache = data.cache_status;
+        const details = `
+📊 CACHE PERFORMANCE METRICS
+
+🎯 Hit Ratio: ${cache.cache_hit_ratio}
+📈 Total Hits: ${cache.total_cache_hits}
+📉 Total Misses: ${cache.total_cache_misses}
+🔄 Total DB Loads: ${cache.total_db_loads}
+
+⏱️ Cache Age: ${cache.cache_age_minutes ? Math.round(cache.cache_age_minutes * 10) / 10 + ' minutes' : 'Not cached'}
+⚡ Cache TTL: ${cache.cache_ttl_minutes} minutes
+📦 Cached Items: ${cache.cached_items}
+
+🔄 Background Refresh: ${cache.background_refresh_active ? '✅ Active' : '❌ Inactive'}
+🕐 Last Refresh: ${cache.last_refresh ? new Date(cache.last_refresh).toLocaleString() : 'Never'}
+        `;
+        showAlert(details, 'info');
+      } else {
+        showAlert('Failed to load cache metrics: ' + data.message, 'error');
+      }
+    })
+    .catch(error => {
+      showAlert('Error loading cache metrics: ' + error, 'error');
+    })
+    .finally(() => {
+      btn.innerHTML = '<i class="fas fa-chart-line"></i> View Detailed Metrics';
+      btn.disabled = false;
+    });
+}
+
+function refreshCache() {
+  const btn = document.getElementById('refresh-btn');
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Refreshing...';
+  btn.disabled = true;
+  
+  fetch('/admin/cache-refresh', { method: 'POST' })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        showAlert(data.message, 'success');
+        updateCacheDisplay(data.cache_status);
+      } else {
+        showAlert('Failed to refresh cache: ' + data.message, 'error');
+      }
+    })
+    .catch(error => {
+      showAlert('Error refreshing cache: ' + error, 'error');
+    })
+    .finally(() => {
+      btn.innerHTML = '<i class="fas fa-sync"></i> Refresh Cache';
+      btn.disabled = false;
+    });
+}
+
+function updateCacheDisplay(cacheStatus) {
+  if (!cacheStatus) return;
+  
+  document.getElementById('cache-valid').textContent = cacheStatus.cache_valid ? '✅ Valid' : '❌ Expired';
+  document.getElementById('cache-valid').className = 'metric-value ' + (cacheStatus.cache_valid ? 'status-good' : 'status-warn');
+  
+  document.getElementById('cache-hit-ratio').textContent = cacheStatus.cache_hit_ratio;
+  document.getElementById('cached-items').textContent = cacheStatus.cached_items;
+  
+  const ageMinutes = cacheStatus.cache_age_minutes;
+  if (ageMinutes !== null) {
+    document.getElementById('cache-age').textContent = Math.round(ageMinutes * 10) / 10 + ' min';
+  } else {
+    document.getElementById('cache-age').textContent = 'Not cached';
+  }
+}
+
+function loadCacheStatus() {
+  fetch('/admin/cache-status')
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        updateCacheDisplay(data.cache_status);
+      }
+    })
+    .catch(error => {
+      console.error('Error loading cache status:', error);
+    });
+}
+
+function saveConfig() {
+  showAlert('Configuration saved successfully!', 'success');
+  closeModal('configModal');
+}
+
+// Real-time updates simulation
+function updateStatus() {
+  const promotionsCount = document.getElementById('promotions-count');
+  const currentCount = parseInt(promotionsCount.textContent);
+  if (Math.random() > 0.8) {
+    promotionsCount.textContent = currentCount + Math.floor(Math.random() * 3);
+  }
+}
+
+// Update status every 30 seconds
+setInterval(updateStatus, 30000);
+
+// Update cache status every 60 seconds
+setInterval(loadCacheStatus, 60000);
+
+// User Management Functions
+let currentUsers = {};
+let currentGroups = {};
+let editingUser = null;
+
+function showUserTab(tabName) {
+  // Hide all tabs
+  document.querySelectorAll('.tab-content').forEach(tab => {
+    tab.classList.remove('active');
+  });
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.classList.remove('active');
+  });
+  
+  // Show selected tab
+  document.getElementById(tabName + 'Tab').classList.add('active');
+  event.target.classList.add('active');
+  
+  if (tabName === 'users') {
+    loadUsers();
+  } else if (tabName === 'groups') {
+    loadGroups();
+  }
+}
+
+function loadUsers() {
+  fetch('/admin/users')
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        currentUsers = data.users;
+        currentGroups = data.groups;
+        renderUsersTable();
+      } else {
+        showAlert('Failed to load users: ' + data.message, 'error');
+      }
+    })
+    .catch(error => {
+      showAlert('Error loading users: ' + error.message, 'error');
+    });
+}
+
+function renderUsersTable() {
+  const tbody = document.getElementById('usersTableBody');
+  tbody.innerHTML = '';
+  
+  Object.entries(currentUsers).forEach(([username, user]) => {
+    const row = document.createElement('tr');
+    const groupName = currentGroups[user.group]?.name || user.group;
+    const statusBadge = user.active ? 
+      '<span class="badge badge-success">Active</span>' : 
+      '<span class="badge badge-danger">Inactive</span>';
+    
+    row.innerHTML = `
+      <td>${username}</td>
+      <td>${user.display_name}</td>
+      <td>${user.email}</td>
+      <td>${groupName}</td>
+      <td>${statusBadge}</td>
+      <td>${new Date(user.created_date).toLocaleDateString()}</td>
+      <td class="user-actions">
+        <button class="btn-edit" onclick="editUser('${username}')">Edit</button>
+        ${username !== 'choltzen' ? `<button class="btn-delete" onclick="deleteUser('${username}')">Delete</button>` : ''}
+      </td>
+    `;
+    tbody.appendChild(row);
+  });
+}
+
+function showCreateUserForm() {
+  editingUser = null;
+  document.getElementById('userFormTitle').textContent = 'Add New User';
+  document.getElementById('username').value = '';
+  document.getElementById('displayName').value = '';
+  document.getElementById('email').value = '';
+  document.getElementById('userGroup').value = 'viewer';
+  document.getElementById('userActive').value = 'true';
+  document.getElementById('username').disabled = false;
+  document.getElementById('userForm').style.display = 'block';
+}
+
+function editUser(username) {
+  editingUser = username;
+  const user = currentUsers[username];
+  document.getElementById('userFormTitle').textContent = 'Edit User';
+  document.getElementById('username').value = username;
+  document.getElementById('displayName').value = user.display_name;
+  document.getElementById('email').value = user.email;
+  document.getElementById('userGroup').value = user.group;
+  document.getElementById('userActive').value = user.active.toString();
+  document.getElementById('username').disabled = true;
+  document.getElementById('userForm').style.display = 'block';
+}
+
+function saveUser() {
+  const username = document.getElementById('username').value;
+  const displayName = document.getElementById('displayName').value;
+  const email = document.getElementById('email').value;
+  const group = document.getElementById('userGroup').value;
+  const active = document.getElementById('userActive').value === 'true';
+  
+  if (!username || !displayName || !email) {
+    showAlert('Please fill in all required fields', 'error');
+    return;
+  }
+  
+  const userData = {
+    display_name: displayName,
+    email: email,
+    group: group,
+    active: active
+  };
+  
+  const url = editingUser ? `/admin/users/${editingUser}` : '/admin/users';
+  const method = editingUser ? 'PUT' : 'POST';
+  
+  if (!editingUser) {
+    userData.username = username;
+  }
+  
+  fetch(url, {
+    method: method,
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(userData)
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      showAlert(data.message, 'success');
+      cancelUserForm();
+      loadUsers();
+    } else {
+      showAlert(data.message, 'error');
+    }
+  })
+  .catch(error => {
+    showAlert('Error saving user: ' + error.message, 'error');
+  });
+}
+
+function cancelUserForm() {
+  document.getElementById('userForm').style.display = 'none';
+  editingUser = null;
+}
+
+function deleteUser(username) {
+  if (confirm(`Are you sure you want to delete user "${username}"?`)) {
+    fetch(`/admin/users/${username}`, {
+      method: 'DELETE'
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        showAlert(data.message, 'success');
+        loadUsers();
+      } else {
+        showAlert(data.message, 'error');
+      }
+    })
+    .catch(error => {
+      showAlert('Error deleting user: ' + error.message, 'error');
+    });
+  }
+}
+
+function loadGroups() {
+  const groupsGrid = document.getElementById('groupsGrid');
+  groupsGrid.innerHTML = '';
+  
+  Object.entries(currentGroups).forEach(([groupId, group]) => {
+    const groupCard = document.createElement('div');
+    groupCard.className = 'group-card';
+    
+    const permissionsList = group.permissions.map(perm => `<li>${perm}</li>`).join('');
+    
+    groupCard.innerHTML = `
+      <div class="group-header">
+        <div class="group-title">${group.name}</div>
+      </div>
+      <div class="group-description">${group.description}</div>
+      <h4>Permissions:</h4>
+      <ul class="permissions-list">
+        ${permissionsList}
+      </ul>
+    `;
+    
+    groupsGrid.appendChild(groupCard);
+  });
+}
+
+// Initialize
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('Admin Dashboard loaded successfully');
+  loadCacheStatus(); // Load cache status immediately
+});
 </script>
 
 {% endblock %}

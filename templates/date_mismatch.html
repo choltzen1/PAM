@@ -1,26 +1,227 @@
 {% extends "base.html" %}
 {% block title %}Date Mismatch - PAM{% endblock %}
-{% block head %}
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/date_mismatch.css') }}">
+
+{% block header_left %}
+<div class="global-header-promotions">
+  <i class="fas fa-calendar-exclamation-triangle header-icon"></i>
+  <div class="header-text">
+    <h2>Date Mismatch Analysis</h2>
+    <p>Identify and resolve promotion date discrepancies between ORBIT and PAM</p>
+  </div>
+</div>
 {% endblock %}
+
+{% block header_right %}
+<div style="display: flex; align-items: center; gap: 1rem;">
+  <button class="btn btn-primary" onclick="refreshData()" style="background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3); color: white; padding: 0.5rem 1rem; border-radius: 4px; font-size: 0.9rem;">
+    <i class="fas fa-sync-alt"></i> Refresh Data
+  </button>
+  <span style="color: rgba(255,255,255,0.9); font-size: 0.9rem;">{{ user_name or 'User: Coming Soon' }}</span>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.sql-actions {
+  display: flex;
+  gap: 0.25rem;
+  flex-wrap: wrap;
+}
+
+.sql-actions .btn {
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+}
+
+/* Table Container Styles */
+.table-container {
+  width: 100%;
+  overflow-x: auto;
+  position: relative;
+}
+
+.date-mismatch-table {
+  width: 100%;
+  table-layout: fixed;
+}
+
+/* Fix dropdown width issues */
+.form-select {
+  max-width: 200px;
+  width: 100%;
+}
+
+/* Ensure dropdowns don't overflow the page */
+.table-container .form-select {
+  position: relative;
+}
+
+.date-mismatch-table th,
+.date-mismatch-table td {
+  position: relative;
+  overflow: visible;
+}
+
+/* File Preview Styles */
+.file-info-card {
+  background: #ffffff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.file-info-card:hover {
+  box-shadow: 0 3px 12px rgba(0,0,0,0.15);
+  border-color: #bbb;
+}
+
+.file-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.file-info i {
+  font-size: 1.5rem;
+  color: #e20074;
+  min-width: 24px;
+  flex-shrink: 0;
+}
+
+.file-details {
+  flex: 1;
+  min-width: 0;
+}
+
+.file-name {
+  font-weight: 600;
+  color: #333;
+  font-size: 1rem;
+  margin-bottom: 0.25rem;
+  word-break: break-word;
+}
+
+.file-meta {
+  font-size: 0.85rem;
+  color: #666;
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.file-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.file-actions .btn {
+  color: #e20074;
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 500;
+  padding: 0.4rem 0.8rem;
+  border-radius: 4px;
+  border: 1px solid #e20074;
+  background: #ffffff;
+  transition: background-color 0.2s ease, color 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.file-actions .btn:hover {
+  background-color: #e20074;
+  color: #ffffff;
+}
+
+.sql-preview-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+  padding: 0.5rem;
+  background: #e9ecef;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.sql-preview-header .btn-link {
+  padding: 0.25rem 0.5rem;
+  color: #e20074;
+  text-decoration: none;
+  font-size: 0.8rem;
+  border: none;
+  background: none;
+  cursor: pointer;
+}
+
+.sql-preview-header .btn-link:hover {
+  text-decoration: underline;
+  color: #b8005a;
+}
+
+#sqlPreviewArea {
+  max-height: 400px;
+  min-height: 200px;
+  width: 100%;
+  resize: vertical;
+  font-family: monospace;
+  font-size: 12px;
+  background-color: #f8f9fa;
+  overflow-y: auto;
+  white-space: pre;
+  word-wrap: break-word;
+}
+
+.operator-id-section {
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.operator-id-section .form-label {
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 0.5rem;
+}
+
+.operator-id-section .form-label i {
+  color: #e20074;
+  margin-right: 0.5rem;
+}
+
+/* SQL Preview Container Styles */
+#sql-preview-container {
+  border: 1px solid #17a2b8;
+}
+
+#sql-preview-container .card-header {
+  background: linear-gradient(135deg, #17a2b8, #138496);
+}
+
+#sql-preview-content textarea {
+  border: 1px solid #dee2e6;
+  background-color: #f8f9fa;
+}
+
+.actions {
+  white-space: nowrap;
+}
+
+.actions button, .actions a {
+  margin: 0.1rem;
+}
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="date-mismatch-page">
-  <!-- Header -->
-  <div class="header-container">
-    <div class="header-left">
-      <i class="fas fa-calendar-exclamation-triangle header-icon"></i>
-      <div>
-        <h1>Date Mismatch Analysis</h1>
-        <p class="subtitle">Identify and resolve promotion date discrepancies between ORBIT and PAM</p>
-      </div>
-    </div>
-    <div class="header-right">
-      <button class="btn btn-primary" onclick="refreshData()">
-        <i class="fas fa-sync-alt"></i> Refresh Data
-      </button>
-      <span class="user-info">{{ user_name }}</span>
-    </div>
-  </div>
 
   <!-- Controls -->
   <div class="controls-container">
@@ -29,7 +230,10 @@
         <label for="mismatch-filter">Filter by Mismatch Type</label>
         <select id="mismatch-filter" class="form-select">
           <option value="all">All Promos</option>
-          <option value="end_date">End Date Mismatches</option>
+          <option value="End Date">End Date Mismatches</option>
+          <option value="Missing in ORBIT">Missing in ORBIT</option>
+          <option value="Missing in PAM">Missing in PAM</option>
+          <option value="no-mismatch">No Mismatches</option>
         </select>
       </div>
       
@@ -52,7 +256,19 @@
     <div class="stats-group">
       <div class="stat-item">
         <span class="stat-number">{{ promos|length }}</span>
-        <span class="stat-label">Total Mismatches</span>
+        <span class="stat-label">Total Promos</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-number">{{ promos|selectattr('mismatch_type', 'equalto', 'End Date')|list|length }}</span>
+        <span class="stat-label">End Date Mismatches</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-number">{{ promos|selectattr('mismatch_type', 'equalto', 'Missing in ORBIT')|list|length }}</span>
+        <span class="stat-label">Missing in ORBIT</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-number">{{ promos|selectattr('mismatch_type', 'equalto', 'Missing in PAM')|list|length }}</span>
+        <span class="stat-label">Missing in PAM</span>
       </div>
     </div>
   </div>
@@ -60,10 +276,91 @@
   <!-- Main Content -->
   <div class="content-container">
     {% if promos %}
+    
+    <!-- Batch Actions -->
+    <div class="batch-actions" id="batchActions" style="display: none; margin-bottom: 20px;">
+      <div class="alert alert-info">
+        <span id="selectedCount">0</span> promotion(s) selected
+      </div>
+      
+      <!-- Operator ID Input inside batch actions -->
+      <div class="operator-id-section" style="margin-bottom: 15px;">
+        <div class="row">
+          <div class="col-md-4">
+            <label for="operatorId" class="form-label">
+              <i class="fas fa-user"></i> Operator ID (Required for SQL Generation)
+            </label>
+            <input type="text" 
+                   class="form-control" 
+                   id="operatorId" 
+                   placeholder="Enter 5-digit operator ID" 
+                   maxlength="5" 
+                   pattern="[0-9]{5}"
+                   title="Must be exactly 5 digits">
+            <div class="form-text">Must be exactly 5 numeric characters</div>
+            <div id="operatorIdError" class="text-danger" style="display: none;"></div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="btn-group">
+        <button class="btn btn-primary" onclick="batchUpdatePam()" id="batchUpdateBtn">
+          <i class="fas fa-upload"></i> Batch Update PAM
+        </button>
+        <button class="btn btn-success" onclick="batchGenerateSql()" id="batchSqlBtn">
+          <i class="fas fa-code"></i> Batch Generate SQL
+        </button>
+        <button class="btn btn-secondary" onclick="clearSelection()">
+          <i class="fas fa-times"></i> Clear Selection
+        </button>
+      </div>
+    </div>
+    
+    <!-- Generated SQL File Preview -->
+    <div id="sqlFilePreview" style="display: none; margin-bottom: 20px;">
+      <div class="file-info-card">
+        <div class="file-info">
+          <i class="fas fa-database"></i>
+          <div class="file-details">
+            <div class="file-name" id="sqlFileName">End_date_updates_YYYY-MM-DD.sql</div>
+            <div class="file-meta">
+              <span id="sqlGeneratedAt">Generated just now</span>
+              <span id="sqlCharCount">• 0 characters</span>
+              <span id="sqlStatementCount">• 0 statements</span>
+            </div>
+          </div>
+        </div>
+        <div class="file-actions">
+          <a href="#" id="downloadSqlBtn" class="btn btn-sm btn-outline">
+            <i class="fas fa-download"></i> Download SQL
+          </a>
+          <button type="button" onclick="toggleSqlPreview()" id="sqlPreviewBtn"
+                  class="btn btn-sm btn-outline" style="margin-left: 0.5rem;">
+            <i class="fas fa-eye"></i> Preview
+          </button>
+        </div>
+      </div>
+      
+      <!-- SQL Preview (initially hidden) -->
+      <div id="sqlPreviewContainer" style="display: none;">
+        <div class="sql-preview-header">
+          <span>SQL Preview</span>
+          <button type="button" onclick="clearSqlPreview()" class="btn btn-sm btn-link">
+            <i class="fas fa-times"></i> Close Preview
+          </button>
+        </div>
+        <textarea class="form-control" id="sqlPreviewArea" rows="10" readonly>
+        </textarea>
+      </div>
+    </div>
+    
     <div class="table-container">
       <table class="date-mismatch-table">
         <thead>
           <tr>
+            <th>
+              <input type="checkbox" id="selectAll" onchange="toggleSelectAll()">
+            </th>
             <th>Promo Owner</th>
             <th>ORBIT Number</th>
             <th>Promo Code</th>
@@ -75,7 +372,10 @@
         </thead>
         <tbody>
           {% for promo in promos %}
-          <tr class="mismatch-row" data-mismatch-type="{{ promo.mismatch_type }}" data-owner="{{ promo.owner }}">
+          <tr class="mismatch-row" data-mismatch-type="{{ promo.mismatch_type }}" data-owner="{{ promo.owner }}" data-promo-code="{{ promo.code }}">
+            <td>
+              <input type="checkbox" class="row-checkbox" value="{{ promo.code }}" onchange="updateBatchActions()">
+            </td>
             <td class="promo-owner">{{ promo.owner or 'N/A' }}</td>
             <td class="orbit-number">{{ promo.orbit_id or 'N/A' }}</td>
             <td class="promo-code">
@@ -86,19 +386,15 @@
             <td class="orbit-end-date">{{ promo.orbit_end_date or 'N/A' }}</td>
             <td class="pam-end-date">{{ promo.promo_end_date or 'N/A' }}</td>
             <td class="mismatch-type">
-              <span class="badge badge-{{ promo.mismatch_severity }}">
-                {{ promo.mismatch_type }}
-              </span>
+              {% if promo.mismatch_type %}
+                <span class="badge badge-{{ promo.mismatch_severity }}">
+                  {{ promo.mismatch_type }}
+                </span>
+              {% endif %}
             </td>
             <td class="actions">
-              <button class="btn btn-sm btn-outline-primary" onclick="syncFromOrbit('{{ promo.code }}')">
-                <i class="fas fa-sync"></i> Sync from ORBIT
-              </button>
-              <button class="btn btn-sm btn-outline-secondary" onclick="syncToPam('{{ promo.code }}')">
+              <button class="btn btn-sm btn-outline-secondary" onclick="syncToPam('{{ promo.code }}', this)">
                 <i class="fas fa-upload"></i> Update PAM
-              </button>
-              <button class="btn btn-sm btn-outline-success" onclick="generateSql('{{ promo.code }}')">
-                <i class="fas fa-code"></i> Generate SQL
               </button>
             </td>
           </tr>
@@ -121,29 +417,509 @@
   </div>
 </div>
 
+<!-- SQL Preview Container -->
+<div id="sql-preview-container" class="card mt-4" style="display: none;">
+  <div class="card-header bg-info text-white">
+    <h6 class="mb-0">
+      <i class="fas fa-eye"></i> SQL Preview
+      <button type="button" class="btn btn-sm btn-outline-light float-right" onclick="hideSqlPreview()">
+        <i class="fas fa-times"></i> Close
+      </button>
+    </h6>
+  </div>
+  <div class="card-body">
+    <div id="sql-preview-content">
+      <div class="text-center">
+        <i class="fas fa-spinner fa-spin"></i> Loading SQL...
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
 function refreshData() {
   window.location.reload();
 }
 
-function syncFromOrbit(promoCode) {
-  if (confirm(`Sync dates from ORBIT for promotion ${promoCode}?`)) {
-    // TODO: Implement ORBIT sync when database connection is available
-    alert('ORBIT database connection not yet available. This feature will be implemented when connection is established.');
+// Multi-select functionality
+function toggleSelectAll() {
+  const selectAllCheckbox = document.getElementById('selectAll');
+  // Only select checkboxes in visible rows (not filtered out)
+  const visibleRowCheckboxes = document.querySelectorAll('.mismatch-row:not([style*="display: none"]) .row-checkbox');
+  
+  visibleRowCheckboxes.forEach(checkbox => {
+    checkbox.checked = selectAllCheckbox.checked;
+  });
+  
+  updateBatchActions();
+}
+
+function updateBatchActions() {
+  const selectedCheckboxes = document.querySelectorAll('.row-checkbox:checked');
+  const batchActions = document.getElementById('batchActions');
+  const selectedCount = document.getElementById('selectedCount');
+  
+  if (selectedCheckboxes.length > 0) {
+    batchActions.style.display = 'block';
+    selectedCount.textContent = selectedCheckboxes.length;
+  } else {
+    batchActions.style.display = 'none';
+  }
+  
+  // Update select all checkbox state based on visible rows only
+  const visibleRowCheckboxes = document.querySelectorAll('.mismatch-row:not([style*="display: none"]) .row-checkbox');
+  const visibleSelectedCheckboxes = document.querySelectorAll('.mismatch-row:not([style*="display: none"]) .row-checkbox:checked');
+  const selectAllCheckbox = document.getElementById('selectAll');
+  
+  if (visibleRowCheckboxes.length === 0) {
+    selectAllCheckbox.checked = false;
+    selectAllCheckbox.indeterminate = false;
+  } else {
+    selectAllCheckbox.checked = visibleSelectedCheckboxes.length === visibleRowCheckboxes.length;
+    selectAllCheckbox.indeterminate = visibleSelectedCheckboxes.length > 0 && visibleSelectedCheckboxes.length < visibleRowCheckboxes.length;
   }
 }
 
-function syncToPam(promoCode) {
-  if (confirm(`Update PAM dates for promotion ${promoCode}?`)) {
-    // TODO: Implement PAM update functionality
-    alert('PAM update functionality will be implemented.');
+function clearSelection() {
+  const selectAllCheckbox = document.getElementById('selectAll');
+  const rowCheckboxes = document.querySelectorAll('.row-checkbox');
+  
+  selectAllCheckbox.checked = false;
+  selectAllCheckbox.indeterminate = false;
+  rowCheckboxes.forEach(checkbox => {
+    checkbox.checked = false;
+  });
+  
+  updateBatchActions();
+}
+
+function getSelectedPromoCodes() {
+  const selectedCheckboxes = document.querySelectorAll('.row-checkbox:checked');
+  return Array.from(selectedCheckboxes).map(checkbox => checkbox.value);
+}
+
+function batchUpdatePam() {
+  const selectedCodes = getSelectedPromoCodes();
+  
+  if (selectedCodes.length === 0) {
+    alert('Please select promotions to update.');
+    return;
+  }
+  
+  if (!confirm(`Update PAM dates for ${selectedCodes.length} selected promotion(s)?`)) {
+    return;
+  }
+  
+  const batchUpdateBtn = document.getElementById('batchUpdateBtn');
+  const originalText = batchUpdateBtn.innerHTML;
+  batchUpdateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating...';
+  batchUpdateBtn.disabled = true;
+  
+  // Process each promotion sequentially
+  processBatchUpdate(selectedCodes, 0, [], originalText);
+}
+
+function processBatchUpdate(promoCodes, index, results, originalButtonText) {
+  if (index >= promoCodes.length) {
+    // All done, show results
+    showBatchResults('Update PAM', results);
+    const batchUpdateBtn = document.getElementById('batchUpdateBtn');
+    batchUpdateBtn.innerHTML = originalButtonText;
+    batchUpdateBtn.disabled = false;
+    return;
+  }
+  
+  const promoCode = promoCodes[index];
+  
+  fetch(`/update_pam_date/${promoCode}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    results.push({
+      promoCode: promoCode,
+      success: data.success,
+      message: data.message
+    });
+    
+    // Process next promotion
+    processBatchUpdate(promoCodes, index + 1, results, originalButtonText);
+  })
+  .catch(error => {
+    results.push({
+      promoCode: promoCode,
+      success: false,
+      message: 'Network error: ' + error.message
+    });
+    
+    // Process next promotion even if this one failed
+    processBatchUpdate(promoCodes, index + 1, results, originalButtonText);
+  });
+}
+
+function batchGenerateSql() {
+  const selectedCodes = getSelectedPromoCodes();
+  
+  if (selectedCodes.length === 0) {
+    alert('Please select promotions to generate SQL for.');
+    return;
+  }
+  
+  // Get operator ID from the input field
+  const operatorId = document.getElementById('operatorId').value;
+  
+  // Validate operator ID
+  if (!operatorId || operatorId.length !== 5 || !/^\d{5}$/.test(operatorId)) {
+    alert('Please enter a valid 5-digit operator ID');
+    document.getElementById('operatorId').focus();
+    return;
+  }
+  
+  // Show loading state
+  const batchSqlBtn = document.getElementById('batchSqlBtn');
+  const originalText = batchSqlBtn.innerHTML;
+  batchSqlBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating SQL...';
+  batchSqlBtn.disabled = true;
+  
+  // Prepare data for batch SQL generation
+  const promoData = [];
+  selectedCodes.forEach(code => {
+    const row = document.querySelector(`tr[data-promo-code="${code}"]`);
+    if (row) {
+      const orbitEndDate = row.querySelector('.orbit-end-date').textContent.trim();
+      console.log(`Found promo ${code} with orbit end date: ${orbitEndDate}`);
+      promoData.push({
+        code: code,
+        orbit_end_date: orbitEndDate
+      });
+    } else {
+      console.error(`Could not find row for promo code: ${code}`);
+    }
+  });
+  
+  console.log('Prepared promo data:', promoData);
+  
+  if (promoData.length === 0) {
+    alert('No valid promotion data found. Please try again.');
+    batchSqlBtn.innerHTML = originalText;
+    batchSqlBtn.disabled = false;
+    return;
+  }
+  
+  // Make AJAX request to generate batch SQL
+  fetch('/generate_batch_sql', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      promotions: promoData,
+      operator_id: operatorId
+    })
+  })
+  .then(response => {
+    if (!response.ok) {
+      return response.json().then(err => Promise.reject(err));
+    }
+    return response.json();
+  })
+  .then(data => {
+    // Show file preview
+    showSqlFilePreview(data);
+    
+    // Reset button
+    batchSqlBtn.innerHTML = originalText;
+    batchSqlBtn.disabled = false;
+  })
+  .catch(error => {
+    alert('Error generating SQL: ' + (error.error || 'Unknown error'));
+    
+    // Reset button
+    batchSqlBtn.innerHTML = originalText;
+    batchSqlBtn.disabled = false;
+  });
+}
+
+function showBatchResults(operation, results) {
+  const successCount = results.filter(r => r.success).length;
+  const failureCount = results.length - successCount;
+  
+  let message = `${operation} completed:\n`;
+  message += `✓ ${successCount} successful\n`;
+  if (failureCount > 0) {
+    message += `✗ ${failureCount} failed\n\n`;
+    message += 'Failed promotions:\n';
+    results.filter(r => !r.success).forEach(r => {
+      message += `${r.promoCode}: ${r.message}\n`;
+    });
+  }
+  
+  alert(message);
+  
+  if (successCount > 0) {
+    // Refresh the page to show updated data
+    setTimeout(() => {
+      window.location.reload();
+    }, 1000);
   }
 }
 
-function generateSql(promoCode) {
-  // TODO: Implement SQL generation functionality
-  console.log(`Generate SQL requested for promo: ${promoCode}`);
+function syncToPam(promoCode, button) {
+    // Show loading state
+    const originalText = button.innerHTML;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating...';
+    button.disabled = true;
+    
+    // Make AJAX call to update PAM
+    fetch(`/update_pam_date/${promoCode}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Show success message
+            showMessage(data.message, 'success');
+            
+            // Update the PAM End Date in the table (6th column)
+            const row = button.closest('tr');
+            const pamDateCell = row.querySelector('td:nth-child(6)'); // PAM End Date column
+            if (pamDateCell) {
+                pamDateCell.textContent = data.new_date;
+            }
+            
+            // Update the mismatch type to show it's now synced (7th column)
+            const mismatchTypeCell = row.querySelector('td:nth-child(7)'); // Mismatch Type column
+            if (mismatchTypeCell) {
+                mismatchTypeCell.innerHTML = '<span class="status-match">Synced</span>';
+            }
+            
+            // Hide the button since dates now match
+            button.style.display = 'none';
+            
+        } else {
+            showMessage(data.message, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showMessage('Error updating PAM date: ' + error.message, 'error');
+    })
+    .finally(() => {
+        // Restore button state
+        button.innerHTML = originalText;
+        button.disabled = false;
+    });
 }
+
+function showMessage(message, type) {
+    // Create message element
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `alert alert-${type}`;
+    messageDiv.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 10px 20px;
+        border-radius: 4px;
+        z-index: 1000;
+        min-width: 250px;
+        max-width: 400px;
+        word-wrap: break-word;
+    `;
+    
+    if (type === 'success') {
+        messageDiv.style.backgroundColor = '#d4edda';
+        messageDiv.style.color = '#155724';
+        messageDiv.style.border = '1px solid #c3e6cb';
+    } else {
+        messageDiv.style.backgroundColor = '#f8d7da';
+        messageDiv.style.color = '#721c24';
+        messageDiv.style.border = '1px solid #f5c6cb';
+    }
+    
+    messageDiv.textContent = message;
+    
+    // Add to page
+    document.body.appendChild(messageDiv);
+    
+    // Remove after 5 seconds
+    setTimeout(() => {
+        if (messageDiv.parentNode) {
+            messageDiv.parentNode.removeChild(messageDiv);
+        }
+    }, 5000);
+}
+
+function downloadSqlForPromo(promoCode, orbitEndDate) {
+  // Get operator ID from the input field
+  const operatorId = document.getElementById('operatorId').value;
+  
+  // Validate operator ID
+  if (!operatorId || operatorId.length !== 5 || !/^\d{5}$/.test(operatorId)) {
+    alert('Please enter a valid 5-digit operator ID');
+    return;
+  }
+  
+  // Trigger download
+  const url = `/generate_sql_for_promo/${promoCode}?operator_id=${operatorId}&orbit_end_date=${encodeURIComponent(orbitEndDate)}`;
+  window.location.href = url;
+}
+
+function toggleSqlPreview(promoCode, orbitEndDate) {
+  // Get operator ID from the input field
+  const operatorId = document.getElementById('operatorId').value;
+  
+  // Validate operator ID
+  if (!operatorId || operatorId.length !== 5 || !/^\d{5}$/.test(operatorId)) {
+    alert('Please enter a valid 5-digit operator ID');
+    return;
+  }
+  
+  const container = document.getElementById('sql-preview-container');
+  const content = document.getElementById('sql-preview-content');
+  
+  if (container.style.display === 'none') {
+    // Show preview and load SQL
+    container.style.display = 'block';
+    content.innerHTML = '<div class="text-center"><i class="fas fa-spinner fa-spin"></i> Loading SQL...</div>';
+    
+    // Scroll to preview
+    container.scrollIntoView({ behavior: 'smooth' });
+    
+    // Load SQL via AJAX
+    const url = `/preview_sql_for_promo/${promoCode}?operator_id=${operatorId}&orbit_end_date=${encodeURIComponent(orbitEndDate)}`;
+    
+    fetch(url)
+      .then(response => {
+        if (!response.ok) {
+          return response.json().then(err => Promise.reject(err));
+        }
+        return response.json();
+      })
+      .then(data => {
+        content.innerHTML = `
+          <div class="form-group">
+            <label><strong>SQL Statement for ${promoCode}:</strong></label>
+            <textarea class="form-control" rows="6" readonly style="font-family: monospace; font-size: 12px;">${data.sql}</textarea>
+          </div>
+          <div class="text-right">
+            <button class="btn btn-success btn-sm" onclick="copySqlToClipboard(this)">
+              <i class="fas fa-copy"></i> Copy SQL
+            </button>
+          </div>
+        `;
+      })
+      .catch(error => {
+        content.innerHTML = `
+          <div class="alert alert-danger">
+            <strong>Error:</strong> ${error.error || 'Failed to load SQL preview'}
+          </div>
+        `;
+      });
+  } else {
+    // Hide preview
+    hideSqlPreview();
+  }
+}
+
+function hideSqlPreview() {
+  document.getElementById('sql-preview-container').style.display = 'none';
+}
+
+function copySqlToClipboard(button) {
+  const textarea = button.closest('.form-group').querySelector('textarea');
+  textarea.select();
+  document.execCommand('copy');
+  
+  // Visual feedback
+  const originalText = button.innerHTML;
+  button.innerHTML = '<i class="fas fa-check"></i> Copied!';
+  button.classList.remove('btn-success');
+  button.classList.add('btn-outline-success');
+  
+  setTimeout(() => {
+    button.innerHTML = originalText;
+    button.classList.remove('btn-outline-success');
+    button.classList.add('btn-success');
+  }, 2000);
+}
+
+// File preview widget functions
+function showSqlFilePreview(data) {
+  const preview = document.getElementById('sqlFilePreview');
+  const fileName = document.getElementById('sqlFileName');
+  const generatedAt = document.getElementById('sqlGeneratedAt');
+  const charCount = document.getElementById('sqlCharCount');
+  const statementCount = document.getElementById('sqlStatementCount');
+  const downloadBtn = document.getElementById('downloadSqlBtn');
+  
+  // Update file info
+  fileName.textContent = data.filename;
+  generatedAt.textContent = `Generated on ${data.generated_at}`;
+  charCount.textContent = `• ${data.character_count.toLocaleString()} characters`;
+  statementCount.textContent = `• ${data.statement_count} statement${data.statement_count !== 1 ? 's' : ''}`;
+  
+  // Set download URL
+  downloadBtn.href = data.download_url;
+  
+  // Store SQL content for preview
+  window.generatedSqlContent = data.sql_content;
+  
+  // Show the preview widget
+  preview.style.display = 'block';
+  
+  // Scroll to the preview
+  preview.scrollIntoView({ behavior: 'smooth' });
+}
+
+function toggleSqlPreview() {
+  const container = document.getElementById('sqlPreviewContainer');
+  const previewArea = document.getElementById('sqlPreviewArea');
+  const previewBtn = document.getElementById('sqlPreviewBtn');
+  
+  if (container.style.display === 'none') {
+    // Show preview
+    container.style.display = 'block';
+    previewArea.value = window.generatedSqlContent || 'No SQL content available';
+    previewBtn.innerHTML = '<i class="fas fa-eye-slash"></i> Hide Preview';
+  } else {
+    // Hide preview
+    clearSqlPreview();
+  }
+}
+
+function clearSqlPreview() {
+  const container = document.getElementById('sqlPreviewContainer');
+  const previewBtn = document.getElementById('sqlPreviewBtn');
+  
+  container.style.display = 'none';
+  previewBtn.innerHTML = '<i class="fas fa-eye"></i> Preview';
+}
+
+// Add input validation for operator ID
+document.getElementById('operatorId').addEventListener('input', function() {
+  const value = this.value;
+  const errorDiv = document.getElementById('operatorIdError');
+  
+  // Remove non-numeric characters
+  this.value = value.replace(/[^0-9]/g, '');
+  
+  // Validate length and content
+  if (this.value.length > 0 && this.value.length !== 5) {
+    errorDiv.textContent = 'Operator ID must be exactly 5 digits';
+    errorDiv.style.display = 'block';
+    this.style.borderColor = '#dc3545';
+  } else {
+    errorDiv.style.display = 'none';
+    this.style.borderColor = '';
+  }
+});
 
 // Filter functionality
 document.getElementById('mismatch-filter').addEventListener('change', applyFilters);
@@ -158,9 +934,16 @@ function applyFilters() {
     const mismatchType = row.dataset.mismatchType;
     const owner = row.dataset.owner;
     
-    // For "all" promos, show everything. For "end_date", only show rows with mismatch types
-    const matchesMismatch = mismatchFilter === 'all' || 
-                           (mismatchFilter === 'end_date' && mismatchType && mismatchType !== '' && mismatchType !== 'none');
+    // Filter logic for mismatch types
+    let matchesMismatch = false;
+    if (mismatchFilter === 'all') {
+      matchesMismatch = true;
+    } else if (mismatchFilter === 'no-mismatch') {
+      matchesMismatch = !mismatchType || mismatchType === '';
+    } else {
+      matchesMismatch = mismatchType === mismatchFilter;
+    }
+    
     const matchesOwner = ownerFilter === 'all' || owner === ownerFilter;
     
     if (matchesMismatch && matchesOwner) {
@@ -169,6 +952,9 @@ function applyFilters() {
       row.style.display = 'none';
     }
   });
+  
+  // Update batch actions and select all state after filtering
+  updateBatchActions();
 }
 
 // Search functionality
@@ -187,6 +973,9 @@ document.getElementById('search-input').addEventListener('input', function() {
       row.style.display = 'none';
     }
   });
+  
+  // Update batch actions and select all state after searching
+  updateBatchActions();
 });
 </script>
 
