@@ -518,9 +518,9 @@
     "version_history": [
       "09/03/2025 03:58 PM - Cade Holtzen - Created promo."
     ],
-    "last_changes": "Last save: 09/03/2025 03:59 PM - Cade Holtzen - Changed: Promo % Discount (\u2192 100)",
+    "last_changes": "Last save: 09/03/2025 03:59 PM - Cade Holtzen - Changed: Promo % Discount (\u00e2\u2020\u2019 100)",
     "created_at": "2025-09-03T15:58:59.117379",
-    "updated_at": "2025-09-03T15:59:41.142704",
+    "updated_at": "2025-09-03T15:59:41.083433",
     "sku_link": "https://apps.powerapps.com/play/9f175d7a-fd5e-47ea-a998-2bff5de64661?tenantId=be0f980b-dd99-4b19-bd7b-bc71a09b026c&RecordID=eaa9ee30-1722-f011-9989-6045bd08a828&NavScreen=Attachments",
     "tradein_link": "https://apps.powerapps.com/play/9f175d7a-fd5e-47ea-a998-2bff5de64661?tenantId=be0f980b-dd99-4b19-bd7b-bc71a09b026c&RecordID=eaa9ee30-1722-f011-9989-6045bd08a828&NavScreen=Attachments",
     "sql_file": {},
@@ -573,6 +573,48 @@
     "sql_file": {},
     "jira_ticket": "",
     "initiative_name": "",
+    "segment_name": "",
+    "sub_segment": "",
+    "segment_group_id": "",
+    "segment_level": "",
+    "updated_by": "Cade Holtzen"
+  },
+  "P973": {
+    "promo_notes": "3/5: Corrected marketing names/formatting issues in Eligibile trade-in devices",
+    "generated_sql": "",
+    "uploaded_files": {},
+    "version_history": [
+      "09/04/2025 04:22 PM - Cade Holtzen - Created promo."
+    ],
+    "last_changes": "Last save: 09/04/2025 04:22 PM - Cade Holtzen - Changed: Promo Amount (\u00e2\u2020\u2019 830)",
+    "created_at": "2025-09-04T16:22:07.256063",
+    "updated_at": "2025-09-04T16:22:10.679004",
+    "sku_link": "",
+    "tradein_link": "",
+    "sql_file": {},
+    "jira_ticket": "",
+    "initiative_name": "iPhone 16 On Us ($830) with New Line and Trade on Most Plans",
+    "segment_name": "",
+    "sub_segment": "",
+    "segment_group_id": "",
+    "segment_level": "",
+    "updated_by": "Cade Holtzen"
+  },
+  "P974": {
+    "promo_notes": "- Can be combined with Carrier Freedom while 17493 is active - Eligible for forever upgrade redemption  - Customer type Business w/Tax ID >13 Lines is only qualified for customers that have the Yearly Upgrade SOC  - Removed devices from trade-in tiers with FMV higher than promo value to accommodate 100% RDC ",
+    "generated_sql": "",
+    "uploaded_files": {},
+    "version_history": [
+      "09/09/2025 01:41 PM - Cade Holtzen - Created promo."
+    ],
+    "last_changes": "Last save: 09/09/2025 01:41 PM - Cade Holtzen - Changed: Promo % Discount (\u2192 100)",
+    "created_at": "2025-09-09T13:41:36.130287",
+    "updated_at": "2025-09-09T13:41:50.935434",
+    "sku_link": "",
+    "tradein_link": "",
+    "sql_file": {},
+    "jira_ticket": "",
+    "initiative_name": "iPhone 16 On Us ($830) w/Trade on Go5G Plus / Next",
     "segment_name": "",
     "sub_segment": "",
     "segment_group_id": "",
