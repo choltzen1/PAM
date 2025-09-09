@@ -607,14 +607,35 @@
     "version_history": [
       "09/09/2025 01:41 PM - Cade Holtzen - Created promo."
     ],
-    "last_changes": "Last save: 09/09/2025 01:41 PM - Cade Holtzen - Changed: Promo % Discount (\u2192 100)",
+    "last_changes": "Last save: 09/09/2025 01:59 PM - Cade Holtzen - Changed: Promo Amount (\u00e2\u2020\u2019 830)",
     "created_at": "2025-09-09T13:41:36.130287",
-    "updated_at": "2025-09-09T13:41:50.935434",
+    "updated_at": "2025-09-09T13:59:30.095689",
     "sku_link": "",
     "tradein_link": "",
     "sql_file": {},
     "jira_ticket": "",
     "initiative_name": "iPhone 16 On Us ($830) w/Trade on Go5G Plus / Next",
+    "segment_name": "",
+    "sub_segment": "",
+    "segment_group_id": "",
+    "segment_level": "",
+    "updated_by": "Cade Holtzen"
+  },
+  "P975": {
+    "promo_notes": "NULL",
+    "generated_sql": "",
+    "uploaded_files": {},
+    "version_history": [
+      "09/09/2025 02:03 PM - Cade Holtzen - Created promo."
+    ],
+    "last_changes": null,
+    "created_at": "2025-09-09T14:03:44.855493",
+    "updated_at": "2025-09-09T14:03:44.878760",
+    "sku_link": "",
+    "tradein_link": "",
+    "sql_file": {},
+    "jira_ticket": "",
+    "initiative_name": "iPhone 15 On Us ($730) with New Line and Trade on Most Plans",
     "segment_name": "",
     "sub_segment": "",
     "segment_group_id": "",

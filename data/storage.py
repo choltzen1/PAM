@@ -42,7 +42,13 @@ class PromoDataManager:
             json.dump(data, f, indent=2, ensure_ascii=False)
     
     def get_promo(self, promo_code: str) -> Dict[str, Any]:
-        """Get a specific promotion by code from database"""
+        """Get a specific promotion by code - check JSON first (for edits), then database"""
+        # First check JSON file for any saved edits
+        data = self._load_json(self.promo_file)
+        if promo_code in data:
+            return data[promo_code]
+        
+        # If not in JSON, fall back to database
         try:
             db_record = self.db_manager.get_promo_by_code(promo_code)
             if db_record:
