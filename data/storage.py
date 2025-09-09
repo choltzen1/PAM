@@ -5,224 +5,28 @@ from typing import Dict, Any, List, Optional
 from datetime import datetime
 from werkzeug.datastructures import FileStorage
 from werkzeug.utils import secure_filename
+from .database import DatabaseManager
 
 
 class PromoDataManager:
-    """Manages persistent storage for promotion data using JSON files"""
+    """Manages persistent storage for promotion data using live database connection"""
     def __init__(self, data_dir: str = "data"):
         self.data_dir = data_dir
-        self.promo_file = os.path.join(data_dir, "promotions.json")
-        self.spe_file = os.path.join(data_dir, "spe_promotions.json")
-        self.rebates_file = os.path.join(data_dir, "rebates.json")
         self.uploads_dir = os.path.join(data_dir, "uploads")
         self.promo_uploads_dir = os.path.join(self.uploads_dir, "promotions")
         
-        # Ensure directories exist
+        # File paths for JSON storage (still needed for SPE and some legacy operations)
+        self.promo_file = os.path.join(data_dir, "promotions.json")
+        self.spe_file = os.path.join(data_dir, "spe_promotions.json")
+        self.rebates_file = os.path.join(data_dir, "rebates.json")
+        
+        # Initialize database manager for live data
+        self.db_manager = DatabaseManager()
+        
+        # Ensure upload directories exist
         os.makedirs(data_dir, exist_ok=True)
         os.makedirs(self.uploads_dir, exist_ok=True)
         os.makedirs(self.promo_uploads_dir, exist_ok=True)
-        
-        # Initialize files if they don't exist
-        self._initialize_files()
-    
-    def _initialize_files(self):
-        """Initialize JSON files with default data if they don't exist"""
-        if not os.path.exists(self.promo_file):
-            default_promo = {
-                "P0472022": {
-                    "code": "P0472022",
-                    "owner": "Alejandro Ferrer",
-                    "bill_facing_name": "2022 Samsung Trade P30",
-                    "orbit_id": "15233",
-                    "description": "Magenta Only: Customers can get up to $600 off GS22 Series when they trade in an eligible device (new and existing customers qualify) on a qualifying rate plan - TFB Retail Only.",
-                    "promo_notes": "Two-tiered discount structure.\n1. $700: All iPhones EXCEPT the iPhone 14 and 15\n2. $730: iPhone 14 and 15 (including all memory variants) to have $730\nTier 1 $730: iPhone 15, iPhone 15 Plus, iPhone 15 Pro, iPhone 15 Pro Max, iPhone 14, iPhone 14 Plus, iPhone 14 Pro, iPhone 14 Pro Max\nTier 2 $700: iPhone 15 Plus, iPhone 15 Pro, iPhone 15 Pro Max, iPhone 14 Plus, iPhone 14 Pro, iPhone 14 Pro Max, iPhone 13 Mini, iPhone 13 Pro, iPhone 13 Pro Max",
-                    "discount": 10,
-                    "amount": 600,
-                    "nseip_drop": "N",
-                    "dcd_web_cart": "Y",
-                    "product_type": "G",
-                    "bogo": "N",
-                    "trade_in_group_id": "TRD2025-001",
-                    "fpd_display_promo": "N",
-                    "on_menu": "Y",
-                    "market_group": "*",
-                    "store_group": "*",
-                    "sku_link": "https://web.powerapps.com/webplayer/iframe...",
-                    "tradein_link": "https://web.powerapps.com/webplayer/iframe...",
-                    "promo_start_date": "2025-07-01",
-                    "promo_end_date": "2025-08-01",
-                    "comm_end_date": "2025-08-15",
-                    "promo_duration": 24,
-                    "delay_time": 0,                    "application_grace_period": "G11",
-                    "promo_grace": "",
-                    "trade_in_grace": "",
-                    "mpss_lookback": "",
-                    "device_sales_type": "S01",
-                    "activation_type": "*",
-                    "maintain_soc": "Y",
-                    "limit_per_ban": 4,
-                    "min_gsm_count": "",
-                    "max_gsm_count": 12,
-                    "port_in_group_id": "G02",
-                    # Segmentation fields
-                    "segment_name": "",
-                    "sub_segment": "",
-                    "segment_group_id": "",
-                    "segment_level": "",
-                    # Groupings fields
-                    "soc_grouping": "Group 1NS",
-                    "account_type": "A01",
-                    "sales_application": "S01",
-                    # BPTCR fields
-                    "bptcr_details": [
-                        "BPTCR Detail 1",
-                        "BPTCR Detail 2",
-                        "BPTCR Detail 3"
-                    ],
-                    "version_history": [
-                        "11/6/2023 1:18 PM - Michael Pugh - Approval requested for Care-Medjo, Sue, Commissions - Sandbo, Stephany and Device Finance - Kanzler, Justin.",
-                        "11/1/2023 10:00 AM - Cade Holtzen - Created promo."
-                    ],
-                    "created_at": datetime.now().isoformat(),
-                    "updated_at": datetime.now().isoformat()
-                }
-            }
-            self._save_json(self.promo_file, default_promo)
-        
-        if not os.path.exists(self.spe_file):
-            default_spe = {
-                "SP005": {
-                    "code": "SP005",
-                    "owner": "Hari Kariavula",
-                    "bill_facing_name": "2022 Line On Us P2",
-                    "orbit_id": "15600",
-                    "description": "SPE Line On Us Promo",
-                    "promo_notes": "",
-                    "promo_identifier": "B",
-                    "pt_priority_indicator": "G",
-                    "account_type": "*",
-                    "sales_application": "*",
-                    "dcd_web_cart": "Y",
-                    "on_menu": "N",
-                    "service_priority": "2880",
-                    "max_discount": "1",
-                    "market_group": "*",
-                    "store_group": "*",
-                    "c2_content": "",
-                    "promo_start_date": "2025-01-01",
-                    "promo_end_date": "2025-12-31",
-                    "pr_date": "",
-                    "ban_tenure_start": "",
-                    "ban_tenure_end": "",
-                    "channel_grace_period": "NULL",
-                    "maintain_line_count_days": "365",
-                    "re_enroll_period": "",
-                    "promo_duration": "",
-                    "port_duration": "",
-                    "tfb_channel_group_id": "NULL",
-                    "dealer_group_id": "NULL",
-                    "updated_mrc_ranking": "NULL",
-                    "suppress_discount_reorder": "No",
-                    "retro_ban_evaluation": "No",
-                    "port_in_group_id": "NULL",
-                    "adjustment_code": "EEDG74",
-                    "discount_codes": "22Q12F, 22Q12P, 22Q12S",
-                    "total_indicator": "N",
-                    "gsm_indicator": "Y",
-                    "mi_indicator": "N",
-                    "pure_mi_indicator": "N",
-                    "virtual_mi_indicator": "N",
-                    "duplicate_indicator": "N",
-                    "auto_att_indicator": "N",
-                    "fax_line_indicator": "N",
-                    "conference_indicator": "N",
-                    "iot_indicator": "N",
-                    "go_soc_group_id": "A56",
-                    "bo_soc_group_id": "A55",
-                    "paid_soc_group_id": "A55",
-                    "min_paid_line_mi_count": "",
-                    "go_line_maintenance": "A57",
-                    "bo_line_maintenance": "A57",
-                    "paid_line_maintenance": "A57",
-                    "min_paid_line_gsm_count": "1",
-                    "go_line_count": "1",
-                    "bo_line_count": "1",
-                    "borrow_bo_lines": "N",
-                    "lend_bo_lines": "Y",
-                    "soc_discount_mapping": "https://web.powerapps.com/webplayer/iframe...",
-                    "version_history": [
-                        f"{datetime.now().strftime('%m/%d/%Y %I:%M %p')} - Cade Holtzen - Created SPE promo."
-                    ],
-                    "created_at": datetime.now().isoformat(),
-                    "updated_at": datetime.now().isoformat()
-                },
-                "SP122": {
-                    "code": "SP122",
-                    "owner": "Rich Brakenhoff",
-                    "bill_facing_name": "Internet ID250153",
-                    "orbit_id": "23987",
-                    "description": "Internet ID250153",
-                    "promo_notes": "",
-                    "promo_identifier": "F",
-                    "pt_priority_indicator": "B",
-                    "account_type": "A01",
-                    "sales_application": "NULL",
-                    "dcd_web_cart": "N",
-                    "on_menu": "Y",
-                    "service_priority": "2880",
-                    "max_discount": "1",
-                    "market_group": "*",
-                    "store_group": "*",
-                    "c2_content": "",
-                    "promo_start_date": "2025-03-27",
-                    "promo_end_date": "2025-04-02",
-                    "pr_date": "",
-                    "ban_tenure_start": "",
-                    "ban_tenure_end": "",
-                    "channel_grace_period": "G01",
-                    "maintain_line_count_days": "365",
-                    "re_enroll_period": "",
-                    "promo_duration": "",
-                    "port_duration": "",
-                    "tfb_channel_group_id": "A02",
-                    "dealer_group_id": "G01",
-                    "updated_mrc_ranking": "GSM",
-                    "suppress_discount_reorder": "Yes",
-                    "retro_ban_evaluation": "No",
-                    "port_in_group_id": "G03",
-                    "adjustment_code": "EEDG74",
-                    "discount_codes": "22Q12F, 22Q12P, 22Q12S",
-                    "total_indicator": "Y",
-                    "gsm_indicator": "N",
-                    "mi_indicator": "Y",
-                    "pure_mi_indicator": "N",
-                    "virtual_mi_indicator": "N",
-                    "duplicate_indicator": "N",
-                    "auto_att_indicator": "Y",
-                    "fax_line_indicator": "N",
-                    "conference_indicator": "N",
-                    "iot_indicator": "Y",
-                    "go_soc_group_id": "A55",
-                    "bo_soc_group_id": "A56",
-                    "paid_soc_group_id": "A56",
-                    "min_paid_line_mi_count": "2",
-                    "go_line_maintenance": "A56",
-                    "bo_line_maintenance": "A55",
-                    "paid_line_maintenance": "A56",
-                    "min_paid_line_gsm_count": "1",
-                    "go_line_count": "2",
-                    "bo_line_count": "1",
-                    "borrow_bo_lines": "Y",
-                    "lend_bo_lines": "N",
-                    "soc_discount_mapping": "https://web.powerapps.com/webplayer/iframe...",
-                    "version_history": [
-                        f"{datetime.now().strftime('%m/%d/%Y %I:%M %p')} - Rich Brakenhoff - Created SPE promo."
-                    ],
-                    "created_at": datetime.now().isoformat(),
-                    "updated_at": datetime.now().isoformat()
-                }
-            }
-            self._save_json(self.spe_file, default_spe)
     
     def _load_json(self, filepath: str) -> Dict[str, Any]:
         """Load data from JSON file"""
@@ -238,9 +42,15 @@ class PromoDataManager:
             json.dump(data, f, indent=2, ensure_ascii=False)
     
     def get_promo(self, promo_code: str) -> Dict[str, Any]:
-        """Get a specific promotion by code"""
-        data = self._load_json(self.promo_file)
-        return data.get(promo_code, {})
+        """Get a specific promotion by code from database"""
+        try:
+            db_record = self.db_manager.get_promo_by_code(promo_code)
+            if db_record:
+                return self.db_manager.convert_db_record_to_json_format(db_record)
+            return {}
+        except Exception as e:
+            print(f"Database lookup failed for {promo_code}: {e}")
+            return {}
     
     def get_spe_promo(self, promo_code: str) -> Dict[str, Any]:
         """Get a specific SPE promotion by code"""
@@ -248,13 +58,40 @@ class PromoDataManager:
         return data.get(promo_code, {})
     
     def get_all_promos(self) -> Dict[str, Any]:
-        """Get all promotions"""
-        return self._load_json(self.promo_file)
+        """Get all promotions from database"""
+        try:
+            db_records = self.db_manager.get_promos_by_execution_type("RDC")
+            if db_records:
+                # Convert to dictionary format like JSON file
+                result = {}
+                for record in db_records:
+                    # Cast to proper type for compatibility
+                    record_dict: Dict[str, Any] = {str(k): v for k, v in record.items()} if record else {}
+                    converted = self.db_manager.convert_db_record_to_json_format(record_dict)
+                    result[converted['code']] = converted
+                return result
+            return {}
+        except Exception as e:
+            print(f"Database lookup failed for all promos: {e}")
+            return {}
     
     def get_paginated_promos(self, page: int = 1, per_page: int = 25, search: str = "", owner_filter: str = "all") -> Dict[str, Any]:
-        """Get paginated promotions with optional filtering"""
-        all_promos = self._load_json(self.promo_file)
-        promo_list = list(all_promos.values())
+        """Get paginated promotions with optional filtering from database"""
+        try:
+            db_records = self.db_manager.get_promos_by_execution_type("RDC")
+            if db_records:
+                # Convert all database records to JSON format
+                promo_list = []
+                for record in db_records:
+                    # Cast to proper type for compatibility
+                    record_dict: Dict[str, Any] = {str(k): v for k, v in record.items()} if record else {}
+                    converted = self.db_manager.convert_db_record_to_json_format(record_dict)
+                    promo_list.append(converted)
+            else:
+                promo_list = []
+        except Exception as e:
+            print(f"Database lookup failed for paginated promos: {e}")
+            promo_list = []
         
         # Apply filters
         if search:
@@ -281,7 +118,7 @@ class PromoDataManager:
         paginated_promos = promo_list[start:end]
         
         # Get unique owners for filter dropdown
-        all_owners = sorted(set(promo.get('owner', '') for promo in all_promos.values() if promo.get('owner')))
+        all_owners = sorted(set(promo.get('owner', '') for promo in promo_list if promo.get('owner')))
         
         return {
             'promotions': paginated_promos,
@@ -853,6 +690,8 @@ class PromoDataManager:
         
         # Create secure filename
         original_filename = file.filename
+        if not original_filename:
+            raise ValueError("File must have a filename")
         secure_name = secure_filename(original_filename)
         
         # Set standard filename based on type
@@ -971,7 +810,7 @@ class PromoDataManager:
             return file_info.get('file_path')
         return None
     
-    def get_date_mismatched_promos(self) -> List[Dict[str, Any]]:
+    def get_date_mismatched_promos(self) -> Dict[str, Any]:
         """Get promotions with date mismatches between ORBIT and PAM"""
         # For now, we'll generate sample data with some date mismatches
         # When ORBIT database connection is available, this will query real data

@@ -1,27 +1,39 @@
 from flask import Blueprint, request, render_template, redirect, url_for, flash, jsonify, send_file
 from werkzeug.utils import secure_filename
 import os
+from typing import Optional, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from data.storage import PromoDataManager
 
 # Create blueprint for promotion routes
 promo_bp = Blueprint('promo', __name__)
 
 # Data manager will be set by the main app
-data_manager = None
+data_manager: Optional['PromoDataManager'] = None
 
 def init_data_manager(dm):
     """Initialize the data manager from the main app"""
     global data_manager
     data_manager = dm
 
+def _ensure_data_manager():
+    """Ensure data_manager is initialized, raise error if not"""
+    if data_manager is None:
+        raise RuntimeError("Data manager not initialized. Call init_data_manager() first.")
+    return data_manager
+
 @promo_bp.route('/edit_promo/<promo_code>', methods=['GET', 'POST'])
 def edit_promo(promo_code):
     """Handle editing of promotion data"""
+    dm = _ensure_data_manager()
+    
     if request.method == 'POST':
         # Get the active tab
         active_tab = request.form.get('active_tab', 'Details')
         
         # Get current promo data
-        promo_data = data_manager.get_promo(promo_code)
+        promo_data = dm.get_promo(promo_code)
         if not promo_data:
             # Create new promo data if it doesn't exist
             promo_data = {
@@ -57,10 +69,7 @@ def edit_promo(promo_code):
                 promo_data['sql_generated_at'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                 promo_data['sql_generation_time'] = f"{generation_time:.4f}"
                 promo_data['sql_length'] = len(sql_content)
-                data_manager.save_promo(promo_code, promo_data, user_name="Cade Holtzen")
-                
-                # Record SQL generation in version history
-                data_manager.record_sql_generation(promo_code, "Cade Holtzen", generation_time, len(sql_content))
+                dm.save_promo(promo_code, promo_data, user_name="Cade Holtzen")
                 
                 # Flash message with performance info
                 flash(f"SQL generated successfully in {generation_time:.2f} seconds ({len(sql_content):,} characters)", "success")
@@ -80,7 +89,7 @@ def edit_promo(promo_code):
                 file = request.files[file_key]
                 if file and file.filename:
                     try:
-                        file_metadata = data_manager.save_excel_file(promo_code, file, file_key)
+                        file_metadata = dm.save_excel_file(promo_code, file, file_key)
                         if file_metadata:
                             # Update the promo data with file metadata
                             if 'uploaded_files' not in promo_data:
@@ -132,10 +141,7 @@ def edit_promo(promo_code):
                                 except Exception as e:
                                     flash(f"Error processing trade-in Excel: {str(e)}", "warning")
                             
-                            data_manager.save_promo(promo_code, promo_data)
-                            
-                            # Record file upload in version history
-                            data_manager.record_file_upload(promo_code, "Cade Holtzen", file_key, file.filename)
+                            dm.save_promo(promo_code, promo_data)
                             
                             flash(f"{file_key.replace('_', ' ').title()} uploaded successfully", "success")
                         else:
@@ -157,7 +163,7 @@ def edit_promo(promo_code):
         # Save changes
         if updated_fields:
             promo_data['last_changes'] = f"Updated {', '.join(updated_fields)} on {active_tab} tab"
-            data_manager.save_promo(promo_code, promo_data, user_name="Cade Holtzen")
+            dm.save_promo(promo_code, promo_data, user_name="Cade Holtzen")
             flash(f"Saved {active_tab} successfully", "success")
         
         # Redirect to maintain the active tab
@@ -165,7 +171,7 @@ def edit_promo(promo_code):
     
     # GET request
     tab = request.args.get('tab', 'Details')
-    promo_data = data_manager.get_promo(promo_code)
+    promo_data = dm.get_promo(promo_code)
     if not promo_data:
         # Create new promo data if it doesn't exist
         promo_data = {
@@ -180,19 +186,20 @@ def edit_promo(promo_code):
     return render_template('edit_promo.html', 
                          promo=promo_data, 
                          active_tab=tab,
-                         soc_groupings=data_manager.get_soc_groupings(),
-                         soc_grouping_details=data_manager.get_soc_grouping_details(),
-                         account_types=data_manager.get_account_types(),
-                         account_type_details=data_manager.get_account_type_details(),
-                         sales_applications=data_manager.get_sales_applications(),
-                         sales_application_details=data_manager.get_sales_application_details(),
+                         soc_groupings=dm.get_soc_groupings(),
+                         soc_grouping_details=dm.get_soc_grouping_details(),
+                         account_types=dm.get_account_types(),
+                         account_type_details=dm.get_account_type_details(),
+                         sales_applications=dm.get_sales_applications(),
+                         sales_application_details=dm.get_sales_application_details(),
                          user_name="Cade Holtzen")
 
 @promo_bp.route('/clear_trade_data/<promo_code>', methods=['POST'])
 def clear_trade_data(promo_code):
     """Clear all trade-related data for a promotion"""
     try:
-        promo_data = data_manager.get_promo(promo_code)
+        dm = _ensure_data_manager()
+        promo_data = dm.get_promo(promo_code)
         if not promo_data:
             return jsonify({'success': False, 'error': 'Promotion not found'})
         
@@ -216,7 +223,7 @@ def clear_trade_data(promo_code):
                 promo_data[field] = ''  # Clear the field
         
         # Save the updated promo data
-        data_manager.save_promo(promo_code, promo_data, user_name="Cade Holtzen")
+        dm.save_promo(promo_code, promo_data, user_name="Cade Holtzen")
         
         return jsonify({'success': True, 'message': 'Trade data cleared successfully'})
     
@@ -227,7 +234,8 @@ def clear_trade_data(promo_code):
 def clear_tiers_data(promo_code):
     """Clear all tiers-related data for a promotion"""
     try:
-        promo_data = data_manager.get_promo(promo_code)
+        dm = _ensure_data_manager()
+        promo_data = dm.get_promo(promo_code)
         if not promo_data:
             return jsonify({'success': False, 'error': 'Promotion not found'})
         
@@ -244,7 +252,7 @@ def clear_tiers_data(promo_code):
             promo_data[field] = ''  # Clear the field
         
         # Save the updated promo data
-        data_manager.save_promo(promo_code, promo_data, user_name="Cade Holtzen")
+        dm.save_promo(promo_code, promo_data, user_name="Cade Holtzen")
         
         return jsonify({'success': True, 'message': 'Tiers data cleared successfully'})
     except Exception as e:
@@ -254,7 +262,8 @@ def clear_tiers_data(promo_code):
 def clear_segment_data(promo_code):
     """Clear all segmentation-related data for a promotion"""
     try:
-        promo_data = data_manager.get_promo(promo_code)
+        dm = _ensure_data_manager()
+        promo_data = dm.get_promo(promo_code)
         if not promo_data:
             return jsonify({'success': False, 'error': 'Promotion not found'})
         
@@ -267,7 +276,7 @@ def clear_segment_data(promo_code):
             promo_data[field] = ''  # Clear the field
         
         # Save the updated promo data
-        data_manager.save_promo(promo_code, promo_data, user_name="Cade Holtzen")
+        dm.save_promo(promo_code, promo_data, user_name="Cade Holtzen")
         
         return jsonify({'success': True, 'message': 'Segmentation data cleared successfully'})
     except Exception as e:
@@ -277,7 +286,8 @@ def clear_segment_data(promo_code):
 def delete_file(promo_code, file_type):
     """Delete an uploaded file for a promotion"""
     try:
-        success = data_manager.delete_uploaded_file(promo_code, file_type)
+        dm = _ensure_data_manager()
+        success = dm.delete_uploaded_file(promo_code, file_type)
         if success:
             return jsonify({'success': True, 'message': f'{file_type.replace("_", " ").title()} file deleted successfully'})
         else:
@@ -289,7 +299,8 @@ def delete_file(promo_code, file_type):
 def download_file(promo_code, file_type):
     """Download uploaded files for a promotion"""
     try:
-        promo_data = data_manager.get_promo(promo_code)
+        dm = _ensure_data_manager()
+        promo_data = dm.get_promo(promo_code)
         if not promo_data:
             flash("Promotion not found", "error")
             return redirect(url_for('home'))
@@ -299,7 +310,7 @@ def download_file(promo_code, file_type):
             return redirect(url_for('promo.edit_promo', promo_code=promo_code))
         
         file_info = promo_data['uploaded_files'][file_type]
-        file_path = file_info['path']
+        file_path = file_info.get('file_path', file_info.get('path', ''))  # Handle both possible keys
         
         if not os.path.exists(file_path):
             flash("File no longer exists", "error")
@@ -314,7 +325,8 @@ def download_file(promo_code, file_type):
 def download_sql(promo_code):
     """Download generated SQL for a promotion"""
     try:
-        promo_data = data_manager.get_promo(promo_code)
+        dm = _ensure_data_manager()
+        promo_data = dm.get_promo(promo_code)
         if not promo_data:
             flash("Promotion not found", "error")
             return redirect(url_for('home'))
@@ -347,7 +359,8 @@ def download_sql(promo_code):
 def get_full_sql(promo_code):
     """Get the full SQL for a promotion via AJAX"""
     try:
-        promo_data = data_manager.get_promo(promo_code)
+        dm = _ensure_data_manager()
+        promo_data = dm.get_promo(promo_code)
         if not promo_data:
             return jsonify({'success': False, 'error': 'Promotion not found'})
         

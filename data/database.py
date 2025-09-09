@@ -283,10 +283,7 @@ class DatabaseManager:
         except Exception as e:
             logger.error(f"Failed to fetch promo {promo_code}: {str(e)}")
             return None
-        except Exception as e:
-            logger.error(f"Failed to fetch promo {promo_code}: {str(e)}")
-            return None
-    
+
     def get_recent_promos(self, days: int = 30) -> List[Dict[Hashable, Any]]:
         """Fetch promotions created/updated in the last N days"""
         sql = """
@@ -464,7 +461,7 @@ class DatabaseManager:
             "sql_file": {},
             "last_changes": None,
             "jira_ticket": "",
-            "initiative_name": "",
+            "initiative_name": db_record.get("description", ""),  # Map description to initiative_name for UI
             # Additional fields from database sample
             "crffc_maintainactivelinedev": "Y" if db_record.get("crffc_maintainactivelinedev") == "Y" else "N",
             "Broken_Trade": db_record.get("Broken_Trade", ""),
