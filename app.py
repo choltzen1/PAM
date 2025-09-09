@@ -409,6 +409,7 @@ def edit_spe(promo_code):
         
         try:
             # Save the SPE data using JSON manager
+            json_manager = get_json_manager()
             json_manager.save_spe_promo(promo_code, spe_data, user_name="Cade Holtzen")
             flash(f'SPE {promo_code} saved successfully!', 'success')
             # Redirect back to the same tab
@@ -1127,7 +1128,9 @@ def links(promo_code):
                 if promo_code_upper in regular_promos:
                     data_manager.save_promo(promo_code_upper, promo_data, user_name="Current User")
                 else:
-                    data_manager.save_spe_promo(promo_code_upper, promo_data, user_name="Current User")
+                    # Use JSON manager for SPE promotions
+                    json_manager = get_json_manager()
+                    json_manager.save_spe_promo(promo_code_upper, promo_data, user_name="Current User")
                 
                 # Redirect to prevent form resubmission dialog
                 return redirect(url_for('links', promo_code=promo_code_upper))

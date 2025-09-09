@@ -391,6 +391,26 @@ class DatabaseManager:
     
     def convert_db_record_to_json_format(self, db_record: Dict[str, Any]) -> Dict[str, Any]:
         """Convert database record to JSON storage format"""
+        
+        def format_date_for_html(date_value):
+            """Convert M/D/YYYY to YYYY-MM-DD for HTML date inputs"""
+            if not date_value:
+                return ""
+            date_str = str(date_value).strip()
+            if not date_str:
+                return ""
+            
+            # Handle M/D/YYYY format from SQL Server
+            try:
+                from datetime import datetime
+                if '/' in date_str:
+                    # Parse M/D/YYYY format
+                    dt = datetime.strptime(date_str, '%m/%d/%Y')
+                    return dt.strftime('%Y-%m-%d')
+                return date_str
+            except:
+                return date_str
+        
         # Map database columns to JSON format
         json_record = {
             "code": db_record.get("code", ""),
@@ -399,8 +419,8 @@ class DatabaseManager:
             "owner": str(db_record.get("Owner", "Unknown")).strip('"'),  # Remove quotes from owner field
             "orbit_id": db_record.get("orbit_id", ""),
             "promo_notes": db_record.get("promo_notes", ""),  # Add promo_notes field
-            "promo_start_date": str(db_record.get("promo_srart_date", "")) if db_record.get("promo_srart_date") else "",
-            "promo_end_date": str(db_record.get("promo_end_date", "")) if db_record.get("promo_end_date") else "",
+            "promo_start_date": format_date_for_html(db_record.get("promo_srart_date")),
+            "promo_end_date": format_date_for_html(db_record.get("promo_end_date")),
             "amount": str(db_record.get("amount", "")),
             "discount": str(db_record.get("discount", "")),
             "operator_id": str(db_record.get("operator_id", "")),
@@ -447,7 +467,7 @@ class DatabaseManager:
             "pj_code": "",
             "sku_link": "",
             "tradein_link": "",
-            "comm_end_date": db_record.get("comm_end_date", ""),  # Now available from database
+            "comm_end_date": format_date_for_html(db_record.get("comm_end_date")),
             "promo_grace": "",
             "trade_in_grace": "",
             "segment_name": "",
