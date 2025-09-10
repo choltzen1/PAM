@@ -3,9 +3,13 @@ import os
 import requests
 import urllib3
 from datetime import datetime
+from dotenv import load_dotenv
 from data.hybrid_storage import HybridPromoDataManager as PromoDataManager
 from promo.builders import generate_promo_eligibility_sql
 from promo.routes import promo_bp
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Pre-load pandas to avoid delays during SQL generation
 try:
@@ -1776,64 +1780,163 @@ def admin_cache_refresh():
 @app.route("/create_jira_ticket", methods=["POST"])
 def create_jira_ticket():
     try:
+        # Debug: Print all request headers
+        print("🔧 JIRA Debug - Request Headers:")
+        for header, value in request.headers:
+            print(f"   {header}: {value}")
+        
         # Get form data
-        summary = request.form.get('summary', '')
-        description = request.form.get('description', '')
+        data = request.get_json() if request.is_json else request.form
+        summary = data.get('summary', '')
+        description = data.get('description', '')
+        priority = data.get('priority', 'High')
+        issue_type = data.get('issue_type', 'Task')
+        parent = data.get('parent', '')  # Get parent ticket key
+        promo_code = data.get('promo_code', '')
+        ticket_type = data.get('ticket_type', 'bptcr')  # 'bptcr' or 'dcd'
         
-        # Get JIRA configuration from environment variables or config
-        jira_url = os.environ.get('JIRA_URL', 'https://your-jira-instance.com')
-        jira_username = os.environ.get('JIRA_USERNAME', '')
-        jira_password = os.environ.get('JIRA_PASSWORD', '')
-        jira_project = os.environ.get('JIRA_PROJECT', 'YOUR-PROJECT')
+        print(f"🔧 JIRA Debug - Form data: {dict(data)}")
         
-        if not all([jira_url, jira_username, jira_password, jira_project]):
-            return jsonify({
-                'success': False,
-                'error': 'JIRA configuration is incomplete. Please check environment variables.'
-            })
-        
-        # Create JIRA ticket payload
-        ticket_data = {
-            "fields": {
-                "project": {"key": jira_project},
-                "summary": summary,
-                "description": description,
-                "issuetype": {"name": "Task"}
-            }
+        # Enhanced JIRA configuration from environment variables
+        jira_config = {
+            'url': os.environ.get('JIRA_URL', 'https://t-mobile-stage.atlassian.net'),
+            'username': os.environ.get('JIRA_USERNAME', ''),
+            'api_token': os.environ.get('JIRA_API_TOKEN', ''),  # Use API token instead of password
+            'project': os.environ.get('JIRA_PROJECT', 'EFPE'),
+            'default_assignee': os.environ.get('JIRA_DEFAULT_ASSIGNEE', ''),
+            'labels': os.environ.get('JIRA_LABELS', 'PAM,Promotion,BPTCR').split(','),
+            'components': os.environ.get('JIRA_COMPONENTS', 'Promotion Management').split(','),
+            'timeout': int(os.environ.get('JIRA_TIMEOUT', '30')),
+            'verify_ssl': os.environ.get('JIRA_VERIFY_SSL', 'false').lower() == 'true'
         }
         
-        # Make request to JIRA API
-        auth = (jira_username, jira_password)
-        headers = {'Content-Type': 'application/json'}
+        print(f"🔧 JIRA Debug - Config: URL={jira_config['url']}, User={jira_config['username']}, Project={jira_config['project']}")
+        
+        # Validate required configuration
+        if not all([jira_config['url'], jira_config['username'], jira_config['api_token'], jira_config['project']]):
+            missing_fields = []
+            if not jira_config['url']: missing_fields.append('JIRA_URL')
+            if not jira_config['username']: missing_fields.append('JIRA_USERNAME')
+            if not jira_config['api_token']: missing_fields.append('JIRA_API_TOKEN')
+            if not jira_config['project']: missing_fields.append('JIRA_PROJECT')
+            
+            return jsonify({
+                'success': False,
+                'error': f'JIRA configuration is incomplete. Missing: {", ".join(missing_fields)}. Please check your .env file.'
+            })
+        
+        # Build enhanced ticket payload
+        ticket_fields = {
+            "project": {"key": jira_config['project']},
+            "summary": summary,
+            "description": description,
+            "issuetype": {"name": issue_type},
+            "priority": {"name": priority}
+        }
+        
+        # Add required fields for CPO project
+        if jira_config['project'] == 'CPO':
+            # R2D2 Team is required for CPO project (use ID format)
+            r2d2_team_id = os.getenv('JIRA_R2D2_TEAM_ID', '14013')  # Default: Promo Ops T1
+            ticket_fields["customfield_10279"] = {"id": r2d2_team_id}
+        
+        # Add parent field if specified
+        if parent:
+            ticket_fields["parent"] = {"key": parent}
+            print(f"🔧 JIRA Debug - Adding parent: {parent}")
+        
+        # Add labels if configured
+        if jira_config['labels'] and jira_config['labels'][0]:
+            ticket_fields["labels"] = [label.strip() for label in jira_config['labels'] if label.strip()]
+        
+        # Add assignee if configured
+        if jira_config['default_assignee']:
+            ticket_fields["assignee"] = {"emailAddress": jira_config['default_assignee']}
+        
+        # Add promo-specific information if available
+        if promo_code:
+            # Add promo code to description for better tracking
+            ticket_fields["description"] += f"\n\nPromotion Code: {promo_code}"
+        
+        ticket_data = {"fields": ticket_fields}
+        
+        # Make request to JIRA API using API token authentication
+        auth = (jira_config['username'], jira_config['api_token'])
+        headers = {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        }
+        
+        # Debug logging if enabled
+        if os.environ.get('DEBUG_JIRA', 'false').lower() == 'true':
+            print(f"🔧 JIRA Debug - Creating ticket in project {jira_config['project']}")
+            print(f"🔧 JIRA Debug - Summary: {summary}")
+            print(f"🔧 JIRA Debug - URL: {jira_config['url']}/rest/api/2/issue/")
         
         response = requests.post(
-            f"{jira_url}/rest/api/2/issue/",
+            f"{jira_config['url']}/rest/api/2/issue/",
             json=ticket_data,
             auth=auth,
             headers=headers,
-            verify=False  # Disable SSL verification for internal JIRA instances
+            timeout=jira_config['timeout'],
+            verify=jira_config['verify_ssl']
         )
         
         if response.status_code == 201:
             ticket_info = response.json()
             ticket_key = ticket_info['key']
-            ticket_url = f"{jira_url}/browse/{ticket_key}"
+            ticket_url = f"{jira_config['url']}/browse/{ticket_key}"
+            
+            # Save ticket information to promo data if promo_code provided
+            if promo_code:
+                try:
+                    promo_data = data_manager.get_promo(promo_code)
+                    if promo_data:
+                        # Save different ticket types to different fields
+                        if ticket_type == 'dcd':
+                            promo_data['dcd_jira_ticket'] = ticket_key
+                            print(f"✅ DCD JIRA ticket {ticket_key} linked to promo {promo_code}")
+                        else:
+                            promo_data['jira_ticket'] = ticket_key
+                            print(f"✅ JIRA ticket {ticket_key} linked to promo {promo_code}")
+                        data_manager.save_promo(promo_code, promo_data)
+                except Exception as e:
+                    print(f"⚠️  Failed to link JIRA ticket to promo: {e}")
             
             return jsonify({
                 'success': True,
                 'ticket_key': ticket_key,
-                'ticket_url': ticket_url
+                'ticket_url': ticket_url,
+                'message': f'JIRA ticket {ticket_key} created successfully!'
             })
         else:
+            error_details = f"{response.status_code} - {response.text}"
+            if os.environ.get('DEBUG_JIRA', 'false').lower() == 'true':
+                print(f"❌ JIRA Error: {error_details}")
+            
             return jsonify({
                 'success': False,
-                'error': f'Failed to create JIRA ticket: {response.status_code} - {response.text}'
+                'error': f'Failed to create JIRA ticket: {error_details}'
             })
     
-    except Exception as e:
+    except requests.exceptions.Timeout:
         return jsonify({
             'success': False,
-            'error': f'Error creating JIRA ticket: {str(e)}'
+            'error': 'JIRA request timed out. Please check your connection and try again.'
+        })
+    except requests.exceptions.ConnectionError:
+        return jsonify({
+            'success': False,
+            'error': 'Could not connect to JIRA. Please check the JIRA URL and your network connection.'
+        })
+    except Exception as e:
+        error_msg = f'Error creating JIRA ticket: {str(e)}'
+        if os.environ.get('DEBUG_JIRA', 'false').lower() == 'true':
+            print(f"❌ JIRA Exception: {error_msg}")
+        
+        return jsonify({
+            'success': False,
+            'error': error_msg
         })
 
 

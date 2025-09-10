@@ -630,7 +630,7 @@
     ],
     "last_changes": null,
     "created_at": "2025-09-09T14:03:44.855493",
-    "updated_at": "2025-09-09T14:03:44.878760",
+    "updated_at": "2025-09-09T14:03:44.855479",
     "sku_link": "",
     "tradein_link": "",
     "sql_file": {},
@@ -641,5 +641,68 @@
     "segment_group_id": "",
     "segment_level": "",
     "updated_by": "Cade Holtzen"
+  },
+  "P976": {
+    "promo_notes": "12.2.24 - Initiative name - updated to include Next to match the description of the promo.",
+    "generated_sql": "",
+    "uploaded_files": {},
+    "version_history": [
+      "09/10/2025 12:19 PM - System - Created promo."
+    ],
+    "last_changes": null,
+    "created_at": "2025-09-10T12:19:32.860030",
+    "updated_at": "2025-09-10T12:19:32.860022",
+    "sku_link": "",
+    "tradein_link": "",
+    "sql_file": {},
+    "jira_ticket": "CPO-16304",
+    "initiative_name": "NR X Apple: $600 Off iPhone 16 w/Trade on Go5G Plus/Next - SEGMENT PLANS",
+    "segment_name": "",
+    "sub_segment": "",
+    "segment_group_id": "",
+    "segment_level": "",
+    "updated_by": "System"
+  },
+  "P977": {
+    "promo_notes": "1.2.25 - Active Line Required - updated to Yes.",
+    "generated_sql": "",
+    "uploaded_files": {},
+    "version_history": [
+      "09/10/2025 12:44 PM - System - Created promo."
+    ],
+    "last_changes": null,
+    "created_at": "2025-09-10T12:44:41.636815",
+    "updated_at": "2025-09-10T12:44:41.636803",
+    "sku_link": "",
+    "tradein_link": "",
+    "sql_file": {},
+    "jira_ticket": "CPO-16307",
+    "initiative_name": "NR x Apple: iPhone on Us ($800) w/ New Line and Trade on Most Plans",
+    "segment_name": "",
+    "sub_segment": "",
+    "segment_group_id": "",
+    "segment_level": "",
+    "updated_by": "System"
+  },
+  "P993": {
+    "promo_notes": "Steelthread is eligible channel TCL Flip 4 5G launch was pushed for TFB from May to June 2025 ",
+    "generated_sql": "",
+    "uploaded_files": {},
+    "version_history": [
+      "09/10/2025 01:42 PM - System - Created promo."
+    ],
+    "last_changes": null,
+    "created_at": "2025-09-10T13:42:48.016622",
+    "updated_at": "2025-09-10T13:42:48.049055",
+    "sku_link": "",
+    "tradein_link": "",
+    "sql_file": {},
+    "jira_ticket": "",
+    "initiative_name": "TFB Affordables On Us - AAL Select Plan",
+    "segment_name": "",
+    "sub_segment": "",
+    "segment_group_id": "",
+    "segment_level": "",
+    "updated_by": "System"
   }
 }
