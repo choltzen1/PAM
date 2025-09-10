@@ -1,5 +1,8 @@
 // JIRA Modal Functions
-function openJiraModal() {
+function openJiraModal(ticketType = 'bptcr') {
+  // Store the ticket type for later use
+  window.currentTicketType = ticketType;
+  
   // Pre-fill with promo information
   const promoCode = document.querySelector('input[name="promo_code"]')?.value || 
                    window.promoData?.code || "";
@@ -27,12 +30,34 @@ function openJiraModal() {
     }
   }
   
-  // Build the summary in the required format:
-  // EFPE Promo Device - New Promo - Promo {promo_code} - {orbit_id} - {initiative_name} - Launch Date {date} 12:00 AM
-  const summary = `EFPE Promo Device - New Promo - Promo ${promoCode}${orbitId ? ' - ' + orbitId : ''}${initiativeName ? ' - ' + initiativeName : ''}${formattedLaunchDate}`;
+  // Build different summaries based on ticket type
+  let summary, description;
+  if (ticketType === 'dcd') {
+    summary = `DCD Promo Request - Promo ${promoCode}${orbitId ? ' - ' + orbitId : ''}${initiativeName ? ' - ' + initiativeName : ''}${formattedLaunchDate}`;
+    description = `DCD approval request for promotion ${promoCode}`;
+    
+    // Update modal title
+    document.querySelector('#jiraModal .modal-header h3').textContent = 'Create DCD JIRA Ticket';
+    
+    // Set parent to DCD by default
+    const parentSelect = document.getElementById('jiraParent');
+    const dcdOption = Array.from(parentSelect.options).find(option => option.textContent.includes('DCD'));
+    if (dcdOption) {
+      parentSelect.value = dcdOption.value;
+    }
+  } else {
+    summary = `EFPE Promo Device - New Promo - Promo ${promoCode}${orbitId ? ' - ' + orbitId : ''}${initiativeName ? ' - ' + initiativeName : ''}${formattedLaunchDate}`;
+    description = `JIRA Automation Test`;
+    
+    // Update modal title
+    document.querySelector('#jiraModal .modal-header h3').textContent = 'Create JIRA Ticket';
+    
+    // Reset parent to default
+    document.getElementById('jiraParent').value = '';
+  }
   
   document.getElementById('jiraSummary').value = summary;
-  document.getElementById('jiraDescription').value = `JIRA Automation Test`;
+  document.getElementById('jiraDescription').value = description;
   
   document.getElementById('jiraModal').style.display = 'block';
 }
@@ -48,13 +73,12 @@ function createJiraTicket() {
     priority: document.getElementById('jiraPriority').value,
     issue_type: document.getElementById('jiraIssueType').value,
     parent: document.getElementById('jiraParent').value,
-    email: document.getElementById('jiraEmail').value,
-    token: document.getElementById('jiraToken').value,
-    promo_code: window.promoData?.code || ""
+    promo_code: window.promoData?.code || document.querySelector('input[name="promo_code"]')?.value || "",
+    ticket_type: window.currentTicketType || 'bptcr' // Use stored ticket type
   };
   
-  if (!formData.summary || !formData.description || !formData.email || !formData.token) {
-    alert('Please fill in all required fields.');
+  if (!formData.summary || !formData.description) {
+    alert('Please fill in the summary and description fields.');
     return;
   }
   
@@ -74,16 +98,65 @@ function createJiraTicket() {
   .then(response => response.json())
   .then(data => {
     if (data.success) {
-      alert(`✅ JIRA Ticket Created: ${data.ticket_key}\n\nThe operator ID has been updated with the ticket number.`);
+      // Show success message with ticket details
+      const ticketTypeDisplay = formData.ticket_type === 'dcd' ? 'DCD ' : '';
+      alert(`✅ ${ticketTypeDisplay}JIRA Ticket Created Successfully!\n\nTicket: ${data.ticket_key}\nURL: ${data.ticket_url}\n\n${data.message || ''}`);
+      
+      // Update the appropriate ticket display
+      if (data.ticket_key && formData.promo_code) {
+        const jiraCards = document.querySelectorAll('.jira-management-card');
+        let targetCard;
+        
+        if (formData.ticket_type === 'dcd') {
+          // Find DCD card
+          targetCard = Array.from(jiraCards).find(card => 
+            card.querySelector('h3')?.textContent.includes('DCD')
+          );
+        } else {
+          // Find BPTCR card (the first one or one without DCD)
+          targetCard = Array.from(jiraCards).find(card => 
+            !card.querySelector('h3')?.textContent.includes('DCD')
+          );
+        }
+        
+        if (targetCard) {
+          let statusDiv = targetCard.querySelector('.jira-ticket-status');
+          const ticketLabel = formData.ticket_type === 'dcd' ? 'DCD JIRA Ticket Created:' : 'JIRA Ticket Created:';
+          
+          if (statusDiv) {
+            statusDiv.innerHTML = `
+              <i class="fas fa-check-circle"></i>
+              <strong>${ticketLabel}</strong> 
+              <a href="${data.ticket_url}" target="_blank">${data.ticket_key}</a>
+            `;
+            statusDiv.style.display = 'block';
+          } else {
+            // Add the status if it doesn't exist
+            statusDiv = document.createElement('div');
+            statusDiv.className = 'jira-ticket-status';
+            statusDiv.innerHTML = `
+              <i class="fas fa-check-circle"></i>
+              <strong>${ticketLabel}</strong> 
+              <a href="${data.ticket_url}" target="_blank">${data.ticket_key}</a>
+            `;
+            targetCard.appendChild(statusDiv);
+          }
+        }
+      }
+      
       closeJiraModal();
-      // Refresh the page to show the updated operator ID
-      window.location.reload();
     } else {
-      alert(`❌ Error creating ticket: ${data.error}`);
+      // Show detailed error message
+      let errorMsg = data.error || 'Unknown error occurred';
+      if (errorMsg.includes('JIRA configuration is incomplete')) {
+        errorMsg += '\n\nPlease ensure your .env file contains:\n- JIRA_URL\n- JIRA_USERNAME\n- JIRA_API_TOKEN\n- JIRA_PROJECT';
+      }
+      alert(`❌ Error creating JIRA ticket:\n\n${errorMsg}`);
     }
   })
   .catch(error => {
-    alert(`❌ Error: ${error.message}`);
+    console.error('JIRA Error:', error);
+    alert(`❌ Network Error: ${error.message}\n\nPlease check your connection and try again.`);
   })
   .finally(() => {
     // Reset button state

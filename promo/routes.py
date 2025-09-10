@@ -192,7 +192,8 @@ def edit_promo(promo_code):
                          account_type_details=dm.get_account_type_details(),
                          sales_applications=dm.get_sales_applications(),
                          sales_application_details=dm.get_sales_application_details(),
-                         user_name="Cade Holtzen")
+                         user_name="Cade Holtzen",
+                         jira_dcd_ticket=os.getenv('JIRA_DCD_CURRENT_TICKET', 'DCOMM-13037'))
 
 @promo_bp.route('/clear_trade_data/<promo_code>', methods=['POST'])
 def clear_trade_data(promo_code):
