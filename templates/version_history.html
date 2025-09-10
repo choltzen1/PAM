@@ -154,32 +154,50 @@
   function toggleRow(promoCode) {
     const historyRow = document.getElementById('history-' + promoCode);
     const expandBtn = document.querySelector(`[data-promo="${promoCode}"] .expand-btn i`);
-    
-    if (historyRow.style.display === 'none') {
+    if (!historyRow) return;
+    const isHidden = historyRow.classList.contains('hidden-row');
+    if (isHidden) {
+      historyRow.classList.remove('hidden-row');
       historyRow.style.display = 'table-row';
-      expandBtn.className = 'fas fa-chevron-down';
+      if (expandBtn) expandBtn.className = 'fas fa-chevron-down';
     } else {
+      historyRow.classList.add('hidden-row');
       historyRow.style.display = 'none';
-      expandBtn.className = 'fas fa-chevron-right';
+      if (expandBtn) expandBtn.className = 'fas fa-chevron-right';
     }
   }
 
   function expandAllRows() {
     document.querySelectorAll('.change-history-row').forEach(row => {
+      row.classList.remove('hidden-row');
       row.style.display = 'table-row';
     });
-    document.querySelectorAll('.expand-btn i').forEach(icon => {
-      icon.className = 'fas fa-chevron-down';
-    });
+    document.querySelectorAll('.expand-btn i').forEach(icon => { icon.className = 'fas fa-chevron-down'; });
   }
 
   function collapseAllRows() {
     document.querySelectorAll('.change-history-row').forEach(row => {
+      row.classList.add('hidden-row');
       row.style.display = 'none';
     });
-    document.querySelectorAll('.expand-btn i').forEach(icon => {
-      icon.className = 'fas fa-chevron-right';
-    });
+    document.querySelectorAll('.expand-btn i').forEach(icon => { icon.className = 'fas fa-chevron-right'; });
   }
+
+  // Make entire promo row clickable (excluding direct link clicks) after DOM loaded
+  document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('tr.promo-row').forEach(row => {
+      row.addEventListener('click', (e) => {
+        // Allow opening edit link with middle/ctrl/meta click without toggling
+        const anchor = e.target.closest('a');
+        if (anchor && (e.metaKey || e.ctrlKey || e.button === 1)) return;
+        // Prevent navigation when just expanding via normal left click
+        if (anchor && e.button === 0) {
+          e.preventDefault();
+        }
+        const promoCode = row.getAttribute('data-promo');
+        toggleRow(promoCode);
+      });
+    });
+  });
 </script>
 {% endblock %}
