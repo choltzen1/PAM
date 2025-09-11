@@ -1798,11 +1798,17 @@ def create_jira_ticket():
         print(f"🔧 JIRA Debug - Form data: {dict(data)}")
         
         # Enhanced JIRA configuration from environment variables
+        # Use different projects based on ticket type
+        if ticket_type == 'dcd':
+            project_key = os.environ.get('JIRA_DCD_PROJECT', 'DCOMM')
+        else:
+            project_key = os.environ.get('JIRA_PROJECT', 'EFPE')
+            
         jira_config = {
             'url': os.environ.get('JIRA_URL', 'https://t-mobile-stage.atlassian.net'),
             'username': os.environ.get('JIRA_USERNAME', ''),
             'api_token': os.environ.get('JIRA_API_TOKEN', ''),  # Use API token instead of password
-            'project': os.environ.get('JIRA_PROJECT', 'EFPE'),
+            'project': project_key,
             'default_assignee': os.environ.get('JIRA_DEFAULT_ASSIGNEE', ''),
             'labels': os.environ.get('JIRA_LABELS', 'PAM,Promotion,BPTCR').split(','),
             'components': os.environ.get('JIRA_COMPONENTS', 'Promotion Management').split(','),
@@ -1834,10 +1840,14 @@ def create_jira_ticket():
             "priority": {"name": priority}
         }
         
-        # Add required fields for CPO project
+        # Add required fields for specific projects
         if jira_config['project'] == 'CPO':
             # R2D2 Team is required for CPO project (use ID format)
             r2d2_team_id = os.getenv('JIRA_R2D2_TEAM_ID', '14013')  # Default: Promo Ops T1
+            ticket_fields["customfield_10279"] = {"id": r2d2_team_id}
+        elif jira_config['project'] == 'DCOMM':
+            # R2D2 Team is required for DCOMM project - Ops Engineering team
+            r2d2_team_id = os.getenv('JIRA_DCD_R2D2_TEAM_ID', '12762')  # Default: Ops Engineering
             ticket_fields["customfield_10279"] = {"id": r2d2_team_id}
         
         # Add parent field if specified
