@@ -693,7 +693,7 @@
     ],
     "last_changes": null,
     "created_at": "2025-09-10T13:42:48.016622",
-    "updated_at": "2025-09-10T13:42:48.049055",
+    "updated_at": "2025-09-10T13:42:48.016613",
     "sku_link": "",
     "tradein_link": "",
     "sql_file": {},
@@ -703,6 +703,27 @@
     "sub_segment": "",
     "segment_group_id": "",
     "segment_level": "",
+    "updated_by": "System"
+  },
+  "R121": {
+    "promo_notes": "3.24.2025 - Samsung.com is no longer a participating channel since this offer is LTO for two weeks or 10k takers (whichever comes first.) - Thien Nguyen 4/8 - active line required YES by business/it request",
+    "generated_sql": "",
+    "uploaded_files": {},
+    "version_history": [
+      "09/10/2025 03:29 PM - Cade Holtzen - Created promo."
+    ],
+    "last_changes": "Last save: 09/11/2025 10:43 AM - Cade Holtzen - Changed: Activation Type (\u2192 AE1)",
+    "created_at": "2025-09-10T15:29:25.445353",
+    "updated_at": "2025-09-11T11:18:04.695948",
+    "sku_link": "",
+    "tradein_link": "",
+    "sql_file": {},
+    "jira_ticket": "",
+    "initiative_name": "A36 On Us w/ Trade on Go5G Plus/Next",
+    "segment_name": "hi",
+    "sub_segment": "",
+    "segment_group_id": "",
+    "segment_level": "LINE",
     "updated_by": "System"
   }
 }
