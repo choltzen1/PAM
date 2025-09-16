@@ -538,3 +538,29 @@ html, body {
 .operator-id-section .form-label i { color:#e20074; margin-right:0.5rem; }
 .actions { white-space:nowrap; }
 .actions button, .actions a { margin:0.1rem; }
+.status-synced { background:#d4edda; color:#155724; border:1px solid #c3e6cb; }
+
+/* === SQL Generation / File Preview (aligned with edit_promo) === */
+.file-info-card { background:#ffffff; border:1px solid #ddd; border-radius:8px; padding:1rem; margin-bottom:1rem; display:flex; justify-content:space-between; align-items:center; gap:1rem; flex-wrap:wrap; transition:box-shadow .2s ease,border-color .2s ease; box-shadow:0 1px 3px rgba(0,0,0,0.1); }
+.file-info-card:hover { box-shadow:0 3px 12px rgba(0,0,0,0.15); border-color:#bbb; }
+.file-info { display:flex; align-items:center; gap:.75rem; }
+.file-info i { font-size:1.4rem; color:var(--tmobile-magenta); }
+.file-details { display:flex; flex-direction:column; }
+.file-name { font-weight:600; font-size:.95rem; }
+.file-meta { font-size:.7rem; color:#555; display:flex; gap:.4rem; flex-wrap:wrap; }
+.file-actions { display:flex; gap:.5rem; align-items:center; }
+.file-actions .btn { padding:.35rem .65rem; font-size:.65rem; border:1px solid var(--tmobile-magenta); background:#fff; color:var(--tmobile-magenta); border-radius:4px; }
+.file-actions .btn:hover { background:var(--tmobile-magenta); color:#fff; }
+#sqlFilePreview .file-details { gap:0.25rem; }
+.file-actions-below { margin-top:0.4rem; }
+.file-actions-below .btn { font-size:.6rem; }
+#sqlPreviewContainer { margin-top:.5rem; border:1px solid #ddd; background:#fff; border-radius:8px; padding:.75rem; box-shadow:0 1px 3px rgba(0,0,0,0.08); }
+.sql-preview-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:.5rem; padding:.4rem .5rem; background:#e9ecef; border-radius:4px; font-size:.75rem; font-weight:500; }
+.sql-preview-header button { background:none; border:none; color:var(--tmobile-magenta); font-size:.65rem; cursor:pointer; padding:.25rem .4rem; }
+.sql-preview-header button:hover { text-decoration:underline; }
+#sqlPreviewArea { width:100%; max-height:400px; min-height:180px; font-family:monospace; font-size:.7rem; line-height:1.3; }
+
+@media (max-width: 600px) {
+  .file-info-card { flex-direction:column; align-items:flex-start; }
+  .file-actions { width:100%; }
+}
