@@ -1,9 +1,9 @@
 # Flask and web framework dependencies
 Flask==3.0.0
-Werkzeug==3.0.1
+Werkzeug==3.0.6
 
 # Data processing and Excel handling
-pandas==2.1.4
+pandas==2.3.2
 openpyxl==3.1.2
 
 # Database connectivity
@@ -21,10 +21,10 @@ python-dotenv==1.0.0
 psutil==5.9.6
 
 # Additional dependencies for production
-Jinja2==3.1.2
-MarkupSafe==2.1.3
-click==8.1.7
-blinker==1.7.0
+Jinja2==3.1.6
+MarkupSafe==3.0.2
+click==8.1.8
+blinker==1.9.0
 itsdangerous==2.1.2
 
 # Excel file handling (alternative to openpyxl for older formats)
