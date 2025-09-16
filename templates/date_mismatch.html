@@ -119,26 +119,26 @@
     <!-- Generated SQL File Preview -->
   <div id="sqlFilePreview" class="hidden mb-20">
       <div class="file-info-card">
-        <div class="file-info">
-          <i class="fas fa-database"></i>
-          <div class="file-details">
-            <div class="file-name" id="sqlFileName">End_date_updates_YYYY-MM-DD.sql</div>
-            <div class="file-meta">
-              <span id="sqlGeneratedAt">Generated just now</span>
-              <span id="sqlCharCount">• 0 characters</span>
-              <span id="sqlStatementCount">• 0 statements</span>
+            <div class="file-info">
+              <i class="fas fa-database"></i>
+              <div class="file-details">
+                <div class="file-name" id="sqlFileName">End_date_updates_YYYY-MM-DD.sql</div>
+                <div class="file-meta">
+                  <span id="sqlGeneratedAt">Generated just now</span>
+                  <span id="sqlCharCount">• 0 characters</span>
+                  <span id="sqlStatementCount">• 0 statements</span>
+                </div>
+                <div class="file-actions file-actions-below">
+                  <a href="#" id="downloadSqlBtn" class="btn btn-sm btn-outline">
+                    <i class="fas fa-download"></i> Download SQL
+                  </a>
+                  <button type="button" onclick="toggleSqlPreview()" id="sqlPreviewBtn"
+                          class="btn btn-sm btn-outline ml-5">
+                    <i class="fas fa-eye"></i> Preview
+                  </button>
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
-        <div class="file-actions">
-          <a href="#" id="downloadSqlBtn" class="btn btn-sm btn-outline">
-            <i class="fas fa-download"></i> Download SQL
-          </a>
-          <button type="button" onclick="toggleSqlPreview()" id="sqlPreviewBtn"
-                  class="btn btn-sm btn-outline ml-5">
-            <i class="fas fa-eye"></i> Preview
-          </button>
-        </div>
       </div>
       
       <!-- SQL Preview (initially hidden) -->
@@ -238,7 +238,9 @@
 
 <script>
 function refreshData() {
-  window.location.reload();
+  // Instead of full reload (which clears selections), fetch fresh mismatch data asynchronously (future enhancement)
+  // For now keep existing behavior optional via fallback flag; disabled to preserve user selections.
+  // window.location.reload();
 }
 
 // Multi-select functionality
@@ -259,11 +261,15 @@ function updateBatchActions() {
   const batchActions = document.getElementById('batchActions');
   const selectedCount = document.getElementById('selectedCount');
   
+  // Show/hide batch action bar. Must remove/add 'hidden' class because it sets display:none !important
   if (selectedCheckboxes.length > 0) {
+    batchActions.classList.remove('hidden');
     batchActions.style.display = 'block';
     selectedCount.textContent = selectedCheckboxes.length;
   } else {
+    batchActions.classList.add('hidden');
     batchActions.style.display = 'none';
+    selectedCount.textContent = '0';
   }
   
   // Update select all checkbox state based on visible rows only
@@ -342,7 +348,8 @@ function processBatchUpdate(promoCodes, index, results, originalButtonText) {
     results.push({
       promoCode: promoCode,
       success: data.success,
-      message: data.message
+  message: data.message,
+  newDate: data.new_date || data.newDate
     });
     
     // Process next promotion
@@ -460,10 +467,34 @@ function showBatchResults(operation, results) {
   alert(message);
   
   if (successCount > 0) {
-    // Refresh the page to show updated data
-    setTimeout(() => {
-      window.location.reload();
-    }, 1000);
+    // Instead of reloading, update rows in place (dates + mismatch badge) so user can continue working
+    results.filter(r => r.success).forEach(r => {
+      const row = document.querySelector(`tr[data-promo-code="${r.promoCode}"]`);
+      if (row) {
+        // Update PAM end date cell using API-provided newDate (fallback to ORBIT end date cell, fallback to regex)
+        const pamCell = row.querySelector('.pam-end-date');
+        if (pamCell) {
+          let updatedDate = r.newDate;
+          if (!updatedDate) {
+            const orbitCell = row.querySelector('.orbit-end-date');
+            if (orbitCell) updatedDate = orbitCell.textContent.trim();
+          }
+          if (!updatedDate && r.message) {
+            const match = r.message.match(/to (\d{2}\/\d{2}\/\d{4})/);
+            if (match) updatedDate = match[1];
+          }
+          if (updatedDate) pamCell.textContent = updatedDate;
+        }
+        // Replace mismatch type with Synced badge
+        const mismatchCell = row.querySelector('.mismatch-type');
+        if (mismatchCell) {
+          mismatchCell.innerHTML = '<span class="badge badge-success status-synced">Synced</span>';
+        }
+        // Hide individual Update PAM button
+        const button = row.querySelector('button');
+        if (button) button.style.display = 'none';
+      }
+    });
   }
 }
 
@@ -671,7 +702,8 @@ function showSqlFilePreview(data) {
   // Store SQL content for preview
   window.generatedSqlContent = data.sql_content;
   
-  // Show the preview widget
+  // Show the preview widget (remove 'hidden' class which forces display:none !important)
+  preview.classList.remove('hidden');
   preview.style.display = 'block';
   
   // Scroll to the preview
@@ -682,10 +714,11 @@ function toggleSqlPreview() {
   const container = document.getElementById('sqlPreviewContainer');
   const previewArea = document.getElementById('sqlPreviewArea');
   const previewBtn = document.getElementById('sqlPreviewBtn');
-  
-  if (container.style.display === 'none') {
+  const isHidden = container.classList.contains('hidden') || getComputedStyle(container).display === 'none';
+  if (isHidden) {
     // Show preview
-    container.style.display = 'block';
+  container.classList.remove('hidden');
+  container.style.display = 'block';
     previewArea.value = window.generatedSqlContent || 'No SQL content available';
     previewBtn.innerHTML = '<i class="fas fa-eye-slash"></i> Hide Preview';
   } else {
@@ -699,6 +732,8 @@ function clearSqlPreview() {
   const previewBtn = document.getElementById('sqlPreviewBtn');
   
   container.style.display = 'none';
+  // Add hidden class back for consistency
+  container.classList.add('hidden');
   previewBtn.innerHTML = '<i class="fas fa-eye"></i> Preview';
 }
 
