@@ -52,14 +52,14 @@
     </div>
 
     <div class="action-buttons">
-      <a href="{{ url_for('get_promo_codes') }}" class="btn"><i class="fas fa-wrench"></i> Get Promo Code</a>
+  <a href="{{ url_for('promo.get_promo_codes_page') }}" class="btn"><i class="fas fa-wrench"></i> Get Promo Code</a>
     </div>
   </div>
 
   <!-- Tabs row -->
   <div class="promotions-tabs">
-    <a href="{{ url_for('promotions') }}" class="tab {% if active_tab=='RDC' %}active{% endif %}">RDC</a>
-    <a href="{{ url_for('spe') }}" class="tab {% if active_tab=='SPE' %}active{% endif %}">SPE</a>
+  <a href="{{ url_for('promo.promotions_page') }}" class="tab {% if active_tab=='RDC' %}active{% endif %}">RDC</a>
+  <a href="{{ url_for('promo.spe_page') }}" class="tab {% if active_tab=='SPE' %}active{% endif %}">SPE</a>
     <button class="tab">Sprint</button>
     <button class="tab">Functional</button>
     <button class="tab">Z-Lab</button>  </div>
@@ -89,9 +89,9 @@
           <td>{{ promo.promo_start_date }}</td>
           <td>{{ promo.promo_end_date }}</td>          <td class="promo-owner">{{ promo.owner }}</td>
           <td class="promo-actions">
-            <a href="{{ url_for('edit_spe', promo_code=promo.code) }}" class="icon-button" title="Edit"><i class="fas fa-edit"></i></a>
+            <a href="{{ url_for('promo.edit_spe_page', promo_code=promo.code) }}" class="icon-button" title="Edit"><i class="fas fa-edit"></i></a>
             <button class="icon-button" title="Team"><i class="fas fa-users"></i></button>
-            <a href="{{ url_for('approvers', promo_code=promo.code) }}" class="icon-button" title="Approvers"><i class="fas fa-file-signature"></i></a>
+            <a href="{{ url_for('promo.approvers_page') }}" class="icon-button" title="Approvers"><i class="fas fa-file-signature"></i></a>
             <button class="icon-button" title="Refresh"><i class="fas fa-sync-alt"></i></button>
             <button class="icon-button" title="Link"><i class="fas fa-link"></i></button>
           </td>

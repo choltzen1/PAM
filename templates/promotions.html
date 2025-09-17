@@ -53,14 +53,14 @@
     </div>
 
     <div class="action-buttons">
-      <a href="{{ url_for('get_promo_codes') }}" class="btn"><i class="fas fa-wrench"></i> Get Promo Code</a>
+  <a href="{{ url_for('promo.get_promo_codes_page') }}" class="btn"><i class="fas fa-wrench"></i> Get Promo Code</a>
     </div>
   </div>
 
   <!-- Tabs row -->
   <div class="promotions-tabs">
-    <a href="{{ url_for('promotions') }}" class="tab {% if active_tab=='RDC' %}active{% endif %}">RDC</a>
-    <a href="{{ url_for('spe') }}" class="tab {% if active_tab=='SPE' %}active{% endif %}">SPE</a>
+  <a href="{{ url_for('promo.promotions_page') }}" class="tab {% if active_tab=='RDC' %}active{% endif %}">RDC</a>
+  <a href="{{ url_for('promo.spe_page') }}" class="tab {% if active_tab=='SPE' %}active{% endif %}">SPE</a>
     <button class="tab">Sprint</button>
     <button class="tab">Functional</button>
     <button class="tab">Z-Lab</button>
@@ -93,10 +93,10 @@
           <td class="promo-owner">{{ promo.owner }}</td>
           <td class="promo-actions">
             <a href="{{ url_for('promo.edit_promo', promo_code=promo.code) }}" class="icon-button" title="Edit"><i class="fas fa-edit"></i></a>
-            <a href="{{ url_for('reviewers', promo_code=promo.code) }}" class="icon-button" title="Reviewers"><i class="fas fa-users"></i></a>
-            <a href="{{ url_for('approvers', promo_code=promo.code) }}" class="icon-button" title="Approvers"><i class="fas fa-file-signature"></i></a>
-            <a href="{{ url_for('updates') }}?search={{ promo.code }}" class="icon-button" title="Updates"><i class="fas fa-sync-alt"></i></a>
-            <a href="{{ url_for('links', promo_code=promo.code) }}" class="icon-button" title="Links"><i class="fas fa-link"></i></a>
+            <a href="{{ url_for('promo.reviewers_with_code', promo_code=promo.code) }}" class="icon-button" title="Reviewers"><i class="fas fa-users"></i></a>
+            <a href="{{ url_for('promo.approvers_page') }}" class="icon-button" title="Approvers"><i class="fas fa-file-signature"></i></a>
+            <a href="{{ url_for('promo.updates_page') }}?search={{ promo.code }}" class="icon-button" title="Updates"><i class="fas fa-sync-alt"></i></a>
+            <a href="{{ url_for('promo.links_page', promo_code=promo.code) }}" class="icon-button" title="Links"><i class="fas fa-link"></i></a>
           </td>
         </tr>
         {% endfor %}
@@ -116,8 +116,8 @@
     
     <div class="pagination-controls">
       {% if pagination.has_prev %}
-        <a href="{{ url_for('promotions', page=1, search=search_query, owner=selected_owner) }}" class="pagination-btn">First</a>
-        <a href="{{ url_for('promotions', page=pagination.prev_num, search=search_query, owner=selected_owner) }}" class="pagination-btn">‹ Prev</a>
+  <a href="{{ url_for('promo.promotions_page', page=1, search=search_query, owner=selected_owner) }}" class="pagination-btn">First</a>
+  <a href="{{ url_for('promo.promotions_page', page=pagination.prev_num, search=search_query, owner=selected_owner) }}" class="pagination-btn">‹ Prev</a>
       {% endif %}
       
       {% for page_num in range(
@@ -127,13 +127,13 @@
         {% if page_num == pagination.page %}
           <span class="pagination-btn active">{{ page_num }}</span>
         {% else %}
-          <a href="{{ url_for('promotions', page=page_num, search=search_query, owner=selected_owner) }}" class="pagination-btn">{{ page_num }}</a>
+          <a href="{{ url_for('promo.promotions_page', page=page_num, search=search_query, owner=selected_owner) }}" class="pagination-btn">{{ page_num }}</a>
         {% endif %}
       {% endfor %}
       
       {% if pagination.has_next %}
-        <a href="{{ url_for('promotions', page=pagination.next_num, search=search_query, owner=selected_owner) }}" class="pagination-btn">Next ›</a>
-        <a href="{{ url_for('promotions', page=pagination.total_pages, search=search_query, owner=selected_owner) }}" class="pagination-btn">Last</a>
+  <a href="{{ url_for('promo.promotions_page', page=pagination.next_num, search=search_query, owner=selected_owner) }}" class="pagination-btn">Next ›</a>
+  <a href="{{ url_for('promo.promotions_page', page=pagination.total_pages, search=search_query, owner=selected_owner) }}" class="pagination-btn">Last</a>
       {% endif %}
     </div>
   </div>

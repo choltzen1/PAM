@@ -106,6 +106,74 @@ data/
 2. **Access the Application**:
    Open your browser and navigate to `http://127.0.0.1:5000`
 
+### Application Factory (Refactor 2025)
+The app now uses an application factory pattern for better testability and modularity.
+
+```
+from factory import create_app
+app = create_app()
+```
+
+Legacy scripts and the dev server still work via `python app.py`, which simply initializes the factory-built instance.
+
+Benefits:
+- Enables isolated app instances in tests (`create_app({'TESTING': True})`).
+- Centralizes blueprint registration and data manager setup in `factory.py`.
+- Simplifies future configuration injection (DB URIs, feature flags).
+
+### Endpoint Validator
+Safety script at `tools/validate_endpoints.py` now enforces a **blueprint-only** contract.
+
+Usage:
+```
+python tools/validate_endpoints.py  # exits non‑zero if any legacy endpoint resurrected or required blueprint missing
+```
+
+Behavior:
+- Fails with code 2 if a removed legacy endpoint name reappears.
+- Fails with code 1 if a required blueprint endpoint cannot be built.
+- Exits 0 when the set is clean.
+
+### Routing & Refactor (2025 Migration)
+
+The 2025 refactor decomposed a monolithic `app.py` into focused blueprints:
+
+| Area | Blueprint | Module | Prefix |
+|------|-----------|--------|--------|
+| Promotions UI / SQL / Date Mismatch / Files | `promo` | `promo/routes.py` | (none) |
+| Admin & Version History & User Mgmt | `admin_bp` | `admin/routes.py` | `/admin` |
+| JIRA Integration | `jira_bp` | `jira/routes.py` | `/jira` |
+| JSON/API Endpoints (lookup, orbit search, status update) | `api` | `api/routes.py` | `/api` |
+
+All legacy flat routes and redirect shims were removed (September 2025). Only canonical blueprint endpoints remain.
+
+#### Deprecation Controls
+
+Environment flags control the lifecycle:
+
+| Env Var | Effect |
+|---------|--------|
+| `PAM_VALIDATION_MODE=1` | Light-weight init for validator/tests (skips heavy external ops). |
+| (REMOVED) `PAM_BLOCK_LEGACY_ROUTES=1` | Deprecated; shims removed so flag is ignored. |
+
+Historical rollout (completed):
+1. Introduced blueprints alongside shims.
+2. Added validator + alias usage telemetry.
+3. Converted templates/tests to blueprint endpoints.
+4. Enabled blueprint-only validator in CI.
+5. Removed shims & alias middleware (September 2025).
+
+#### Adding New Routes
+Always add routes in the appropriate blueprint; do not extend `app.py`. If you need a temporary alias, add the redirect in `app.py` plus a mapping entry in `tools/validate_endpoints.py`.
+
+#### Why This Matters
+Benefits realized:
+- Clear separation of UI (promo/admin) vs integration (jira/api).
+- Easier testing via `create_app()` with selective blueprint registration.
+- Centralized data manager initialization & future feature toggles.
+- Safe incremental migration with automated endpoint validation and alias usage telemetry.
+
+
 ## Application Structure
 
 ### Main Pages
@@ -167,6 +235,22 @@ PAM/
 
 ## Development
 
+### Continuous Integration
+Automated tests & endpoint validation run on each push via GitHub Actions workflow `ci.yml`.
+
+Badge (add once repo public / actions enabled):
+```
+![CI](https://github.com/choltzen1/PAM/actions/workflows/ci.yml/badge.svg)
+```
+
+Current enforced pipeline (legacy shims removed):
+1. Install dependencies
+2. Run pytest (with `PAM_VALIDATION_MODE=1`)
+3. Run endpoint validator in blueprint mode (fails build if any legacy endpoints reappear)
+
+Deprecation Status: Complete. Legacy shim routes removed; validator enforces blueprint-only mode. `PAM_BLOCK_LEGACY_ROUTES` flag retired.
+
+
 ### Adding New Features
 1. Create feature branch from main
 2. Implement changes following existing patterns
@@ -222,6 +306,6 @@ This project is proprietary to T-Mobile. See the LICENSE file for full details.
 
 ---
 
-**PAM System Version**: 2.0.0  
-**Last Updated**: August 2025  
+**PAM System Version**: 2.1.0  
+**Last Updated**: September 2025  
 **Maintained by**: T-Mobile Promotions Team

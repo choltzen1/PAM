@@ -67,7 +67,7 @@
       <div class="right-panel">
         <div class="tabs">
           {% for tab in ['Details','Dates & Times','Requirements','Line Indicators','SOC Groupings','Notes'] %}
-            <a href="{{ url_for('edit_spe', promo_code=promo.get('code', spe_key), tab=tab) }}"
+            <a href="{{ url_for('promo.edit_spe_page', promo_code=promo.get('code', spe_key), tab=tab) }}"
                class="tab {% if tab == active_tab %}active{% endif %}">
               {{ tab }}
             </a>

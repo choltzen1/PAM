@@ -156,13 +156,13 @@
         Create, edit, and manage promotions. Access promotion forms, link management, and SQL generation tools.
       </div>
       <div class="card-actions">
-        <a href="{{ url_for('promotions') }}" class="btn-admin">
+  <a href="{{ url_for('promo.promotions_page') }}" class="btn-admin">
           <i class="fas fa-tags"></i> View Promotions
         </a>
-        <a href="{{ url_for('links_main') }}" class="btn-admin secondary">
+  <a href="{{ url_for('promo.links_main_page') }}" class="btn-admin secondary">
           <i class="fas fa-link"></i> Manage Links
         </a>
-        <a href="{{ url_for('version_history') }}" class="btn-admin secondary">
+  <a href="{{ url_for('admin_bp.version_history_page') }}" class="btn-admin secondary">
           <i class="fas fa-history"></i> Version History
         </a>
       </div>

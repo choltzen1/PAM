@@ -55,9 +55,9 @@
     <div id="footer-time">{{ current_datetime }}</div>
     <nav class="footer-links" style="display:flex;gap:1.5em;align-items:center;">
       <a href="javascript:history.back()" style="color:#fff;text-decoration:none;font-size:1.2em;"><i class="fas fa-chevron-left"></i></a>
-      <a href="{{ url_for('home') }}" style="color:#fff;text-decoration:none;font-size:1.2em;"><i class="fas fa-home"></i></a>
-      <a href="{{ url_for('promotions') }}" style="color:#fff;text-decoration:none;font-size:1.2em;"><i class="fas fa-tags"></i></a>
-      <a href="{{ url_for('spe') }}" style="color:#fff;text-decoration:none;font-size:1.2em;"><i class="fas fa-bolt"></i></a>
+  <a href="{{ url_for('core.home') }}" style="color:#fff;text-decoration:none;font-size:1.2em;"><i class="fas fa-home"></i></a>
+  <a href="{{ url_for('promo.promotions_page') }}" style="color:#fff;text-decoration:none;font-size:1.2em;"><i class="fas fa-tags"></i></a>
+  <a href="{{ url_for('promo.spe_page') }}" style="color:#fff;text-decoration:none;font-size:1.2em;"><i class="fas fa-bolt"></i></a>
     </nav>
   </footer>
   <script>
