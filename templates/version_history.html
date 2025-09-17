@@ -51,11 +51,11 @@
       <button class="btn"><i class="fas fa-download"></i> Export History</button>
       <button class="btn" onclick="expandAllRows()"><i class="fas fa-expand-arrows-alt"></i> Expand All</button>
       <button class="btn" onclick="collapseAllRows()"><i class="fas fa-compress-arrows-alt"></i> Collapse All</button>
-      <a href="{{ url_for('admin') }}" class="btn btn-secondary">
+  <a href="{{ url_for('admin_bp.dashboard') }}" class="btn btn-secondary">
         <i class="fas fa-cogs"></i>
         Back to Admin
       </a>
-      <a href="{{ url_for('promotions') }}" class="btn btn-primary">
+  <a href="{{ url_for('promo.promotions_page') }}" class="btn btn-primary">
         <i class="fas fa-tags"></i>
         View Promotions
       </a>

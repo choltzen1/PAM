@@ -139,5 +139,24 @@
     ],
     "created_at": "2025-07-23T14:26:32.937020",
     "updated_at": "2025-07-23T14:26:32.937021"
+  },
+  "BPTST25": {
+    "code": "BPTST25",
+    "bill_facing_name": "BP Promo",
+    "promo_owner": "QA",
+    "promo_start_date": "2025-01-01",
+    "promo_end_date": "2025-12-31",
+    "description": "Autotest",
+    "status": "Draft",
+    "created_date": "2025-09-17",
+    "created_by": "System",
+    "spe_category": "Cat",
+    "spe_type": "Type",
+    "updated_at": "2025-09-17T13:46:57.439668",
+    "created_at": "2025-09-17T11:27:15.556100",
+    "version_history": [
+      "09/17/2025 11:27 AM - System - Created SPE promo."
+    ],
+    "last_changes": null
   }
 }
