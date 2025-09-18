@@ -1,30 +1,6 @@
-import os
 import pytest
-import importlib.util
-import sys
 
-# Robust import of app
-if 'app' in sys.modules:
-    app = sys.modules['app']
-else:
-    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-    if project_root not in sys.path:
-        sys.path.insert(0, project_root)
-    app_path = os.path.join(project_root, 'app.py')
-    spec = importlib.util.spec_from_file_location('app', app_path)
-    if spec and spec.loader:  # runtime safety
-        module = importlib.util.module_from_spec(spec)
-        sys.modules['app'] = module
-        spec.loader.exec_module(module)  # type: ignore
-        app = module.app
-    else:
-        raise RuntimeError('Failed to load app module spec for tests')
-
-@pytest.fixture(scope='module')
-def client():
-    app.config['TESTING'] = True
-    with app.test_client() as c:
-        yield c
+# Uses shared fixtures from conftest.py
 
 def test_admin_dashboard_page(client):
     resp = client.get('/admin')

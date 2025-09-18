@@ -535,6 +535,9 @@ class HybridPromoDataManager:
             # Compare data and record changes
             changed_fields = {}
             for key, new_value in promo_data.items():
+                # Skip non-meaningful timestamp/system-only fields from version history diffs
+                if key in {"updated_at", "created_at", "last_sync"}:
+                    continue
                 old_value = existing_data.get(key)
                 if old_value != new_value:
                     changed_fields[key] = {
@@ -564,6 +567,11 @@ class HybridPromoDataManager:
     def record_sql_generation(self, promo_code: str, user_name: str, generation_time: float, sql_length: int):
         """Record SQL generation in version history"""
         self.version_history.record_sql_generation(promo_code, user_name, generation_time, sql_length)
+
+    def record_date_mismatch_sql(self, promo_code: str, user_name: str, generation_time: float, sql_length: int):
+        """Record date mismatch SQL generation in version history"""
+        if hasattr(self.version_history, 'record_date_mismatch_sql'):
+            self.version_history.record_date_mismatch_sql(promo_code, user_name, generation_time, sql_length)
     
     def record_file_upload(self, promo_code: str, user_name: str, file_type: str, filename: str):
         """Record file upload in version history"""
@@ -590,7 +598,11 @@ class HybridPromoDataManager:
             current_promo = current_promos.get(promo_code)
             if current_promo:
                 # Get detailed change history
-                changes = self.get_promo_version_history(promo_code)
+                # Use curated changes if available
+                if hasattr(self.version_history, 'get_curated_promo_changes'):
+                    changes = self.version_history.get_curated_promo_changes(promo_code)
+                else:
+                    changes = self.get_promo_version_history(promo_code)
                 
                 promo_with_history = {
                     'promo_code': promo_code,
@@ -641,6 +653,39 @@ class HybridPromoDataManager:
         result = self._refresh_cache()
         print("Manual cache refresh completed")
         return result
+
+    def full_data_refresh(self) -> Dict[str, Any]:
+        """Perform a full data refresh of all caches (promos, SPE, rebates).
+        Returns counts and timing info for each segment."""
+        with self._cache_lock:
+            print("Full data refresh requested...")
+            overall_start = time.time()
+
+            # Invalidate all timestamps so subsequent refresh calls reload
+            self._cache_timestamp = None
+            self._spe_cache_timestamp = None
+            self._rebates_cache_timestamp = None
+
+            # Refresh each cache capturing timing
+            stats: Dict[str, Any] = {}
+            start = time.time()
+            promos = self._refresh_cache()
+            stats['promotions_loaded'] = len(promos)
+            stats['promotions_time'] = round(time.time() - start, 3)
+
+            start = time.time()
+            spe = self._refresh_spe_cache()
+            stats['spe_loaded'] = len(spe)
+            stats['spe_time'] = round(time.time() - start, 3)
+
+            start = time.time()
+            rebates = self._refresh_rebates_cache()
+            stats['rebates_loaded'] = len(rebates)
+            stats['rebates_time'] = round(time.time() - start, 3)
+
+            stats['total_time'] = round(time.time() - overall_start, 3)
+            print(f"Full data refresh completed in {stats['total_time']}s")
+            return stats
     
     def get_cache_status(self) -> Dict[str, Any]:
         """Get enhanced cache status for debugging and monitoring"""

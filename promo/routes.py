@@ -157,6 +157,12 @@ def generate_date_sql_bp():
                 sql_statements.append(sql)
             except ValueError:
                 return jsonify({'success': False,'message': f'Invalid date format: {new_end_date}. Use MM/DD/YYYY format.'}), 400
+        # Record a single compact version history event per promo
+        dm = _ensure_data_manager()
+        for promo_code in promo_codes:
+            if hasattr(dm, 'record_date_mismatch_sql'):
+                # Provide minimal metrics (no huge SQL blob)
+                dm.record_date_mismatch_sql(promo_code, 'System', generation_time=0.0, sql_length=sum(len(s) for s in sql_statements))
         return jsonify({'success': True,'sql_statements': sql_statements})
     except Exception as e:
         return jsonify({'success': False,'message': f'Error generating SQL: {str(e)}'}), 500
@@ -774,6 +780,12 @@ def edit_promo(promo_code):
                 
                 # Flash message with performance info
                 flash(f"SQL generated successfully in {generation_time:.2f} seconds ({len(sql_content):,} characters)", "success")
+
+                # Record PCR Version event in version history
+                try:
+                    dm.record_sql_generation(promo_code, "Cade Holtzen", generation_time, len(sql_content))
+                except Exception as vh_err:
+                    print(f"Version history PCR record failed: {vh_err}")
                 
                 # Log performance warning if slow
                 if generation_time > 5.0:

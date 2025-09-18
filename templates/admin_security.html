@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% block title %}Security & Audit - PAM{% endblock %}
+{% block head %}<link rel="stylesheet" href="/static/css/admin.css">{% endblock %}
+{% block content %}
+<div class="admin-subpage">
+  <div class="subpage-header">
+    <h2><i class="fas fa-shield-alt"></i> Security & Audit</h2>
+    <a class="breadcrumb-link" href="/admin"><i class="fas fa-arrow-left"></i> Back to Dashboard</a>
+  </div>
+  <p class="subpage-intro">Review system statistics and audit-related summaries.</p>
+  <div class="admin-subgrid">
+    <button class="btn-admin" onclick="loadAudit()"><i class="fas fa-history"></i> Audit Snapshot</button>
+  </div>
+  <div id="sec-output" class="admin-output"></div>
+</div>
+<script>
+function showOutput(t){document.getElementById('sec-output').textContent=t;}
+function loadAudit(){fetch('/admin/stats').then(r=>r.json()).then(d=>showOutput(JSON.stringify(d,null,2)));}
+</script>
+{% endblock %}
