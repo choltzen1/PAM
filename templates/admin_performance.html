@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% block title %}Performance - PAM{% endblock %}
+{% block head %}<link rel="stylesheet" href="/static/css/admin.css">{% endblock %}
+{% block content %}
+<div class="admin-subpage">
+  <div class="subpage-header">
+    <h2><i class="fas fa-tachometer-alt"></i> Performance & Cache</h2>
+    <a class="breadcrumb-link" href="/admin"><i class="fas fa-arrow-left"></i> Back to Dashboard</a>
+  </div>
+  <p class="subpage-intro">Monitor cache effectiveness and manually refresh or inspect detailed metrics.</p>
+  <div class="admin-subgrid">
+    <button class="btn-admin" onclick="refreshCache()"><i class="fas fa-sync"></i> Refresh Cache</button>
+    <button class="btn-admin" onclick="showMetrics()"><i class="fas fa-chart-line"></i> Detailed Metrics</button>
+  </div>
+  <div id="perf-output" class="admin-output"></div>
+</div>
+<script>
+function showOutput(t){document.getElementById('perf-output').textContent=t;}
+function refreshCache(){fetch('/admin/cache-refresh',{method:'POST'}).then(r=>r.json()).then(d=>showOutput(JSON.stringify(d,null,2)));}
+function showMetrics(){fetch('/admin/cache-status').then(r=>r.json()).then(d=>showOutput(JSON.stringify(d,null,2)));}
+</script>
+{% endblock %}

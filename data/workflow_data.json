@@ -16,9 +16,9 @@
     "version_history": [
       "09/17/2025 11:06 AM - Tester - Created promo."
     ],
-    "last_changes": "Last save: 09/17/2025 01:46 PM - Cade Holtzen - Changed: Segment Name (cleared)",
+    "last_changes": "Last save: 09/18/2025 05:36 PM - Cade Holtzen - Changed: Segment Name (cleared)",
     "created_at": "2025-09-17T11:06:28.533562",
-    "updated_at": "2025-09-17T13:46:56.776510",
+    "updated_at": "2025-09-18T17:36:54.504607",
     "segment_name": "",
     "updated_by": "Cade Holtzen",
     "sub_segment": "",
@@ -31,7 +31,7 @@
     ],
     "last_changes": null,
     "created_at": "2025-09-17T11:27:15.045558",
-    "updated_at": "2025-09-17T13:46:56.887233",
+    "updated_at": "2025-09-18T17:36:57.840240",
     "updated_by": "System"
   },
   "API123": {
@@ -76,7 +76,7 @@
     ],
     "last_changes": null,
     "created_at": "2025-09-17T12:29:49.734468",
-    "updated_at": "2025-09-17T13:46:50.643414",
+    "updated_at": "2025-09-18T17:36:39.415252",
     "updated_by": "Test"
   },
   "ORBITX": {
@@ -85,7 +85,7 @@
     ],
     "last_changes": null,
     "created_at": "2025-09-17T12:29:54.523593",
-    "updated_at": "2025-09-17T13:46:50.713183",
+    "updated_at": "2025-09-18T17:36:40.362529",
     "updated_by": "Test"
   },
   "TESTSTS": {
@@ -94,7 +94,7 @@
     ],
     "last_changes": null,
     "created_at": "2025-09-17T12:30:00.921623",
-    "updated_at": "2025-09-17T13:46:52.962436",
+    "updated_at": "2025-09-18T17:36:44.504227",
     "updated_by": "System",
     "test_status": "Passed"
   },
@@ -104,7 +104,7 @@
     ],
     "last_changes": null,
     "created_at": "2025-09-17T12:30:04.726669",
-    "updated_at": "2025-09-17T13:46:53.048039",
+    "updated_at": "2025-09-18T17:36:45.744372",
     "updated_by": "Test"
   },
   "R223": {
@@ -194,7 +194,7 @@
     ],
     "last_changes": null,
     "created_at": "2025-09-17T16:50:30.797838",
-    "updated_at": "2025-09-17T16:50:53.516931",
+    "updated_at": "2025-09-18T13:38:59.992143",
     "sku_link": "",
     "tradein_link": "",
     "sql_file": {},
@@ -205,8 +205,29 @@
     "segment_group_id": "",
     "segment_level": "",
     "updated_by": "Cade Holtzen",
-    "sql_generated_at": "2025-09-17 16:50:52",
-    "sql_generation_time": "0.1531",
+    "sql_generated_at": "2025-09-18 13:38:59",
+    "sql_generation_time": "0.4677",
     "sql_length": 10037534
+  },
+  "P800": {
+    "promo_notes": "\"can be combined with Carrier Freedom while 17493 is active   9/4 - corrected typo in trade tiers  9/18 - no longer dark so initiative name and desc is updated 10/16 - removed dark status and added actual device names  12/16:  Submitted CRs, revised intake to make specific to National Retail - Apple  2/19: Added in Apple spring NPI name of device \"\"iPhone 16e\"\" 4/25: updating desc/name to include new Exp plans\"",
+    "generated_sql": "",
+    "uploaded_files": {},
+    "version_history": [
+      "09/17/2025 05:09 PM - Cade Holtzen - Created promo."
+    ],
+    "last_changes": null,
+    "created_at": "2025-09-17T17:09:00.401894",
+    "updated_at": "2025-09-17T17:09:01.166507",
+    "sku_link": "",
+    "tradein_link": "",
+    "sql_file": {},
+    "jira_ticket": "",
+    "initiative_name": "NR x Apple iPhone 16 Pro On Us ($1000) w/ Trade on Go5G Next",
+    "segment_name": "",
+    "sub_segment": "",
+    "segment_group_id": "",
+    "segment_level": "",
+    "updated_by": "Cade Holtzen"
   }
 }
