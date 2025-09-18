@@ -16,9 +16,9 @@
     "version_history": [
       "09/17/2025 11:06 AM - Tester - Created promo."
     ],
-    "last_changes": "Last save: 09/17/2025 01:46 PM - Cade Holtzen - Changed: Segment Name (cleared)",
+    "last_changes": "Last save: 09/18/2025 05:36 PM - Cade Holtzen - Changed: Segment Name (cleared)",
     "created_at": "2025-09-17T11:06:28.533562",
-    "updated_at": "2025-09-17T13:46:56.776510",
+    "updated_at": "2025-09-18T17:36:54.504607",
     "segment_name": "",
     "updated_by": "Cade Holtzen",
     "sub_segment": "",
@@ -31,7 +31,7 @@
     ],
     "last_changes": null,
     "created_at": "2025-09-17T11:27:15.045558",
-    "updated_at": "2025-09-17T13:46:56.887233",
+    "updated_at": "2025-09-18T17:36:57.840240",
     "updated_by": "System"
   },
   "API123": {
@@ -76,7 +76,7 @@
     ],
     "last_changes": null,
     "created_at": "2025-09-17T12:29:49.734468",
-    "updated_at": "2025-09-17T13:46:50.643414",
+    "updated_at": "2025-09-18T17:36:39.415252",
     "updated_by": "Test"
   },
   "ORBITX": {
@@ -85,7 +85,7 @@
     ],
     "last_changes": null,
     "created_at": "2025-09-17T12:29:54.523593",
-    "updated_at": "2025-09-17T13:46:50.713183",
+    "updated_at": "2025-09-18T17:36:40.362529",
     "updated_by": "Test"
   },
   "TESTSTS": {
@@ -94,7 +94,7 @@
     ],
     "last_changes": null,
     "created_at": "2025-09-17T12:30:00.921623",
-    "updated_at": "2025-09-17T13:46:52.962436",
+    "updated_at": "2025-09-18T17:36:44.504227",
     "updated_by": "System",
     "test_status": "Passed"
   },
@@ -104,7 +104,7 @@
     ],
     "last_changes": null,
     "created_at": "2025-09-17T12:30:04.726669",
-    "updated_at": "2025-09-17T13:46:53.048039",
+    "updated_at": "2025-09-18T17:36:45.744372",
     "updated_by": "Test"
   },
   "R223": {
@@ -194,7 +194,7 @@
     ],
     "last_changes": null,
     "created_at": "2025-09-17T16:50:30.797838",
-    "updated_at": "2025-09-17T16:50:52.854654",
+    "updated_at": "2025-09-18T13:38:59.992143",
     "sku_link": "",
     "tradein_link": "",
     "sql_file": {},
@@ -205,193 +205,25 @@
     "segment_group_id": "",
     "segment_level": "",
     "updated_by": "Cade Holtzen",
-    "sql_generated_at": "2025-09-17 16:50:52",
-    "sql_generation_time": "0.1531",
+    "sql_generated_at": "2025-09-18 13:38:59",
+    "sql_generation_time": "0.4677",
     "sql_length": 10037534
   },
-  "25035": {
-    "promo_notes": "7/15 - NPP:  confirmed to remove dark status from intake 7/23 - cancelling per Sharon request",
+  "P800": {
+    "promo_notes": "\"can be combined with Carrier Freedom while 17493 is active   9/4 - corrected typo in trade tiers  9/18 - no longer dark so initiative name and desc is updated 10/16 - removed dark status and added actual device names  12/16:  Submitted CRs, revised intake to make specific to National Retail - Apple  2/19: Added in Apple spring NPI name of device \"\"iPhone 16e\"\" 4/25: updating desc/name to include new Exp plans\"",
     "generated_sql": "",
     "uploaded_files": {},
     "version_history": [
-      "09/24/2025 09:59 AM - Cade Holtzen - Created promo."
+      "09/17/2025 05:09 PM - Cade Holtzen - Created promo."
     ],
     "last_changes": null,
-    "created_at": "2025-09-24T09:59:40.298873",
-    "updated_at": "2025-09-24T09:59:40.298863",
+    "created_at": "2025-09-17T17:09:00.401894",
+    "updated_at": "2025-09-17T17:09:01.166507",
     "sku_link": "",
     "tradein_link": "",
     "sql_file": {},
     "jira_ticket": "",
-    "initiative_name": "iPhone 16 Pro On Us ($1000) w/any condition trade on Experience Beyond",
-    "segment_name": "",
-    "sub_segment": "",
-    "segment_group_id": "",
-    "segment_level": "",
-    "updated_by": "Cade Holtzen"
-  },
-  "P678": {
-    "promo_notes": "\"1/22/24 - Initiative Name - Updating name to \"\"$300 Off Select iPads | 5GB+\"\" so that exclusions don't need to be called out in the promo title. \"",
-    "generated_sql": "",
-    "uploaded_files": {},
-    "version_history": [
-      "09/24/2025 10:03 AM - Cade Holtzen - Created promo."
-    ],
-    "last_changes": null,
-    "created_at": "2025-09-24T10:03:23.246213",
-    "updated_at": "2025-09-24T10:03:30.951197",
-    "sku_link": "",
-    "tradein_link": "",
-    "sql_file": {},
-    "jira_ticket": "",
-    "initiative_name": "$300 Off Select iPads | 5GB+",
-    "segment_name": "",
-    "sub_segment": "",
-    "segment_group_id": "",
-    "segment_level": "",
-    "updated_by": "Cade Holtzen"
-  },
-  "P676": {
-    "promo_notes": "2/7: Removed Apple from eligible Sales Channels as they don't currently sell Go5G Next rate plans",
-    "generated_sql": "",
-    "uploaded_files": {},
-    "version_history": [
-      "09/24/2025 10:06 AM - Cade Holtzen - Created promo."
-    ],
-    "last_changes": null,
-    "created_at": "2025-09-24T10:06:13.022274",
-    "updated_at": "2025-09-24T10:06:20.741756",
-    "sku_link": "",
-    "tradein_link": "",
-    "sql_file": {},
-    "jira_ticket": "",
-    "initiative_name": "iPhone 15 on Us w/ Port on Go5G Next",
-    "segment_name": "",
-    "sub_segment": "",
-    "segment_group_id": "",
-    "segment_level": "",
-    "updated_by": "Cade Holtzen"
-  },
-  "P681": {
-    "promo_notes": "NULL",
-    "generated_sql": "",
-    "uploaded_files": {},
-    "version_history": [
-      "09/24/2025 10:58 AM - Cade Holtzen - Created promo."
-    ],
-    "last_changes": null,
-    "created_at": "2025-09-24T10:58:42.690713",
-    "updated_at": "2025-09-24T10:58:42.690704",
-    "sku_link": "",
-    "tradein_link": "",
-    "sql_file": {},
-    "jira_ticket": "",
-    "initiative_name": "Samsung Tab A9+ On Us",
-    "segment_name": "",
-    "sub_segment": "",
-    "segment_group_id": "",
-    "segment_level": "",
-    "updated_by": "Cade Holtzen"
-  },
-  "P688": {
-    "promo_notes": "NULL",
-    "generated_sql": "",
-    "uploaded_files": {},
-    "version_history": [
-      "09/24/2025 11:03 AM - Cade Holtzen - Created promo."
-    ],
-    "last_changes": null,
-    "created_at": "2025-09-24T11:03:02.166692",
-    "updated_at": "2025-09-24T11:13:35.598283",
-    "sku_link": "",
-    "tradein_link": "",
-    "sql_file": {},
-    "jira_ticket": "",
-    "initiative_name": "iPhone 15 On Us w/ AAL & Trade",
-    "segment_name": "",
-    "sub_segment": "",
-    "segment_group_id": "",
-    "segment_level": "",
-    "updated_by": "Cade Holtzen"
-  },
-  "P686": {
-    "promo_notes": "\"6/4: Added preorder/launch dates to eligible purchase devices   In order for broken trade to work properly and reduce poor customer experience, we cannot change MPSS for google launch offers or NPI Offers in order for customers to be enrolled and reenrolled, we need to call this out in the orbit tickets: MPSS Lookback must remain at 90 days  8/13: Updated to actual Google device names due to Embargo Lift \"",
-    "generated_sql": "",
-    "uploaded_files": {},
-    "version_history": [
-      "09/24/2025 11:16 AM - Cade Holtzen - Created promo."
-    ],
-    "last_changes": null,
-    "created_at": "2025-09-24T11:16:42.225067",
-    "updated_at": "2025-09-24T11:29:07.311286",
-    "sku_link": "",
-    "tradein_link": "",
-    "sql_file": {},
-    "jira_ticket": "",
-    "initiative_name": "$1000 off select Android Devices w/Trade on Go5G Plus/Next",
-    "segment_name": "",
-    "sub_segment": "",
-    "segment_group_id": "",
-    "segment_level": "",
-    "updated_by": "Cade Holtzen"
-  },
-  "P689": {
-    "promo_notes": "NULL",
-    "generated_sql": "",
-    "uploaded_files": {},
-    "version_history": [
-      "09/24/2025 11:32 AM - Cade Holtzen - Created promo."
-    ],
-    "last_changes": null,
-    "created_at": "2025-09-24T11:32:44.248085",
-    "updated_at": "2025-09-24T11:32:44.248073",
-    "sku_link": "",
-    "tradein_link": "",
-    "sql_file": {},
-    "jira_ticket": "",
-    "initiative_name": "NR x Apple: iPhone 15 On Us w/ AAL & Trade - Q1'24",
-    "segment_name": "",
-    "sub_segment": "",
-    "segment_group_id": "",
-    "segment_level": "",
-    "updated_by": "Cade Holtzen"
-  },
-  "P690": {
-    "promo_notes": "Promo callout (Timestamp) needed  This promotion should be extended to SteelThread project.",
-    "generated_sql": "",
-    "uploaded_files": {},
-    "version_history": [
-      "09/24/2025 02:54 PM - Cade Holtzen - Created promo."
-    ],
-    "last_changes": null,
-    "created_at": "2025-09-24T14:54:25.460631",
-    "updated_at": "2025-09-24T14:54:25.460621",
-    "sku_link": "",
-    "tradein_link": "",
-    "sql_file": {},
-    "jira_ticket": "",
-    "initiative_name": "TFB 2024 $99 iPad 9th Gen on 5GB/$20+",
-    "segment_name": "",
-    "sub_segment": "",
-    "segment_group_id": "",
-    "segment_level": "",
-    "updated_by": "Cade Holtzen"
-  },
-  "R121": {
-    "promo_notes": "3.24.2025 - Samsung.com is no longer a participating channel since this offer is LTO for two weeks or 10k takers (whichever comes first.) - Thien Nguyen 4/8 - active line required YES by business/it request",
-    "generated_sql": "",
-    "uploaded_files": {},
-    "version_history": [
-      "09/24/2025 02:58 PM - Cade Holtzen - Created promo."
-    ],
-    "last_changes": "Last save: 09/24/2025 03:14 PM - Cade Holtzen - Changed: Trade-In Group ID (\u2192 M24)",
-    "created_at": "2025-09-24T14:58:46.746524",
-    "updated_at": "2025-09-24T15:23:46.065338",
-    "sku_link": "",
-    "tradein_link": "",
-    "sql_file": {},
-    "jira_ticket": "",
-    "initiative_name": "A36 On Us w/ Trade on Go5G Plus/Next",
+    "initiative_name": "NR x Apple iPhone 16 Pro On Us ($1000) w/ Trade on Go5G Next",
     "segment_name": "",
     "sub_segment": "",
     "segment_group_id": "",

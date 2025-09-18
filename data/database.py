@@ -4,6 +4,8 @@ import urllib.parse
 from typing import Dict, Any, List, Optional, Hashable
 from datetime import datetime
 import logging
+import os
+import sqlite3
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -18,6 +20,29 @@ class DatabaseManager:
         self.username = 'Python_user'
         self.password = 'Pit30&i5t#w@y45$%^'
         self._engine = None
+        # Diagnostics persistence (SQLite co-located with version history)
+        self._diag_db_path = os.path.join('data', 'version_history.db')
+        self._ensure_diag_tables()
+        # Threshold from environment
+        self.invalid_ratio_threshold = float(os.environ.get('INVALID_DATE_RATIO_WARN_THRESHOLD', '0.10'))
+
+    def _ensure_diag_tables(self):
+        try:
+            os.makedirs('data', exist_ok=True)
+            with sqlite3.connect(self._diag_db_path) as conn:
+                conn.execute("""
+                    CREATE TABLE IF NOT EXISTS date_diagnostics_history (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        captured_at TEXT NOT NULL,
+                        window_days INTEGER NOT NULL,
+                        total_with_value INTEGER,
+                        valid_dates INTEGER,
+                        invalid_dates INTEGER,
+                        invalid_ratio REAL
+                    )
+                """)
+        except Exception as e:
+            logger.warning(f"Failed to ensure diagnostics tables: {e}")
     
     def get_engine(self):
         """Create and return SQLAlchemy engine"""
@@ -302,6 +327,9 @@ class DatabaseManager:
 
     def get_recent_promos(self, days: int = 30) -> List[Dict[Hashable, Any]]:
         """Fetch promotions created/updated in the last N days"""
+        # Some rows have non-date / malformed values in promo_srart_date (stored as text).
+        # Direct comparison causes implicit conversion and raises: Conversion failed when converting date and/or time from character string.
+        # Use TRY_CONVERT to safely skip bad rows.
         sql = """
         SELECT 
             code,
@@ -313,16 +341,78 @@ class DatabaseManager:
             operator_id,
             orbit_id
         FROM [RDC].[PAM_Orbit_Data]
-        WHERE promo_srart_date >= DATEADD(day, -:days, GETDATE())
-        ORDER BY promo_srart_date DESC
+        WHERE TRY_CONVERT(date, promo_srart_date) IS NOT NULL
+          AND TRY_CONVERT(date, promo_srart_date) >= CONVERT(date, DATEADD(day, -:days, GETDATE()))
+        ORDER BY TRY_CONVERT(date, promo_srart_date) DESC
         """
         
         try:
             df = self.get_dataframe(sql, {'days': days})
-            return df.to_dict('records')
+            records = df.to_dict('records')
+            # Diagnostic: count invalid date rows skipped
+            try:
+                # Pull a lightweight set of raw date values to count invalids
+                raw_sql = """
+                SELECT promo_srart_date FROM [RDC].[PAM_Orbit_Data]
+                WHERE promo_srart_date IS NOT NULL
+                """
+                raw_df = self.get_dataframe(raw_sql)
+                total_with_value = len(raw_df)
+                valid_mask = raw_df['promo_srart_date'].apply(lambda v: self._is_valid_date_string(v))
+                valid_count = int(valid_mask.sum())
+                invalid_count = total_with_value - valid_count
+                ratio = (invalid_count / total_with_value) if total_with_value else 0.0
+                if total_with_value and ratio > self.invalid_ratio_threshold:
+                    logger.warning(f"High invalid promo_srart_date ratio: {invalid_count}/{total_with_value} (>{self.invalid_ratio_threshold*100:.0f}%)")
+                # Persist snapshot
+                try:
+                    with sqlite3.connect(self._diag_db_path) as c2:
+                        c2.execute(
+                            "INSERT INTO date_diagnostics_history (captured_at, window_days, total_with_value, valid_dates, invalid_dates, invalid_ratio) VALUES (?,?,?,?,?,?)",
+                            (datetime.utcnow().isoformat(), days, total_with_value, valid_count, invalid_count, ratio)
+                        )
+                except Exception as pe:
+                    logger.warning(f"Failed to persist diagnostics snapshot: {pe}")
+                # Attach diagnostics to first record if any; or create synthetic diagnostic record
+                if records:
+                    records[0]['_date_diagnostics'] = {
+                        'total_with_value': total_with_value,
+                        'valid_dates': valid_count,
+                        'invalid_dates': invalid_count,
+                        'days_window': days
+                    }
+                else:
+                    records.append({
+                        '_date_diagnostics': {
+                            'total_with_value': total_with_value,
+                            'valid_dates': valid_count,
+                            'invalid_dates': invalid_count,
+                            'days_window': days
+                        }
+                    })
+            except Exception as diag_err:
+                logger.warning(f"Date diagnostics failed: {diag_err}")
+            return records
         except Exception as e:
             logger.error(f"Failed to fetch recent promos: {str(e)}")
             return []
+
+    def _is_valid_date_string(self, value: Any) -> bool:
+        """Heuristic to decide if a string can be parsed as date (M/D/YYYY or ISO)."""
+        if value is None:
+            return False
+        s = str(value).strip()
+        if not s:
+            return False
+        from datetime import datetime
+        # Try M/D/YYYY
+        for fmt in ('%m/%d/%Y', '%Y-%m-%d', '%Y-%m-%d %H:%M:%S', '%m/%d/%y'):
+            try:
+                datetime.strptime(s, fmt)
+                return True
+            except Exception:
+                continue
+        return False
     
     def get_active_promos(self) -> List[Dict[Hashable, Any]]:
         """Fetch currently active promotions"""
@@ -337,8 +427,10 @@ class DatabaseManager:
             operator_id,
             orbit_id
         FROM [RDC].[PAM_Orbit_Data]
-        WHERE GETDATE() BETWEEN promo_srart_date AND promo_end_date
-        ORDER BY promo_srart_date DESC
+        WHERE TRY_CONVERT(date, promo_srart_date) IS NOT NULL
+          AND TRY_CONVERT(date, promo_end_date) IS NOT NULL
+          AND CONVERT(date, GETDATE()) BETWEEN TRY_CONVERT(date, promo_srart_date) AND TRY_CONVERT(date, promo_end_date)
+        ORDER BY TRY_CONVERT(date, promo_srart_date) DESC
         """
         
         try:
@@ -398,10 +490,11 @@ class DatabaseManager:
             cat_channelsname,
             cat_description
         FROM [RDC].[PAM_Orbit_Data]
-        WHERE code LIKE :search_term 
+        WHERE (code LIKE :search_term 
            OR description LIKE :search_term
-           OR [bill facing name] LIKE :search_term
-        ORDER BY promo_srart_date DESC
+           OR [bill facing name] LIKE :search_term)
+          AND TRY_CONVERT(date, promo_srart_date) IS NOT NULL
+        ORDER BY TRY_CONVERT(date, promo_srart_date) DESC
         """
         
         try:
