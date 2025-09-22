@@ -31,7 +31,7 @@ itsdangerous==2.1.2
 xlrd==2.0.1
 
 # Date and time utilities (if needed for enhanced datetime handling)
-python-dateutil==2.8.2
+python-dateutil==2.9.0.post0
 
 # JSON schema validation (if you want to add data validation)
 jsonschema==4.20.0
