@@ -12,7 +12,7 @@ pyodbc==5.0.1
 
 # HTTP requests and networking
 requests==2.31.0
-urllib3==2.1.0
+urllib3==2.5.0
 
 # Environment and configuration
 python-dotenv==1.0.0
