@@ -38,7 +38,7 @@
         </div>
         <div class="info-box">
           <div class="info-title">Description</div>
-          <div class="mb-sm">{{ promo.description }}</div>
+          <div>{{ promo.cat_description|e }}</div>
           <div><b>Promo Notes:</b></div>
           <div class="pre-line">{{ promo.promo_notes }}</div>
         </div>
@@ -558,13 +558,20 @@
                   </div>
                   
                   <div class="dcd-field-row-split">
-                    <div class="dcd-field-row manual-entry">
+                    <div class="dcd-field-row auto-filled">
                       <label class="dcd-field-label">LOB:</label>
                       <div class="dcd-field-value">
-                        <select class="form-control" name="dcd_lob">
-                          <option value="TMO Postpaid" selected>TMO Postpaid</option>
-                          <option value="TMO Prepaid">TMO Prepaid</option>
-                          <option value="Business">Business</option>
+                        {% set auto_lob = promo.cat_lobchannelhorizontalname or 'TMO Postpaid' %}
+                        <span class="auto-text">{{ auto_lob }}</span>
+                        <span class="auto-badge">Auto</span>
+                        <button type="button" class="edit-btn" onclick="toggleEditField(this)">
+                          <i class="fas fa-edit"></i>
+                        </button>
+                        <select class="form-control edit-input hidden" name="dcd_lob">
+                          <option value="TMO Postpaid" {% if auto_lob == 'TMO Postpaid' %}selected{% endif %}>TMO Postpaid</option>
+                          <option value="TMO Prepaid" {% if auto_lob == 'TMO Prepaid' %}selected{% endif %}>TMO Prepaid</option>
+                          <option value="Business" {% if auto_lob == 'Business' %}selected{% endif %}>Business</option>
+                          <option value="{{ auto_lob }}" {% if auto_lob not in ['TMO Postpaid', 'TMO Prepaid', 'Business'] %}selected{% endif %}>{{ auto_lob }}</option>
                         </select>
                       </div>
                     </div>
@@ -735,11 +742,20 @@
                 <h4 class="dcd-section-title">Device Lists</h4>
                 <div class="dcd-field-grid">
                   
-                  <div class="dcd-field-row manual-entry">
+                  <div class="dcd-field-row {% if promo.cat_eligibledevices %}auto-filled{% else %}manual-entry{% endif %}">
                     <label class="dcd-field-label">Purchase Devices:</label>
                     <div class="dcd-field-value">
+                      {% if promo.cat_eligibledevices %}
+                      <span class="auto-text pre-line">{{ promo.cat_eligibledevices|e }}</span>
+                      <span class="auto-badge">Auto</span>
+                      <button type="button" class="edit-btn" onclick="toggleEditField(this)">
+                        <i class="fas fa-edit"></i>
+                      </button>
+                      <textarea class="edit-input hidden form-control large-textarea" name="dcd_purchase_devices" rows="6">{{ promo.cat_eligibledevices|e }}</textarea>
+                      {% else %}
                       <textarea class="form-control large-textarea" name="dcd_purchase_devices" rows="6"
                                 placeholder="List all eligible purchase devices with colors and memory variants..."></textarea>
+                      {% endif %}
                       <div class="field-help">
                         <i class="fas fa-info-circle"></i>
                         Include all colors and memory variants for each device model
@@ -747,11 +763,20 @@
                     </div>
                   </div>
                   
-                  <div class="dcd-field-row manual-entry">
+                  <div class="dcd-field-row {% if promo.crffc_eligibletradeindevices %}auto-filled{% else %}manual-entry{% endif %}">
                     <label class="dcd-field-label">Trade-in devices:</label>
                     <div class="dcd-field-value">
+                      {% if promo.crffc_eligibletradeindevices %}
+                      <span class="auto-text pre-line">{{ promo.crffc_eligibletradeindevices|e }}</span>
+                      <span class="auto-badge">Auto</span>
+                      <button type="button" class="edit-btn" onclick="toggleEditField(this)">
+                        <i class="fas fa-edit"></i>
+                      </button>
+                      <textarea class="edit-input hidden form-control large-textarea" name="dcd_tradein_devices" rows="8">{{ promo.crffc_eligibletradeindevices|e }}</textarea>
+                      {% else %}
                       <textarea class="form-control large-textarea" name="dcd_tradein_devices" rows="8"
                                 placeholder="Organize by payout tiers (e.g., $500, $250) and list eligible trade-in devices..."></textarea>
+                      {% endif %}
                       <div class="field-help">
                         <i class="fas fa-info-circle"></i>
                         Organize by payout amount and include all eligible trade-in device models
@@ -1247,6 +1272,20 @@
 {% block extra_js %}
 <script src="{{ url_for('static', filename='js/jira_modal.js') }}"></script>
 <script>
+// Autofill functionality for device fields
+function autofillField(fieldId, content) {
+  const field = document.getElementById(fieldId);
+  if (field) {
+    field.value = content;
+    // Get the button that was clicked
+    const button = event.currentTarget;
+    button.disabled = true;
+    button.innerHTML = '<i class="fas fa-check"></i> Autofilled';
+    button.classList.remove('btn-info-outline');
+    button.classList.add('btn-success-outline');
+  }
+}
+
 // Trade validation functions
 function validateTradeFields() {
   const brokenTradeY = document.querySelector('input[name="broken_trade"][value="Y"]');
@@ -1996,5 +2035,5 @@ function showAutoSaveError(message) {
   }, 3000);
 }
 </script>
-{% endblock %}
-{% endblock %}
+{% endblock extra_js %}
+{% endblock content %}

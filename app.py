@@ -17,4 +17,12 @@ The root route now lives in the core blueprint (`core.home`).
 """
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    import argparse
+    
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(description='Run the PAM application')
+    parser.add_argument('--port', type=int, default=5005, help='Port to run the application on')
+    args = parser.parse_args()
+    
+    # Run the app on the specified port
+    app.run(debug=True, port=args.port)

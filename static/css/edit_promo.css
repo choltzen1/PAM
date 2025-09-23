@@ -85,8 +85,50 @@
   color: #444;
 }
 .mb-sm { margin-bottom: 0.5rem; }
-.pre-line { white-space: pre-line; }
+.pre-line { 
+  white-space: pre-line; 
+  word-wrap: break-word;
+}
 .recent-changes-text { color:#666; font-size:0.9em; }
+
+/* Description formatting removed - using normal text styling */
+
+/* Device lists formatting in DCD JIRA tab */
+.dcd-field-value .auto-text.pre-line {
+  white-space: pre-line;
+  font-size: 0.9em;
+  line-height: 1.4;
+  color: #333;
+  background-color: #f9f9f9;
+  padding: 8px;
+  border-radius: 4px;
+  border-left: 2px solid #0078d4;
+  max-height: 200px;
+  overflow-y: auto;
+  margin-bottom: 10px;
+}
+
+/* Autofill feature styling */
+.textarea-with-autofill {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.autofill-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 5;
+  padding: 0.25rem 0.75rem;
+  font-size: 0.85rem;
+  opacity: 0.8;
+  transition: opacity 0.2s;
+}
+
+.autofill-btn:hover {
+  opacity: 1;
+}
 
 /* Tabs */
 .tabs {
