@@ -23,8 +23,9 @@ class DatabaseManager:
         """Create and return SQLAlchemy engine"""
         if self._engine is None:
             try:
+                # Use ODBC Driver 17 for SQL Server
                 params = urllib.parse.quote_plus(
-                    f'DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={self.server};DATABASE={self.database};UID={self.username};PWD={self.password}'
+                    f'DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={self.server};DATABASE={self.database};UID={self.username};PWD={self.password};TrustServerCertificate=yes'
                 )
                 self._engine = create_engine(f'mssql+pyodbc:///?odbc_connect={params}')
                 
@@ -105,7 +106,14 @@ class DatabaseManager:
             clawback_indicator,
             Broken_Trade,
             Anticipated_volume_take_rates_total,
-            Desired_Execution
+            Desired_Execution,
+            Status,
+            crffc_eligibletradeindevices,
+            cat_lobchannelhorizontalname,
+            cat_additionaleligibilityrequirementsname,
+            cat_eligibledevices,
+            cat_channelsname,
+            cat_description
         FROM [RDC].[PAM_Orbit_Data]
         WHERE Desired_Execution = :execution_type
         ORDER BY code DESC
@@ -169,6 +177,7 @@ class DatabaseManager:
             Anticipated_volume_take_rates_total,
             Desired_Execution
         FROM [RDC].[PAM_Orbit_Data]
+        WHERE cast(promo_srart_date as date)  >= DATEADD(day, -?, GETDATE())
         ORDER BY code DESC
         """
         
@@ -270,7 +279,14 @@ class DatabaseManager:
             clawback_indicator,
             Broken_Trade,
             Anticipated_volume_take_rates_total,
-            Desired_Execution
+            Desired_Execution,
+            Status,
+            crffc_eligibletradeindevices,
+            cat_lobchannelhorizontalname,
+            cat_additionaleligibilityrequirementsname,
+            cat_eligibledevices,
+            cat_channelsname,
+            cat_description
         FROM [RDC].[PAM_Orbit_Data]
         WHERE code = :promo_code
         """
@@ -373,7 +389,14 @@ class DatabaseManager:
             clawback_indicator,
             Broken_Trade,
             Anticipated_volume_take_rates_total,
-            Desired_Execution
+            Desired_Execution,
+            Status,
+            crffc_eligibletradeindevices,
+            cat_lobchannelhorizontalname,
+            cat_additionaleligibilityrequirementsname,
+            cat_eligibledevices,
+            cat_channelsname,
+            cat_description
         FROM [RDC].[PAM_Orbit_Data]
         WHERE code LIKE :search_term 
            OR description LIKE :search_term
@@ -388,6 +411,60 @@ class DatabaseManager:
         except Exception as e:
             logger.error(f"Failed to search promos: {str(e)}")
             return []
+    
+    def _extract_mpss_lookback(self, description: str) -> str:
+        """
+        Extract MPSS Lookback value from description text.
+        Format expected: "MPSS: X Days" or "MPSS: X"
+        Returns the number as a string, or empty string if not found.
+        """
+        if not description:
+            return ""
+        
+        import re
+        
+        # Pattern to find "MPSS: X" or "MPSS: X Days"
+        pattern = r"MPSS:\s*(\d+)"
+        match = re.search(pattern, description)
+        
+        if match:
+            return match.group(1)
+        return ""
+    
+    def _strip_quotes(self, text: str) -> str:
+        """
+        Strip surrounding quotes from a text string if they exist and clean special characters.
+        Handles both single and double quotes, and cleans invisible unicode characters.
+        Also removes question marks from device listings.
+        """
+        if not text or not isinstance(text, str):
+            return ""
+            
+        # Strip double quotes
+        if text.startswith('"') and text.endswith('"'):
+            text = text[1:-1]
+            
+        # Strip single quotes
+        if text.startswith("'") and text.endswith("'"):
+            text = text[1:-1]
+            
+        # Clean invisible or special characters that might render as '?'
+        import re
+        
+        # This regex matches various zero-width characters, non-breaking spaces, etc.
+        invisible_chars_pattern = r'[\u200B-\u200F\uFEFF\u00A0]'
+        text = re.sub(invisible_chars_pattern, '', text)
+        
+        # Special handling for device lists - check if this looks like a device listing
+        if ('Samsung Galaxy:' in text or 'Apple:' in text or 'OnePlus:' in text or 'Google Pixel:' in text):
+            # Remove question marks that are used for uncertainty in device listings
+            text = text.replace('?', '')
+            # Clean up multiple spaces that might result from removed characters
+            text = re.sub(r'\s+', ' ', text)
+            # Clean up spaces before commas
+            text = re.sub(r'\s+,', ',', text)
+        
+        return text
     
     def convert_db_record_to_json_format(self, db_record: Dict[str, Any]) -> Dict[str, Any]:
         """Convert database record to JSON storage format"""
@@ -450,9 +527,11 @@ class DatabaseManager:
             "activation_type": db_record.get("activation_type", ""),  # Add activation_type
             "account_type": db_record.get("account_type", ""),  # Add account_type
             "sales_application": db_record.get("sales_application", ""),  # Add sales_application
-            "mpss_lookback": str(db_record.get("mpss_lookback", "")),
             "device_status_group_id": db_record.get("device_status_group_id", ""),
             "clawback_indicator": "Y" if db_record.get("clawback_indicator") == "Y" else "N",
+            
+            # Parse cat_description to extract MPSS lookback value
+            "mpss_lookback": self._extract_mpss_lookback(db_record.get("cat_description", "")),
             
             # Add metadata
             "data_source": "database",
@@ -485,7 +564,17 @@ class DatabaseManager:
             # Additional fields from database sample
             "crffc_maintainactivelinedev": "Y" if db_record.get("crffc_maintainactivelinedev") == "Y" else "N",
             "Broken_Trade": db_record.get("Broken_Trade", ""),
-            "Anticipated_volume_take_rates_total": db_record.get("Anticipated_volume_take_rates_total", "")
+            "Anticipated_volume_take_rates_total": db_record.get("Anticipated_volume_take_rates_total", ""),
+            
+            # NEW FIELDS - Added from database analysis
+            "Status": db_record.get("Status", ""),
+            # Strip quotes from device fields if they exist
+            "crffc_eligibletradeindevices": self._strip_quotes(db_record.get("crffc_eligibletradeindevices", "")),
+            "cat_lobchannelhorizontalname": db_record.get("cat_lobchannelhorizontalname", ""),
+            "cat_additionaleligibilityrequirementsname": db_record.get("cat_additionaleligibilityrequirementsname", ""),
+            "cat_eligibledevices": self._strip_quotes(db_record.get("cat_eligibledevices", "")),
+            "cat_channelsname": db_record.get("cat_channelsname", ""),
+            "cat_description": db_record.get("cat_description", "")
         }
         
         return json_record
