@@ -143,6 +143,25 @@ def search_orbit(orbit_id):
                     'start_date': spe_promo.get('promo_start_date', ''),
                     'end_date': spe_promo.get('promo_end_date', ''),
                 })
+        # Final fallback: direct DB orbit-only lookup (record may not have code yet)
+        try:
+            from data.database import DatabaseManager
+            dbm = DatabaseManager()
+            orbit_row = dbm.get_orbit_record_by_orbit_id(orbit_id)
+            if orbit_row:
+                return jsonify({
+                    'found': True,
+                    'type': 'RDC',
+                    'promo_code': '',  # intentionally blank; not yet assigned
+                    'initiative_name': orbit_row.get('bill_facing_name', orbit_row.get('description','Unknown')),
+                    'description': orbit_row.get('description',''),
+                    'owner': orbit_row.get('owner',''),
+                    'start_date': orbit_row.get('promo_start_date',''),
+                    'end_date': orbit_row.get('promo_end_date',''),
+                    'note': 'Orbit record located (no promo code assigned yet)'
+                })
+        except Exception:
+            pass
         return jsonify({'found': False, 'message': f'Orbit ID {orbit_id} not found in promotions data'})
     except Exception as e:
         return jsonify({'found': False, 'error': str(e)})
@@ -180,3 +199,199 @@ def update_testing_status():
         })
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
+
+@api_bp.route('/generate_next_promo_code', methods=['GET'])
+def generate_next_promo_code():
+    """Compute next promo code based on existing codes.
+
+    Rules:
+    - Consider codes matching ^[A-Z][0-9]{3}$.
+    - Find highest letter; within that letter find max numeric.
+    - Increment numeric; if > 999 roll to next letter and numeric=1 (formatted 001).
+    - If rollover past 'Z', return error.
+    - If no codes exist (unlikely in current state), start at 'A001'.
+    """
+    try:
+        if not data_manager:
+            return jsonify({'success': False, 'error': 'Data manager unavailable'}), 500
+        # New simplified DB-first sequential logic
+        from data.database import DatabaseManager
+        from data.code_tracking import load_issued_codes, record_issued_code
+        issued = load_issued_codes()
+        dbm = DatabaseManager()
+        highest = dbm.get_highest_sequential_promo_code()
+        import re
+        pat = re.compile(r'^([A-Z])(\d{1,4})$')
+        rolled = False
+        if not highest:
+            # Seed at R1 => format R001
+            letter = 'R'
+            num = 1
+        else:
+            m = pat.match(highest.upper())
+            if not m:
+                letter = 'R'; num = 1
+            else:
+                letter = m.group(1)
+                num = int(m.group(2)) + 1
+                if num > 9999:  # safeguard upper bound (4 digits allowed by regex)
+                    if letter == 'Z':
+                        return jsonify({'success': False, 'error': 'Exhausted code space'}), 400
+                    letter = chr(ord(letter) + 1)
+                    num = 1
+                    rolled = True
+        # Skip any tombstoned codes (rare unless DB behind file state). Increment until free.
+        while True:
+            width = 3 if num <= 999 else 4
+            candidate = f"{letter}{num:0{width}d}"
+            if candidate not in issued:
+                break
+            num += 1
+        record_issued_code(candidate)
+        return jsonify({'success': True, 'next_code': candidate, 'base_letter': letter, 'rolled': rolled})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@api_bp.route('/generate_and_ingest', methods=['POST'])
+def generate_and_ingest():
+    """Generate the next promo code and ingest orbit data into PAM storage.
+
+    Expected JSON: { "orbit_id": "####" }
+    Flow:
+      1. Validate orbit_id.
+      2. Ensure no existing promo already linked to this orbit_id.
+      3. Generate next code (internal call to logic mirroring generate_next_promo_code).
+      4. Fetch full orbit record from DB; if missing -> 404.
+      5. Map DB record to JSON promo schema; set code + orbit_id.
+      6. Save via data_manager.save_promo.
+      7. Return success payload.
+    """
+    try:
+        if not data_manager:
+            return jsonify({'success': False, 'error': 'Data manager unavailable'}), 500
+        body = request.get_json() or {}
+        orbit_id = (body.get('orbit_id') or '').strip()
+        if not orbit_id:
+            return jsonify({'success': False, 'error': 'orbit_id required'}), 400
+        # Check if orbit already assigned
+        existing = data_manager.get_all_promos() or {}
+        for code, pdata in existing.items():
+            if pdata.get('orbit_id') == orbit_id:
+                return jsonify({'success': False, 'error': 'Orbit already assigned', 'existing_code': code}), 409
+        # Generate next code (reuse logic - inline to avoid extra HTTP call)
+        from data.database import DatabaseManager
+        from data.code_tracking import load_issued_codes, record_issued_code
+        issued = load_issued_codes()
+        dbm = DatabaseManager()
+        highest = dbm.get_highest_sequential_promo_code()
+        import re
+        pat = re.compile(r'^([A-Z])(\d{1,4})$')
+        rolled = False
+        if not highest:
+            base_letter = 'R'; num = 1
+        else:
+            m = pat.match(highest.upper())
+            if not m:
+                base_letter = 'R'; num = 1
+            else:
+                base_letter = m.group(1)
+                num = int(m.group(2)) + 1
+                if num > 9999:
+                    if base_letter == 'Z':
+                        return jsonify({'success': False, 'error': 'Exhausted code space'}), 400
+                    base_letter = chr(ord(base_letter)+1)
+                    num = 1
+                    rolled = True
+        while True:
+            width = 3 if num <= 999 else 4
+            next_code = f"{base_letter}{num:0{width}d}"
+            if next_code not in issued:
+                break
+            num += 1
+        record_issued_code(next_code)
+        # Fetch orbit record from DB
+        from data.database import DatabaseManager
+        dbm = DatabaseManager()
+        orbit_row = dbm.get_full_orbit_record_by_orbit_id(orbit_id)
+        if not orbit_row:
+            return jsonify({'success': False, 'error': f'Orbit {orbit_id} not found in DB'}), 404
+        # Convert to JSON storage format if code present or not
+        # Use existing convert helper if possible
+        converted = dbm.convert_db_record_to_json_format(orbit_row) if hasattr(dbm, 'convert_db_record_to_json_format') else {}
+        # Overlay essentials
+        converted['code'] = next_code
+        converted['orbit_id'] = orbit_id
+        if not converted.get('description'):
+            converted['description'] = orbit_row.get('description','')
+        if not converted.get('bill_facing_name'):
+            converted['bill_facing_name'] = orbit_row.get('bill_facing_name') or orbit_row.get('description','')
+        # Persist
+        data_manager.save_promo(next_code, converted, user_name='System')
+        saved = data_manager.get_promo(next_code) or {}
+        return jsonify({
+            'success': True,
+            'promo_code': next_code,
+            'orbit_id': orbit_id,
+            'rolled': rolled,
+            'base_letter': base_letter,
+            'fields_imported': len(converted.keys()),
+            'owner': saved.get('owner'),
+            'description': saved.get('description')
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@api_bp.route('/recent_generated_promos', methods=['GET'])
+def recent_generated_promos():
+    """Return last 10 generated promos (RDC + SPE) using created_at descending.
+
+    Data source: merged hybrid manager promos & SPE promos. Falls back to JSON timestamps.
+    """
+    try:
+        if not data_manager:
+            return jsonify({'success': False, 'promos': []})
+        import datetime
+        promos = data_manager.get_all_promos() or {}
+        # promos returns dict (code->data) or list depending on manager; normalize
+        if isinstance(promos, list):
+            # convert list of dicts with 'code'
+            norm = {}
+            for rec in promos:
+                c = str(rec.get('code','')).strip()
+                if c:
+                    norm[c] = rec
+            promos = norm
+        spe = {}
+        try:
+            spe = data_manager.get_all_spe_promos() or {}
+            if isinstance(spe, list):
+                conv = {}
+                for rec in spe:
+                    c = str(rec.get('code','')).strip()
+                    if c:
+                        conv[c] = rec
+                spe = conv
+        except Exception:
+            spe = {}
+        combined = {}
+        combined.update(promos)
+        combined.update(spe)
+        rows = []
+        for code, pdata in combined.items():
+            created_raw = pdata.get('created_at') or pdata.get('updated_at') or ''
+            try:
+                created_dt = datetime.datetime.fromisoformat(created_raw.replace('Z','+00:00')) if created_raw else datetime.datetime.min
+            except Exception:
+                created_dt = datetime.datetime.min
+            rows.append({
+                'code': code,
+                'orbit_id': pdata.get('orbit_id',''),
+                'description': pdata.get('bill_facing_name') or pdata.get('description',''),
+                'created_at': created_dt.isoformat(),
+                'type': pdata.get('Desired_Execution') or ('SPE' if code.startswith('SP') else 'RDC')
+            })
+        rows.sort(key=lambda r: r['created_at'], reverse=True)
+        latest = rows[:10]
+        return jsonify({'success': True, 'promos': latest, 'count': len(latest)})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e), 'promos': []}), 500

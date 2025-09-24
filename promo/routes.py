@@ -31,12 +31,20 @@ def promotions_page():
     per_page = request.args.get('per_page', 25, type=int)
     search = request.args.get('search', '', type=str)
     owner_filter = request.args.get('owner', 'all', type=str)
-    promo_data = dm.get_paginated_promos(
-        page=page,
-        per_page=per_page,
-        search=search,
-        owner_filter=owner_filter
-    )
+    if hasattr(dm, 'get_pam_only_paginated_promos'):
+        promo_data = dm.get_pam_only_paginated_promos(
+            page=page,
+            per_page=per_page,
+            search=search,
+            owner_filter=owner_filter
+        )
+    else:
+        promo_data = dm.get_paginated_promos(
+            page=page,
+            per_page=per_page,
+            search=search,
+            owner_filter=owner_filter
+        )
     return render_template(
         'promotions.html',
         promotions=promo_data['promotions'],

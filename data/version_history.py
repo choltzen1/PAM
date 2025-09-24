@@ -200,6 +200,7 @@ class VersionHistoryManager:
                     # Compare structure and values (old/new) exactly
                     if set(last_fc.keys()) == set(meaningful.keys()):
                         same = True
+                        
                         for k, vals in meaningful.items():
                             prev = last_fc.get(k, {})
                             if not isinstance(prev, dict):
