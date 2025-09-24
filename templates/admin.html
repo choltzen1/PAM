@@ -109,6 +109,19 @@
 
   <!-- Placeholder: could add live recent activity feed in future -->
 
+  <div class="admin-card" style="margin-top:20px;">
+    <div class="card-header">
+      <div class="card-icon"><i class="fas fa-tags"></i></div>
+      <div class="card-title">PAM JSON Promotions</div>
+    </div>
+    <div class="card-content">
+      Manage JSON-layer promotions, including hard deletion and bulk cleanup.
+      <div class="card-actions" style="margin-top:12px;">
+        <a href="/admin/pam-promotions" class="btn-admin"><i class="fas fa-arrow-right"></i> Open Manager</a>
+      </div>
+    </div>
+  </div>
+
   <script>
   async function loadDashboardSummary(){
     try {
@@ -165,6 +178,33 @@
     }
   }
   document.addEventListener('DOMContentLoaded', loadDashboardSummary);
+  </script>
+  <script>
+  async function deletePromo(){
+    const codeInput = document.getElementById('deletePromoCode');
+    const resultEl = document.getElementById('deletePromoResult');
+    const promoCode = (codeInput.value || '').trim();
+    if(!promoCode){
+      resultEl.innerHTML = '<span style="color:#d33;">Enter a promo code.</span>';
+      return;
+    }
+    resultEl.innerHTML = 'Deleting '+promoCode+'...';
+    try{
+      const res = await fetch('/admin/delete-promo', {
+       method:'POST',
+       headers:{'Content-Type':'application/json'},
+       body: JSON.stringify({promo_code: promoCode})
+      });
+      const js = await res.json();
+      if(res.ok && js.success){
+        resultEl.innerHTML = '<span style="color:green;">'+js.message+'</span>';
+      } else {
+        resultEl.innerHTML = '<span style="color:#d33;">'+(js.message || 'Delete failed')+'</span>';
+      }
+    } catch(e){
+      resultEl.innerHTML = '<span style="color:#d33;">Error: '+e+'</span>';
+    }
+  }
   </script>
 </div>
 

@@ -15,10 +15,16 @@ class DatabaseManager:
     """Manages SQL Server database connections and queries for live promo data"""
     
     def __init__(self):
-        self.server = 'PPOLWPQMR00003,50107'
-        self.database = 'PromoQuality'
-        self.username = 'Python_user'
-        self.password = 'Pit30&i5t#w@y45$%^'
+        # Load connection parameters from environment for security
+        self.server = os.getenv('PAM_DB_SERVER', 'localhost')
+        self.database = os.getenv('PAM_DB_DATABASE', 'PromoQuality')
+        self.username = os.getenv('PAM_DB_USERNAME', '')
+        self.password = os.getenv('PAM_DB_PASSWORD', '')
+        self.driver = os.getenv('PAM_DB_DRIVER', 'ODBC Driver 17 for SQL Server')
+        self.encrypt = os.getenv('PAM_DB_ENCRYPT', 'no').lower()  # yes/no
+        self.trust_cert = os.getenv('PAM_DB_TRUST_CERT', 'yes').lower()  # yes/no
+        self.timeout = int(os.getenv('PAM_DB_LOGIN_TIMEOUT', '15'))
+        self.source_table = os.getenv('PAM_SOURCE_TABLE', '[PAM].[PAM_Orbit_Data_Updated]')
         self._engine = None
         # Diagnostics persistence (SQLite co-located with version history)
         self._diag_db_path = os.path.join('data', 'version_history.db')
@@ -48,10 +54,31 @@ class DatabaseManager:
         """Create and return SQLAlchemy engine"""
         if self._engine is None:
             try:
-                params = urllib.parse.quote_plus(
-                    f'DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={self.server};DATABASE={self.database};UID={self.username};PWD={self.password}'
-                )
-                self._engine = create_engine(f'mssql+pyodbc:///?odbc_connect={params}')
+                server_part = self.server  # Port (if any) is already embedded in server value
+                # Build raw ODBC string
+                odbc_elems = [
+                    f'DRIVER={{{self.driver}}}',
+                    f'SERVER={server_part}',
+                    f'DATABASE={self.database}'
+                ]
+                if self.username:
+                    odbc_elems.append(f'UID={self.username}')
+                    odbc_elems.append(f'PWD={self.password}')
+                else:
+                    # Integrated security fallback (Windows auth)
+                    odbc_elems.append('Trusted_Connection=yes')
+                if self.encrypt in ('yes','true','1'):
+                    odbc_elems.append('Encrypt=yes')
+                else:
+                    odbc_elems.append('Encrypt=no')
+                if self.trust_cert in ('yes','true','1'):
+                    odbc_elems.append('TrustServerCertificate=yes')
+                odbc_elems.append(f'LoginTimeout={self.timeout}')
+                odbc_str = ';'.join(odbc_elems)
+                masked = odbc_str.replace(self.password, '***') if self.password else odbc_str
+                logger.info(f"Attempting DB connect with: {masked}")
+                params = urllib.parse.quote_plus(odbc_str)
+                self._engine = create_engine(f'mssql+pyodbc:///?odbc_connect={params}', pool_pre_ping=True, pool_recycle=1800)
                 
                 # Test connection
                 with self._engine.connect() as conn:
@@ -59,7 +86,8 @@ class DatabaseManager:
                 logger.info("Database connection established ✅")
                 
             except Exception as e:
-                logger.error(f"Failed to connect to database: {str(e)}")
+                logger.error(f"Failed to connect to database: {e}")
+                logger.error("Troubleshooting tips: 1) Verify server/port reachable (ping / Test-NetConnection) 2) Confirm ODBC driver installed 3) Check firewall/VPN 4) Validate credentials.")
                 raise
         
         return self._engine
@@ -88,11 +116,42 @@ class DatabaseManager:
     def get_all_promos(self) -> List[Dict[Hashable, Any]]:
         """Fetch all promotions from PAM_Orbit_Data table"""
         return self.get_promos_by_execution_type("RDC")
+
+    def get_highest_sequential_promo_code(self) -> Optional[str]:
+        """Return the highest promo code matching pattern ^[A-Z][0-9]{1,4}$ (one letter + digits).
+
+        We rely on DB ordering but also perform regex parsing to ensure correctness.
+        Returns None if no matching codes found or on error.
+        """
+        try:
+            # Efficient: pull only code column; ordering DESC to hit highest early
+            sql = f"SELECT TOP 200 code FROM {self.source_table} WHERE code IS NOT NULL ORDER BY code DESC"
+            df = self.get_dataframe(sql)
+            import re
+            pat = re.compile(r'^[A-Z]([0-9]{1,4})$')
+            best = None
+            best_letter = ''
+            best_num = -1
+            for raw in df['code'].dropna().tolist():
+                code = str(raw).strip().upper()
+                m = pat.match(code)
+                if not m:
+                    continue
+                letter = code[0]
+                num = int(m.group(1))
+                # Order by letter then numeric; primary expectation is single active letter (e.g., R)
+                if best is None:
+                    best = code; best_letter = letter; best_num = num; continue
+                if letter > best_letter or (letter == best_letter and num > best_num):
+                    best = code; best_letter = letter; best_num = num
+            return best
+        except Exception:
+            return None
     
     def get_promos_by_execution_type(self, execution_type: str) -> List[Dict[Hashable, Any]]:
         """Fetch promotions filtered by Desired_Execution type (RDC, SPE, Rebate)"""
-        sql = """
-        SELECT 
+        sql = f"""
+            SELECT 
             code,
             Owner,
             [bill facing name] as bill_facing_name,
@@ -131,7 +190,7 @@ class DatabaseManager:
             Broken_Trade,
             Anticipated_volume_take_rates_total,
             Desired_Execution
-        FROM [RDC].[PAM_Orbit_Data]
+    FROM {self.source_table}
         WHERE Desired_Execution = :execution_type
         ORDER BY code DESC
         """
@@ -153,8 +212,8 @@ class DatabaseManager:
     
     def get_all_promotions_unified(self) -> List[Dict[Hashable, Any]]:
         """Fetch ALL promotions regardless of type"""
-        sql = """
-        SELECT 
+        sql = f"""
+            SELECT 
             code,
             Owner,
             [bill facing name] as bill_facing_name,
@@ -193,65 +252,14 @@ class DatabaseManager:
             Broken_Trade,
             Anticipated_volume_take_rates_total,
             Desired_Execution
-        FROM [RDC].[PAM_Orbit_Data]
-        ORDER BY code DESC
+            FROM {self.source_table}
+            ORDER BY code DESC
         """
-        
         try:
             df = self.get_dataframe(sql)
             return df.to_dict('records')
         except Exception as e:
             logger.error(f"Failed to fetch all promotions: {str(e)}")
-            return []
-        sql = """
-        SELECT 
-            code,
-            Owner,
-            [bill facing name] as bill_facing_name,
-            orbit_id,
-            description,
-            promo_notes,
-            discount,
-            amount,
-            nseip_drop,
-            dcd_web_cart,
-            product_type,
-            bogo,
-            fpd_display_promo,
-            on_menu,
-            market_group,
-            store_group,
-            promo_srart_date,
-            promo_end_date,
-            comm_end_date,
-            promo_duration,
-            delay_time,
-            application_grace_period,
-            device_sales_type,
-            activation_type,
-            active_line_required,
-            maintain_soc,
-            crffc_maintainactivelinedev,
-            limit_per_ban,
-            soc_grouping,
-            account_type,
-            sales_application,
-            operator_id,
-            sku_group_id,
-            device_status_group_id,
-            clawback_indicator,
-            Broken_Trade,
-            Anticipated_volume_take_rates_total,
-            Desired_Execution
-        FROM [RDC].[PAM_Orbit_Data]
-        ORDER BY code DESC
-        """
-        
-        try:
-            df = self.get_dataframe(sql)
-            return df.to_dict('records')
-        except Exception as e:
-            logger.error(f"Failed to fetch promotions: {str(e)}")
             return []
     
     def get_promo_by_code(self, promo_code: str) -> Optional[Dict[str, Any]]:
@@ -296,7 +304,7 @@ class DatabaseManager:
             Broken_Trade,
             Anticipated_volume_take_rates_total,
             Desired_Execution
-        FROM [RDC].[PAM_Orbit_Data]
+    FROM {self.source_table}
         WHERE code = :promo_code
         """
         
@@ -314,8 +322,8 @@ class DatabaseManager:
         # Some rows have non-date / malformed values in promo_srart_date (stored as text).
         # Direct comparison causes implicit conversion and raises: Conversion failed when converting date and/or time from character string.
         # Use TRY_CONVERT to safely skip bad rows.
-        sql = """
-        SELECT 
+        sql = f"""
+            SELECT 
             code,
             Owner,
             description,
@@ -324,9 +332,9 @@ class DatabaseManager:
             amount,
             operator_id,
             orbit_id
-        FROM [RDC].[PAM_Orbit_Data]
+            FROM {self.source_table}
         WHERE TRY_CONVERT(date, promo_srart_date) IS NOT NULL
-          AND TRY_CONVERT(date, promo_srart_date) >= CONVERT(date, DATEADD(day, -:days, GETDATE()))
+    AND cast(promo_srart_date as date)  >= DATEADD(day, -:days, GETDATE())
         ORDER BY TRY_CONVERT(date, promo_srart_date) DESC
         """
         
@@ -336,10 +344,7 @@ class DatabaseManager:
             # Diagnostic: count invalid date rows skipped
             try:
                 # Pull a lightweight set of raw date values to count invalids
-                raw_sql = """
-                SELECT promo_srart_date FROM [RDC].[PAM_Orbit_Data]
-                WHERE promo_srart_date IS NOT NULL
-                """
+                raw_sql = f"SELECT promo_srart_date FROM {self.source_table} WHERE promo_srart_date IS NOT NULL"
                 raw_df = self.get_dataframe(raw_sql)
                 total_with_value = len(raw_df)
                 valid_mask = raw_df['promo_srart_date'].apply(lambda v: self._is_valid_date_string(v))
@@ -400,8 +405,8 @@ class DatabaseManager:
     
     def get_active_promos(self) -> List[Dict[Hashable, Any]]:
         """Fetch currently active promotions"""
-        sql = """
-        SELECT 
+        sql = f"""
+            SELECT 
             code,
             Owner,
             description,
@@ -410,13 +415,12 @@ class DatabaseManager:
             amount,
             operator_id,
             orbit_id
-        FROM [RDC].[PAM_Orbit_Data]
-        WHERE TRY_CONVERT(date, promo_srart_date) IS NOT NULL
-          AND TRY_CONVERT(date, promo_end_date) IS NOT NULL
-          AND CONVERT(date, GETDATE()) BETWEEN TRY_CONVERT(date, promo_srart_date) AND TRY_CONVERT(date, promo_end_date)
-        ORDER BY TRY_CONVERT(date, promo_srart_date) DESC
+            FROM {self.source_table}
+            WHERE TRY_CONVERT(date, promo_srart_date) IS NOT NULL
+              AND TRY_CONVERT(date, promo_end_date) IS NOT NULL
+              AND CONVERT(date, GETDATE()) BETWEEN TRY_CONVERT(date, promo_srart_date) AND TRY_CONVERT(date, promo_end_date)
+            ORDER BY TRY_CONVERT(date, promo_srart_date) DESC
         """
-        
         try:
             df = self.get_dataframe(sql)
             return df.to_dict('records')
@@ -426,8 +430,8 @@ class DatabaseManager:
     
     def search_promos(self, search_term: str) -> List[Dict[Hashable, Any]]:
         """Search promotions by code or description"""
-        sql = """
-        SELECT 
+        sql = f"""
+            SELECT 
             code,
             Owner,
             [bill facing name] as bill_facing_name,
@@ -466,14 +470,13 @@ class DatabaseManager:
             Broken_Trade,
             Anticipated_volume_take_rates_total,
             Desired_Execution
-        FROM [RDC].[PAM_Orbit_Data]
-        WHERE (code LIKE :search_term 
-           OR description LIKE :search_term
-           OR [bill facing name] LIKE :search_term)
-          AND TRY_CONVERT(date, promo_srart_date) IS NOT NULL
-        ORDER BY TRY_CONVERT(date, promo_srart_date) DESC
+            FROM {self.source_table}
+            WHERE (code LIKE :search_term 
+               OR description LIKE :search_term
+               OR [bill facing name] LIKE :search_term)
+              AND TRY_CONVERT(date, promo_srart_date) IS NOT NULL
+            ORDER BY TRY_CONVERT(date, promo_srart_date) DESC
         """
-        
         try:
             search_pattern = f"%{search_term}%"
             df = self.get_dataframe(sql, {'search_term': search_pattern})
@@ -481,6 +484,94 @@ class DatabaseManager:
         except Exception as e:
             logger.error(f"Failed to search promos: {str(e)}")
             return []
+
+    def get_orbit_record_by_orbit_id(self, orbit_id: str) -> Optional[Dict[str, Any]]:
+        """Fetch raw promotion row by orbit_id only (record may not yet have a promo code assigned)."""
+        sql = f"""
+            SELECT 
+            orbit_id,
+            [bill facing name] as bill_facing_name,
+            description,
+            Owner,
+            promo_srart_date,
+            promo_end_date
+            FROM {self.source_table}
+            WHERE orbit_id = :orbit_id
+        """
+        try:
+            df = self.get_dataframe(sql, {'orbit_id': orbit_id})
+            if df.empty:
+                return None
+            row = df.iloc[0].to_dict()
+            normalized = {
+                'orbit_id': row.get('orbit_id',''),
+                'bill_facing_name': row.get('bill_facing_name') or row.get('description',''),
+                'description': row.get('description',''),
+                'owner': str(row.get('Owner','')).strip('"'),
+                'promo_start_date': row.get('promo_srart_date',''),
+                'promo_end_date': row.get('promo_end_date','')
+            }
+            return normalized
+        except Exception as e:
+            logger.error(f"Orbit-only lookup failed for {orbit_id}: {e}")
+            return None
+
+    def get_full_orbit_record_by_orbit_id(self, orbit_id: str) -> Optional[Dict[str, Any]]:
+        """Fetch the full raw orbit record for ingestion (does not require code).
+
+        Returns database row as dict or None.
+        """
+        sql = f"""
+            SELECT 
+            code,
+            Owner,
+            [bill facing name] as bill_facing_name,
+            orbit_id,
+            description,
+            promo_notes,
+            discount,
+            amount,
+            nseip_drop,
+            dcd_web_cart,
+            product_type,
+            bogo,
+            fpd_display_promo,
+            on_menu,
+            market_group,
+            store_group,
+            promo_srart_date,
+            promo_end_date,
+            comm_end_date,
+            promo_duration,
+            delay_time,
+            application_grace_period,
+            device_sales_type,
+            activation_type,
+            active_line_required,
+            maintain_soc,
+            crffc_maintainactivelinedev,
+            limit_per_ban,
+            soc_grouping,
+            account_type,
+            sales_application,
+            operator_id,
+            sku_group_id,
+            device_status_group_id,
+            clawback_indicator,
+            Broken_Trade,
+            Anticipated_volume_take_rates_total,
+            Desired_Execution
+    FROM {self.source_table}
+        WHERE orbit_id = :orbit_id
+        """
+        try:
+            df = self.get_dataframe(sql, {'orbit_id': orbit_id})
+            if df.empty:
+                return None
+            return df.iloc[0].to_dict()
+        except Exception as e:
+            logger.error(f"Full orbit lookup failed for {orbit_id}: {e}")
+            return None
     
     def convert_db_record_to_json_format(self, db_record: Dict[str, Any]) -> Dict[str, Any]:
         """Convert database record to JSON storage format"""
