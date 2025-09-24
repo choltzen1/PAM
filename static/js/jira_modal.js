@@ -216,22 +216,24 @@ function collectDcdFormData() {
   
   // Helper function to get field value (either from display text or input)
   function getFieldValue(name) {
-    // First, try to find a direct input/textarea/select field
-    const input = document.querySelector(`input[name="${name}"], textarea[name="${name}"], select[name="${name}"]`);
-    if (input && !input.classList.contains('hidden') && !input.classList.contains('edit-input')) {
-      return input.value;
+    // First, try to find a direct input/textarea/select field that's not hidden
+    const directInput = document.querySelector(`input[name="${name}"], textarea[name="${name}"], select[name="${name}"]`);
+    if (directInput && !directInput.classList.contains('hidden') && !directInput.classList.contains('edit-input')) {
+      return directInput.value;
     }
     
-    // For auto-filled fields, find the field by name and get the auto-text value
-    const hiddenInput = document.querySelector(`input[name="${name}"].edit-input`);
+    // For auto-filled fields, find the hidden input/textarea/select with edit-input class
+    const hiddenInput = document.querySelector(`input[name="${name}"].edit-input, textarea[name="${name}"].edit-input, select[name="${name}"].edit-input`);
+    
     if (hiddenInput) {
       // Find the parent dcd-field-value, then find the auto-text within it
       const fieldValue = hiddenInput.closest('.dcd-field-value');
       const autoText = fieldValue?.querySelector('.auto-text');
+      
       if (autoText) {
-        return autoText.textContent;
+        return autoText.textContent.trim();
       }
-      // Fallback to hidden input value
+      // Fallback to hidden input/textarea/select value
       return hiddenInput.value;
     }
     
@@ -259,56 +261,109 @@ function collectDcdFormData() {
   formData.transaction_types = getFieldValue('dcd_transaction_types');
   formData.ban_limit = getFieldValue('dcd_ban_limit');
   
+  // Additional DCD fields
+  formData.rdc_activations = getFieldValue('dcd_rdc_activations');
+  formData.rdc_aal = getFieldValue('dcd_rdc_aal');
+  formData.rdc_upgrades = getFieldValue('dcd_rdc_upgrades');
+  formData.payout_amount = getFieldValue('dcd_payout_amount');
+  formData.rebate_details = getFieldValue('dcd_rebate_details');
+  formData.segment_name = getFieldValue('dcd_segment_name');
+  formData.segment_level = getFieldValue('dcd_segment_level');
+  formData.sku_list = getFieldValue('dcd_sku_list');
+  formData.tradein_list = getFieldValue('dcd_tradein_list');
+  formData.broken_trade = getFieldValue('dcd_broken_trade');
+  formData.handset_line_condition = getFieldValue('dcd_handset_line_condition');
+  formData.port_in = getFieldValue('dcd_port_in');
+  formData.stackable = getFieldValue('dcd_stackable');
+  formData.yu1 = getFieldValue('dcd_yu1');
+  
   return formData;
 }
 
+function formatFieldValue(value, defaultValue = 'TBD') {
+  // Only show default if value is truly empty/undefined/null
+  // Preserve actual values like "N/A", "No", "False", etc.
+  if (value === null || value === undefined || value === '') {
+    return defaultValue;
+  }
+  return value;
+}
+
 function buildDcdDescription(data) {
-  return `Description
-*Initiative Name:* ${data.initiative_name || 'TBD'}
+  return `
+*Initiative Name:* ${formatFieldValue(data.initiative_name)}
 
-*Point of contact for review/validating in PRW/PROD:* ${data.point_of_contact || 'TBD'}
+*Point of contact for review/validating in PRW/PROD:* ${formatFieldValue(data.point_of_contact)}
 
-*GTM Point of contact for review/validating in PRW/PROD:* ${data.gtm_contact || 'TBD'}
+*GTM Point of contact for review/validating in PRW/PROD:* ${formatFieldValue(data.gtm_contact)}
 
-*LOB:* ${data.lob || 'TMO Postpaid'}
+*LOB:* ${formatFieldValue(data.lob, 'TMO Postpaid')}
 
-*Promo Type:* ${data.promo_type || 'Trade In (Multi-Tier)'}
+*Promo Type:* ${formatFieldValue(data.promo_type, 'Trade In (Multi-Tier)')}
 
 *Expected Business Behavior:*  
 
-${data.business_behavior || 'TBD'}
+${formatFieldValue(data.business_behavior)}
 
-*Max Payout:* ${data.max_payout || 'TBD'}
-
-*SOC Group:* ${data.soc_group || 'TBD'}
+*Max Payout:* ${formatFieldValue(data.max_payout)}
 
 *Purchase Devices:*
 
-${data.purchase_devices || 'TBD'}
+${formatFieldValue(data.purchase_devices)}
 
 *Trade-in devices:*
 
-${data.tradein_devices || 'TBD'}
+${formatFieldValue(data.tradein_devices)}
 
 *Promotion Configuration Details:*
 
-*Promotion start date, time:* ${data.start_date || 'TBD'}
+*Promotion start date, time:* ${formatFieldValue(data.start_date)}
 
-*Promotion end date, time:* ${data.end_date || 'TBD'}
+*Promotion end date, time:* ${formatFieldValue(data.end_date)}
 
-*Promo ID:* ${data.promo_id || 'TBD'}
+*Promo ID:* ${formatFieldValue(data.promo_id)}
 
-*Promo Group ID:* ${data.promo_group_id || 'TBD'}
+*Promo Group ID:* ${formatFieldValue(data.promo_group_id)}
 
-*Promotion Customer-Facing Name:* ${data.customer_facing_name || 'TBD'}
+*Promotion Customer-Facing Name:* ${formatFieldValue(data.customer_facing_name)}
 
-*Any account type/sub-type (AT/ST) conditions:* ${data.account_types || 'TBD'}
+*Any account type/sub-type (AT/ST) conditions:* ${formatFieldValue(data.account_types)}
 
-*DCP Application Channels:* ${data.channels || 'TBD'}
+*DCP Application Channels:* ${formatFieldValue(data.channels)}
 
-*Transaction types:* ${data.transaction_types || 'TBD'}
+*SOC Group/Rate plan requirement:* ${formatFieldValue(data.soc_group)}
 
-*Redemption/BAN Limit:* ${data.ban_limit || 'TBD'}`;
+*Transaction types:* ${formatFieldValue(data.transaction_types)}
+
+*100% RDC for Activations (Web only):* ${formatFieldValue(data.rdc_activations)}
+
+*100% RDC for AAL (Web only):* ${formatFieldValue(data.rdc_aal)}
+
+*100% RDC Upgrades (Web only):* ${formatFieldValue(data.rdc_upgrades)}
+
+*Payout amount:* ${formatFieldValue(data.payout_amount)}
+
+*Rebate Details / Promo Code:* ${formatFieldValue(data.rebate_details, 'N/A')}
+
+*Redemption/BAN Limit:* ${data.ban_limit ? (formatFieldValue(data.ban_limit) + '/BAN') : 'TBD'}
+
+*Segment Name:* ${formatFieldValue(data.segment_name)}
+
+*Segment Level:* ${formatFieldValue(data.segment_level)}
+
+*SKU List:* ${formatFieldValue(data.sku_list, 'Attached')}
+
+*Trade-In List (if applicable):* ${formatFieldValue(data.tradein_list, 'Attached')}
+
+*Broken Trade (if applicable):* ${formatFieldValue(data.broken_trade)}
+
+*Handset Line Condition:* ${formatFieldValue(data.handset_line_condition)}
+
+*Port-In:* ${formatFieldValue(data.port_in)}
+
+*Stackable:* ${formatFieldValue(data.stackable)}
+
+*YU1:* ${formatFieldValue(data.yu1)}`;
 }
 
 function previewDcdTemplate() {

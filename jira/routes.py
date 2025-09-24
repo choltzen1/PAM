@@ -48,14 +48,19 @@ def create_jira_ticket():
         fields['labels'] = [l.strip() for l in cfg['labels'] if l.strip()]
     if cfg['default_assignee']:
         fields['assignee'] = {'emailAddress': cfg['default_assignee']}
+    
+    # Set parent ticket - for DCD tickets, use the current DCD ticket as parent if no parent is specified
     if parent:
         fields['parent'] = {'key': parent}
+    elif ticket_type == 'dcd':
+        dcd_parent = os.getenv('JIRA_DCD_CURRENT_TICKET', 'DCOMM-13037')
+        fields['parent'] = {'key': dcd_parent}
 
-    # R2D2 team custom field logic
+    # R2D2 team custom field logic - using correct team IDs
     if cfg['project'] == 'CPO':
         fields['customfield_10279'] = {'id': os.getenv('JIRA_R2D2_TEAM_ID', '14013')}
     elif cfg['project'] == 'DCOMM':
-        fields['customfield_10279'] = {'id': os.getenv('JIRA_DCD_R2D2_TEAM_ID', '12762')}
+        fields['customfield_10279'] = {'id': os.getenv('JIRA_DCD_R2D2_TEAM_ID', '12793')}
 
     if promo_code:
         fields['description'] = f"{fields['description']}\n\nPromotion Code: {promo_code}".strip()
