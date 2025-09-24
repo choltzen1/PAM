@@ -260,7 +260,7 @@
               <label class="section-label">SKU Group ID</label>
               <label class="section-label">Device Status Group ID</label>
               <label class="section-label">Clawback Indicator</label>
-              <input class="form-control" name="operator_id" value="{{ promo.operator_id or '16085' }}">
+              <input class="form-control" name="operator_id" value="{{ promo.operator_id }}">
               <input class="form-control" name="sku_group_id" value="{{ promo.sku_group_id }}">
               <input class="form-control" name="device_status_group_id" value="{{ promo.device_status_group_id }}">
               <div class="input-group vertical-radio">
@@ -888,11 +888,16 @@
                         </select>
                       </div>
                     </div>
-                    <div class="dcd-field-row manual-entry">
+                    <div class="dcd-field-row auto-filled">
                       <label class="dcd-field-label">Rebate Details / Promo Code:</label>
                       <div class="dcd-field-value">
-                        <input type="text" class="form-control" name="dcd_rebate_details" 
-                               placeholder="N/A">
+                        <span class="auto-text">N/A</span>
+                        <span class="auto-badge">Auto</span>
+                        <button type="button" class="edit-btn" onclick="toggleEditField(this)">
+                          <i class="fas fa-edit"></i>
+                        </button>
+                        <input type="text" class="form-control edit-input hidden" name="dcd_rebate_details" 
+                               value="N/A">
                       </div>
                     </div>
                     <div class="dcd-field-row auto-filled">

@@ -21,7 +21,7 @@ if __name__ == "__main__":
     
     # Parse command line arguments
     parser = argparse.ArgumentParser(description='Run the PAM application')
-    parser.add_argument('--port', type=int, default=5005, help='Port to run the application on')
+    parser.add_argument('--port', type=int, default=5006, help='Port to run the application on')
     args = parser.parse_args()
     
     # Run the app on the specified port
