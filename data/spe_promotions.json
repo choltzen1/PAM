@@ -148,11 +148,11 @@
     "promo_end_date": "2025-12-31",
     "description": "Autotest",
     "status": "Draft",
-    "created_date": "2025-09-18",
+    "created_date": "2025-09-23",
     "created_by": "System",
     "spe_category": "Cat",
     "spe_type": "Type",
-    "updated_at": "2025-09-18T17:36:58.461908",
+    "updated_at": "2025-09-23T11:09:16.197584",
     "created_at": "2025-09-17T11:27:15.556100",
     "version_history": [
       "09/17/2025 11:27 AM - System - Created SPE promo."

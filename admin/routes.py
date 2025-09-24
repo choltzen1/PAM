@@ -85,6 +85,26 @@ def admin_dashboard():
     except Exception:
         return render_template('admin.html', promotions_count=847, spe_count=234, pending_reviews=12)
 
+@admin_bp.route('/admin/pam-promotions')
+def admin_pam_promotions():
+    dm = _ensure_dm()
+    # Pagination + search params
+    page = request.args.get('page', 1, type=int)
+    per_page = request.args.get('per_page', 25, type=int)
+    search = request.args.get('search', '', type=str)
+    owner = request.args.get('owner', 'all', type=str)
+    # Use PAM-only method if available
+    if hasattr(dm, 'get_pam_only_paginated_promos'):
+        promo_data = dm.get_pam_only_paginated_promos(page=page, per_page=per_page, search=search, owner_filter=owner)
+    else:
+        promo_data = dm.get_paginated_promos(page=page, per_page=per_page, search=search, owner_filter=owner)
+    return render_template('admin_pam_promotions.html',
+                           promotions=promo_data['promotions'],
+                           pagination=promo_data['pagination'],
+                           owners=promo_data['owners'],
+                           search_query=search,
+                           selected_owner=owner)
+
 @admin_bp.route('/admin/user-management', endpoint='user_management')
 def admin_user_management():
     return render_template('admin_user_management.html')
@@ -262,6 +282,56 @@ def admin_cache_refresh():
     except Exception as e:
         return jsonify({'success': False, 'message': f'Failed to refresh cache: {e}'})
 
+@admin_bp.route('/admin/delete-promo', methods=['POST'])
+def admin_delete_promo():
+    dm = _ensure_dm()
+    try:
+        data = request.get_json() if request.is_json else request.form
+        raw_code = data.get('promo_code') if data else ''
+        promo_code = (raw_code or '').strip()
+        if not promo_code:
+            return jsonify({'success': False, 'message': 'promo_code required'}), 400
+        existing = dm.get_promo(promo_code)
+        if not existing:
+            return jsonify({'success': False, 'message': f'Promo {promo_code} not found'}), 404
+        dm.delete_promo(promo_code)
+        # Force cache refresh so removal is reflected immediately
+        try:
+            dm.force_refresh()
+        except Exception:
+            pass
+        return jsonify({'success': True, 'message': f'Promo {promo_code} deleted'})
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'Error deleting promo: {e}'})
+
+@admin_bp.route('/admin/delete-promos', methods=['POST'])
+def admin_delete_promos():
+    dm = _ensure_dm()
+    try:
+        data = request.get_json() if request.is_json else {}
+        codes = data.get('codes') or []
+        if not isinstance(codes, list) or not codes:
+            return jsonify({'success': False, 'message': 'codes list required'}), 400
+        deleted = []
+        skipped = []
+        for code in codes:
+            try:
+                existing = dm.get_promo(code)
+                if existing:
+                    dm.delete_promo(code)
+                    deleted.append(code)
+                else:
+                    skipped.append(code)
+            except Exception:
+                skipped.append(code)
+        try:
+            dm.force_refresh()
+        except Exception:
+            pass
+        return jsonify({'success': True, 'message': f'Deleted {len(deleted)} promos (skipped {len(skipped)})', 'deleted': deleted, 'skipped': skipped})
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'Bulk delete error: {e}'})
+
 @admin_bp.route('/admin/data-refresh', methods=['POST'])
 def admin_data_refresh():
     dm = _ensure_dm()
@@ -318,7 +388,8 @@ def admin_date_diagnostics():
             'invalid_dates': None
         }
         try:
-            raw_df = dbm.get_dataframe("SELECT promo_srart_date FROM [RDC].[PAM_Orbit_Data] WHERE promo_srart_date IS NOT NULL")
+            # Updated to reference PAM updated source table
+            raw_df = dbm.get_dataframe("SELECT promo_srart_date FROM [PAM].[PAM_Orbit_Data_Updated] WHERE promo_srart_date IS NOT NULL")
             total_with_value = len(raw_df)
             valid_mask = raw_df['promo_srart_date'].apply(lambda v: dbm._is_valid_date_string(v))
             valid = int(valid_mask.sum())
