@@ -136,7 +136,7 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(res=>{
           if(res.ok && res.js.success){
             promoTitle.textContent = 'Created Promo ' + res.js.promo_code;
-            promoDescription.innerHTML = `<strong>Promo Code:</strong> ${res.js.promo_code}<br>`+
+            promoDescription.innerHTML = `<strong>Promo Code:</strong> <a href="/edit_promo/${res.js.promo_code}" target="_blank" class="created-promo-link">${res.js.promo_code}</a><br>`+
               `<strong>Orbit ID:</strong> ${res.js.orbit_id}<br>`+
               (res.js.fields_imported ? `<strong>Imported Fields:</strong> ${res.js.fields_imported}<br>`:'' )+
               (res.js.base_letter ? `<strong>Base Letter:</strong> ${res.js.base_letter} ${res.js.rolled ? '(Rolled Over)' : ''}`:'' )+

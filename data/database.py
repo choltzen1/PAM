@@ -851,8 +851,12 @@ class DatabaseManager:
         # Build dynamic SQL with parameters
         assignments = []
         params = {}
+        # Physical column name normalization (handle spaces in underlying schema)
+        col_alias_map = {
+            'bill_facing_name': '[bill facing name]'  # logical -> physical
+        }
         for i,(col,val) in enumerate(field_map.items()):
-            safe_col = col  # assume validated upstream
+            safe_col = col_alias_map.get(col, col)
             param_name = f"p{i}"
             assignments.append(f"{safe_col} = :{param_name}")
             params[param_name] = val
@@ -943,7 +947,12 @@ class DatabaseManager:
         cols = []
         params = {}
         values_clause = []
+        # Physical column name normalization mapping
+        col_alias_map = {
+            'bill_facing_name': '[bill facing name]'
+        }
         for i, (col, val) in enumerate(field_map.items()):
+            col = col_alias_map.get(col, col)
             param = f"p{i}"
             cols.append(col)
             params[param] = val
@@ -958,4 +967,6 @@ class DatabaseManager:
             return True
         except Exception as e:
             logger.error(f"Failed to insert promo record {field_map.get('code')}: {e}")
+            logger.debug(f"Insert SQL: {sql}")
+            logger.debug(f"Params: {params}")
             return False
