@@ -1,0 +1,150 @@
+"""Centralized workflow utilities for promo code generation and orbit ingestion.
+
+Responsibilities:
+- Orbit-first lookup (raw intake vs existing promotions)
+- Next sequential promo code generation with issued code tombstoning
+- Creation of a promo from an orbit record (idempotent if already created)
+
+This consolidates logic previously scattered across api/routes and data/storage so
+endpoints remain thin and re-usable by future CLI/tasks.
+"""
+from __future__ import annotations
+from typing import Optional, Dict, Any
+import re
+
+from data.database import DatabaseManager
+from data.storage import PromoDataManager
+
+# Issued code tracking (reuse existing helper location if available)
+try:
+    from data.code_tracking import load_issued_codes, record_issued_code  # type: ignore
+except Exception:  # fallback no-op definitions
+    def load_issued_codes():  # type: ignore
+        return set()
+    def record_issued_code(code: str):  # type: ignore
+        pass
+
+CODE_PATTERN = re.compile(r'^[A-Z](\d{3,4})$')
+
+class PromoCodeWorkflow:
+    def __init__(self, data_manager: Optional[PromoDataManager] = None):
+        self.db = DatabaseManager()
+        self.data_manager = data_manager or PromoDataManager()
+
+    # ---------------- Orbit Lookup -----------------
+    def orbit_lookup(self, orbit_id: str) -> Dict[str, Any]:
+        """Return dict with keys: found(bool), table(str|None), existing_code(str|None).
+
+        Order: raw orbit intake table -> promotions table.
+        """
+        oid = (orbit_id or '').strip()
+        if not oid:
+            return {'found': False, 'error': 'orbit_id required'}
+        row = self.db.get_orbit_record_by_orbit_id(oid)
+        if row:
+            # Not yet created as promo (no code)
+            return {'found': True, 'table': row.get('_table'), 'existing_code': None, 'orbit': row}
+        # Check promotions for existing assignment
+        for rec in self.db.get_all_promotions_unified():
+            if str(rec.get('orbit_id','')) == oid:
+                return {'found': True, 'table': 'promotions', 'existing_code': rec.get('code'), 'orbit': rec}
+        return {'found': False}
+
+    # --------------- Code Generation ----------------
+    def generate_next_code(self) -> str:
+        issued = load_issued_codes()
+        # Determine current max via DB helper if present
+        highest = self.db.get_highest_sequential_promo_code() or 'R000'
+        m = re.match(r'^([A-Z])(\d{3,4})$', highest.upper())
+        if not m:
+            letter = 'R'; num = 1
+        else:
+            letter = m.group(1)
+            num = int(m.group(2)) + 1
+            if num > 9999:
+                if letter == 'Z':
+                    raise RuntimeError('Exhausted promo code namespace')
+                letter = chr(ord(letter)+1)
+                num = 1
+        while True:
+            width = 3 if num <= 999 else 4
+            candidate = f"{letter}{num:0{width}d}"
+            if candidate not in issued:
+                record_issued_code(candidate)
+                return candidate
+            num += 1
+
+    # --------------- Creation -----------------------
+    def create_from_orbit(self, orbit_id: str, execution_type: str = 'RDC', user: str = 'System') -> Dict[str, Any]:
+        """Ingest orbit record and create promo if not already present.
+
+        Returns success False with existing_code if already created.
+        """
+        oid = (orbit_id or '').strip()
+        if not oid:
+            return {'success': False, 'error': 'orbit_id required'}
+        # Fast duplicate check (avoid scanning all promos) using parameterized SQL
+        try:
+            sql = f"SELECT code FROM {self.db.source_table} WHERE orbit_id = :oid"
+            df = self.db.get_dataframe(sql, {'oid': oid})
+            if not df.empty:
+                return {'success': False, 'error': 'Orbit already assigned', 'existing_code': df.iloc[0]['code']}
+        except Exception:
+            # Fall back to existing unified scan only if direct query fails
+            lookup_scan = self.orbit_lookup(oid)
+            if lookup_scan.get('existing_code'):
+                return {'success': False, 'error': 'Orbit already assigned', 'existing_code': lookup_scan['existing_code']}
+        # Lookup raw orbit (intake) row
+        raw_lookup = self.orbit_lookup(oid)
+        if not raw_lookup.get('found'):
+            return {'success': False, 'error': f'Orbit {oid} not found'}
+        if raw_lookup.get('existing_code'):
+            return {'success': False, 'error': 'Orbit already assigned', 'existing_code': raw_lookup['existing_code']}
+        # Obtain full orbit row (may include more columns than lightweight lookup)
+        full_row = self.db.get_full_orbit_record_by_orbit_id(oid)
+        if not full_row:
+            return {'success': False, 'error': f'Orbit {oid} not found'}
+        new_code = self.generate_next_code()
+        # Core insertion column mapping (expand to reduce null columns). Only include keys with non-None values.
+        candidate_fields = {
+            'code': new_code,
+            'orbit_id': oid,
+            'description': full_row.get('description') or full_row.get('bill_facing_name') or f'Orbit {oid}',
+            'Owner': full_row.get('Owner') or full_row.get('owner') or 'Unassigned',
+            'promo_srart_date': full_row.get('promo_srart_date') or full_row.get('promo_start_date'),
+            'promo_end_date': full_row.get('promo_end_date'),
+            'comm_end_date': full_row.get('comm_end_date'),
+            'application_grace_period': full_row.get('application_grace_period'),
+            'device_sales_type': full_row.get('device_sales_type'),
+            'activation_type': full_row.get('activation_type'),
+            'active_line_required': full_row.get('active_line_required'),
+            'maintain_soc': full_row.get('maintain_soc'),
+            'limit_per_ban': full_row.get('limit_per_ban'),
+            'account_type': full_row.get('account_type'),
+            'sales_application': full_row.get('sales_application'),
+            'market_group': full_row.get('market_group'),
+            'store_group': full_row.get('store_group'),
+            'sku_group_id': full_row.get('sku_group_id'),
+            'device_status_group_id': full_row.get('device_status_group_id'),
+            'soc_grouping': full_row.get('soc_grouping'),
+            'discount': full_row.get('discount'),
+            'amount': full_row.get('amount'),
+            'nseip_drop': full_row.get('nseip_drop'),
+            'dcd_web_cart': full_row.get('dcd_web_cart'),
+            'product_type': full_row.get('product_type'),
+            'bogo': full_row.get('bogo'),
+            'fpd_display_promo': full_row.get('fpd_display_promo'),
+            'on_menu': full_row.get('on_menu'),
+            'Desired_Execution': execution_type
+        }
+        insertion = {k:v for k,v in candidate_fields.items() if v is not None}
+        ok = self.db.insert_promo_record(insertion)
+        if not ok:
+            return {'success': False, 'error': 'Insert failed', 'attempted_fields': list(insertion.keys())}
+        self.db.record_version_entry(new_code, 'Create', f'Created from Orbit {oid}', user, {'orbit_id': oid})
+        db_record = self.db.get_promo_by_code(new_code) or {}
+        payload = self.db.convert_db_record_to_json_format(db_record)
+        payload['success'] = True
+        return payload
+
+__all__ = ['PromoCodeWorkflow']

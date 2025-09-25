@@ -6,6 +6,7 @@ from datetime import datetime
 import logging
 import os
 import sqlite3
+import json
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -25,6 +26,8 @@ class DatabaseManager:
         self.trust_cert = os.getenv('PAM_DB_TRUST_CERT', 'yes').lower()  # yes/no
         self.timeout = int(os.getenv('PAM_DB_LOGIN_TIMEOUT', '15'))
         self.source_table = os.getenv('PAM_SOURCE_TABLE', '[PAM].[PAM_Orbit_Data_Updated]')
+        # Raw intake Orbit table (no promo code yet). Always query this FIRST for orbit lookups.
+        self.orbit_source_table = os.getenv('PAM_ORBIT_SOURCE_TABLE', '[RDC].[PAM_Orbit_Data]')
         self._engine = None
         # Diagnostics persistence (SQLite co-located with version history)
         self._diag_db_path = os.path.join('data', 'version_history.db')
@@ -47,6 +50,59 @@ class DatabaseManager:
                         invalid_ratio REAL
                     )
                 """)
+                # Version history augment (diff_json,user_name) + promo_extras + promo_files
+                conn.execute("""
+                    CREATE TABLE IF NOT EXISTS version_history (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        promo_code TEXT NOT NULL,
+                        timestamp TEXT NOT NULL,
+                        change_type TEXT NOT NULL,
+                        description TEXT NOT NULL,
+                        user_name TEXT NULL,
+                        diff_json TEXT NULL
+                    )
+                """)
+                conn.execute("""
+                    CREATE TABLE IF NOT EXISTS promo_extras (
+                        promo_code TEXT PRIMARY KEY,
+                        jira_ticket TEXT,
+                        initiative_name TEXT,
+                        sku_link TEXT,
+                        tradein_link TEXT,
+                        promo_grace TEXT,
+                        trade_in_grace TEXT,
+                        segment_name TEXT,
+                        sub_segment TEXT,
+                        segment_group_id TEXT,
+                        segment_level TEXT,
+                        flow_indicator TEXT,
+                        created_at TEXT,
+                        updated_at TEXT,
+                        updated_by TEXT
+                    )
+                """)
+                conn.execute("""
+                    CREATE TABLE IF NOT EXISTS promo_files (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        promo_code TEXT NOT NULL,
+                        original_filename TEXT NOT NULL,
+                        stored_filename TEXT NOT NULL,
+                        file_type TEXT,
+                        size_bytes INTEGER,
+                        checksum TEXT,
+                        uploaded_by TEXT NOT NULL,
+                        uploaded_at TEXT NOT NULL
+                    )
+                """)
+                conn.execute("CREATE INDEX IF NOT EXISTS idx_promo_files_code ON promo_files(promo_code)")
+                # Lightweight schema migration: ensure user_name column exists (older DBs lacked it)
+                try:
+                    cur = conn.execute("PRAGMA table_info(version_history)")
+                    cols = [r[1] for r in cur.fetchall()]
+                    if 'user_name' not in cols:
+                        conn.execute("ALTER TABLE version_history ADD COLUMN user_name TEXT NULL")
+                except Exception as mig_e:
+                    logger.warning(f"Version history migration check failed: {mig_e}")
         except Exception as e:
             logger.warning(f"Failed to ensure diagnostics tables: {e}")
     
@@ -272,7 +328,7 @@ class DatabaseManager:
     
     def get_promo_by_code(self, promo_code: str) -> Optional[Dict[str, Any]]:
         """Fetch specific promotion by code"""
-        sql = """
+        sql = f"""
         SELECT 
             code,
             Owner,
@@ -319,7 +375,7 @@ class DatabaseManager:
             cat_eligibledevices,
             cat_channelsname,
             cat_description
-    FROM {self.source_table}
+        FROM {self.source_table}
         WHERE code = :promo_code
         """
         
@@ -508,42 +564,51 @@ class DatabaseManager:
             return []
 
     def get_orbit_record_by_orbit_id(self, orbit_id: str) -> Optional[Dict[str, Any]]:
-        """Fetch raw promotion row by orbit_id only (record may not yet have a promo code assigned)."""
-        sql = f"""
-            SELECT 
-            orbit_id,
-            [bill facing name] as bill_facing_name,
-            description,
-            Owner,
-            promo_srart_date,
-            promo_end_date
-            FROM {self.source_table}
-            WHERE orbit_id = :orbit_id
+        """Fetch lightweight orbit intake row by orbit_id.
+
+        1) Query raw orbit source table (self.orbit_source_table) which contains intake data before promo creation.
+        2) If not found AND orbit & promo tables differ, fallback to promotions table (self.source_table).
+        Returns minimal normalized dict or None.
         """
-        try:
-            df = self.get_dataframe(sql, {'orbit_id': orbit_id})
-            if df.empty:
+        def _run(sql_table: str):
+            sql_local = f"""
+                SELECT orbit_id,[bill facing name] as bill_facing_name,description,Owner,promo_srart_date,promo_end_date
+                FROM {sql_table}
+                WHERE orbit_id = :orbit_id
+            """
+            try:
+                df_local = self.get_dataframe(sql_local, {'orbit_id': orbit_id})
+                if df_local.empty:
+                    return None
+                r = df_local.iloc[0].to_dict()
+                return {
+                    'orbit_id': r.get('orbit_id',''),
+                    'bill_facing_name': r.get('bill_facing_name') or r.get('description',''),
+                    'description': r.get('description',''),
+                    'owner': str(r.get('Owner','')).strip('"'),
+                    'promo_start_date': r.get('promo_srart_date',''),
+                    'promo_end_date': r.get('promo_end_date',''),
+                    '_table': sql_table
+                }
+            except Exception as ex:
+                logger.error(f"Orbit-only lookup query failed against {sql_table}: {ex}")
                 return None
-            row = df.iloc[0].to_dict()
-            normalized = {
-                'orbit_id': row.get('orbit_id',''),
-                'bill_facing_name': row.get('bill_facing_name') or row.get('description',''),
-                'description': row.get('description',''),
-                'owner': str(row.get('Owner','')).strip('"'),
-                'promo_start_date': row.get('promo_srart_date',''),
-                'promo_end_date': row.get('promo_end_date','')
-            }
-            return normalized
-        except Exception as e:
-            logger.error(f"Orbit-only lookup failed for {orbit_id}: {e}")
-            return None
+        # Primary: raw orbit table
+        primary = _run(self.orbit_source_table)
+        if primary:
+            return primary
+        # Fallback if different
+        if self.orbit_source_table != self.source_table:
+            return _run(self.source_table)
+        return None
 
     def get_full_orbit_record_by_orbit_id(self, orbit_id: str) -> Optional[Dict[str, Any]]:
-        """Fetch the full raw orbit record for ingestion (does not require code).
+        """Fetch full raw orbit (intake) record; fallback to promotions table if not found.
 
-        Returns database row as dict or None.
+        Priority: self.orbit_source_table then self.source_table (if different).
+        Returns dict or None.
         """
-        sql = f"""
+        base_select = """
             SELECT 
             code,
             Owner,
@@ -583,17 +648,26 @@ class DatabaseManager:
             Broken_Trade,
             Anticipated_volume_take_rates_total,
             Desired_Execution
-    FROM {self.source_table}
-        WHERE orbit_id = :orbit_id
+            FROM {table} WHERE orbit_id = :orbit_id
         """
-        try:
-            df = self.get_dataframe(sql, {'orbit_id': orbit_id})
-            if df.empty:
+        def _query(table_name: str):
+            try:
+                sql_local = base_select.format(table=table_name)
+                df_local = self.get_dataframe(sql_local, {'orbit_id': orbit_id})
+                if df_local.empty:
+                    return None
+                rec = df_local.iloc[0].to_dict()
+                rec['_table'] = table_name
+                return rec
+            except Exception as ex:
+                logger.error(f"Full orbit lookup failed against {table_name} for {orbit_id}: {ex}")
                 return None
-            return df.iloc[0].to_dict()
-        except Exception as e:
-            logger.error(f"Full orbit lookup failed for {orbit_id}: {e}")
-            return None
+        primary = _query(self.orbit_source_table)
+        if primary:
+            return primary
+        if self.orbit_source_table != self.source_table:
+            return _query(self.source_table)
+        return None
     
     def _extract_mpss_lookback(self, description: str) -> str:
         """
@@ -761,3 +835,124 @@ class DatabaseManager:
         }
         
         return json_record
+
+    # --- Write helpers for PAM table & SQLite overlays ---
+    def update_promo_fields(self, code: str, field_map: Dict[str, Any]) -> bool:
+        """Update mutable fields in PAM source table.
+
+        field_map: dict of column->value (only columns that exist in self.source_table)
+        Returns True if update succeeded (>=0 rows). Silent if no fields provided.
+        """
+        if not field_map:
+            return True
+        # Build dynamic SQL with parameters
+        assignments = []
+        params = {}
+        for i,(col,val) in enumerate(field_map.items()):
+            safe_col = col  # assume validated upstream
+            param_name = f"p{i}"
+            assignments.append(f"{safe_col} = :{param_name}")
+            params[param_name] = val
+        params['code'] = code
+        sql = f"UPDATE {self.source_table} SET " + ", ".join(assignments) + " WHERE code = :code"
+        try:
+            engine = self.get_engine()
+            with engine.begin() as conn:
+                conn.execute(text(sql), params)
+            return True
+        except Exception as e:
+            logger.error(f"Failed to update promo {code}: {e}")
+            return False
+
+    def get_promo_extras(self, code: str) -> Dict[str, Any]:
+        try:
+            with sqlite3.connect(self._diag_db_path) as conn:
+                conn.row_factory = sqlite3.Row
+                row = conn.execute("SELECT * FROM promo_extras WHERE promo_code=?", (code,)).fetchone()
+                return dict(row) if row else {}
+        except Exception:
+            return {}
+
+    def upsert_promo_extras(self, code: str, extras: Dict[str, Any], user: str):
+        fields = ['jira_ticket','initiative_name','sku_link','tradein_link','promo_grace','trade_in_grace','segment_name','sub_segment','segment_group_id','segment_level','flow_indicator']
+        cols = []
+        vals = []
+        for c in fields:
+            cols.append(c)
+            vals.append(extras.get(c))
+        now = datetime.utcnow().isoformat()
+        try:
+            with sqlite3.connect(self._diag_db_path) as conn:
+                conn.execute("""
+                    INSERT INTO promo_extras (promo_code, jira_ticket, initiative_name, sku_link, tradein_link, promo_grace, trade_in_grace, segment_name, sub_segment, segment_group_id, segment_level, flow_indicator, created_at, updated_at, updated_by)
+                    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+                    ON CONFLICT(promo_code) DO UPDATE SET
+                        jira_ticket=excluded.jira_ticket,
+                        initiative_name=excluded.initiative_name,
+                        sku_link=excluded.sku_link,
+                        tradein_link=excluded.tradein_link,
+                        promo_grace=excluded.promo_grace,
+                        trade_in_grace=excluded.trade_in_grace,
+                        segment_name=excluded.segment_name,
+                        sub_segment=excluded.sub_segment,
+                        segment_group_id=excluded.segment_group_id,
+                        segment_level=excluded.segment_level,
+                        flow_indicator=excluded.flow_indicator,
+                        updated_at=excluded.updated_at,
+                        updated_by=excluded.updated_by
+                """, [code, *vals, now, now, user])
+        except Exception as e:
+            logger.error(f"Failed upsert extras for {code}: {e}")
+
+    def record_version_entry(self, code: str, change_type: str, description: str, user: str, diff: Optional[Dict[str, Any]] = None):
+        try:
+            with sqlite3.connect(self._diag_db_path) as conn:
+                conn.execute(
+                    "INSERT INTO version_history (promo_code, timestamp, change_type, description, user_name, diff_json) VALUES (?,?,?,?,?,?)",
+                    (code, datetime.utcnow().isoformat(), change_type, description, user, json.dumps(diff) if diff else None)
+                )
+        except Exception as e:
+            logger.error(f"Failed to record version history for {code}: {e}")
+
+    def record_promo_file(self, code: str, original_filename: str, stored_filename: str, file_type: Optional[str], size_bytes: int, checksum: Optional[str], uploaded_by: str):
+        """Persist a file upload record in promo_files."""
+        try:
+            with sqlite3.connect(self._diag_db_path) as conn:
+                conn.execute(
+                    """INSERT INTO promo_files (promo_code, original_filename, stored_filename, file_type, size_bytes, checksum, uploaded_by, uploaded_at)
+                        VALUES (?,?,?,?,?,?,?,?)""",
+                    (code, original_filename, stored_filename, file_type, size_bytes, checksum, uploaded_by, datetime.utcnow().isoformat())
+                )
+        except Exception as e:
+            logger.error(f"Failed to record promo file for {code}: {e}")
+
+    def insert_promo_record(self, field_map: Dict[str, Any]) -> bool:
+        """Insert a brand new promotion row into the PAM source table.
+
+        field_map: column->value. Columns must exist in the target table. Dynamic SQL is built safely using
+        named parameters. Returns True on success.
+        """
+        if not field_map:
+            return False
+        # Ensure required keys
+        if 'code' not in field_map:
+            raise ValueError('insert_promo_record requires a code key')
+        cols = []
+        params = {}
+        values_clause = []
+        for i, (col, val) in enumerate(field_map.items()):
+            param = f"p{i}"
+            cols.append(col)
+            params[param] = val
+            values_clause.append(f":{param}")
+        col_sql = ",".join(cols)
+        val_sql = ",".join(values_clause)
+        sql = f"INSERT INTO {self.source_table} ({col_sql}) VALUES ({val_sql})"
+        try:
+            engine = self.get_engine()
+            with engine.begin() as conn:
+                conn.execute(text(sql), params)
+            return True
+        except Exception as e:
+            logger.error(f"Failed to insert promo record {field_map.get('code')}: {e}")
+            return False
