@@ -23,9 +23,9 @@ PAM (Promotion Automation Manager) is a comprehensive web-based application desi
 - **Department Integration**: Seamless integration with different approval departments
 
 #### 📈 **Data Management & Validation**
-- **File Upload Support**: SKU lists, trade-in files, and promotional documents
-- **Data Validation**: Comprehensive error checking and data consistency validation
-- **Date Mismatch Detection**: Identify and resolve promotional date conflicts
+- **File Upload Support**: SKU lists, trade-in files, and promotional documents (checksums logged)
+- **Structured Version History**: Field‑level diffs captured in SQLite with user + change type
+- **Date Mismatch Detection**: Identify and resolve promotional date conflicts with diagnostics history
 - **Export Capabilities**: Generate reports and export promotional data
 
 #### 🎨 **User Experience**
@@ -42,20 +42,29 @@ PAM (Promotion Automation Manager) is a comprehensive web-based application desi
 - **Jinja2 Templates**: Server-side rendering with Flask template engine
 
 ### Backend
-- **Flask Framework**: Python web framework with modular blueprint architecture
-- **JSON Data Storage**: Flexible data management with JSON file persistence
-- **File Handling**: Secure file upload and management system
-- **Date Processing**: Advanced date calculations for promotion scheduling
+- **Flask Framework**: Modular blueprint architecture
+- **Primary Data Store (SQL Server)**: `[PAM].[PAM_Orbit_Data_Updated]` is the single source of truth for ALL promotions (RDC/SPE/Rebate distinguished by `Desired_Execution`)
+- **Metadata Store (SQLite)**: `data/version_history.db` holds version history, extended promo extras, uploaded file metadata, and diagnostics snapshots
+- **File Handling**: Secure file upload (saved under `data/uploads/promotions/<code>/`) with checksum + metadata persisted
+- **Date Processing**: Advanced date calculations + invalid date diagnostics history
 
-### Data Structure
+### Data Architecture
 ```
-data/
-├── promotions.json      # RDC promotion data
-├── spe_promotions.json  # SPE promotion data
-├── rebates.json         # Rebate program data
-└── uploads/             # File upload storage
-    └── promotions/      # Promotion-specific files
+SQL Server (authoritative)
+└── [PAM].[PAM_Orbit_Data_Updated]  (all core promo columns, incl. Desired_Execution)
+
+SQLite (supporting)
+└── version_history.db
+   ├── version_history   (promo_code, change_type, diff_json, user_name, timestamp)
+   ├── promo_extras      (promo_code PRIMARY KEY, extended editable fields)
+   ├── promo_files       (id, promo_code, filename, file_type, checksum_md5, uploaded_at, uploaded_by, size_bytes)
+   └── date_diagnostics_history (invalid_ratio, sample_size, window_start, window_end, created_at)
+
+Filesystem
+└── data/uploads/promotions/<PROMO_CODE>/  (uploaded artifacts)
 ```
+
+Legacy JSON files (`promotions.json`, `spe_promotions.json`, `rebates.json`) were retired September 2025. On startup any remnants are auto‑archived to `.bak` and never read.
 
 ## Getting Started
 
@@ -94,7 +103,7 @@ data/
    ```
 
 2. **Data Initialization**:
-   The application will automatically create initial data files on first run.
+   First run creates the supporting SQLite database (`data/version_history.db`). Core promotion data is fetched live from SQL Server; ensure connectivity/env credentials.
 
 ### Running the Application
 
@@ -121,18 +130,8 @@ Benefits:
 - Centralizes blueprint registration and data manager setup in `factory.py`.
 - Simplifies future configuration injection (DB URIs, feature flags).
 
-### Endpoint Validator
-Safety script at `tools/validate_endpoints.py` now enforces a **blueprint-only** contract.
-
-Usage:
-```
-python tools/validate_endpoints.py  # exits non‑zero if any legacy endpoint resurrected or required blueprint missing
-```
-
-Behavior:
-- Fails with code 2 if a removed legacy endpoint name reappears.
-- Fails with code 1 if a required blueprint endpoint cannot be built.
-- Exits 0 when the set is clean.
+### Endpoint Validator & Migration Guardrails
+`tools/validate_endpoints.py` enforces a blueprint‑only contract (legacy flat routes removed). Migration scripts under `tools/` (`migrate_json_history.py`, `migrate_extras_from_json.py`) remain for historical one‑time conversions; they are no longer required for new deployments.
 
 ### Routing & Refactor (2025 Migration)
 
@@ -202,35 +201,23 @@ Benefits realized:
 - Direct navigation from promotion lists
 - Approval status tracking and notifications
 
-### File Structure
+### File Structure (Simplified)
 ```
 PAM/
-├── app.py                 # Main application file
-├── requirements.txt       # Python dependencies
-├── README.md             # This file
-├── LICENSE               # License information
-├── data/                 # Data storage
-│   ├── __init__.py
-│   ├── storage.py        # Data management layer
-│   ├── promotions.json   # RDC promotions
-│   ├── spe_promotions.json # SPE promotions
-│   ├── rebates.json      # Rebate data
-│   └── uploads/          # File uploads
-├── promo/                # Promotion business logic
-│   ├── builders.py       # SQL generation
-│   ├── parsers.py        # Data parsing utilities
-│   └── routes.py         # Promotion-specific routes
-├── services/             # External service integrations
-│   └── orbit.py          # Orbit system integration
-├── static/               # Static assets
-│   ├── css/             # Stylesheets
-│   └── js/              # JavaScript files
-└── templates/            # HTML templates
-    ├── base.html         # Base template
-    ├── promotions.html   # Promotion management
-    ├── capacity.html     # Capacity planning
-    ├── approvers.html    # Approval workflows
-    └── [other pages]
+├── app.py                  # Entrypoint (factory bootstrap)
+├── factory.py              # create_app()
+├── data/
+│   ├── storage.py          # PromoDataManager (DB-only)
+│   ├── database.py         # SQL Server + SQLite helpers
+│   ├── version_history.py  # Version event semantics
+│   └── version_history.db  # (created at runtime)
+├── promo/ (routes/builders/parsers)
+├── admin/ (admin + stats + history)
+├── api/   (lookup + integration endpoints)
+├── services/orbit.py
+├── static/ (css/js)
+├── templates/ (Jinja2 views)
+└── tools/ (migration + validation utilities)
 ```
 
 ## Development
@@ -258,9 +245,9 @@ Deprecation Status: Complete. Legacy shim routes removed; validator enforces blu
 4. Submit pull request for review
 
 ### Data Model Extensions
-- Extend JSON schemas in `data/storage.py`
-- Update validation rules as needed
-- Maintain backward compatibility
+- Add core columns in SQL Server table (schema migration outside this repo scope)
+- Add new extended (non-core) fields to `promo_extras` (SQLite) and wire into diff logic
+- Record changes automatically via `record_version_entry` in `database.py`
 
 ### API Endpoints
 The application provides RESTful endpoints for:
@@ -272,11 +259,11 @@ The application provides RESTful endpoints for:
 ## Deployment
 
 ### Production Considerations
-- Use a production WSGI server (e.g., Gunicorn)
-- Configure proper environment variables
-- Set up SSL/TLS certificates
-- Implement proper backup strategies for data files
-- Configure log rotation and monitoring
+- Run behind a production WSGI server (e.g., Gunicorn / IIS w/ wfastcgi)
+- Provide SQL Server connectivity (ODBC driver / connection string env var)
+- Back up only: SQL Server data + `data/version_history.db` + uploaded files
+- Monitor version history growth (diff JSON compact by design)
+- Instrument logs / metrics (add structured logging if scaling)
 
 ### Example Production Setup
 ```bash
@@ -306,6 +293,6 @@ This project is proprietary to T-Mobile. See the LICENSE file for full details.
 
 ---
 
-**PAM System Version**: 2.1.0  
+**PAM System Version**: 3.0.0  
 **Last Updated**: September 2025  
 **Maintained by**: T-Mobile Promotions Team
