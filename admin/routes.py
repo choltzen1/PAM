@@ -143,12 +143,13 @@ def admin_backup():
         import shutil
         backup_dir = f"backups/backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
         os.makedirs(backup_dir, exist_ok=True)
-        for fname in ['data/spe_promotions.json','data/rebates.json','data/workflow_data.json']:
+        # Copy metadata/database artifacts (legacy JSON promo files removed; copy any lingering .bak for safety)
+        for fname in ['data/version_history.db']:
             if os.path.exists(fname):
                 shutil.copy2(fname, backup_dir)
         if os.path.exists('data/uploads'):
             shutil.copytree('data/uploads', os.path.join(backup_dir,'uploads'))
-        return jsonify({'success': True, 'message': f'Backup created in {backup_dir} (Promotions in DB not copied)'})
+        return jsonify({'success': True, 'message': f'Backup created in {backup_dir} (Promotions reside in SQL Server)'})
     except Exception as e:
         return jsonify({'success': False, 'message': f'Backup failed: {e}'})
 
@@ -157,12 +158,9 @@ def admin_stats():
     dm = _ensure_dm()
     try:
         promotions_data = dm.get_all_promos()
-        from data.storage import PromoDataManager as JSONManager
-        json_manager = JSONManager()
-        spe_data = json_manager.get_all_spe_promos()
+        # SPE promos now sourced directly from SQL Server (no JSON manager needed)
+        spe_data = dm.get_all_spe_promos()
         cache_status = dm.get_cache_status()
-        spe_file_size = os.path.getsize('data/spe_promotions.json')/1024 if os.path.exists('data/spe_promotions.json') else 0
-        workflow_file_size = os.path.getsize('data/workflow_data.json')/1024 if os.path.exists('data/workflow_data.json') else 0
         uploads_count = 0
         if os.path.exists('data/uploads'):
             for _,_,files in os.walk('data/uploads'):
@@ -171,10 +169,10 @@ def admin_stats():
             'promotions_count': len(promotions_data),
             'spe_count': len(spe_data),
             'total_records': len(promotions_data)+len(spe_data),
-            'data_source': 'Database + JSON hybrid',
+            'data_source': 'Database (SQL Server + SQLite metadata)',
             'cache_status': cache_status,
-            'spe_file_size': f'{spe_file_size:.1f} KB',
-            'workflow_file_size': f'{workflow_file_size:.1f} KB',
+            'spe_file_size': None,
+            'workflow_file_size': None,
             'uploads_count': uploads_count,
             'database_connected': True,
             'last_cache_refresh': cache_status.get('last_refresh','Never')
