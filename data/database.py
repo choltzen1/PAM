@@ -7,6 +7,9 @@ import logging
 import os
 import sqlite3
 import json
+import os
+import sqlite3
+import json
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -28,7 +31,95 @@ class DatabaseManager:
         self.source_table = os.getenv('PAM_SOURCE_TABLE', '[PAM].[PAM_Orbit_Data_Updated]')
         # Raw intake Orbit table (no promo code yet). Always query this FIRST for orbit lookups.
         self.orbit_source_table = os.getenv('PAM_ORBIT_SOURCE_TABLE', '[RDC].[PAM_Orbit_Data]')
+        # Load connection parameters from environment for security
+        self.server = os.getenv('PAM_DB_SERVER', 'localhost')
+        self.database = os.getenv('PAM_DB_DATABASE', 'PromoQuality')
+        self.username = os.getenv('PAM_DB_USERNAME', '')
+        self.password = os.getenv('PAM_DB_PASSWORD', '')
+        self.driver = os.getenv('PAM_DB_DRIVER', 'ODBC Driver 17 for SQL Server')
+        self.encrypt = os.getenv('PAM_DB_ENCRYPT', 'no').lower()  # yes/no
+        self.trust_cert = os.getenv('PAM_DB_TRUST_CERT', 'yes').lower()  # yes/no
+        self.timeout = int(os.getenv('PAM_DB_LOGIN_TIMEOUT', '15'))
+        self.source_table = os.getenv('PAM_SOURCE_TABLE', '[PAM].[PAM_Orbit_Data_Updated]')
+        # Raw intake Orbit table (no promo code yet). Always query this FIRST for orbit lookups.
+        self.orbit_source_table = os.getenv('PAM_ORBIT_SOURCE_TABLE', '[RDC].[PAM_Orbit_Data]')
         self._engine = None
+        # Diagnostics persistence (SQLite co-located with version history)
+        self._diag_db_path = os.path.join('data', 'version_history.db')
+        self._ensure_diag_tables()
+        # Threshold from environment
+        self.invalid_ratio_threshold = float(os.environ.get('INVALID_DATE_RATIO_WARN_THRESHOLD', '0.10'))
+
+    def _ensure_diag_tables(self):
+        try:
+            os.makedirs('data', exist_ok=True)
+            with sqlite3.connect(self._diag_db_path) as conn:
+                conn.execute("""
+                    CREATE TABLE IF NOT EXISTS date_diagnostics_history (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        captured_at TEXT NOT NULL,
+                        window_days INTEGER NOT NULL,
+                        total_with_value INTEGER,
+                        valid_dates INTEGER,
+                        invalid_dates INTEGER,
+                        invalid_ratio REAL
+                    )
+                """)
+                # Version history augment (diff_json,user_name) + promo_extras + promo_files
+                conn.execute("""
+                    CREATE TABLE IF NOT EXISTS version_history (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        promo_code TEXT NOT NULL,
+                        timestamp TEXT NOT NULL,
+                        change_type TEXT NOT NULL,
+                        description TEXT NOT NULL,
+                        user_name TEXT NULL,
+                        diff_json TEXT NULL
+                    )
+                """)
+                conn.execute("""
+                    CREATE TABLE IF NOT EXISTS promo_extras (
+                        promo_code TEXT PRIMARY KEY,
+                        jira_ticket TEXT,
+                        initiative_name TEXT,
+                        sku_link TEXT,
+                        tradein_link TEXT,
+                        promo_grace TEXT,
+                        trade_in_grace TEXT,
+                        segment_name TEXT,
+                        sub_segment TEXT,
+                        segment_group_id TEXT,
+                        segment_level TEXT,
+                        flow_indicator TEXT,
+                        created_at TEXT,
+                        updated_at TEXT,
+                        updated_by TEXT
+                    )
+                """)
+                conn.execute("""
+                    CREATE TABLE IF NOT EXISTS promo_files (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        promo_code TEXT NOT NULL,
+                        original_filename TEXT NOT NULL,
+                        stored_filename TEXT NOT NULL,
+                        file_type TEXT,
+                        size_bytes INTEGER,
+                        checksum TEXT,
+                        uploaded_by TEXT NOT NULL,
+                        uploaded_at TEXT NOT NULL
+                    )
+                """)
+                conn.execute("CREATE INDEX IF NOT EXISTS idx_promo_files_code ON promo_files(promo_code)")
+                # Lightweight schema migration: ensure user_name column exists (older DBs lacked it)
+                try:
+                    cur = conn.execute("PRAGMA table_info(version_history)")
+                    cols = [r[1] for r in cur.fetchall()]
+                    if 'user_name' not in cols:
+                        conn.execute("ALTER TABLE version_history ADD COLUMN user_name TEXT NULL")
+                except Exception as mig_e:
+                    logger.warning(f"Version history migration check failed: {mig_e}")
+        except Exception as e:
+            logger.warning(f"Failed to ensure diagnostics tables: {e}")
         # Diagnostics persistence (SQLite co-located with version history)
         self._diag_db_path = os.path.join('data', 'version_history.db')
         self._ensure_diag_tables()
@@ -135,6 +226,31 @@ class DatabaseManager:
                 logger.info(f"Attempting DB connect with: {masked}")
                 params = urllib.parse.quote_plus(odbc_str)
                 self._engine = create_engine(f'mssql+pyodbc:///?odbc_connect={params}', pool_pre_ping=True, pool_recycle=1800)
+                server_part = self.server  # Port (if any) is already embedded in server value
+                # Build raw ODBC string
+                odbc_elems = [
+                    f'DRIVER={{{self.driver}}}',
+                    f'SERVER={server_part}',
+                    f'DATABASE={self.database}'
+                ]
+                if self.username:
+                    odbc_elems.append(f'UID={self.username}')
+                    odbc_elems.append(f'PWD={self.password}')
+                else:
+                    # Integrated security fallback (Windows auth)
+                    odbc_elems.append('Trusted_Connection=yes')
+                if self.encrypt in ('yes','true','1'):
+                    odbc_elems.append('Encrypt=yes')
+                else:
+                    odbc_elems.append('Encrypt=no')
+                if self.trust_cert in ('yes','true','1'):
+                    odbc_elems.append('TrustServerCertificate=yes')
+                odbc_elems.append(f'LoginTimeout={self.timeout}')
+                odbc_str = ';'.join(odbc_elems)
+                masked = odbc_str.replace(self.password, '***') if self.password else odbc_str
+                logger.info(f"Attempting DB connect with: {masked}")
+                params = urllib.parse.quote_plus(odbc_str)
+                self._engine = create_engine(f'mssql+pyodbc:///?odbc_connect={params}', pool_pre_ping=True, pool_recycle=1800)
                 
                 # Test connection
                 with self._engine.connect() as conn:
@@ -142,6 +258,8 @@ class DatabaseManager:
                 logger.info("Database connection established ✅")
                 
             except Exception as e:
+                logger.error(f"Failed to connect to database: {e}")
+                logger.error("Troubleshooting tips: 1) Verify server/port reachable (ping / Test-NetConnection) 2) Confirm ODBC driver installed 3) Check firewall/VPN 4) Validate credentials.")
                 logger.error(f"Failed to connect to database: {e}")
                 logger.error("Troubleshooting tips: 1) Verify server/port reachable (ping / Test-NetConnection) 2) Confirm ODBC driver installed 3) Check firewall/VPN 4) Validate credentials.")
                 raise
@@ -203,9 +321,42 @@ class DatabaseManager:
             return best
         except Exception:
             return None
+
+    def get_highest_sequential_promo_code(self) -> Optional[str]:
+        """Return the highest promo code matching pattern ^[A-Z][0-9]{1,4}$ (one letter + digits).
+
+        We rely on DB ordering but also perform regex parsing to ensure correctness.
+        Returns None if no matching codes found or on error.
+        """
+        try:
+            # Efficient: pull only code column; ordering DESC to hit highest early
+            sql = f"SELECT TOP 200 code FROM {self.source_table} WHERE code IS NOT NULL ORDER BY code DESC"
+            df = self.get_dataframe(sql)
+            import re
+            pat = re.compile(r'^[A-Z]([0-9]{1,4})$')
+            best = None
+            best_letter = ''
+            best_num = -1
+            for raw in df['code'].dropna().tolist():
+                code = str(raw).strip().upper()
+                m = pat.match(code)
+                if not m:
+                    continue
+                letter = code[0]
+                num = int(m.group(1))
+                # Order by letter then numeric; primary expectation is single active letter (e.g., R)
+                if best is None:
+                    best = code; best_letter = letter; best_num = num; continue
+                if letter > best_letter or (letter == best_letter and num > best_num):
+                    best = code; best_letter = letter; best_num = num
+            return best
+        except Exception:
+            return None
     
     def get_promos_by_execution_type(self, execution_type: str) -> List[Dict[Hashable, Any]]:
         """Fetch promotions filtered by Desired_Execution type (RDC, SPE, Rebate)"""
+        sql = f"""
+            SELECT 
         sql = f"""
             SELECT 
             code,
@@ -277,6 +428,8 @@ class DatabaseManager:
         """Fetch ALL promotions regardless of type"""
         sql = f"""
             SELECT 
+        sql = f"""
+            SELECT 
             code,
             Owner,
             [bill facing name] as bill_facing_name,
@@ -325,6 +478,10 @@ class DatabaseManager:
         except Exception as e:
             logger.error(f"Failed to fetch all promotions: {str(e)}")
             return []
+    
+    def get_promo_by_code(self, promo_code: str) -> Optional[Dict[str, Any]]:
+        """Fetch specific promotion by code"""
+        sql = f"""
     
     def get_promo_by_code(self, promo_code: str) -> Optional[Dict[str, Any]]:
         """Fetch specific promotion by code"""
@@ -493,12 +650,100 @@ class DatabaseManager:
             ORDER BY TRY_CONVERT(date, promo_srart_date) DESC
         """
         try:
+            df = self.get_dataframe(sql, {'days': days})
+            records = df.to_dict('records')
+            # Diagnostic: count invalid date rows skipped
+            try:
+                # Pull a lightweight set of raw date values to count invalids
+                raw_sql = f"SELECT promo_srart_date FROM {self.source_table} WHERE promo_srart_date IS NOT NULL"
+                raw_df = self.get_dataframe(raw_sql)
+                total_with_value = len(raw_df)
+                valid_mask = raw_df['promo_srart_date'].apply(lambda v: self._is_valid_date_string(v))
+                valid_count = int(valid_mask.sum())
+                invalid_count = total_with_value - valid_count
+                ratio = (invalid_count / total_with_value) if total_with_value else 0.0
+                if total_with_value and ratio > self.invalid_ratio_threshold:
+                    logger.warning(f"High invalid promo_srart_date ratio: {invalid_count}/{total_with_value} (>{self.invalid_ratio_threshold*100:.0f}%)")
+                # Persist snapshot
+                try:
+                    with sqlite3.connect(self._diag_db_path) as c2:
+                        c2.execute(
+                            "INSERT INTO date_diagnostics_history (captured_at, window_days, total_with_value, valid_dates, invalid_dates, invalid_ratio) VALUES (?,?,?,?,?,?)",
+                            (datetime.utcnow().isoformat(), days, total_with_value, valid_count, invalid_count, ratio)
+                        )
+                except Exception as pe:
+                    logger.warning(f"Failed to persist diagnostics snapshot: {pe}")
+                # Attach diagnostics to first record if any; or create synthetic diagnostic record
+                if records:
+                    records[0]['_date_diagnostics'] = {
+                        'total_with_value': total_with_value,
+                        'valid_dates': valid_count,
+                        'invalid_dates': invalid_count,
+                        'days_window': days
+                    }
+                else:
+                    records.append({
+                        '_date_diagnostics': {
+                            'total_with_value': total_with_value,
+                            'valid_dates': valid_count,
+                            'invalid_dates': invalid_count,
+                            'days_window': days
+                        }
+                    })
+            except Exception as diag_err:
+                logger.warning(f"Date diagnostics failed: {diag_err}")
+            return records
+        except Exception as e:
+            logger.error(f"Failed to fetch recent promos: {str(e)}")
+            return []
+
+    def _is_valid_date_string(self, value: Any) -> bool:
+        """Heuristic to decide if a string can be parsed as date (M/D/YYYY or ISO)."""
+        if value is None:
+            return False
+        s = str(value).strip()
+        if not s:
+            return False
+        from datetime import datetime
+        # Try M/D/YYYY
+        for fmt in ('%m/%d/%Y', '%Y-%m-%d', '%Y-%m-%d %H:%M:%S', '%m/%d/%y'):
+            try:
+                datetime.strptime(s, fmt)
+                return True
+            except Exception:
+                continue
+        return False
+    
+    def get_active_promos(self) -> List[Dict[Hashable, Any]]:
+        """Fetch currently active promotions"""
+        sql = f"""
+            SELECT 
+            code,
+            Owner,
+            description,
+            promo_srart_date,
+            promo_end_date,
+            amount,
+            operator_id,
+            orbit_id
+            FROM {self.source_table}
+            WHERE TRY_CONVERT(date, promo_srart_date) IS NOT NULL
+              AND TRY_CONVERT(date, promo_end_date) IS NOT NULL
+              AND CONVERT(date, GETDATE()) BETWEEN TRY_CONVERT(date, promo_srart_date) AND TRY_CONVERT(date, promo_end_date)
+            ORDER BY TRY_CONVERT(date, promo_srart_date) DESC
+        """
+        try:
             df = self.get_dataframe(sql)
             return df.to_dict('records')
         except Exception as e:
             logger.error(f"Failed to fetch active promos: {str(e)}")
+            logger.error(f"Failed to fetch active promos: {str(e)}")
             return []
     
+    def search_promos(self, search_term: str) -> List[Dict[Hashable, Any]]:
+        """Search promotions by code or description"""
+        sql = f"""
+            SELECT 
     def search_promos(self, search_term: str) -> List[Dict[Hashable, Any]]:
         """Search promotions by code or description"""
         sql = f"""
@@ -561,7 +806,56 @@ class DatabaseManager:
             return df.to_dict('records')
         except Exception as e:
             logger.error(f"Failed to search promos: {str(e)}")
+            logger.error(f"Failed to search promos: {str(e)}")
             return []
+
+    def get_orbit_record_by_orbit_id(self, orbit_id: str) -> Optional[Dict[str, Any]]:
+        """Fetch lightweight orbit intake row by orbit_id.
+
+        1) Query raw orbit source table (self.orbit_source_table) which contains intake data before promo creation.
+        2) If not found AND orbit & promo tables differ, fallback to promotions table (self.source_table).
+        Returns minimal normalized dict or None.
+        """
+        def _run(sql_table: str):
+            sql_local = f"""
+                SELECT orbit_id,[bill facing name] as bill_facing_name,description,Owner,promo_srart_date,promo_end_date
+                FROM {sql_table}
+                WHERE orbit_id = :orbit_id
+            """
+            try:
+                df_local = self.get_dataframe(sql_local, {'orbit_id': orbit_id})
+                if df_local.empty:
+                    return None
+                r = df_local.iloc[0].to_dict()
+                return {
+                    'orbit_id': r.get('orbit_id',''),
+                    'bill_facing_name': r.get('bill_facing_name') or r.get('description',''),
+                    'description': r.get('description',''),
+                    'owner': str(r.get('Owner','')).strip('"'),
+                    'promo_start_date': r.get('promo_srart_date',''),
+                    'promo_end_date': r.get('promo_end_date',''),
+                    '_table': sql_table
+                }
+            except Exception as ex:
+                logger.error(f"Orbit-only lookup query failed against {sql_table}: {ex}")
+                return None
+        # Primary: raw orbit table
+        primary = _run(self.orbit_source_table)
+        if primary:
+            return primary
+        # Fallback if different
+        if self.orbit_source_table != self.source_table:
+            return _run(self.source_table)
+        return None
+
+    def get_full_orbit_record_by_orbit_id(self, orbit_id: str) -> Optional[Dict[str, Any]]:
+        """Fetch full raw orbit (intake) record; fallback to promotions table if not found.
+
+        Priority: self.orbit_source_table then self.source_table (if different).
+        Returns dict or None.
+        """
+        base_select = """
+            SELECT 
 
     def get_orbit_record_by_orbit_id(self, orbit_id: str) -> Optional[Dict[str, Any]]:
         """Fetch lightweight orbit intake row by orbit_id.
@@ -835,6 +1129,127 @@ class DatabaseManager:
         }
         
         return json_record
+
+    # --- Write helpers for PAM table & SQLite overlays ---
+    def update_promo_fields(self, code: str, field_map: Dict[str, Any]) -> bool:
+        """Update mutable fields in PAM source table.
+
+        field_map: dict of column->value (only columns that exist in self.source_table)
+        Returns True if update succeeded (>=0 rows). Silent if no fields provided.
+        """
+        if not field_map:
+            return True
+        # Build dynamic SQL with parameters
+        assignments = []
+        params = {}
+        for i,(col,val) in enumerate(field_map.items()):
+            safe_col = col  # assume validated upstream
+            param_name = f"p{i}"
+            assignments.append(f"{safe_col} = :{param_name}")
+            params[param_name] = val
+        params['code'] = code
+        sql = f"UPDATE {self.source_table} SET " + ", ".join(assignments) + " WHERE code = :code"
+        try:
+            engine = self.get_engine()
+            with engine.begin() as conn:
+                conn.execute(text(sql), params)
+            return True
+        except Exception as e:
+            logger.error(f"Failed to update promo {code}: {e}")
+            return False
+
+    def get_promo_extras(self, code: str) -> Dict[str, Any]:
+        try:
+            with sqlite3.connect(self._diag_db_path) as conn:
+                conn.row_factory = sqlite3.Row
+                row = conn.execute("SELECT * FROM promo_extras WHERE promo_code=?", (code,)).fetchone()
+                return dict(row) if row else {}
+        except Exception:
+            return {}
+
+    def upsert_promo_extras(self, code: str, extras: Dict[str, Any], user: str):
+        fields = ['jira_ticket','initiative_name','sku_link','tradein_link','promo_grace','trade_in_grace','segment_name','sub_segment','segment_group_id','segment_level','flow_indicator']
+        cols = []
+        vals = []
+        for c in fields:
+            cols.append(c)
+            vals.append(extras.get(c))
+        now = datetime.utcnow().isoformat()
+        try:
+            with sqlite3.connect(self._diag_db_path) as conn:
+                conn.execute("""
+                    INSERT INTO promo_extras (promo_code, jira_ticket, initiative_name, sku_link, tradein_link, promo_grace, trade_in_grace, segment_name, sub_segment, segment_group_id, segment_level, flow_indicator, created_at, updated_at, updated_by)
+                    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+                    ON CONFLICT(promo_code) DO UPDATE SET
+                        jira_ticket=excluded.jira_ticket,
+                        initiative_name=excluded.initiative_name,
+                        sku_link=excluded.sku_link,
+                        tradein_link=excluded.tradein_link,
+                        promo_grace=excluded.promo_grace,
+                        trade_in_grace=excluded.trade_in_grace,
+                        segment_name=excluded.segment_name,
+                        sub_segment=excluded.sub_segment,
+                        segment_group_id=excluded.segment_group_id,
+                        segment_level=excluded.segment_level,
+                        flow_indicator=excluded.flow_indicator,
+                        updated_at=excluded.updated_at,
+                        updated_by=excluded.updated_by
+                """, [code, *vals, now, now, user])
+        except Exception as e:
+            logger.error(f"Failed upsert extras for {code}: {e}")
+
+    def record_version_entry(self, code: str, change_type: str, description: str, user: str, diff: Optional[Dict[str, Any]] = None):
+        try:
+            with sqlite3.connect(self._diag_db_path) as conn:
+                conn.execute(
+                    "INSERT INTO version_history (promo_code, timestamp, change_type, description, user_name, diff_json) VALUES (?,?,?,?,?,?)",
+                    (code, datetime.utcnow().isoformat(), change_type, description, user, json.dumps(diff) if diff else None)
+                )
+        except Exception as e:
+            logger.error(f"Failed to record version history for {code}: {e}")
+
+    def record_promo_file(self, code: str, original_filename: str, stored_filename: str, file_type: Optional[str], size_bytes: int, checksum: Optional[str], uploaded_by: str):
+        """Persist a file upload record in promo_files."""
+        try:
+            with sqlite3.connect(self._diag_db_path) as conn:
+                conn.execute(
+                    """INSERT INTO promo_files (promo_code, original_filename, stored_filename, file_type, size_bytes, checksum, uploaded_by, uploaded_at)
+                        VALUES (?,?,?,?,?,?,?,?)""",
+                    (code, original_filename, stored_filename, file_type, size_bytes, checksum, uploaded_by, datetime.utcnow().isoformat())
+                )
+        except Exception as e:
+            logger.error(f"Failed to record promo file for {code}: {e}")
+
+    def insert_promo_record(self, field_map: Dict[str, Any]) -> bool:
+        """Insert a brand new promotion row into the PAM source table.
+
+        field_map: column->value. Columns must exist in the target table. Dynamic SQL is built safely using
+        named parameters. Returns True on success.
+        """
+        if not field_map:
+            return False
+        # Ensure required keys
+        if 'code' not in field_map:
+            raise ValueError('insert_promo_record requires a code key')
+        cols = []
+        params = {}
+        values_clause = []
+        for i, (col, val) in enumerate(field_map.items()):
+            param = f"p{i}"
+            cols.append(col)
+            params[param] = val
+            values_clause.append(f":{param}")
+        col_sql = ",".join(cols)
+        val_sql = ",".join(values_clause)
+        sql = f"INSERT INTO {self.source_table} ({col_sql}) VALUES ({val_sql})"
+        try:
+            engine = self.get_engine()
+            with engine.begin() as conn:
+                conn.execute(text(sql), params)
+            return True
+        except Exception as e:
+            logger.error(f"Failed to insert promo record {field_map.get('code')}: {e}")
+            return False
 
     # --- Write helpers for PAM table & SQLite overlays ---
     def update_promo_fields(self, code: str, field_map: Dict[str, Any]) -> bool:
