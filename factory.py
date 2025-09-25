@@ -9,7 +9,7 @@ from admin.routes import admin_bp, init_data_manager as init_admin_data_manager
 from core import core_bp
 from api.routes import api_bp, init_data_manager as init_api_data_manager
 from jira.routes import jira_bp
-from data.hybrid_storage import HybridPromoDataManager as PromoDataManager
+from data.storage import PromoDataManager
 
 load_dotenv()
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -34,7 +34,7 @@ def create_app(config: dict | None = None) -> Flask:
             data_manager = FallbackManager()
     else:
         data_manager = PromoDataManager()
-        print("✅ Enhanced hybrid data manager initialized with database integration")
+        print("✅ DB-only promo data manager initialized (JSON disabled for RDC)")
 
     # Register blueprints
     app.register_blueprint(core_bp)
