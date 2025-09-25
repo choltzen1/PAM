@@ -162,6 +162,28 @@ class HybridPromoDataManager:
                         promo_data.update(workflow_data[code])
                     
                     merged_data[code] = promo_data
+
+            # Overlay any JSON-only promos (e.g., newly ingested before DB replication)
+            try:
+                json_promos = self._original_manager._load_json(self._original_manager.promo_file)  # type: ignore[attr-defined]
+                for jcode, jdata in json_promos.items():
+                    if not jcode:
+                        continue
+                    if jcode in merged_data:
+                        # Update DB record with any JSON overrides (recent edits)
+                        merged = merged_data[jcode]
+                        merged.update(jdata)
+                        # Also merge workflow fields if present
+                        if jcode in workflow_data:
+                            merged.update(workflow_data[jcode])
+                    else:
+                        # Pure JSON-only promo (add and merge workflow if exists)
+                        new_entry = dict(jdata)
+                        if jcode in workflow_data:
+                            new_entry.update(workflow_data[jcode])
+                        merged_data[jcode] = new_entry
+            except Exception as e:
+                print(f"Warning: failed overlaying JSON promos into hybrid cache: {e}")
             
             # Update cache
             self._cache = merged_data
@@ -514,6 +536,58 @@ class HybridPromoDataManager:
             },
             'owners': all_owners
         }
+
+    def get_pam_only_paginated_promos(self, page: int = 1, per_page: int = 25,
+                                      search: str = "", owner_filter: str = "all") -> Dict[str, Any]:
+        """Return ONLY promotions that exist in PAM JSON (exclude raw Orbit DB-only records)."""
+        try:
+            json_promos = self._original_manager._load_json(self._original_manager.promo_file)  # type: ignore[attr-defined]
+        except Exception:
+            json_promos = {}
+        # Build list ensuring code present inside each record
+        promo_list = []
+        for code, pdata in json_promos.items():
+            if not code:
+                continue
+            if 'code' not in pdata:
+                pdata = dict(pdata)
+                pdata['code'] = code
+            promo_list.append(pdata)
+
+        # Apply filters
+        if search:
+            s = search.lower()
+            promo_list = [p for p in promo_list if (
+                s in p.get('code','').lower() or
+                s in p.get('owner','').lower() or
+                s in p.get('bill_facing_name','').lower()
+            )]
+        if owner_filter and owner_filter != 'all':
+            promo_list = [p for p in promo_list if p.get('owner','') == owner_filter]
+
+        promo_list.sort(key=lambda x: x.get('updated_at', x.get('code','')), reverse=True)
+
+        total_items = len(promo_list)
+        total_pages = (total_items + per_page - 1) // per_page
+        start = (page - 1) * per_page
+        end = start + per_page
+        paginated = promo_list[start:end]
+
+        owners = sorted(set(p.get('owner','') for p in promo_list if p.get('owner')))
+        return {
+            'promotions': paginated,
+            'pagination': {
+                'page': page,
+                'per_page': per_page,
+                'total_items': total_items,
+                'total_pages': total_pages,
+                'has_prev': page > 1,
+                'has_next': page < total_pages,
+                'prev_num': page - 1 if page > 1 else None,
+                'next_num': page + 1 if page < total_pages else None
+            },
+            'owners': owners
+        }
     
     def save_promo(self, promo_code: str, promo_data: Dict[str, Any], user_name: str = "System"):
         """Save promotion data with version history tracking"""
@@ -535,6 +609,9 @@ class HybridPromoDataManager:
             # Compare data and record changes
             changed_fields = {}
             for key, new_value in promo_data.items():
+                # Skip non-meaningful timestamp/system-only fields from version history diffs
+                if key in {"updated_at", "created_at", "last_sync"}:
+                    continue
                 old_value = existing_data.get(key)
                 if old_value != new_value:
                     changed_fields[key] = {
@@ -564,6 +641,11 @@ class HybridPromoDataManager:
     def record_sql_generation(self, promo_code: str, user_name: str, generation_time: float, sql_length: int):
         """Record SQL generation in version history"""
         self.version_history.record_sql_generation(promo_code, user_name, generation_time, sql_length)
+
+    def record_date_mismatch_sql(self, promo_code: str, user_name: str, generation_time: float, sql_length: int):
+        """Record date mismatch SQL generation in version history"""
+        if hasattr(self.version_history, 'record_date_mismatch_sql'):
+            self.version_history.record_date_mismatch_sql(promo_code, user_name, generation_time, sql_length)
     
     def record_file_upload(self, promo_code: str, user_name: str, file_type: str, filename: str):
         """Record file upload in version history"""
@@ -590,7 +672,11 @@ class HybridPromoDataManager:
             current_promo = current_promos.get(promo_code)
             if current_promo:
                 # Get detailed change history
-                changes = self.get_promo_version_history(promo_code)
+                # Use curated changes if available
+                if hasattr(self.version_history, 'get_curated_promo_changes'):
+                    changes = self.version_history.get_curated_promo_changes(promo_code)
+                else:
+                    changes = self.get_promo_version_history(promo_code)
                 
                 promo_with_history = {
                     'promo_code': promo_code,
@@ -641,6 +727,39 @@ class HybridPromoDataManager:
         result = self._refresh_cache()
         print("Manual cache refresh completed")
         return result
+
+    def full_data_refresh(self) -> Dict[str, Any]:
+        """Perform a full data refresh of all caches (promos, SPE, rebates).
+        Returns counts and timing info for each segment."""
+        with self._cache_lock:
+            print("Full data refresh requested...")
+            overall_start = time.time()
+
+            # Invalidate all timestamps so subsequent refresh calls reload
+            self._cache_timestamp = None
+            self._spe_cache_timestamp = None
+            self._rebates_cache_timestamp = None
+
+            # Refresh each cache capturing timing
+            stats: Dict[str, Any] = {}
+            start = time.time()
+            promos = self._refresh_cache()
+            stats['promotions_loaded'] = len(promos)
+            stats['promotions_time'] = round(time.time() - start, 3)
+
+            start = time.time()
+            spe = self._refresh_spe_cache()
+            stats['spe_loaded'] = len(spe)
+            stats['spe_time'] = round(time.time() - start, 3)
+
+            start = time.time()
+            rebates = self._refresh_rebates_cache()
+            stats['rebates_loaded'] = len(rebates)
+            stats['rebates_time'] = round(time.time() - start, 3)
+
+            stats['total_time'] = round(time.time() - overall_start, 3)
+            print(f"Full data refresh completed in {stats['total_time']}s")
+            return stats
     
     def get_cache_status(self) -> Dict[str, Any]:
         """Get enhanced cache status for debugging and monitoring"""

@@ -2,6 +2,7 @@ from flask import Blueprint, render_template, jsonify, request, redirect, url_fo
 from datetime import datetime
 import os, json
 from typing import Optional, TYPE_CHECKING
+import sqlite3
 
 if TYPE_CHECKING:
     from data.storage import PromoDataManager
@@ -84,9 +85,46 @@ def admin_dashboard():
     except Exception:
         return render_template('admin.html', promotions_count=847, spe_count=234, pending_reviews=12)
 
+@admin_bp.route('/admin/pam-promotions')
+def admin_pam_promotions():
+    dm = _ensure_dm()
+    # Pagination + search params
+    page = request.args.get('page', 1, type=int)
+    per_page = request.args.get('per_page', 25, type=int)
+    search = request.args.get('search', '', type=str)
+    owner = request.args.get('owner', 'all', type=str)
+    # Use PAM-only method if available
+    if hasattr(dm, 'get_pam_only_paginated_promos'):
+        promo_data = dm.get_pam_only_paginated_promos(page=page, per_page=per_page, search=search, owner_filter=owner)
+    else:
+        promo_data = dm.get_paginated_promos(page=page, per_page=per_page, search=search, owner_filter=owner)
+    return render_template('admin_pam_promotions.html',
+                           promotions=promo_data['promotions'],
+                           pagination=promo_data['pagination'],
+                           owners=promo_data['owners'],
+                           search_query=search,
+                           selected_owner=owner)
+
 @admin_bp.route('/admin/user-management', endpoint='user_management')
 def admin_user_management():
     return render_template('admin_user_management.html')
+
+# New subpages for decluttered functionality
+@admin_bp.route('/admin/data')
+def admin_data_page():
+    return render_template('admin_data.html')
+
+@admin_bp.route('/admin/performance')
+def admin_performance_page():
+    return render_template('admin_performance.html')
+
+@admin_bp.route('/admin/integrations')
+def admin_integrations_page():
+    return render_template('admin_integrations.html')
+
+@admin_bp.route('/admin/security')
+def admin_security_page():
+    return render_template('admin_security.html')
 
 @admin_bp.route('/version-history', endpoint='version_history_page')
 def version_history_page():
@@ -105,12 +143,13 @@ def admin_backup():
         import shutil
         backup_dir = f"backups/backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
         os.makedirs(backup_dir, exist_ok=True)
-        for fname in ['data/spe_promotions.json','data/rebates.json','data/workflow_data.json']:
+        # Copy metadata/database artifacts (legacy JSON promo files removed; copy any lingering .bak for safety)
+        for fname in ['data/version_history.db']:
             if os.path.exists(fname):
                 shutil.copy2(fname, backup_dir)
         if os.path.exists('data/uploads'):
             shutil.copytree('data/uploads', os.path.join(backup_dir,'uploads'))
-        return jsonify({'success': True, 'message': f'Backup created in {backup_dir} (Promotions in DB not copied)'})
+        return jsonify({'success': True, 'message': f'Backup created in {backup_dir} (Promotions reside in SQL Server)'})
     except Exception as e:
         return jsonify({'success': False, 'message': f'Backup failed: {e}'})
 
@@ -119,12 +158,9 @@ def admin_stats():
     dm = _ensure_dm()
     try:
         promotions_data = dm.get_all_promos()
-        from data.storage import PromoDataManager as JSONManager
-        json_manager = JSONManager()
-        spe_data = json_manager.get_all_spe_promos()
+        # SPE promos now sourced directly from SQL Server (no JSON manager needed)
+        spe_data = dm.get_all_spe_promos()
         cache_status = dm.get_cache_status()
-        spe_file_size = os.path.getsize('data/spe_promotions.json')/1024 if os.path.exists('data/spe_promotions.json') else 0
-        workflow_file_size = os.path.getsize('data/workflow_data.json')/1024 if os.path.exists('data/workflow_data.json') else 0
         uploads_count = 0
         if os.path.exists('data/uploads'):
             for _,_,files in os.walk('data/uploads'):
@@ -133,10 +169,10 @@ def admin_stats():
             'promotions_count': len(promotions_data),
             'spe_count': len(spe_data),
             'total_records': len(promotions_data)+len(spe_data),
-            'data_source': 'Database + JSON hybrid',
+            'data_source': 'Database (SQL Server + SQLite metadata)',
             'cache_status': cache_status,
-            'spe_file_size': f'{spe_file_size:.1f} KB',
-            'workflow_file_size': f'{workflow_file_size:.1f} KB',
+            'spe_file_size': None,
+            'workflow_file_size': None,
             'uploads_count': uploads_count,
             'database_connected': True,
             'last_cache_refresh': cache_status.get('last_refresh','Never')
@@ -144,6 +180,68 @@ def admin_stats():
         return jsonify({'success': True, 'stats': stats})
     except Exception as e:
         return jsonify({'success': False, 'message': f'Failed to get stats: {e}'})
+
+@admin_bp.route('/admin/dashboard-summary')
+def admin_dashboard_summary():
+    dm = _ensure_dm()
+    summary = {}
+    try:
+        # Promotions overview
+        promos = dm.get_all_promos()
+        total_promos = len(promos)
+        owners = set()
+        active_promos = 0
+        today = datetime.now().date()
+        for p in promos.values():
+            end = p.get('promo_end_date') or p.get('promo_srart_date')
+            start = p.get('promo_start_date') or p.get('promo_srart_date')
+            try:
+                if start and end:
+                    from datetime import datetime as _dt
+                    s = _dt.strptime(start, '%Y-%m-%d').date()
+                    e = _dt.strptime(end, '%Y-%m-%d').date()
+                    if s <= today <= e:
+                        active_promos += 1
+            except Exception:
+                pass
+            if p.get('owner'): owners.add(p.get('owner'))
+        # Cache
+        cache_status = dm.get_cache_status()
+        # PCR stats (lightweight count)
+        pcr_events = 0
+        pcr_promos = 0
+        try:
+            import sqlite3, os
+            with sqlite3.connect(os.path.join('data','version_history.db')) as conn:
+                row = conn.execute("SELECT COUNT(*) FROM version_history WHERE change_type='PCR Version'").fetchone()
+                pcr_events = row[0] if row else 0
+                row2 = conn.execute("SELECT COUNT(DISTINCT promo_code) FROM version_history WHERE change_type='PCR Version'").fetchone()
+                pcr_promos = row2[0] if row2 else 0
+        except Exception:
+            pass
+        # Date diagnostics latest snapshot
+        invalid_ratio = None
+        try:
+            import sqlite3, os
+            with sqlite3.connect(os.path.join('data','version_history.db')) as conn:
+                snap = conn.execute("SELECT invalid_ratio FROM date_diagnostics_history ORDER BY id DESC LIMIT 1").fetchone()
+                if snap: invalid_ratio = snap[0]
+        except Exception:
+            pass
+        summary = {
+            'total_promos': total_promos,
+            'active_promos': active_promos,
+            'unique_owners': len(owners),
+            'cache_valid': cache_status.get('cache_valid'),
+            'cache_age_minutes': cache_status.get('cache_age_minutes'),
+            'pcr_events': pcr_events,
+            'pcr_promos': pcr_promos,
+            'invalid_date_ratio': invalid_ratio
+        }
+        response = {'success': True, **summary, 'summary': summary}
+        return jsonify(response)
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'Failed to load dashboard summary: {e}', 'summary': summary})
 
 @admin_bp.route('/admin/test-connections', methods=['POST'])
 def admin_test_connections():
@@ -181,6 +279,172 @@ def admin_cache_refresh():
         return jsonify({'success': True, 'message': f'Cache refreshed in {refresh_time:.2f}s', 'cache_status': cache_status})
     except Exception as e:
         return jsonify({'success': False, 'message': f'Failed to refresh cache: {e}'})
+
+@admin_bp.route('/admin/delete-promo', methods=['POST'])
+def admin_delete_promo():
+    dm = _ensure_dm()
+    try:
+        data = request.get_json() if request.is_json else request.form
+        raw_code = data.get('promo_code') if data else ''
+        promo_code = (raw_code or '').strip()
+        if not promo_code:
+            return jsonify({'success': False, 'message': 'promo_code required'}), 400
+        existing = dm.get_promo(promo_code)
+        if not existing:
+            return jsonify({'success': False, 'message': f'Promo {promo_code} not found'}), 404
+        dm.delete_promo(promo_code)
+        # Force cache refresh so removal is reflected immediately
+        try:
+            dm.force_refresh()
+        except Exception:
+            pass
+        return jsonify({'success': True, 'message': f'Promo {promo_code} deleted'})
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'Error deleting promo: {e}'})
+
+@admin_bp.route('/admin/delete-promos', methods=['POST'])
+def admin_delete_promos():
+    dm = _ensure_dm()
+    try:
+        data = request.get_json() if request.is_json else {}
+        codes = data.get('codes') or []
+        if not isinstance(codes, list) or not codes:
+            return jsonify({'success': False, 'message': 'codes list required'}), 400
+        deleted = []
+        skipped = []
+        for code in codes:
+            try:
+                existing = dm.get_promo(code)
+                if existing:
+                    dm.delete_promo(code)
+                    deleted.append(code)
+                else:
+                    skipped.append(code)
+            except Exception:
+                skipped.append(code)
+        try:
+            dm.force_refresh()
+        except Exception:
+            pass
+        return jsonify({'success': True, 'message': f'Deleted {len(deleted)} promos (skipped {len(skipped)})', 'deleted': deleted, 'skipped': skipped})
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'Bulk delete error: {e}'})
+
+@admin_bp.route('/admin/data-refresh', methods=['POST'])
+def admin_data_refresh():
+    dm = _ensure_dm()
+    try:
+        start_time = datetime.now()
+        # If hybrid manager has full_data_refresh use it, else fall back to force_refresh
+        if hasattr(dm, 'full_data_refresh'):
+            stats = dm.full_data_refresh()
+        else:
+            dm.force_refresh()
+            stats = {'promotions_loaded': len(dm.get_all_promos())}
+        total_time = (datetime.now() - start_time).total_seconds()
+        cache_status = dm.get_cache_status()
+        return jsonify({'success': True, 'message': f'Data refreshed in {total_time:.2f}s', 'details': stats, 'cache_status': cache_status})
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'Failed to perform data refresh: {e}'})
+
+@admin_bp.route('/admin/pcr-stats')
+def admin_pcr_stats():
+    # Provide counts of PCR Version events per promo
+    try:
+        db_path = os.path.join('data', 'version_history.db')
+        stats = []
+        with sqlite3.connect(db_path) as conn:
+            conn.row_factory = sqlite3.Row
+            rows = conn.execute("""
+                SELECT promo_code, COUNT(*) AS pcr_versions,
+                       MIN(timestamp) AS first_pcr, MAX(timestamp) AS last_pcr
+                FROM version_history
+                WHERE change_type='PCR Version'
+                GROUP BY promo_code
+                ORDER BY pcr_versions DESC, last_pcr DESC
+                LIMIT 100
+            """).fetchall()
+            stats = [dict(r) for r in rows]
+        return jsonify({'success': True, 'pcr_stats': stats})
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'Failed to load PCR stats: {e}'})
+
+@admin_bp.route('/admin/date-diagnostics')
+def admin_date_diagnostics():
+    # Use DatabaseManager diagnostics by invoking get_recent_promos (days=30) without impacting cache
+    try:
+        from data.database import DatabaseManager
+        dbm = DatabaseManager()
+        recent = dbm.get_recent_promos(days=30)
+        diag = None
+        if recent:
+            diag = recent[0].get('_date_diagnostics')
+        # Also compute overall invalid ratio quickly (may reuse logic)
+        overall = {
+            'total_with_value': None,
+            'valid_dates': None,
+            'invalid_dates': None
+        }
+        try:
+            # Updated to reference PAM updated source table
+            raw_df = dbm.get_dataframe("SELECT promo_srart_date FROM [PAM].[PAM_Orbit_Data_Updated] WHERE promo_srart_date IS NOT NULL")
+            total_with_value = len(raw_df)
+            valid_mask = raw_df['promo_srart_date'].apply(lambda v: dbm._is_valid_date_string(v))
+            valid = int(valid_mask.sum())
+            invalid = total_with_value - valid
+            overall = {
+                'total_with_value': total_with_value,
+                'valid_dates': valid,
+                'invalid_dates': invalid,
+                'invalid_ratio': round(invalid / total_with_value, 4) if total_with_value else None
+            }
+        except Exception:
+            pass
+        payload = {
+            'recent_window_diagnostics': diag,
+            'overall_diagnostics': overall
+        }
+        return jsonify({'success': True, 'diagnostics': payload})
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'Failed to load date diagnostics: {e}'})
+
+@admin_bp.route('/admin/data-health')
+def admin_data_health():
+    # Aggregate latest diagnostics snapshot & PCR counts summary
+    try:
+        db_path = os.path.join('data', 'version_history.db')
+        result = {}
+        with sqlite3.connect(db_path) as conn:
+            conn.row_factory = sqlite3.Row
+            snap = conn.execute("""
+                SELECT * FROM date_diagnostics_history
+                ORDER BY id DESC LIMIT 1
+            """).fetchone()
+            if snap:
+                result['latest_snapshot'] = dict(snap)
+            else:
+                result['latest_snapshot'] = None
+            pcr_summary = conn.execute("""
+                SELECT COUNT(*) as total_pcr_events, COUNT(DISTINCT promo_code) as promos_with_pcr
+                FROM version_history WHERE change_type='PCR Version'
+            """).fetchone()
+            result['pcr_summary'] = dict(pcr_summary) if pcr_summary else {}
+        # Derive status
+        status = 'unknown'
+        ratio = None
+        if result['latest_snapshot'] and result['latest_snapshot'].get('invalid_ratio') is not None:
+            ratio = result['latest_snapshot']['invalid_ratio']
+            if ratio < 0.05:
+                status = 'healthy'
+            elif ratio < 0.15:
+                status = 'warning'
+            else:
+                status = 'critical'
+        result['status'] = status
+        result['invalid_ratio'] = ratio
+        return jsonify({'success': True, 'data_health': result})
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'Failed to load data health: {e}'})
 
 # --- User management API ---
 @admin_bp.route('/admin/users', methods=['GET'])

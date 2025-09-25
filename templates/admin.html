@@ -17,110 +17,44 @@
 
 {% block content %}
 <div class="admin-dashboard">
-  <!-- System Status Overview -->
-  <div class="system-status">
-    <h3 style="margin-bottom: 20px; color: #1e293b;"><i class="fas fa-chart-line"></i> System Status</h3>
-    <div class="status-grid">
-      <div class="status-item">
-        <div class="status-value good" id="promotions-count">{{ promotions_count or '847' }}</div>
-        <div class="status-label">Active Promotions</div>
-      </div>
-      <div class="status-item">
-        <div class="status-value good" id="uptime">99.7%</div>
-        <div class="status-label">System Uptime</div>
-      </div>
-      <div class="status-item">
-        <div class="status-value warning" id="pending-reviews">{{ pending_reviews or '12' }}</div>
-        <div class="status-label">Pending Reviews</div>
-      </div>
-      <div class="status-item">
-        <div class="status-value good" id="data-health">Healthy</div>
-        <div class="status-label">Data Integrity</div>
-      </div>
-    </div>
+  <!-- KPI Bar -->
+  <div class="kpi-bar">
+    <div class="kpi" id="kpi-total-promos"><span class="kpi-label">Total Promos</span><span class="kpi-value">--</span></div>
+    <div class="kpi" id="kpi-active-promos"><span class="kpi-label">Active</span><span class="kpi-value">--</span></div>
+    <div class="kpi" id="kpi-owners"><span class="kpi-label">Owners</span><span class="kpi-value">--</span></div>
+    <div class="kpi" id="kpi-cache"><span class="kpi-label">Cache</span><span class="kpi-value">--</span></div>
+    <div class="kpi" id="kpi-pcr"><span class="kpi-label">PCR Events</span><span class="kpi-value">--</span></div>
+    <div class="kpi" id="kpi-date"><span class="kpi-label">Date Quality</span><span class="kpi-value">--</span></div>
   </div>
 
   <!-- Admin Tools Grid -->
   <div class="admin-grid">
-    <!-- User Management -->
-    <div class="admin-card">
-      <div class="card-header">
-        <div class="card-icon">
-          <i class="fas fa-users"></i>
-        </div>
-        <div class="card-title">User Management</div>
-      </div>
-      <div class="card-content">
-        Manage user accounts, permissions, and access levels. View active sessions and audit user activity.
-      </div>
-      <div class="card-actions">
-        <a href="/admin/user-management" class="btn-admin">
-          <i class="fas fa-users"></i> Manage Users
-        </a>
-      </div>
+    <!-- Unified Navigation Cards -->
+    <div class="admin-card nav-card">
+      <div class="card-header"><div class="card-icon"><i class="fas fa-database"></i></div><div class="card-title">Data</div></div>
+      <div class="card-content">Backups, refresh, diagnostics, PCR history consolidation.</div>
+      <div class="card-actions"><a href="/admin/data" class="btn-admin"><i class="fas fa-arrow-right"></i> Open</a></div>
     </div>
 
     <!-- Data Management -->
-    <div class="admin-card">
-      <div class="card-header">
-        <div class="card-icon">
-          <i class="fas fa-database"></i>
-        </div>
-        <div class="card-title">Data Management</div>
-      </div>
-      <div class="card-content">
-        Backup, restore, and manage promotion data. Monitor data integrity and perform cleanup operations.
-      </div>
-      <div class="card-actions">
-        <button class="btn-admin" onclick="backupData()">
-          <i class="fas fa-download"></i> Backup Data
-        </button>
-        <button class="btn-admin secondary" onclick="showDataStats()">
-          <i class="fas fa-chart-bar"></i> Statistics
-        </button>
-      </div>
+    <div class="admin-card nav-card">
+      <div class="card-header"><div class="card-icon"><i class="fas fa-tachometer-alt"></i></div><div class="card-title">Performance</div></div>
+      <div class="card-content">Cache efficiency, metrics, manual refresh controls.</div>
+      <div class="card-actions"><a class="btn-admin" href="/admin/performance"><i class="fas fa-arrow-right"></i> Open</a></div>
     </div>
 
     <!-- System Configuration -->
-    <div class="admin-card">
-      <div class="card-header">
-        <div class="card-icon">
-          <i class="fas fa-cog"></i>
-        </div>
-        <div class="card-title">System Configuration</div>
-      </div>
-      <div class="card-content">
-        Configure system settings, integration endpoints, and application preferences.
-      </div>
-      <div class="card-actions">
-        <button class="btn-admin" onclick="openModal('configModal')">
-          <i class="fas fa-edit"></i> Settings
-        </button>
-        <button class="btn-admin secondary" onclick="testConnections()">
-          <i class="fas fa-plug"></i> Test Connections
-        </button>
-      </div>
+    <div class="admin-card nav-card">
+      <div class="card-header"><div class="card-icon"><i class="fas fa-link"></i></div><div class="card-title">Integrations</div></div>
+      <div class="card-content">Connectivity checks & external system health snapshots.</div>
+      <div class="card-actions"><a class="btn-admin" href="/admin/integrations"><i class="fas fa-arrow-right"></i> Open</a></div>
     </div>
 
     <!-- Security & Audit -->
-    <div class="admin-card">
-      <div class="card-header">
-        <div class="card-icon">
-          <i class="fas fa-shield-alt"></i>
-        </div>
-        <div class="card-title">Security & Audit</div>
-      </div>
-      <div class="card-content">
-        Monitor security events, view audit logs, and manage access permissions and authentication.
-      </div>
-      <div class="card-actions">
-        <button class="btn-admin" onclick="openModal('auditModal')">
-          <i class="fas fa-history"></i> Audit Logs
-        </button>
-        <button class="btn-admin secondary" onclick="showAlert('Security scan completed successfully!', 'success')">
-          <i class="fas fa-search"></i> Security Scan
-        </button>
-      </div>
+    <div class="admin-card nav-card">
+      <div class="card-header"><div class="card-icon"><i class="fas fa-shield-alt"></i></div><div class="card-title">Security</div></div>
+      <div class="card-content">Audit snapshots and integrity indicators.</div>
+      <div class="card-actions"><a class="btn-admin" href="/admin/security"><i class="fas fa-arrow-right"></i> Open</a></div>
     </div>
 
     <!-- Integration Management -->
@@ -145,26 +79,14 @@
     </div>
 
     <!-- Promo Editing -->
-    <div class="admin-card">
-      <div class="card-header">
-        <div class="card-icon">
-          <i class="fas fa-edit"></i>
-        </div>
-        <div class="card-title">Promo Editing</div>
-      </div>
-      <div class="card-content">
-        Create, edit, and manage promotions. Access promotion forms, link management, and SQL generation tools.
-      </div>
-      <div class="card-actions">
-  <a href="{{ url_for('promo.promotions_page') }}" class="btn-admin">
-          <i class="fas fa-tags"></i> View Promotions
-        </a>
-  <a href="{{ url_for('promo.links_main_page') }}" class="btn-admin secondary">
-          <i class="fas fa-link"></i> Manage Links
-        </a>
-  <a href="{{ url_for('admin_bp.version_history_page') }}" class="btn-admin secondary">
-          <i class="fas fa-history"></i> Version History
-        </a>
+    <div class="admin-card nav-card large">
+      <div class="card-header"><div class="card-icon"><i class="fas fa-tags"></i></div><div class="card-title">Promotions</div></div>
+      <div class="card-content">Manage promo lifecycle, links, version history, and review state.</div>
+      <div class="card-actions stack">
+        <a href="{{ url_for('promo.promotions_page') }}" class="btn-admin"><i class="fas fa-tags"></i> Promotions</a>
+        <a href="{{ url_for('promo.links_main_page') }}" class="btn-admin secondary"><i class="fas fa-link"></i> Links</a>
+        <a href="{{ url_for('admin_bp.version_history_page') }}" class="btn-admin secondary"><i class="fas fa-history"></i> Version History</a>
+        <a href="/admin/user-management" class="btn-admin secondary"><i class="fas fa-users"></i> Users</a>
       </div>
     </div>
 
@@ -177,76 +99,113 @@
         <div class="card-title">Performance Monitoring</div>
       </div>
       <div class="card-content">
-        <div id="cache-status-display">
-          <div class="metric-row">
-            <span class="metric-label">Cache Status:</span>
-            <span class="metric-value" id="cache-valid">Loading...</span>
-          </div>
-          <div class="metric-row">
-            <span class="metric-label">Hit Ratio:</span>
-            <span class="metric-value" id="cache-hit-ratio">Loading...</span>
-          </div>
-          <div class="metric-row">
-            <span class="metric-label">Cached Items:</span>
-            <span class="metric-value" id="cached-items">Loading...</span>
-          </div>
-          <div class="metric-row">
-            <span class="metric-label">Cache Age:</span>
-            <span class="metric-value" id="cache-age">Loading...</span>
-          </div>
-        </div>
+        Cache metrics & refresh controls.
       </div>
       <div class="card-actions">
-        <button class="btn-admin" onclick="showDetailedMetrics()" id="metrics-btn">
-          <i class="fas fa-chart-line"></i> View Detailed Metrics
-        </button>
-        <button class="btn-admin secondary" onclick="refreshCache()" id="refresh-btn">
-          <i class="fas fa-sync"></i> Refresh Cache
-        </button>
+        <a class="btn-admin" href="/admin/performance"><i class="fas fa-arrow-right"></i> Open</a>
       </div>
     </div>
   </div>
 
-  <!-- Recent Activity -->
-  <div class="recent-activity">
-    <h3 style="margin-bottom: 20px; color: #1e293b;"><i class="fas fa-clock"></i> Recent Activity</h3>
-    <div class="activity-item">
-      <div class="activity-icon create">
-        <i class="fas fa-plus"></i>
-      </div>
-      <div class="activity-content">
-        <div class="activity-title">New promotion P0482024 created</div>
-        <div class="activity-time">2 hours ago by Alejandro Ferrer</div>
-      </div>
+  <!-- Placeholder: could add live recent activity feed in future -->
+
+  <div class="admin-card" style="margin-top:20px;">
+    <div class="card-header">
+      <div class="card-icon"><i class="fas fa-tags"></i></div>
+      <div class="card-title">PAM JSON Promotions</div>
     </div>
-    <div class="activity-item">
-      <div class="activity-icon update">
-        <i class="fas fa-edit"></i>
-      </div>
-      <div class="activity-content">
-        <div class="activity-title">Promotion R223 updated with new eligibility rules</div>
-        <div class="activity-time">4 hours ago by Sarah Chen</div>
-      </div>
-    </div>
-    <div class="activity-item">
-      <div class="activity-icon create">
-        <i class="fas fa-upload"></i>
-      </div>
-      <div class="activity-content">
-        <div class="activity-title">Bulk promotion data imported (47 records)</div>
-        <div class="activity-time">6 hours ago by System Admin</div>
-      </div>
-    </div>
-    <div class="activity-item">
-      <div class="activity-icon update">
-        <i class="fas fa-sync"></i>
-      </div>
-      <div class="activity-content">
-        <div class="activity-title">ORBIT integration sync completed</div>
-        <div class="activity-time">8 hours ago by System</div>
+    <div class="card-content">
+      Manage JSON-layer promotions, including hard deletion and bulk cleanup.
+      <div class="card-actions" style="margin-top:12px;">
+        <a href="/admin/pam-promotions" class="btn-admin"><i class="fas fa-arrow-right"></i> Open Manager</a>
       </div>
     </div>
   </div>
+
+  <script>
+  async function loadDashboardSummary(){
+    try {
+      const res = await fetch('/admin/dashboard-summary');
+      if(!res.ok) return;
+      const data = await res.json();
+      const setKpi = (id, value, statusClass) => {
+        const el = document.getElementById(id);
+        if(!el) return;
+        const valSpan = el.querySelector('.kpi-value');
+        if(valSpan) valSpan.textContent = value;
+        el.classList.remove('good','warn','bad');
+        if(statusClass) el.classList.add(statusClass);
+      };
+
+  setKpi('kpi-total-promos', data.total_promos ?? '--');
+  document.getElementById('kpi-total-promos')?.setAttribute('data-tip','Total promotions currently in system');
+  setKpi('kpi-active-promos', data.active_promos ?? '--');
+  document.getElementById('kpi-active-promos')?.setAttribute('data-tip','Promotions active today based on start/end dates');
+  setKpi('kpi-owners', data.unique_owners ?? '--');
+  document.getElementById('kpi-owners')?.setAttribute('data-tip','Distinct promotion owners across all records');
+
+      // Cache status
+      let cacheStatus = 'Unknown';
+      let cacheClass = '';
+      if(data.cache && typeof data.cache.valid === 'boolean'){
+        cacheStatus = data.cache.valid ? 'Warm' : 'Stale';
+        cacheClass = data.cache.valid ? 'good' : 'warn';
+      }
+  setKpi('kpi-cache', cacheStatus, cacheClass);
+  const cacheAge = data.cache_age_minutes != null ? `${data.cache_age_minutes}m old` : 'no age';
+  document.getElementById('kpi-cache')?.setAttribute('data-tip',`Cache status: ${cacheStatus}. Age: ${cacheAge}`);
+
+      // PCR coverage
+      let pcrText = '--';
+      if(data.pcr && data.pcr.event_count != null){
+        const cov = data.pcr.coverage_percent != null ? data.pcr.coverage_percent : null;
+        pcrText = data.pcr.event_count + (cov!=null ? ` (${cov}%)` : '');
+      }
+  setKpi('kpi-pcr', pcrText);
+  document.getElementById('kpi-pcr')?.setAttribute('data-tip','PCR version events recorded and coverage % over unique promos');
+
+      // Date quality ratio
+      if(data.date_quality){
+        const ratio = data.date_quality.invalid_ratio;
+        let cls = 'good';
+        if(ratio > 5 && ratio <= 15) cls = 'warn';
+        else if(ratio > 15) cls = 'bad';
+  setKpi('kpi-date', ratio.toFixed(2)+'%', cls);
+  document.getElementById('kpi-date')?.setAttribute('data-tip',`Invalid date ratio ${ratio.toFixed(2)}% (<=5 good, >15 issue)`);
+      }
+    } catch(e){
+      console.warn('Failed loading dashboard summary', e);
+    }
+  }
+  document.addEventListener('DOMContentLoaded', loadDashboardSummary);
+  </script>
+  <script>
+  async function deletePromo(){
+    const codeInput = document.getElementById('deletePromoCode');
+    const resultEl = document.getElementById('deletePromoResult');
+    const promoCode = (codeInput.value || '').trim();
+    if(!promoCode){
+      resultEl.innerHTML = '<span style="color:#d33;">Enter a promo code.</span>';
+      return;
+    }
+    resultEl.innerHTML = 'Deleting '+promoCode+'...';
+    try{
+      const res = await fetch('/admin/delete-promo', {
+       method:'POST',
+       headers:{'Content-Type':'application/json'},
+       body: JSON.stringify({promo_code: promoCode})
+      });
+      const js = await res.json();
+      if(res.ok && js.success){
+        resultEl.innerHTML = '<span style="color:green;">'+js.message+'</span>';
+      } else {
+        resultEl.innerHTML = '<span style="color:#d33;">'+(js.message || 'Delete failed')+'</span>';
+      }
+    } catch(e){
+      resultEl.innerHTML = '<span style="color:#d33;">Error: '+e+'</span>';
+    }
+  }
+  </script>
 </div>
 
 <!-- Modals -->
@@ -652,6 +611,63 @@ function refreshCache() {
     });
 }
 
+function dataRefresh() {
+  const btn = document.getElementById('data-refresh-btn');
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Refreshing...';
+  btn.disabled = true;
+
+  fetch('/admin/data-refresh', { method: 'POST' })
+    .then(r => r.json())
+    .then(data => {
+      if (data.success) {
+        const d = data.details || {};
+        const msg = `Full data refresh completed in ${data.message.split(' in ')[1] || ''}\nPromotions: ${d.promotions_loaded ?? 'n/a'} ( ${d.promotions_time ?? '?'}s )\nSPE: ${d.spe_loaded ?? 'n/a'} ( ${d.spe_time ?? '?'}s )\nRebates: ${d.rebates_loaded ?? 'n/a'} ( ${d.rebates_time ?? '?'}s )`;
+        showAlert(msg, 'success');
+        if (data.cache_status) updateCacheDisplay(data.cache_status);
+      } else {
+        showAlert('Failed to refresh data: ' + data.message, 'error');
+      }
+    })
+    .catch(err => showAlert('Error refreshing data: ' + err, 'error'))
+    .finally(() => {
+      btn.innerHTML = '<i class="fas fa-database"></i> Full Data Refresh';
+      btn.disabled = false;
+    });
+}
+
+function loadPcrStats() {
+  const btn = document.getElementById('pcr-stats-btn');
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> PCR Stats';
+  btn.disabled = true;
+  fetch('/admin/pcr-stats')
+    .then(r=>r.json())
+    .then(data=>{
+      if(!data.success){showAlert('Failed: '+data.message,'error');return;}
+      const rows = (data.pcr_stats||[]).map(r=>`• ${r.promo_code}: ${r.pcr_versions} (first ${r.first_pcr}, last ${r.last_pcr})`).join('\n');
+      showAlert(rows || 'No PCR versions recorded','info');
+    })
+    .catch(e=>showAlert('Error: '+e,'error'))
+    .finally(()=>{btn.innerHTML='<i class="fas fa-flask"></i> PCR Stats';btn.disabled=false;});
+}
+
+function loadDateDiagnostics(){
+  const btn = document.getElementById('date-diag-btn');
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Date Diagnostics';
+  btn.disabled = true;
+  fetch('/admin/date-diagnostics')
+    .then(r=>r.json())
+    .then(data=>{
+      if(!data.success){showAlert('Failed: '+data.message,'error');return;}
+      const d=data.diagnostics||{};
+      const recent=d.recent_window_diagnostics||{};
+      const overall=d.overall_diagnostics||{};
+      const msg=`Recent Window (days=${recent.days_window||'?'}):\nValid: ${recent.valid_dates||0}  Invalid: ${recent.invalid_dates||0}  Total With Value: ${recent.total_with_value||0}\n\nOverall:\nValid: ${overall.valid_dates||0}  Invalid: ${overall.invalid_dates||0}  Total: ${overall.total_with_value||0}  Invalid Ratio: ${(overall.invalid_ratio!=null)? overall.invalid_ratio: 'n/a'}`;
+      showAlert(msg,'info');
+    })
+    .catch(e=>showAlert('Error: '+e,'error'))
+    .finally(()=>{btn.innerHTML='<i class="fas fa-calendar-times"></i> Date Diagnostics';btn.disabled=false;});
+}
+
 function updateCacheDisplay(cacheStatus) {
   if (!cacheStatus) return;
   
@@ -682,6 +698,24 @@ function loadCacheStatus() {
     });
 }
 
+function loadDataHealth(){
+  fetch('/admin/data-health')
+    .then(r=>r.json())
+    .then(data=>{
+      if(!data.success) return;
+      const h = data.data_health || {};
+      const el = document.getElementById('data-health');
+      if(!el) return;
+      const status = h.status || 'unknown';
+      el.textContent = status.charAt(0).toUpperCase()+status.slice(1);
+      el.classList.remove('good','warning','critical');
+      if(status==='healthy') el.classList.add('good');
+      else if(status==='warning') el.classList.add('warning');
+      else if(status==='critical') el.classList.add('error');
+    })
+    .catch(()=>{});
+}
+
 function saveConfig() {
   showAlert('Configuration saved successfully!', 'success');
   closeModal('configModal');
@@ -698,6 +732,8 @@ function updateStatus() {
 
 // Update status every 30 seconds
 setInterval(updateStatus, 30000);
+setInterval(loadDataHealth, 60000);
+loadDataHealth();
 
 // Update cache status every 60 seconds
 setInterval(loadCacheStatus, 60000);

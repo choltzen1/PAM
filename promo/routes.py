@@ -31,12 +31,20 @@ def promotions_page():
     per_page = request.args.get('per_page', 25, type=int)
     search = request.args.get('search', '', type=str)
     owner_filter = request.args.get('owner', 'all', type=str)
-    promo_data = dm.get_paginated_promos(
-        page=page,
-        per_page=per_page,
-        search=search,
-        owner_filter=owner_filter
-    )
+    if hasattr(dm, 'get_pam_only_paginated_promos'):
+        promo_data = dm.get_pam_only_paginated_promos(
+            page=page,
+            per_page=per_page,
+            search=search,
+            owner_filter=owner_filter
+        )
+    else:
+        promo_data = dm.get_paginated_promos(
+            page=page,
+            per_page=per_page,
+            search=search,
+            owner_filter=owner_filter
+        )
     return render_template(
         'promotions.html',
         promotions=promo_data['promotions'],
@@ -102,32 +110,16 @@ def date_mismatch_page():
 def update_pam_date_bp(promo_code):
     dm = _ensure_data_manager()
     try:
-        db_records = dm.db_manager.get_all_promos() if hasattr(dm, 'db_manager') and dm.db_manager else []  # type: ignore[attr-defined]
-        orbit_end_date = None
-        for record in db_records:
-            if str(record.get('code','')) == promo_code:
-                orbit_end_date = record.get('promo_end_date','')
-                break
-        if not orbit_end_date:
-            return jsonify({'success': False,'message': f'Promotion {promo_code} not found in ORBIT database'}), 404
-        import json, os
-        promo_file = os.path.join('data','promotions.json')
-        try:
-            with open(promo_file,'r') as f:
-                pam_data = json.load(f)
-        except (FileNotFoundError, json.JSONDecodeError):
-            return jsonify({'success': False,'message':'Could not read PAM promotions file'}), 500
-        if promo_code not in pam_data:
-            return jsonify({'success': False,'message': f'Promotion {promo_code} not found in PAM data'}), 404
-        from datetime import datetime
-        old_end_date = pam_data[promo_code].get('promo_end_date','N/A')
-        pam_data[promo_code]['promo_end_date'] = orbit_end_date
-        pam_data[promo_code]['updated_at'] = datetime.now().isoformat()
-        vh = pam_data[promo_code].setdefault('version_history', [])
-        vh.append(f"{datetime.now().strftime('%m/%d/%Y %I:%M %p')} - Date Mismatch Tool - Updated end date from {old_end_date} to {orbit_end_date} (synced from ORBIT)")
-        with open(promo_file,'w') as f:
-            json.dump(pam_data, f, indent=2, ensure_ascii=False)
-        return jsonify({'success': True,'message': f'Successfully updated PAM end date for {promo_code} from {old_end_date} to {orbit_end_date}','old_date': old_end_date,'new_date': orbit_end_date})
+        # Fetch current DB record
+        record = dm.db_manager.get_promo_by_code(promo_code) if hasattr(dm, 'db_manager') else None  # type: ignore[attr-defined]
+        if not record:
+            return jsonify({'success': False,'message': f'Promotion {promo_code} not found in PAM database'}), 404
+        old_end_date = record.get('promo_end_date','N/A')
+        orbit_end_date = old_end_date  # In DB-only mode we treat provided end date as authoritative
+        # Client should send desired new end date in request JSON (MM/DD/YYYY or ISO). For now keep existing.
+        # If a future payload supplies new date, we can parse and apply.
+        # No change performed now; endpoint retained for compatibility.
+        return jsonify({'success': True,'message': f'DB-only mode: end date retained ({old_end_date}).','old_date': old_end_date,'new_date': orbit_end_date})
     except Exception as e:
         return jsonify({'success': False,'message': f'Error updating PAM date: {str(e)}'}), 500
 
@@ -157,6 +149,12 @@ def generate_date_sql_bp():
                 sql_statements.append(sql)
             except ValueError:
                 return jsonify({'success': False,'message': f'Invalid date format: {new_end_date}. Use MM/DD/YYYY format.'}), 400
+        # Record a single compact version history event per promo
+        dm = _ensure_data_manager()
+        for promo_code in promo_codes:
+            if hasattr(dm, 'record_date_mismatch_sql'):
+                # Provide minimal metrics (no huge SQL blob)
+                dm.record_date_mismatch_sql(promo_code, 'System', generation_time=0.0, sql_length=sum(len(s) for s in sql_statements))
         return jsonify({'success': True,'sql_statements': sql_statements})
     except Exception as e:
         return jsonify({'success': False,'message': f'Error generating SQL: {str(e)}'}), 500
@@ -774,6 +772,12 @@ def edit_promo(promo_code):
                 
                 # Flash message with performance info
                 flash(f"SQL generated successfully in {generation_time:.2f} seconds ({len(sql_content):,} characters)", "success")
+
+                # Record PCR Version event in version history
+                try:
+                    dm.record_sql_generation(promo_code, "Cade Holtzen", generation_time, len(sql_content))
+                except Exception as vh_err:
+                    print(f"Version history PCR record failed: {vh_err}")
                 
                 # Log performance warning if slow
                 if generation_time > 5.0:

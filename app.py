@@ -6,8 +6,7 @@ from factory import data_manager as _dm  # type: ignore
 data_manager = _dm  # expose for tests
 if data_manager is None:  # defensive assertion during test/dev
     try:
-        # Attempt lazy init if somehow missed
-        from data.hybrid_storage import HybridPromoDataManager as PromoDataManager
+        from data.storage import PromoDataManager
         data_manager = PromoDataManager()
     except Exception:
         pass

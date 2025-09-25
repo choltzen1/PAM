@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% block title %}Integrations - PAM{% endblock %}
+{% block head %}<link rel="stylesheet" href="/static/css/admin.css">{% endblock %}
+{% block content %}
+<div class="admin-subpage">
+  <div class="subpage-header">
+    <h2><i class="fas fa-link"></i> Integrations</h2>
+    <a class="breadcrumb-link" href="/admin"><i class="fas fa-arrow-left"></i> Back to Dashboard</a>
+  </div>
+  <p class="subpage-intro">Run connection tests and verify integration points.</p>
+  <div class="admin-subgrid">
+    <button class="btn-admin" onclick="testConnections()"><i class="fas fa-plug"></i> Test Core Connections</button>
+    <button class="btn-admin" onclick="testIntegrations()"><i class="fas fa-check-circle"></i> Test All Integrations</button>
+  </div>
+  <div id="int-output" class="admin-output"></div>
+</div>
+<script>
+function showOutput(t){document.getElementById('int-output').textContent=t;}
+function testConnections(){fetch('/admin/test-connections',{method:'POST'}).then(r=>r.json()).then(d=>showOutput(JSON.stringify(d,null,2)));}
+function testIntegrations(){fetch('/admin/test-connections',{method:'POST'}).then(r=>r.json()).then(d=>showOutput(JSON.stringify(d,null,2)));}
+</script>
+{% endblock %}

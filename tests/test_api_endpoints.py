@@ -61,6 +61,34 @@ def test_search_orbit_not_found(client):
     assert js['found'] is False
 
 
+def test_search_orbit_orbit_only_fallback(client, monkeypatch):
+    # Ensure no promo with this orbit id exists in in-memory manager
+    target_orbit = 'ORB-NOCODE-1'
+    # Monkeypatch DatabaseManager.get_orbit_record_by_orbit_id to simulate row with no code
+    from data import database as db_module
+
+    class DummyDB(db_module.DatabaseManager):
+        def get_orbit_record_by_orbit_id(self, orbit_id: str):
+            if orbit_id == target_orbit:
+                return {
+                    'orbit_id': orbit_id,
+                    'bill_facing_name': 'Orbit Only Initiative',
+                    'description': 'Pending promo code assignment',
+                    'owner': 'OrbitOwner',
+                    'promo_start_date': '2025-09-01',
+                    'promo_end_date': '2025-09-30'
+                }
+            return None
+
+    monkeypatch.setattr(db_module, 'DatabaseManager', DummyDB)
+    r = client.get(f'/api/search_orbit/{target_orbit}')
+    assert r.status_code == 200
+    js = r.get_json()
+    assert js['found'] is True
+    assert js['promo_code'] == ''  # intentionally blank
+    assert 'Orbit record located' in js.get('note','')
+
+
 def test_update_testing_status_success(client):
     code = 'TESTSTS'
     factory.data_manager.save_promo(code, {'owner':'STS'}, user_name='Test')

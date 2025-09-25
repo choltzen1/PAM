@@ -14,19 +14,36 @@ class PromoDataManager:
         self.data_dir = data_dir
         self.uploads_dir = os.path.join(data_dir, "uploads")
         self.promo_uploads_dir = os.path.join(self.uploads_dir, "promotions")
-        
-        # File paths for JSON storage (still needed for SPE and some legacy operations)
+        # File paths for JSON storage (SPE/rebates legacy). RDC promos now DB-only.
         self.promo_file = os.path.join(data_dir, "promotions.json")
         self.spe_file = os.path.join(data_dir, "spe_promotions.json")
         self.rebates_file = os.path.join(data_dir, "rebates.json")
-        
+        # Auto-archive legacy JSON files (one-time rename to .bak) while keeping attributes pointing to new names
+        self._auto_archive_json_files()
         # Initialize database manager for live data
         self.db_manager = DatabaseManager()
-        
         # Ensure upload directories exist
         os.makedirs(data_dir, exist_ok=True)
         os.makedirs(self.uploads_dir, exist_ok=True)
         os.makedirs(self.promo_uploads_dir, exist_ok=True)
+
+    def _auto_archive_json_files(self):
+        mapping = {
+            'promo_file': 'promotions.json',
+            'spe_file': 'spe_promotions.json',
+            'rebates_file': 'rebates.json'
+        }
+        for attr, fname in mapping.items():
+            orig_path = getattr(self, attr)
+            bak_path = orig_path + '.bak'
+            try:
+                if os.path.exists(orig_path) and not os.path.exists(bak_path):
+                    os.rename(orig_path, bak_path)
+                if os.path.exists(bak_path):
+                    setattr(self, attr, bak_path)
+            except Exception:
+                # Non-fatal; leave paths as-is
+                pass
     
     def _load_json(self, filepath: str) -> Dict[str, Any]:
         """Load data from JSON file"""
@@ -42,13 +59,10 @@ class PromoDataManager:
             json.dump(data, f, indent=2, ensure_ascii=False)
     
     def get_promo(self, promo_code: str) -> Dict[str, Any]:
-        """Get a specific promotion by code - check JSON first (for edits), then database"""
-        # First check JSON file for any saved edits
-        data = self._load_json(self.promo_file)
-        if promo_code in data:
-            return data[promo_code]
-        
-        # If not in JSON, fall back to database
+        """Get a specific promotion by code (DB only).
+
+        Legacy JSON override removed: always reflect current DB state.
+        """
         try:
             db_record = self.db_manager.get_promo_by_code(promo_code)
             if db_record:
@@ -59,45 +73,42 @@ class PromoDataManager:
             return {}
     
     def get_spe_promo(self, promo_code: str) -> Dict[str, Any]:
-        """Get a specific SPE promotion by code"""
-        data = self._load_json(self.spe_file)
-        return data.get(promo_code, {})
+        """Get a specific SPE promotion by code (DB)."""
+        try:
+            for r in self.db_manager.get_promos_by_execution_type("SPE"):
+                if str(r.get('code','')).upper() == promo_code.upper():
+                    return self.db_manager.convert_db_record_to_json_format({str(k): v for k,v in r.items()})
+        except Exception:
+            pass
+        return {}
     
     def get_all_promos(self) -> Dict[str, Any]:
-        """Get all promotions from database"""
+        """Get all promotions (RDC) from database (no JSON overlay)."""
         try:
             db_records = self.db_manager.get_promos_by_execution_type("RDC")
-            if db_records:
-                # Convert to dictionary format like JSON file
-                result = {}
-                for record in db_records:
-                    # Cast to proper type for compatibility
-                    record_dict: Dict[str, Any] = {str(k): v for k, v in record.items()} if record else {}
-                    converted = self.db_manager.convert_db_record_to_json_format(record_dict)
-                    result[converted['code']] = converted
-                return result
-            return {}
         except Exception as e:
             print(f"Database lookup failed for all promos: {e}")
-            return {}
+            db_records = []
+        result: Dict[str, Any] = {}
+        for record in db_records:
+            record_dict: Dict[str, Any] = {str(k): v for k, v in record.items()} if record else {}
+            converted = self.db_manager.convert_db_record_to_json_format(record_dict)
+            code = converted.get('code')
+            if code:
+                result[code] = converted
+        return result
     
     def get_paginated_promos(self, page: int = 1, per_page: int = 25, search: str = "", owner_filter: str = "all") -> Dict[str, Any]:
-        """Get paginated promotions with optional filtering from database"""
+        """Get paginated promotions with optional filtering (DB only)."""
         try:
             db_records = self.db_manager.get_promos_by_execution_type("RDC")
-            if db_records:
-                # Convert all database records to JSON format
-                promo_list = []
-                for record in db_records:
-                    # Cast to proper type for compatibility
-                    record_dict: Dict[str, Any] = {str(k): v for k, v in record.items()} if record else {}
-                    converted = self.db_manager.convert_db_record_to_json_format(record_dict)
-                    promo_list.append(converted)
-            else:
-                promo_list = []
         except Exception as e:
             print(f"Database lookup failed for paginated promos: {e}")
-            promo_list = []
+            db_records = []
+        promo_list: List[Dict[str, Any]] = []
+        for record in db_records:
+            record_dict: Dict[str, Any] = {str(k): v for k, v in record.items()} if record else {}
+            promo_list.append(self.db_manager.convert_db_record_to_json_format(record_dict))
         
         # Apply filters
         if search:
@@ -140,49 +151,136 @@ class PromoDataManager:
             },
             'owners': all_owners
         }
+
+    # Backwards-compatible wrapper expected by some routes (previous hybrid storage API)
+    def get_pam_only_paginated_promos(self, page: int = 1, per_page: int = 25, search: str = "", owner_filter: str = "all") -> Dict[str, Any]:
+        """Alias to get_paginated_promos retained so existing route checks succeed."""
+        return self.get_paginated_promos(page=page, per_page=per_page, search=search, owner_filter=owner_filter)
     
     def get_all_spe_promos(self) -> Dict[str, Any]:
-        """Get all SPE promotions"""
-        return self._load_json(self.spe_file)
+        """Get all SPE promotions (DB)."""
+        out: Dict[str, Any] = {}
+        try:
+            for r in self.db_manager.get_promos_by_execution_type("SPE"):
+                conv = self.db_manager.convert_db_record_to_json_format({str(k): v for k,v in r.items()})
+                c = conv.get('code')
+                if c:
+                    out[c] = conv
+        except Exception:
+            pass
+        return out
     
     def save_promo(self, promo_code: str, promo_data: Dict[str, Any], user_name: str = "System"):
-        """Save or update a promotion with change tracking"""
-        data = self._load_json(self.promo_file)
-        
-        # Add metadata
+        """Persist promo edits: update PAM table fields, upsert extras, record diff version history."""
+        promo_data = dict(promo_data or {})
         promo_data['code'] = promo_code
-        promo_data['updated_at'] = datetime.now().isoformat()
-        
-        # If it's a new promo, add creation timestamp
-        if promo_code not in data:
-            promo_data['created_at'] = datetime.now().isoformat()
-            promo_data['version_history'] = [
-                f"{datetime.now().strftime('%m/%d/%Y %I:%M %p')} - {user_name} - Created promo."
-            ]
-            promo_data['last_changes'] = None
-        else:
-            # Preserve creation timestamp and existing permanent version history
-            old_data = data[promo_code]
-            promo_data['created_at'] = old_data.get('created_at', datetime.now().isoformat())
-            
-            # Keep permanent version history (anything that doesn't start with "Last save:")
-            permanent_history = [entry for entry in old_data.get('version_history', []) 
-                               if not entry.startswith('Last save:')]
-            promo_data['version_history'] = permanent_history
-            
-            # Track field changes
-            changes = self._get_field_changes(old_data, promo_data)
-            if changes:
-                # Update last_changes with current change summary
-                timestamp = datetime.now().strftime('%m/%d/%Y %I:%M %p')
-                change_summary = f"Last save: {timestamp} - {user_name} - Changed: {', '.join(changes)}"
-                promo_data['last_changes'] = change_summary
-            else:
-                # Keep existing last_changes if no actual field changes
-                promo_data['last_changes'] = old_data.get('last_changes')
-        
-        data[promo_code] = promo_data
-        self._save_json(self.promo_file, data)
+
+        # 1. Fetch current state (base + extras)
+        try:
+            base_record = self.db_manager.get_promo_by_code(promo_code) or {}
+        except Exception:
+            base_record = {}
+        extras_record = self.db_manager.get_promo_extras(promo_code) or {}
+
+        # 2. Define field partitions
+        base_editable_fields = {
+            'promo_notes','description','Owner','bill facing name','discount','amount','nseip_drop','dcd_web_cart',
+            'product_type','bogo','fpd_display_promo','on_menu','market_group','store_group','promo_srart_date',
+            'promo_end_date','comm_end_date','promo_duration','delay_time','application_grace_period','device_sales_type',
+            'activation_type','active_line_required','maintain_soc','crffc_maintainactivelinedev','limit_per_ban','soc_grouping',
+            'account_type','sales_application','operator_id','sku_group_id','device_status_group_id','clawback_indicator',
+            'Broken_Trade','Anticipated_volume_take_rates_total','Desired_Execution'
+        }
+        extras_fields = {
+            'jira_ticket','initiative_name','sku_link','tradein_link','promo_grace','trade_in_grace',
+            'segment_name','sub_segment','segment_group_id','segment_level','flow_indicator'
+        }
+
+        base_updates = {}
+        extras_updates = {}
+        for k,v in promo_data.items():
+            if k in base_editable_fields:
+                base_updates[k] = v
+            elif k in extras_fields:
+                extras_updates[k] = v
+
+        # 3. Compute old unified snapshot for diff
+        unified_before = {}
+        for k in base_editable_fields:
+            unified_before[k] = base_record.get(k)
+        for k in extras_fields:
+            unified_before[k] = extras_record.get(k)
+
+        # 4. Apply updates
+        if base_updates:
+            self.db_manager.update_promo_fields(promo_code, base_updates)
+        if extras_updates:
+            self.db_manager.upsert_promo_extras(promo_code, extras_updates, user_name)
+
+        # 5. Fetch after state for diff
+        try:
+            new_base = self.db_manager.get_promo_by_code(promo_code) or {}
+        except Exception:
+            new_base = {}
+        new_extras = self.db_manager.get_promo_extras(promo_code) or {}
+        unified_after = {}
+        for k in base_editable_fields:
+            unified_after[k] = new_base.get(k)
+        for k in extras_fields:
+            unified_after[k] = new_extras.get(k)
+
+        # 6. Diff
+        diff = {}
+        changed_fields = []
+        for k in sorted(set(unified_before.keys()) | set(unified_after.keys())):
+            before_val = unified_before.get(k)
+            after_val = unified_after.get(k)
+            if before_val != after_val:
+                diff[k] = {'old': before_val, 'new': after_val}
+                changed_fields.append(k)
+
+        if changed_fields:
+            human_list = ', '.join(changed_fields[:10]) + ('...' if len(changed_fields) > 10 else '')
+            description = f"Edited fields: {human_list}"
+            self.db_manager.record_version_entry(promo_code, 'Edit', description, user_name, diff)
+
+        return {
+            'success': True,
+            'changed': changed_fields,
+            'diff': diff
+        }
+
+    # --- SQL generation/version events (wrappers for previous VersionHistory integration) ---
+    def record_sql_generation(self, promo_code: str, user_name: str, generation_time: float, sql_length: int):
+        """Record PCR SQL generation (compact metadata only)."""
+        meta = {
+            'context': 'pcr',
+            'sql_generation_time': generation_time,
+            'sql_length': sql_length
+        }
+        self.db_manager.record_version_entry(promo_code, 'PCR Version', 'PCR SQL generated', user_name, meta)
+
+    def record_date_mismatch_sql(self, promo_code: str, user_name: str, generation_time: float, sql_length: int):
+        """Record Date Mismatch SQL generation (compact metadata only)."""
+        meta = {
+            'context': 'date_mismatch',
+            'sql_generation_time': generation_time,
+            'sql_length': sql_length
+        }
+        self.db_manager.record_version_entry(promo_code, 'Date Mismatch SQL', 'Date mismatch SQL generated', user_name, meta)
+
+    def record_uploaded_file(self, promo_code: str, original_filename: str, stored_filename: str,
+                              file_type: Optional[str], size_bytes: int, checksum: Optional[str], user_name: str):
+        """Store metadata for an uploaded promo-related file."""
+        self.db_manager.record_promo_file(
+            code=promo_code,
+            original_filename=original_filename,
+            stored_filename=stored_filename,
+            file_type=file_type,
+            size_bytes=size_bytes,
+            checksum=checksum,
+            uploaded_by=user_name
+        )
     
     def save_spe_promo(self, promo_code: str, promo_data: Dict[str, Any], user_name: str = "System"):
         """Save or update an SPE promotion with change tracking"""
@@ -363,11 +461,89 @@ class PromoDataManager:
         self.add_permanent_version_entry(promo_code, entry, is_spe)
     
     def delete_promo(self, promo_code: str):
-        """Delete a promotion"""
-        data = self._load_json(self.promo_file)
-        if promo_code in data:
-            del data[promo_code]
-            self._save_json(self.promo_file, data)
+        """Delete a promotion (JSON deprecated - no-op for DB)."""
+        # If future: implement soft/hard delete in DB layer.
+        pass
+
+    # --- Creation / Orbit ingestion helpers ---
+    def _generate_next_sequential_code(self) -> str:
+        """Generate next sequential promo code using DB + issued tombstones.
+
+        Pattern: Letter + 3-4 digits. R001 seeded if none. Rolls numeric then letter.
+        """
+        from data.code_tracking import load_issued_codes, record_issued_code
+        issued = load_issued_codes()
+        highest = self.db_manager.get_highest_sequential_promo_code()
+        import re
+        pat = re.compile(r'^([A-Z])(\d{1,4})$')
+        if not highest:
+            letter = 'R'; num = 1
+        else:
+            m = pat.match(highest.upper())
+            if not m:
+                letter = 'R'; num = 1
+            else:
+                letter = m.group(1)
+                num = int(m.group(2)) + 1
+                if num > 9999:
+                    if letter == 'Z':
+                        raise RuntimeError('Exhausted promo code namespace')
+                    letter = chr(ord(letter)+1)
+                    num = 1
+        while True:
+            width = 3 if num <= 999 else 4
+            candidate = f"{letter}{num:0{width}d}"
+            if candidate not in issued:
+                record_issued_code(candidate)
+                return candidate
+            num += 1
+
+    def create_promo_from_orbit(self, orbit_id: str, desired_execution: str = 'RDC', user_name: str = 'System') -> Dict[str, Any]:
+        """Create a new promo by ingesting an Orbit record (by orbit_id) and assigning a fresh promo code.
+
+        Steps:
+          1. Validate orbit_id not already assigned.
+          2. Fetch orbit row (full) via DatabaseManager.
+          3. Generate next code.
+          4. Insert row into PAM source table with essential columns.
+          5. Record version history 'Created'.
+          6. Return converted JSON format payload.
+        """
+        orbit_id_clean = (orbit_id or '').strip()
+        if not orbit_id_clean:
+            return {'success': False, 'error': 'orbit_id required'}
+        # Ensure not already present
+        for rec in self.db_manager.get_all_promotions_unified():
+            if str(rec.get('orbit_id','')) == orbit_id_clean:
+                return {'success': False, 'error': 'Orbit already assigned', 'existing_code': rec.get('code')}
+        orbit_row = self.db_manager.get_full_orbit_record_by_orbit_id(orbit_id_clean)
+        if not orbit_row:
+            return {'success': False, 'error': f'Orbit {orbit_id_clean} not found'}
+        new_code = self._generate_next_sequential_code()
+        # Minimal insertion map (copy key fields; rely on later edits for others)
+        insertion_fields = {
+            'code': new_code,
+            'orbit_id': orbit_id_clean,
+            'description': orbit_row.get('description') or orbit_row.get('bill_facing_name') or f'Orbit {orbit_id_clean}',
+            'Owner': orbit_row.get('Owner') or 'Unassigned',
+            'promo_srart_date': orbit_row.get('promo_srart_date'),  # note source column name consistency
+            'promo_end_date': orbit_row.get('promo_end_date'),
+            'Desired_Execution': desired_execution
+        }
+        # Include optional known columns if present in orbit_row
+        for opt in ['amount','discount','sku_group_id','device_status_group_id','soc_grouping','account_type','sales_application','application_grace_period']:
+            if opt in orbit_row and orbit_row.get(opt) is not None:
+                insertion_fields[opt] = orbit_row.get(opt)
+        ok = self.db_manager.insert_promo_record(insertion_fields)
+        if not ok:
+            return {'success': False, 'error': 'Insert failed'}
+        # Version history entry
+        self.db_manager.record_version_entry(new_code, 'Create', f'Created from Orbit {orbit_id_clean}', user_name, {'orbit_id': orbit_id_clean})
+        # Return unified converted record
+        db_record = self.db_manager.get_promo_by_code(new_code) or {}
+        payload = self.db_manager.convert_db_record_to_json_format(db_record)
+        payload['success'] = True
+        return payload
     
     def delete_spe_promo(self, promo_code: str):
         """Delete an SPE promotion"""
@@ -377,111 +553,90 @@ class PromoDataManager:
             self._save_json(self.spe_file, data)
     
     def get_promo_list(self) -> List[Dict[str, Any]]:
-        """Get a list of all promotions for display in tables"""
-        data = self._load_json(self.promo_file)
-        return [
-            {
-                "code": promo_data.get("code", code),
-                "orbit_id": promo_data.get("orbit_id", ""),
-                "status": "Active" if promo_data.get("promo_end_date", "") > datetime.now().strftime("%Y-%m-%d") else "Expired",
-                "description": promo_data.get("description", ""),
-                "start_date": promo_data.get("promo_start_date", ""),
-                "end_date": promo_data.get("promo_end_date", ""),
-                "owner": promo_data.get("owner", ""),
-                "type": "RDC"
-            }
-            for code, promo_data in data.items()
-        ]
+        """Get a list of all promotions (DB only)."""
+        all_promos = self.get_all_promos()
+        now_str = datetime.now().strftime("%Y-%m-%d")
+        rows: List[Dict[str, Any]] = []
+        for code, promo in all_promos.items():
+            end_date = promo.get('promo_end_date', '') or ''
+            rows.append({
+                'code': code,
+                'orbit_id': promo.get('orbit_id', ''),
+                'status': 'Active' if end_date > now_str else 'Expired',
+                'description': promo.get('description', ''),
+                'start_date': promo.get('promo_start_date', ''),
+                'end_date': end_date,
+                'owner': promo.get('owner', ''),
+                'type': 'RDC'
+            })
+        return rows
     
     def get_spe_promo_list(self) -> List[Dict[str, Any]]:
-        """Get a list of all SPE promotions for display in tables"""
-        data = self._load_json(self.spe_file)
-        return [
-            {
-                "code": promo_data.get("code", code),
-                "orbit_id": promo_data.get("orbit_id", ""),
-                "status": "Active" if promo_data.get("promo_end_date", "") > datetime.now().strftime("%Y-%m-%d") else "Expired",
-                "description": promo_data.get("description", ""),
-                "start_date": promo_data.get("promo_start_date", ""),
-                "end_date": promo_data.get("promo_end_date", ""),
-                "owner": promo_data.get("owner", ""),
-                "type": "SPE"
-            }
-            for code, promo_data in data.items()
-        ]
+        """DB list of all SPE promotions for display."""
+        items: List[Dict[str, Any]] = []
+        now_str = datetime.now().strftime("%Y-%m-%d")
+        try:
+            for r in self.db_manager.get_promos_by_execution_type("SPE"):
+                end_date = r.get('promo_end_date','')
+                items.append({
+                    'code': r.get('code',''),
+                    'orbit_id': r.get('orbit_id',''),
+                    'status': 'Active' if (end_date and str(end_date) > now_str) else 'Expired',
+                    'description': r.get('description',''),
+                    'start_date': r.get('promo_srart_date',''),
+                    'end_date': end_date,
+                    'owner': r.get('Owner',''),
+                    'type': 'SPE'
+                })
+        except Exception:
+            pass
+        return items
     
     def get_rebate_list(self) -> List[Dict[str, Any]]:
-        """Get a list of all rebate promotions for display in tables"""
-        # Check if rebates file exists
-        if not os.path.exists(self.rebates_file):
-            return []
-            
-        data = self._load_json(self.rebates_file)
-        return [
-            {
-                "code": promo_data.get("code", code),
-                "orbit_id": promo_data.get("orbit_id", ""),
-                "status": "Active" if promo_data.get("promo_end_date", "") > datetime.now().strftime("%Y-%m-%d") else "Expired",
-                "description": promo_data.get("description", ""),
-                "start_date": promo_data.get("promo_start_date", ""),
-                "end_date": promo_data.get("promo_end_date", ""),
-                "owner": promo_data.get("owner", ""),
-                "type": "REBATE"
-            }
-            for code, promo_data in data.items()
-        ]
+        """DB list of all rebate promotions for display."""
+        items: List[Dict[str, Any]] = []
+        now_str = datetime.now().strftime("%Y-%m-%d")
+        try:
+            for r in self.db_manager.get_promos_by_execution_type("Rebate"):
+                end_date = r.get('promo_end_date','')
+                items.append({
+                    'code': r.get('code',''),
+                    'orbit_id': r.get('orbit_id',''),
+                    'status': 'Active' if (end_date and str(end_date) > now_str) else 'Expired',
+                    'description': r.get('description',''),
+                    'start_date': r.get('promo_srart_date',''),
+                    'end_date': end_date,
+                    'owner': r.get('Owner',''),
+                    'type': 'REBATE'
+                })
+        except Exception:
+            pass
+        return items
 
     def get_all_rebates(self) -> Dict[str, Any]:
-        """Get all rebates data"""
-        if not os.path.exists(self.rebates_file):
-            return {}
-        
-        # Load rebates data which is in array format
-        rebates_data = self._load_json(self.rebates_file)
-        
-        # Handle case where data might not be a list
-        if not isinstance(rebates_data, list):
-            return {}
-        
-        # Convert array to dict format to match other data structures
-        rebates_dict = {}
-        for i, rebate in enumerate(rebates_data):
-            # Ensure rebate is a dict
-            if not isinstance(rebate, dict):
-                continue
-                
-            # Convert field names to match promotion format
-            rebate_formatted = {
-                'owner': rebate.get('owner', 'Unknown'),  # Default owner if not present
-                'promo_start_date': rebate.get('startDate', ''),
-                'promo_end_date': rebate.get('endDate', ''),
-                'promo_code': rebate.get('promoCode', rebate.get('id', '')),
-                'orbit_id': rebate.get('id', ''),
-                'title': rebate.get('title', ''),
-                'description': rebate.get('description', ''),
-                'type': rebate.get('rebateType', ''),
-                'amount': rebate.get('amount', rebate.get('percent', 0)),
-                'status': rebate.get('status', 'active')
-            }
-            
-            # Use the rebate ID as the key, or fallback to index
-            key = rebate.get('id', f'rebate_{i}')
-            rebates_dict[key] = rebate_formatted
-        
-        return rebates_dict
+        """Get all rebates (DB)."""
+        out: Dict[str, Any] = {}
+        try:
+            for r in self.db_manager.get_promos_by_execution_type("Rebate"):
+                conv = self.db_manager.convert_db_record_to_json_format({str(k): v for k,v in r.items()})
+                c = conv.get('code') or conv.get('promo_code')
+                if c:
+                    out[c] = conv
+        except Exception:
+            pass
+        return out
     
     def get_owners(self) -> List[str]:
-        """Get list of unique owners from both promo types"""
-        promo_data = self._load_json(self.promo_file)
-        spe_data = self._load_json(self.spe_file)
-        
+        """Owners across all execution types from DB."""
         owners = set()
-        for data in [promo_data, spe_data]:
-            for promo in data.values():
-                if promo.get("owner"):
-                    owners.add(promo["owner"])
-        
-        return ["All"] + sorted(list(owners))
+        try:
+            for r in self.db_manager.get_all_promotions_unified():
+                o = r.get('Owner') or r.get('owner')
+                if o:
+                    owners.add(o)
+        except Exception:
+            pass
+        return ["All"] + sorted(owners)
     
     def get_soc_groupings(self) -> list:
         """Return the exact list of SOC grouping codes for the dropdown."""
@@ -713,19 +868,35 @@ class PromoDataManager:
         # Save the file
         try:
             file.save(file_path)
-            
-            # Get file size
             file_size = os.path.getsize(file_path)
-            
-            # Create metadata
+            # Compute checksum
+            import hashlib
+            h = hashlib.md5()
+            with open(file_path, 'rb') as fh:
+                for chunk in iter(lambda: fh.read(8192), b''):
+                    h.update(chunk)
+            checksum = h.hexdigest()
             file_metadata = {
                 "filename": filename,
                 "original_name": original_filename,
                 "upload_date": datetime.now().isoformat(),
                 "file_size": file_size,
-                "file_path": file_path
+                "file_path": file_path,
+                "checksum": checksum
             }
-            
+            # Persist metadata in SQLite
+            try:
+                self.record_uploaded_file(
+                    promo_code=promo_code,
+                    original_filename=original_filename,
+                    stored_filename=filename,
+                    file_type=file_type,
+                    size_bytes=file_size,
+                    checksum=checksum,
+                    user_name="System"
+                )
+            except Exception:
+                pass
             return file_metadata
             
         except Exception as e:
@@ -760,7 +931,22 @@ class PromoDataManager:
         try:
             with open(file_path, 'w', encoding='utf-8') as f:
                 f.write(sql_content)
-            
+            size_bytes = os.path.getsize(file_path)
+            import hashlib
+            h = hashlib.md5(sql_content.encode('utf-8'))
+            checksum = h.hexdigest()
+            try:
+                self.record_uploaded_file(
+                    promo_code=promo_code,
+                    original_filename=filename,
+                    stored_filename=secure_name,
+                    file_type="generated_sql",
+                    size_bytes=size_bytes,
+                    checksum=checksum,
+                    user_name="System"
+                )
+            except Exception:
+                pass
             return file_path
             
         except Exception as e:

@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% block title %}PAM JSON Promotions - Admin{% endblock %}
+{% block header_left %}
+<div class="global-header-promotions">
+  <i class="fas fa-database header-icon"></i>
+  <div class="header-text">
+    <h2>PAM JSON Promotions</h2>
+    <p>Manage JSON-layer promotions (create / ingest / delete)</p>
+  </div>
+</div>
+{% endblock %}
+{% block head %}<link rel="stylesheet" href="/static/css/admin.css">{% endblock %}
+{% block content %}
+<div class="admin-dashboard" style="padding-top:10px;">
+  <div class="filter-bar" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:14px;">
+    <form method="get" style="display:flex;gap:8px;align-items:center;">
+      <input type="text" name="search" value="{{ search_query }}" placeholder="Search code / owner / name" style="padding:6px 10px;min-width:240px;" />
+      <select name="owner" style="padding:6px 10px;">
+        <option value="all" {% if selected_owner=='all' %}selected{% endif %}>All Owners</option>
+        {% for o in owners %}
+        <option value="{{ o }}" {% if selected_owner==o %}selected{% endif %}>{{ o }}</option>
+        {% endfor %}
+      </select>
+      <button class="btn-admin" type="submit"><i class="fas fa-search"></i> Filter</button>
+      <a class="btn-admin secondary" href="?"><i class="fas fa-undo"></i> Reset</a>
+    </form>
+    <div style="margin-left:auto;">
+      <button class="btn-admin danger" id="bulkDeleteBtn" disabled onclick="bulkDelete()"><i class="fas fa-trash"></i> Bulk Delete</button>
+    </div>
+  </div>
+
+  <div class="table-responsive" style="max-height:70vh;overflow:auto;">
+    <table class="admin-table" id="pamPromosTable">
+      <thead>
+        <tr>
+          <th><input type="checkbox" id="selectAll" onclick="toggleAll(this)"></th>
+          <th>Code</th>
+          <th>Bill Facing Name</th>
+          <th>Owner</th>
+          <th>Start</th>
+          <th>End</th>
+          <th style="width:110px;">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in promotions %}
+        <tr data-code="{{ p.code }}">
+          <td><input type="checkbox" class="rowChk" onchange="updateBulkState()"></td>
+          <td>{{ p.code }}</td>
+          <td>{{ p.bill_facing_name or p.description }}</td>
+          <td>{{ p.owner }}</td>
+          <td>{{ p.promo_start_date }}</td>
+          <td>{{ p.promo_end_date }}</td>
+          <td>
+            <button class="btn-admin danger" style="padding:4px 8px;font-size:0.75rem;" onclick="deleteSingle('{{ p.code }}')"><i class="fas fa-trash"></i></button>
+            <a class="btn-admin secondary" style="padding:4px 8px;font-size:0.75rem;" href="/edit_promo/{{ p.code }}"><i class="fas fa-edit"></i></a>
+          </td>
+        </tr>
+        {% endfor %}
+        {% if promotions|length == 0 %}
+        <tr><td colspan="7" style="text-align:center;padding:30px;">No promotions found.</td></tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination -->
+  <div class="pagination" style="margin-top:14px;display:flex;gap:8px;align-items:center;">
+    {% set pg = pagination %}
+    {% if pg.has_prev %}<a class="btn-admin secondary" href="?page={{ pg.prev_num }}&per_page={{ pg.per_page }}&search={{ search_query }}&owner={{ selected_owner }}">Prev</a>{% else %}<span class="btn-admin disabled" style="opacity:0.4;">Prev</span>{% endif %}
+    <span>Page {{ pg.page }} / {{ pg.total_pages or 1 }}</span>
+    {% if pg.has_next %}<a class="btn-admin secondary" href="?page={{ pg.next_num }}&per_page={{ pg.per_page }}&search={{ search_query }}&owner={{ selected_owner }}">Next</a>{% else %}<span class="btn-admin disabled" style="opacity:0.4;">Next</span>{% endif %}
+    <span style="margin-left:10px;">Total: {{ pg.total_items }}</span>
+  </div>
+
+  <div id="statusArea" style="margin-top:12px;font-size:0.9rem;"></div>
+</div>
+
+<script>
+function toggleAll(cb){
+  document.querySelectorAll('.rowChk').forEach(ch=>{ ch.checked = cb.checked; });
+  updateBulkState();
+}
+function selectedCodes(){
+  return Array.from(document.querySelectorAll('#pamPromosTable tbody tr')).filter(r=>r.querySelector('.rowChk').checked).map(r=>r.getAttribute('data-code'));
+}
+function updateBulkState(){
+  const btn = document.getElementById('bulkDeleteBtn');
+  const any = selectedCodes().length>0;
+  btn.disabled = !any;
+}
+async function deleteSingle(code){
+  if(!confirm('Delete promo '+code+'? This cannot be undone.')) return;
+  await performDelete([code]);
+}
+async function bulkDelete(){
+  const codes = selectedCodes();
+  if(codes.length===0) return;
+  if(!confirm('Delete '+codes.length+' promotions? This cannot be undone.')) return;
+  await performDelete(codes);
+}
+async function performDelete(codes){
+  const status = document.getElementById('statusArea');
+  status.textContent = 'Deleting '+codes.length+' promotion(s)...';
+  try{
+     const res = await fetch('/admin/delete-promos', {
+       method:'POST',
+       headers:{'Content-Type':'application/json'},
+       body: JSON.stringify({codes})
+     });
+     const js = await res.json();
+     if(res.ok && js.success){
+        status.innerHTML = '<span style="color:green;">'+js.message+'</span>';
+        // Remove deleted rows from table
+        js.deleted.forEach(c=>{
+          const row = document.querySelector('tr[data-code="'+c+'"]');
+          if(row) row.remove();
+        });
+        updateBulkState();
+        if(document.querySelectorAll('#pamPromosTable tbody tr').length===0){
+           const tbody = document.querySelector('#pamPromosTable tbody');
+           tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:30px;">No promotions remaining on this page.</td></tr>';
+        }
+     } else {
+        status.innerHTML = '<span style="color:#d33;">'+(js.message||'Delete failed')+'</span>';
+     }
+  } catch(e){
+     status.innerHTML = '<span style="color:#d33;">Error: '+e+'</span>';
+  }
+}
+</script>
+{% endblock %}
