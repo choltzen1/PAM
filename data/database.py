@@ -117,6 +117,16 @@ class DatabaseManager:
                     cols = [r[1] for r in cur.fetchall()]
                     if 'user_name' not in cols:
                         conn.execute("ALTER TABLE version_history ADD COLUMN user_name TEXT NULL")
+                    if 'diff_json' not in cols:
+                        conn.execute("ALTER TABLE version_history ADD COLUMN diff_json TEXT NULL")
+                    if 'field_changes' in cols and 'diff_json' in cols:
+                        try:
+                            conn.execute("""
+                                UPDATE version_history SET diff_json = field_changes
+                                WHERE (diff_json IS NULL OR diff_json='') AND field_changes IS NOT NULL
+                            """)
+                        except Exception:
+                            pass
                 except Exception as mig_e:
                     logger.warning(f"Version history migration check failed: {mig_e}")
         except Exception as e:
@@ -912,14 +922,38 @@ class DatabaseManager:
             logger.error(f"Failed upsert extras for {code}: {e}")
 
     def record_version_entry(self, code: str, change_type: str, description: str, user: str, diff: Optional[Dict[str, Any]] = None):
+        payload = (code, datetime.utcnow().isoformat(), change_type, description, user, json.dumps(diff) if diff else None)
         try:
             with sqlite3.connect(self._diag_db_path) as conn:
-                conn.execute(
-                    "INSERT INTO version_history (promo_code, timestamp, change_type, description, user_name, diff_json) VALUES (?,?,?,?,?,?)",
-                    (code, datetime.utcnow().isoformat(), change_type, description, user, json.dumps(diff) if diff else None)
+                try:
+                    conn.execute(
+                        "INSERT INTO version_history (promo_code, timestamp, change_type, description, user_name, diff_json) VALUES (?,?,?,?,?,?)",
+                        payload
+                    )
+                except Exception:
+                    # Legacy fallback schema (changed_by / field_changes ordering)
+                    try:
+                        conn.execute(
+                            "INSERT INTO version_history (promo_code, change_type, changed_by, timestamp, description, field_changes) VALUES (?,?,?,?,?,?)",
+                            (code, change_type, user, payload[1], description, payload[5])
+                        )
+                    except Exception as e2:
+                        logger.error(f"Failed to record version history (legacy + current) for {code}: {e2}")
+        except Exception as outer:
+            logger.error(f"Version history insert outer failure for {code}: {outer}")
+
+    def count_version_events(self, code: str, change_type: str) -> int:
+        """Return count of existing events for promo_code + change_type (SQLite)."""
+        try:
+            with sqlite3.connect(self._diag_db_path) as conn:
+                cur = conn.execute(
+                    "SELECT COUNT(*) FROM version_history WHERE promo_code=? AND change_type=?",
+                    (code, change_type)
                 )
-        except Exception as e:
-            logger.error(f"Failed to record version history for {code}: {e}")
+                row = cur.fetchone()
+                return int(row[0]) if row else 0
+        except Exception:
+            return 0
 
     def record_promo_file(self, code: str, original_filename: str, stored_filename: str, file_type: Optional[str], size_bytes: int, checksum: Optional[str], uploaded_by: str):
         """Persist a file upload record in promo_files."""

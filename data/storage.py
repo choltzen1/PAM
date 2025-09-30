@@ -299,7 +299,8 @@ class PromoDataManager:
         if changed_fields:
             human_list = ', '.join(changed_fields[:10]) + ('...' if len(changed_fields) > 10 else '')
             description = f"Edited fields: {human_list}"
-            self.db_manager.record_version_entry(promo_code, 'Edit', description, user_name, diff)
+            # Use 'Modified' (template expects this label). Preserve old/new diff.
+            self.db_manager.record_version_entry(promo_code, 'Modified', description, user_name, diff)
 
         return {
             'success': True,
@@ -310,21 +311,30 @@ class PromoDataManager:
     # --- SQL generation/version events (wrappers for previous VersionHistory integration) ---
     def record_sql_generation(self, promo_code: str, user_name: str, generation_time: float, sql_length: int):
         """Record PCR SQL generation (compact metadata only)."""
+        # Determine next version number (count existing PCR Version events)
+        current = self.db_manager.count_version_events(promo_code, 'PCR Version')
+        version_number = current + 1
         meta = {
             'context': 'pcr',
             'sql_generation_time': generation_time,
-            'sql_length': sql_length
+            'sql_length': sql_length,
+            'version': version_number
         }
-        self.db_manager.record_version_entry(promo_code, 'PCR Version', 'PCR SQL generated', user_name, meta)
+        description = f'PCR Version #{version_number} generated'
+        self.db_manager.record_version_entry(promo_code, 'PCR Version', description, user_name, meta)
 
     def record_date_mismatch_sql(self, promo_code: str, user_name: str, generation_time: float, sql_length: int):
         """Record Date Mismatch SQL generation (compact metadata only)."""
+        current = self.db_manager.count_version_events(promo_code, 'Date Mismatch SQL')
+        version_number = current + 1
         meta = {
             'context': 'date_mismatch',
             'sql_generation_time': generation_time,
-            'sql_length': sql_length
+            'sql_length': sql_length,
+            'version': version_number
         }
-        self.db_manager.record_version_entry(promo_code, 'Date Mismatch SQL', 'Date mismatch SQL generated', user_name, meta)
+        description = f'Date Mismatch SQL #{version_number} generated'
+        self.db_manager.record_version_entry(promo_code, 'Date Mismatch SQL', description, user_name, meta)
 
     def record_uploaded_file(self, promo_code: str, original_filename: str, stored_filename: str,
                               file_type: Optional[str], size_bytes: int, checksum: Optional[str], user_name: str):

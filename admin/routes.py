@@ -4,6 +4,12 @@ import os, json
 from typing import Optional, TYPE_CHECKING
 import sqlite3
 
+# Optional import of new version history service
+try:
+    from data.version_history_service import version_history_service
+except Exception:  # pragma: no cover
+    version_history_service = None  # type: ignore
+
 if TYPE_CHECKING:
     from data.storage import PromoDataManager
 
@@ -130,7 +136,12 @@ def admin_security_page():
 def version_history_page():
     dm = _ensure_dm()
     try:
-        promotions_with_history = dm.get_all_promotions_with_history()
+        # Prefer dedicated service if available
+        if version_history_service:
+            promotions_with_history = version_history_service.get_all_promotions_with_history(dm.get_all_promos)
+        else:
+            # Fallback: empty list (legacy path previously missing)
+            promotions_with_history = []
         return render_template('version_history.html', promotions=promotions_with_history)
     except Exception as e:
         flash(f'Error loading version history: {e}', 'error')
