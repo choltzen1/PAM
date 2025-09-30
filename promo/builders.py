@@ -88,6 +88,13 @@ def generate_promo_eligibility_sql(promo_data):
         except ValueError:
             return 'NULL'
     
+    # Alias / normalize known misspelled DB column -> expected form
+    if 'promo_start_date' not in promo_data and promo_data.get('promo_srart_date'):
+        promo_data['promo_start_date'] = promo_data.get('promo_srart_date')
+    # Collect critical missing fields (diagnostics only)
+    critical_fields = ['code','promo_start_date','promo_end_date','bill_facing_name']
+    missing_crit = [f for f in critical_fields if not promo_data.get(f)]
+
     # Map promo data to SQL fields
     sql_values = {
         'promo_code': promo_data.get('code') if promo_data.get('code') else 'NULL',
@@ -510,6 +517,17 @@ BEGIN
 {segment_groups_sql}
 
 END;{efpe_update_sql}"""
+
+    # Prepend diagnostics if any
+    diag_lines = []
+    if missing_crit:
+        diag_lines.append(f"-- WARNING: Missing critical fields defaulted to NULL: {', '.join(missing_crit)}")
+    if not promo_data.get('operator_id'):
+        diag_lines.append("-- NOTICE: operator_id missing; OPERATOR_ID column will be NULL.")
+    if not any(promo_data.get(k) for k in ['soc_grouping','account_type','sales_application']):
+        diag_lines.append("-- INFO: No segmentation/grouping (SOC/Account Type/Sales Application) provided; eligibility may be broad.")
+    if diag_lines:
+        template_sql = '\n'.join(diag_lines) + '\n' + template_sql
     
     # End timing and log performance
     function_end_time = time.time()

@@ -933,6 +933,44 @@ class DatabaseManager:
         except Exception as e:
             logger.error(f"Failed to record promo file for {code}: {e}")
 
+    def get_promo_files(self, code: str) -> List[Dict[str, Any]]:
+        """Fetch uploaded file metadata records for a promo from SQLite.
+
+        Returns list of rows with keys: original_filename, stored_filename, file_type, size_bytes, checksum, uploaded_at, uploaded_by
+        """
+        out: List[Dict[str, Any]] = []
+        try:
+            with sqlite3.connect(self._diag_db_path) as conn:
+                cur = conn.execute(
+                    "SELECT original_filename, stored_filename, file_type, size_bytes, checksum, uploaded_at, uploaded_by FROM promo_files WHERE promo_code=? ORDER BY uploaded_at DESC",
+                    (code,)
+                )
+                for row in cur.fetchall():
+                    try:
+                        original_filename, stored_filename, file_type, size_bytes, checksum, uploaded_at, uploaded_by = row
+                        out.append({
+                            'original_filename': original_filename,
+                            'stored_filename': stored_filename,
+                            'file_type': file_type,
+                            'size_bytes': size_bytes,
+                            'checksum': checksum,
+                            'uploaded_at': uploaded_at,
+                            'uploaded_by': uploaded_by
+                        })
+                    except Exception:
+                        continue
+        except Exception as e:
+            logger.error(f"Failed to fetch promo files for {code}: {e}")
+        return out
+
+    def delete_promo_file(self, code: str, file_type: str):
+        """Delete promo file metadata rows for a given promo + type."""
+        try:
+            with sqlite3.connect(self._diag_db_path) as conn:
+                conn.execute("DELETE FROM promo_files WHERE promo_code=? AND file_type=?", (code, file_type))
+        except Exception as e:
+            logger.error(f"Failed to delete promo file metadata for {code}/{file_type}: {e}")
+
     def insert_promo_record(self, field_map: Dict[str, Any]) -> bool:
         """Insert a brand new promotion row into the PAM source table.
 

@@ -768,6 +768,14 @@ def edit_promo(promo_code):
                 promo_data['sql_generated_at'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                 promo_data['sql_generation_time'] = f"{generation_time:.4f}"
                 promo_data['sql_length'] = len(sql_content)
+                # Persist a physical .sql file for durability across reloads
+                try:
+                    from data.storage import PromoDataManager as _PDM
+                    # Use existing manager's save_sql_file if present
+                    dm.save_sql_file(promo_code, sql_content, f"{promo_code}_promo_eligibility_rules.sql")
+                except Exception as save_file_err:
+                    print(f"Failed to save SQL file for {promo_code}: {save_file_err}")
+                # Save promo (does not store generated_sql itself in DB, but keeps audit/version info)
                 dm.save_promo(promo_code, promo_data, user_name="Cade Holtzen")
                 
                 # Flash message with performance info

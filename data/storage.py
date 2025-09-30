@@ -66,7 +66,64 @@ class PromoDataManager:
         try:
             db_record = self.db_manager.get_promo_by_code(promo_code)
             if db_record:
-                return self.db_manager.convert_db_record_to_json_format(db_record)
+                converted = self.db_manager.convert_db_record_to_json_format(db_record)
+                # Attach uploaded file metadata (Excel + generated SQL) if present
+                try:
+                    file_rows = self.db_manager.get_promo_files(promo_code)
+                    if file_rows:
+                        uploaded_files: Dict[str, Any] = {}
+                        for r in file_rows:
+                            ftype = r.get('file_type') or ''
+                            # Map specific known types for template consumption
+                            if ftype in ('sku_excel','tradein_excel'):
+                                inferred_name = 'sku_list.xlsx' if ftype=='sku_excel' else 'tradein_list.xlsx'
+                                fpath = os.path.join(self.promo_uploads_dir, promo_code, inferred_name)
+                                # Skip stale metadata (file deleted) and clean DB
+                                if not os.path.exists(fpath):
+                                    try:
+                                        self.db_manager.delete_promo_file(promo_code, ftype)
+                                    except Exception:
+                                        pass
+                                    continue
+                                uploaded_files[ftype] = {
+                                    'original_name': r.get('original_filename'),
+                                    'uploaded_at': r.get('uploaded_at'),
+                                    'upload_date': r.get('uploaded_at'),
+                                    'file_size': r.get('size_bytes'),
+                                    'file_path': fpath,
+                                    'checksum': r.get('checksum')
+                                }
+                            elif ftype == 'generated_sql':
+                                # Provide a lightweight flag for UI (actual SQL content already in promo_data if generated)
+                                uploaded_files[ftype] = {
+                                    'original_name': r.get('original_filename') or f"{promo_code}_promo_eligibility_rules.sql",
+                                    'uploaded_at': r.get('uploaded_at'),
+                                    'upload_date': r.get('uploaded_at'),
+                                    'file_size': r.get('size_bytes'),
+                                    'file_path': os.path.join(self.promo_uploads_dir, promo_code, r.get('stored_filename') or f"{promo_code}_promo_eligibility_rules.sql"),
+                                    'checksum': r.get('checksum')
+                                }
+                        if uploaded_files:
+                            converted['uploaded_files'] = uploaded_files
+                    # If generated SQL file exists, load its content (cap length for performance)
+                    try:
+                        sql_file_path = os.path.join(self.promo_uploads_dir, promo_code, f"{promo_code}_promo_eligibility_rules.sql")
+                        if os.path.exists(sql_file_path):
+                            with open(sql_file_path, 'r', encoding='utf-8', errors='replace') as sf:
+                                sql_content = sf.read()
+                            converted['generated_sql'] = sql_content
+                            converted['sql_length'] = len(sql_content)
+                            # If file metadata recorded, use its uploaded_at as generated timestamp
+                            gen_meta = None
+                            for _k,_v in converted.get('uploaded_files', {}).items():
+                                if _k == 'generated_sql':
+                                    gen_meta = _v; break
+                            converted['sql_generated_at'] = (gen_meta or {}).get('uploaded_at')
+                    except Exception as read_sql_err:
+                        print(f"Read generated SQL failed for {promo_code}: {read_sql_err}")
+                except Exception as attach_err:
+                    print(f"Attach uploaded_files failed for {promo_code}: {attach_err}")
+                return converted
             return {}
         except Exception as e:
             print(f"Database lookup failed for {promo_code}: {e}")
@@ -984,14 +1041,12 @@ class PromoDataManager:
                 file_path = file_info['file_path']
                 if os.path.exists(file_path):
                     os.remove(file_path)
-                
-                # Remove from metadata
-                del uploaded_files[file_type]
-                promo_data['uploaded_files'] = uploaded_files
-                
-                # Save updated promo data
-                self.save_promo(promo_code, promo_data)
-                
+                # Remove metadata row from SQLite
+                try:
+                    self.db_manager.delete_promo_file(promo_code, file_type)
+                except Exception:
+                    pass
+                # No need to call save_promo; uploaded_files rebuilt dynamically
             return True
         except Exception:
             return False
