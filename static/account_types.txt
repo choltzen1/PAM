@@ -24,3 +24,11 @@ AT5 – Individual, Business, Sole Proprietorship (Excludes Special)|Individual:
 AT6 – Individual, Special (Excludes Sole Proprietorship)|Individual: Association (I/A), GSA (I/F), Government (I/G), MCSA (I/M), Regular (I/R); Special: Non TMO Employee (S/6), Employee (S/Y)
 AT7 – Business, Government (Excludes Sole Proprietorship)|Business: Corporate (B/C), Retail (B/L), MCSA (B/M), National (B/N), MCSAGE (B/O), Non Profit (B/P); Government: GSA (G/F), Regular (G/R)
 GST - S/T - AT/ST group for Test Phones|Test Phones Account Type
+ALL - Individual, Business, Government, Sole Proprietorship, Special 
+AT1 - Individual, Business, Special (Excluding Government)
+AT2 - Business and Sole Proprietorship
+AT3 - Business, Government, Sole Proprietorship
+AT4 - Individual only (excludes Sole Proprietorship)
+AT5 - Individual, Business, Sole Proprietorship (excludes Special)
+AT6 - Individual, Special (excludes Sole Proprietorship)
+AT7 - Business, Government (excludes Sole Proprietorship)

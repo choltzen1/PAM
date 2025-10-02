@@ -102,6 +102,7 @@ class VersionHistoryService:
                 # Inject version numbers for PCR events missing version metadata
                 self._inject_versions(rows)
                 self._inject_version_history_field(rows)
+                self._prune_blank_updates(rows)
         except Exception:
             pass
         return rows
@@ -162,6 +163,8 @@ class VersionHistoryService:
             # Enrich versions for PCR events
             self._inject_versions(changes)
             self._inject_version_history_field(changes)
+            self._collapse_same_timestamp(changes)
+            self._prune_blank_updates(changes)
             base = all_promos.get(code, {})
             result.append({
                 'promo_code': code,
@@ -219,6 +222,91 @@ class VersionHistoryService:
             if 'version_history' not in fc:
                 summary = f"{ch.get('timestamp','')} - {ch.get('changed_by','Unknown')} - {ch.get('description','')}".strip()
                 fc['version_history'] = {'old': None, 'new': [summary]}
+
+    def _collapse_same_timestamp(self, changes: List[Dict[str, Any]]):
+        """Collapse multiple Created/Modified entries sharing the exact same timestamp.
+
+        PCR Version / Date Mismatch SQL events are left untouched (even if same timestamp)
+        to preserve discrete version semantics.
+        """
+        if not changes:
+            return
+        precedence = {'Created': 0, 'Create': 0, 'Modified': 1, 'Edit': 1}
+        grouped = {}
+        ordered: List[Dict[str, Any]] = []
+        for ch in changes:
+            ts = ch.get('timestamp')
+            ctype = ch.get('change_type')
+            if ctype not in ('Created','Create','Modified','Edit') or not ts:
+                # passthrough (no collapse key)
+                ordered.append(ch)
+                continue
+            key = ts  # collapse by second-level timestamp
+            existing = grouped.get(key)
+            if not existing:
+                grouped[key] = ch
+                ordered.append(ch)
+            else:
+                # Merge into existing representative
+                rep = existing
+                # Prefer higher precedence (Created beats Modified)
+                if precedence.get(ctype, 99) < precedence.get(rep.get('change_type'), 99):
+                    rep['change_type'] = 'Created' if ctype in ('Created','Create') else 'Modified'
+                    rep['description'] = ch.get('description') or rep.get('description')
+                # Merge field diffs
+                rep_fc = rep.get('field_changes') or {}
+                ch_fc = ch.get('field_changes') or {}
+                # Merge version_history new list
+                if 'version_history' in rep_fc and 'version_history' in ch_fc:
+                    try:
+                        rep_list = rep_fc['version_history'].get('new') or []
+                        add_list = ch_fc['version_history'].get('new') or []
+                        rep_fc['version_history']['new'] = list(dict.fromkeys(rep_list + add_list))
+                    except Exception:
+                        pass
+                elif 'version_history' in ch_fc and 'version_history' not in rep_fc:
+                    rep_fc['version_history'] = ch_fc['version_history']
+                for f, diff in ch_fc.items():
+                    if f == 'version_history':
+                        continue
+                    if f not in rep_fc:
+                        rep_fc[f] = diff
+                rep['field_changes'] = rep_fc
+        # Replace list with collapsed ordering
+        changes.clear()
+        changes.extend(ordered)
+
+    def _prune_blank_updates(self, changes: List[Dict[str, Any]]):
+        """Remove Modified events that have no meaningful field-level diffs.
+
+        A 'blank' update is one where field_changes is empty or only contains
+        non-user facing internal keys (version_history + ignored set).
+        """
+        if not changes:
+            return
+        ignored = {
+            'version_history','updated_at','created_at','last_sync','generated_sql',
+            'full_sql','sql_text','pcr_sql','sql_preview','sql_payload','spe_generated_sql'
+        }
+        pruned: List[Dict[str, Any]] = []
+        for ch in changes:
+            ctype = ch.get('change_type')
+            if ctype not in ('Modified','Edit'):
+                pruned.append(ch)
+                continue
+            fc = ch.get('field_changes') or {}
+            # Determine if any renderable diff remains
+            has_renderable = False
+            for f, diff in fc.items():
+                if f in ignored:
+                    continue
+                if isinstance(diff, dict):
+                    has_renderable = True
+                    break
+            if has_renderable:
+                pruned.append(ch)
+        changes.clear()
+        changes.extend(pruned)
 
 
 # Singleton instance for simple import usage

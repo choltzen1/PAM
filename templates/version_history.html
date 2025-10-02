@@ -106,21 +106,70 @@
                 <h4><i class="fas fa-history"></i> Change History for {{ promo.promo_code }}</h4>
                 <div class="changes-timeline">
                   {% for change in promo.changes %}
-                  <div class="change-item">
-                    <div class="change-icon">
-                          <i class="fas fa-{{ 'plus' if change.change_type == 'Created' else 'edit' if change.change_type == 'Modified' else 'file-upload' if change.change_type == 'File Upload' else 'code' if change.change_type in ['SQL Generated','PCR Version','Date Mismatch SQL'] else 'trash' }}"></i>
+                  {# Derive action_label again for class usage (keep in sync with existing logic) #}
+                  {% set vh = (change.field_changes.version_history if change.field_changes is mapping and change.field_changes.version_history is defined else None) %}
+                  {% set base_created = (change.change_type in ['Created','Create']) %}
+                  {% set is_modified = (change.change_type in ['Modified','Edit']) %}
+                  {% set has_dcd = false %}
+                  {% set has_jira = false %}
+                  {% if change.field_changes %}
+                    {% for fk, fv in change.field_changes.items() %}
+                      {% if fk.startswith('dcd_') %}{% set has_dcd = true %}{% endif %}
+                      {% if fk == 'jira_ticket' %}{% set has_jira = true %}{% endif %}
+                    {% endfor %}
+                  {% endif %}
+                  {% if base_created %}
+                    {% if has_dcd %}
+                      {% set action_label = 'Created DCD Jira Ticket' %}
+                    {% elif has_jira %}
+                      {% set action_label = 'Created Jira Ticket' %}
+                    {% else %}
+                      {% set action_label = 'Created Promo' %}
+                    {% endif %}
+                  {% elif is_modified %}
+                    {% set action_label = 'Updated' %}
+                  {% else %}
+                    {% set action_label = change.change_type %}
+                  {% endif %}
+                  {% set icon_map = {
+                    'Created Promo':'plus',
+                    'Created Jira Ticket':'ticket',
+                    'Created DCD Jira Ticket':'ticket',
+                    'Updated':'pen',
+                    'File Upload':'file-upload',
+                    'SQL Generated':'code',
+                    'PCR Version':'flask',
+                    'Date Mismatch SQL':'exclamation-triangle',
+                    'Deleted':'trash'
+                  } %}
+                  {% set css_key = action_label.lower().replace(' ', '-').replace('dcd-', 'dcd-') %}
+                  <div class="change-item {{ css_key }}">
+                    <div class="change-icon {{ css_key }}">
+                      <i class="fas fa-{{ icon_map.get(action_label, 'info-circle') }}"></i>
                     </div>
                     <div class="change-content">
+                      {% set vh = (change.field_changes.version_history if change.field_changes is mapping and change.field_changes.version_history is defined else None) %}
+                      {% set vh_summary = (vh.new[0] if vh and vh.new is defined and vh.new) %}
+                      {% if vh_summary %}
+                        {% set vh_parts = vh_summary.split(' - ', 2) %}
+                        {% set header_ts = vh_parts[0] if vh_parts|length > 0 else change.timestamp %}
+                        {% set header_user = vh_parts[1] if vh_parts|length > 1 else change.changed_by %}
+                        {% set header_desc = vh_parts[2] if vh_parts|length > 2 else change.description %}
+                      {% else %}
+                        {% set header_ts = change.timestamp %}
+                        {% set header_user = change.changed_by %}
+                        {% set header_desc = change.description %}
+                      {% endif %}
                       <div class="change-header">
-                        <span class="change-type-badge change-{{ change.change_type.lower().replace(' ', '-') }}">
-                          {{ change.change_type }}
+                        <span class="change-type-badge change-{{ action_label.lower().replace(' ', '-') }}">
+                          {{ action_label }}
                         </span>
-                        <span class="change-timestamp">{{ change.timestamp }}</span>
-                        <span class="change-user">by {{ change.changed_by }}</span>
+                        <span class="change-timestamp">{{ header_ts }}</span>
+                        <span class="change-user">by {{ header_user or 'Unknown' }}</span>
                       </div>
                       <div class="change-description">
-                        {% if change.change_type != 'Modified' %}
-                          {{ change.description }}
+                        {% if change.change_type in ['PCR Version','Date Mismatch SQL'] %}
+                          {{ header_desc }}
                         {% endif %}
                         {% if change.change_type in ['PCR Version','Date Mismatch SQL'] and change.field_changes %}
                           <ul class="pcr-meta">
@@ -130,20 +179,22 @@
                             {% if change.field_changes.sql_length is defined %}<li><strong>Length:</strong> {{ change.field_changes.sql_length }}</li>{% endif %}
                           </ul>
                         {% endif %}
-                        {% if change.change_type == 'Modified' and change.field_changes %}
+                        {% if change.field_changes %}
+                          {% set rendered_any = false %}
                           <ul class="field-changes">
-                                {% for field, details in change.field_changes.items() %}
-                                  {% if field not in ['updated_at','created_at','last_sync','generated_sql','full_sql','sql_text','pcr_sql','sql_preview','sql_payload','spe_generated_sql'] %}
-                                    {% if details is mapping %}
-                                      {% set old_val = details.old if (details.old is defined) else (details.before if (details.before is defined) else none) %}
-                                      {% set new_val = details.new if (details.new is defined) else (details.after if (details.after is defined) else none) %}
-                                      <li>
-                                        <strong>{{ field }}:</strong>
-                                        {{ old_val if old_val is not none else 'NULL' }} → {{ new_val if new_val is not none else 'NULL' }}
-                                      </li>
-                                    {% endif %}
-                                  {% endif %}
-                                {% endfor %}
+                            {% for field, details in change.field_changes.items() %}
+                              {% if field not in ['version_history','updated_at','created_at','last_sync','generated_sql','full_sql','sql_text','pcr_sql','sql_preview','sql_payload','spe_generated_sql'] %}
+                                {% if details is mapping %}
+                                  {% set old_val = details.old if (details.old is defined) else (details.before if (details.before is defined) else none) %}
+                                  {% set new_val = details.new if (details.new is defined) else (details.after if (details.after is defined) else none) %}
+                                  <li>
+                                    <strong>{{ field }}:</strong>
+                                    {{ old_val if old_val is not none else 'NULL' }} → {{ new_val if new_val is not none else 'NULL' }}
+                                  </li>
+                                  {% set rendered_any = true %}
+                                {% endif %}
+                              {% endif %}
+                            {% endfor %}
                           </ul>
                         {% endif %}
                       </div>

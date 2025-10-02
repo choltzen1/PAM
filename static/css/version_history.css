@@ -313,14 +313,16 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   border-left: 4px solid #dee2e6;
 }
-
-.change-item:first-child {
-  border-left-color: #28a745; /* Created - green */
-}
-
-.change-item:not(:first-child) {
-  border-left-color: #007bff; /* Modified - blue */
-}
+/* Specific border accent colors (no longer rely on first-child ordering) */
+.change-item.created-promo { border-left-color: #28a745; }
+.change-item.created-jira-ticket { border-left-color: #17a2b8; }
+.change-item.created-dcd-jira-ticket { border-left-color: #E20074; }
+.change-item.updated { border-left-color: #007bff; }
+.change-item.file-upload { border-left-color: #ffc107; }
+.change-item.sql-generated { border-left-color: #6c757d; }
+.change-item.pcr-version { border-left-color: #6f42c1; }
+.change-item.date-mismatch-sql { border-left-color: #dc3545; }
+.change-item.deleted { border-left-color: #dc3545; }
 
 .change-icon {
   width: 40px;
@@ -333,26 +335,19 @@
   background: #e9ecef;
   color: #6c757d;
 }
+/* Icon color backgrounds per event type */
+.change-icon.created-promo { background: #d4edda; color: #1e7e34; }
+.change-icon.created-jira-ticket { background: #d1ecf1; color: #0c5460; }
+.change-icon.created-dcd-jira-ticket { background: #fde3f1; color: #E20074; }
+.change-icon.updated { background: #cce5ff; color: #004085; }
+.change-icon.file-upload { background: #fff3cd; color: #856404; }
+.change-icon.sql-generated { background: #e2e3e5; color: #383d41; }
+.change-icon.pcr-version { background: #f5e6ff; color: #6f42c1; }
+.change-icon.date-mismatch-sql { background: #fde2e1; color: #bd2130; }
+.change-icon.deleted { background: #f8d7da; color: #721c24; }
 
-.change-item:first-child .change-icon {
-  background: #d4edda;
-  color: #28a745;
-}
-
-.change-item:not(:first-child) .change-icon {
-  background: #cce5ff;
-  color: #007bff;
-}
-
-.change-item[class*="file-upload"] .change-icon {
-  background: #fff3cd;
-  color: #856404;
-}
-
-.change-item[class*="sql-generated"] .change-icon {
-  background: #e2e3e5;
-  color: #383d41;
-}
+/* Fallback if class not matched */
+.change-icon.default-icon { background: #e9ecef; color: #6c757d; }
 
 .change-content {
   flex: 1;
@@ -382,10 +377,18 @@
   color: #155724;
 }
 
+/* New granular creation badges */
+.change-created-promo { background: #d4edda; color: #155724; }
+.change-created-jira-ticket { background: #d1ecf1; color: #0c5460; }
+.change-created-dcd-jira-ticket { background: #fde3f1; color: #A30055; }
+
 .change-modified {
   background: #cce5ff;
   color: #004085;
 }
+
+/* Updated synonym of Modified */
+.change-updated { background: #cce5ff; color: #004085; }
 
 .change-deleted {
   background: #f8d7da;
@@ -401,6 +404,12 @@
   background: #e2e3e5;
   color: #383d41;
 }
+
+/* PCR / Date mismatch specific */
+.change-pcr-version { background: #f5e6ff; color: #5a189a; }
+.change-date-mismatch-sql { background: #fde2e1; color: #bd2130; }
+
+.no-field-changes { font-size: 0.75rem; font-style: italic; color: #6c757d; margin: 0.25rem 0 0 0.25rem; }
 
 .change-timestamp {
   font-family: 'Courier New', monospace;
