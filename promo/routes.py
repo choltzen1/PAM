@@ -107,19 +107,13 @@ def date_mismatch_page():
         return render_template('date_mismatch.html', promos=[], owners=[], user_name='Cade Holtzen')
 
 @promo_bp.route('/update-pam-date/<promo_code>', methods=['POST'], endpoint='update_pam_date')
+@promo_bp.route('/update_pam_date/<promo_code>', methods=['POST'])  # backward-compatible alias (old JS used underscore)
 def update_pam_date_bp(promo_code):
     dm = _ensure_data_manager()
     try:
-        # Fetch current DB record
-        record = dm.db_manager.get_promo_by_code(promo_code) if hasattr(dm, 'db_manager') else None  # type: ignore[attr-defined]
-        if not record:
-            return jsonify({'success': False,'message': f'Promotion {promo_code} not found in PAM database'}), 404
-        old_end_date = record.get('promo_end_date','N/A')
-        orbit_end_date = old_end_date  # In DB-only mode we treat provided end date as authoritative
-        # Client should send desired new end date in request JSON (MM/DD/YYYY or ISO). For now keep existing.
-        # If a future payload supplies new date, we can parse and apply.
-        # No change performed now; endpoint retained for compatibility.
-        return jsonify({'success': True,'message': f'DB-only mode: end date retained ({old_end_date}).','old_date': old_end_date,'new_date': orbit_end_date})
+        res = dm.sync_promo_end_date_from_orbit(promo_code, user_name='System')
+        status = 200 if res.get('success') else 400
+        return jsonify(res), status
     except Exception as e:
         return jsonify({'success': False,'message': f'Error updating PAM date: {str(e)}'}), 500
 
@@ -255,6 +249,7 @@ def generate_sql_submit_bp():
         return redirect(url_for('promo.date_mismatch_page'))
 
 @promo_bp.route('/generate-batch-sql', methods=['POST'], endpoint='generate_batch_sql')
+@promo_bp.route('/generate_batch_sql', methods=['POST'])  # backward-compatible alias
 def generate_batch_sql_bp():
     try:
         data = request.get_json()
@@ -278,6 +273,19 @@ def generate_batch_sql_bp():
                 successful_promos.append(code)
         if not sql_statements:
             return jsonify({'success': False,'error':'No valid SQL statements could be generated','failed_promos': failed_promos}), 400
+        # Record version history events for successful promos (one per promo)
+        try:
+            dm = _ensure_data_manager()
+            for code in successful_promos:
+                if hasattr(dm, 'record_date_mismatch_sql'):
+                    # Use individual statement length for each promo for better granularity
+                    try:
+                        stmt = next((s for s in sql_statements if f"promo_code = '{code}'" in s), '')
+                        dm.record_date_mismatch_sql(code, 'System', generation_time=0.0, sql_length=len(stmt))
+                    except Exception:
+                        pass
+        except Exception:
+            pass
         from datetime import datetime
         today = datetime.now().strftime('%Y-%m-%d')
         filename = f"End_date_updates_{today}.sql"

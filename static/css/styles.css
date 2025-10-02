@@ -176,3 +176,20 @@ html, body {
   max-width: 100%;
   padding: 0 0.75rem;
 }
+
+/* Persistent caret color across all interactive text elements */
+input, textarea, select, button, body {
+  caret-color: #111 !important;
+}
+
+/* Stronger specificity to ensure override on Bootstrap or page-level form-control styles */
+body input:not([type=checkbox]):not([type=radio]),
+body textarea,
+body select,
+body .form-control {
+  caret-color: #000 !important; /* enforce near-black */
+  color: #111 !important;       /* ensure text dark so caret contrast shows */
+}
+
+/* Absolute fallback: apply to all elements that can show a caret */
+* { caret-color: #000 !important; }

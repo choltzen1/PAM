@@ -616,6 +616,51 @@ class DatabaseManager:
             return _fetch(self.source_table)
         return None
 
+    def get_orbit_dates_map(self, orbit_ids: List[str]) -> Dict[str, Dict[str, Any]]:
+        """Return mapping of orbit_id -> { 'orbit_start_date': ..., 'orbit_end_date': ... }
+
+        Performs a single set-based query against the orbit source table. Falls back
+        to the primary source table if the orbit table is empty/unavailable.
+        """
+        out: Dict[str, Dict[str, Any]] = {}
+        if not orbit_ids:
+            return out
+        # Deduplicate & chunk to avoid parameter explosion
+        unique_ids = list({oid for oid in orbit_ids if oid})
+        CHUNK = 200
+        tables_to_try = [self.orbit_source_table]
+        if self.orbit_source_table != self.source_table:
+            tables_to_try.append(self.source_table)
+        for table in tables_to_try:
+            remaining = [oid for oid in unique_ids if oid not in out]
+            if not remaining:
+                break
+            for i in range(0, len(remaining), CHUNK):
+                chunk = remaining[i:i+CHUNK]
+                # Build parameter list safely
+                param_names = [f"p{j}" for j in range(len(chunk))]
+                in_clause = ",".join(f":{n}" for n in param_names)
+                sql = f"""
+                    SELECT orbit_id, promo_srart_date AS orbit_start_date, promo_end_date AS orbit_end_date
+                    FROM {table}
+                    WHERE orbit_id IN ({in_clause})
+                """
+                params = {n: v for n,v in zip(param_names, chunk)}
+                try:
+                    df = self.get_dataframe(sql, params)
+                    if not df.empty:
+                        for rec in df.to_dict('records'):
+                            oid = str(rec.get('orbit_id') or '')
+                            if oid and oid not in out:
+                                out[oid] = {
+                                    'orbit_start_date': rec.get('orbit_start_date',''),
+                                    'orbit_end_date': rec.get('orbit_end_date','')
+                                }
+                except Exception as e:
+                    logger.warning(f"Orbit batch date fetch failed on {table}: {e}")
+                    break  # try next table
+        return out
+
     def get_full_orbit_record_by_orbit_id(self, orbit_id: str) -> Optional[Dict[str, Any]]:
         """Return full orbit record (all relevant columns) with source fallback."""
         base = """

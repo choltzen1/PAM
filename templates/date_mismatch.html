@@ -350,13 +350,13 @@ function processBatchUpdate(promoCodes, index, results, originalButtonText) {
       'Content-Type': 'application/json',
     }
   })
-  .then(response => response.json())
+  .then(resp => resp.text().then(t => { try { return JSON.parse(t); } catch(e){ throw new Error(`Non-JSON response: ${t.substring(0,120)}`);} }))
   .then(data => {
     results.push({
       promoCode: promoCode,
       success: data.success,
-  message: data.message,
-  newDate: data.new_date || data.newDate
+      message: data.message,
+      newDate: data.new_date || data.newDate
     });
     
     // Process next promotion
@@ -518,30 +518,18 @@ function syncToPam(promoCode, button) {
             'Content-Type': 'application/json',
         }
     })
-    .then(response => response.json())
+    .then(resp => resp.text().then(t => { try { return JSON.parse(t);} catch(e){ throw new Error(`Non-JSON response: ${t.substring(0,160)}`);} }))
     .then(data => {
         if (data.success) {
-            // Show success message
-            showMessage(data.message, 'success');
-            
-            // Update the PAM End Date in the table (6th column)
-            const row = button.closest('tr');
-            const pamDateCell = row.querySelector('td:nth-child(6)'); // PAM End Date column
-            if (pamDateCell) {
-                pamDateCell.textContent = data.new_date;
-            }
-            
-            // Update the mismatch type to show it's now synced (7th column)
-            const mismatchTypeCell = row.querySelector('td:nth-child(7)'); // Mismatch Type column
-            if (mismatchTypeCell) {
-                mismatchTypeCell.innerHTML = '<span class="status-match">Synced</span>';
-            }
-            
-            // Hide the button since dates now match
-            button.style.display = 'none';
-            
+          showMessage(data.message, 'success');
+          const row = button.closest('tr');
+          const pamDateCell = row.querySelector('.pam-end-date');
+          if (pamDateCell && data.new_date) pamDateCell.textContent = data.new_date;
+          const mismatchTypeCell = row.querySelector('.mismatch-type');
+          if (mismatchTypeCell) mismatchTypeCell.innerHTML = '<span class="badge badge-success">Synced</span>';
+          button.style.display = 'none';
         } else {
-            showMessage(data.message, 'error');
+          showMessage(data.message, 'error');
         }
     })
     .catch(error => {

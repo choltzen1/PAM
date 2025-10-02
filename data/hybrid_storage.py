@@ -394,76 +394,71 @@ class HybridPromoDataManager:
         return owners
     
     def get_date_mismatched_promos(self) -> Dict[str, Any]:
-        """Get promotions with date mismatches between ORBIT (database) and PAM (JSON) end dates"""
-        all_promo_entries = []
-        owners = set()  # Track unique owners
-        
-        # Get all promotions from database (ORBIT data)
-        db_records = self.db_manager.get_all_promos()
-        orbit_data = {}
-        for record in db_records:
-            code = str(record.get('code', ''))
-            if code:
-                orbit_data[code] = {
-                    'orbit_end_date': record.get('promo_end_date', ''),
-                    'orbit_start_date': record.get('promo_start_date', ''),
-                    'orbit_id': record.get('orbit_id', ''),
-                    'bill_facing_name': record.get('bill_facing_name', ''),
-                    'owner': record.get('owner', '')
-                }
-        
-        # Get all promotions from JSON file (PAM data)
-        pam_data = {}
+        """Get promotions with date mismatches between ORBIT (authoritative DB) and PAM (local JSON/db overlay).
+
+        ORBIT values come from the primary SQL Server tables via DatabaseManager.
+        PAM values come from JSON (legacy edits) if present, otherwise mirror ORBIT.
+        """
+        owners: set[str] = set()
+        entries: list[Dict[str, Any]] = []
+
+        # 1. Load ORBIT (DB) promotions (RDC execution type assumed authoritative set)
         try:
-            promo_file = os.path.join(self.data_dir, "promotions.json")
-            with open(promo_file, 'r') as f:
-                pam_data = json.load(f)
-        except (FileNotFoundError, json.JSONDecodeError):
-            pam_data = {}
-        
-        # Compare all promotions that exist in either ORBIT or PAM
-        all_codes = set(orbit_data.keys()) | set(pam_data.keys())
-        
-        for promo_code in all_codes:
-            # Get ORBIT (database) dates
-            orbit_info = orbit_data.get(promo_code, {})
-            orbit_start = orbit_info.get('orbit_start_date', '')
-            orbit_end = orbit_info.get('orbit_end_date', '')
-            orbit_id = orbit_info.get('orbit_id', '')
-            
-            # Get PAM (JSON) dates
-            pam_info = pam_data.get(promo_code, {})
-            pam_start = pam_info.get('promo_start_date', '')
-            pam_end = pam_info.get('promo_end_date', '')
-            
-            # Use ORBIT data for metadata if available, otherwise PAM data
-            bill_facing_name = orbit_info.get('bill_facing_name') or pam_info.get('bill_facing_name', '')
-            owner = orbit_info.get('owner') or pam_info.get('owner', '')
-            
-            # Track owners for filter
+            db_records = self.db_manager.get_promos_by_execution_type("RDC")
+        except Exception:
+            db_records = []
+        orbit_by_code: Dict[str, Dict[str, Any]] = {}
+        orbit_ids: list[str] = []
+        for rec in db_records:
+            # Ensure string-keyed dict for static type expectations
+            rec_str: Dict[str, Any] = {str(k): v for k,v in rec.items()}
+            code = str(rec_str.get('code','') or '')
+            if not code:
+                continue
+            orbit_by_code[code] = rec_str
+            if rec_str.get('orbit_id'):
+                orbit_ids.append(str(rec_str.get('orbit_id')))
+
+        # 2. Load legacy PAM JSON edits (if file exists)
+        pam_json: Dict[str, Any] = {}
+        try:
+            with open(os.path.join(self.data_dir, 'promotions.json'),'r') as f:
+                pam_json = json.load(f)
+        except Exception:
+            pam_json = {}
+
+        # 3. Combine code universe
+        all_codes = set(orbit_by_code.keys()) | set(pam_json.keys())
+
+        # 4. Iterate and build mismatch records
+        for code in all_codes:
+            ob = orbit_by_code.get(code, {})
+            pj = pam_json.get(code, {})
+            orbit_end = ob.get('promo_end_date','')
+            orbit_start = ob.get('promo_srart_date','')
+            pam_end = pj.get('promo_end_date','') or ob.get('promo_end_date','')
+            pam_start = pj.get('promo_start_date','') or ob.get('promo_srart_date','')
+            owner = ob.get('Owner') or pj.get('owner','')
+            bill_facing_name = ob.get('bill_facing_name') or pj.get('bill_facing_name','')
+            orbit_id = ob.get('orbit_id') or pj.get('orbit_id','')
+
             if owner:
                 owners.add(owner)
-            
-            # Check for end date mismatch
-            end_mismatch = orbit_end != pam_end and orbit_end and pam_end
-            
-            # Determine mismatch type and severity
+
             mismatch_type = ''
             mismatch_severity = ''
-            
-            if end_mismatch:
+            if orbit_end and pam_end and orbit_end != pam_end:
                 mismatch_type = 'End Date'
                 mismatch_severity = 'warning'
-            elif not orbit_end and pam_end:
-                mismatch_type = 'Missing in ORBIT'
-                mismatch_severity = 'error'
             elif orbit_end and not pam_end:
                 mismatch_type = 'Missing in PAM'
                 mismatch_severity = 'error'
-            
-            # Create entry for ALL promos (with or without mismatches)
-            promo_entry = {
-                'code': promo_code,
+            elif pam_end and not orbit_end:
+                mismatch_type = 'Missing in ORBIT'
+                mismatch_severity = 'error'
+
+            entries.append({
+                'code': code,
                 'orbit_id': orbit_id,
                 'orbit_start_date': orbit_start,
                 'orbit_end_date': orbit_end,
@@ -473,21 +468,14 @@ class HybridPromoDataManager:
                 'mismatch_severity': mismatch_severity,
                 'bill_facing_name': bill_facing_name,
                 'owner': owner
-            }
-            
-            all_promo_entries.append(promo_entry)
-        
-        # Sort by mismatch severity (errors first, then warnings, then no mismatch)
-        def sort_key(entry):
-            severity_order = {'error': 0, 'warning': 1, '': 2}
-            return (severity_order.get(entry['mismatch_severity'], 2), entry['code'])
-        
-        all_promo_entries.sort(key=sort_key)
-        
-        return {
-            'promos': all_promo_entries,
-            'owners': sorted(list(owners))
-        }
+            })
+
+        def sort_key(e: Dict[str, Any]):
+            order = {'error': 0, 'warning': 1, '': 2}
+            return (order.get(e.get('mismatch_severity',''),2), e.get('code',''))
+        entries.sort(key=sort_key)
+
+        return {'promos': entries, 'owners': sorted(owners)}
     
     def get_paginated_promos(self, page: int = 1, per_page: int = 25, 
                            search: str = "", owner_filter: str = "all") -> Dict[str, Any]:

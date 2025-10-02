@@ -1069,60 +1069,190 @@ class PromoDataManager:
         return None
     
     def get_date_mismatched_promos(self) -> Dict[str, Any]:
-        """Get promotions with date mismatches between ORBIT and PAM"""
-        # For now, we'll generate sample data with some date mismatches
-        # When ORBIT database connection is available, this will query real data
-        
-        all_promos = self.get_all_promos()
-        all_promo_entries = []
-        owners = set()  # Track unique owners
-        
-        # Sample ORBIT dates to simulate mismatches (only end dates matter)
-        sample_orbit_dates = {
-            'P0472022': {
-                'orbit_end_date': '2025-08-10'    # Different from PAM end date
-            },
-            'R223': {
-                'orbit_end_date': '2025-07-20'    # Different from PAM end date
-            }
-        }
-        
-        for promo_code, promo_data in all_promos.items():
-            # Get PAM dates
-            pam_start = promo_data.get('promo_start_date', '')
-            pam_end = promo_data.get('promo_end_date', '')
-            owner = promo_data.get('owner', '')
-            
-            # Track owners for filter
+        """Compare ORBIT (raw intake table) vs PAM (updated table) end dates.
+
+        ORBIT end date comes from DatabaseManager.orbit_source_table (via get_orbit_dates_map).
+        PAM end date comes from the primary source table (self.get_all_promos()).
+        If JSON overlay edits existed they would be merged already in get_all_promos(); for now DB is primary.
+        """
+        try:
+            # 1. Fetch PAM view of promos (includes updated end date)
+            pam_promos = self.get_all_promos()  # returns dict code->promo
+        except Exception:
+            pam_promos = {}
+
+        # 2. Collect orbit_ids for lookup
+        orbit_ids = []
+        code_to_orbit = {}
+        for code, data in pam_promos.items():
+            oid = data.get('orbit_id') or ''
+            if oid:
+                orbit_ids.append(str(oid))
+                code_to_orbit[code] = str(oid)
+
+        # 3. Batch fetch original ORBIT dates (raw intake table). Returns orbit_end_date per orbit_id.
+        try:
+            orbit_map = self.db_manager.get_orbit_dates_map(orbit_ids)
+        except Exception:
+            orbit_map = {}
+
+        owners: set[str] = set()
+        entries: List[Dict[str, Any]] = []
+        def _norm(date_str: str) -> str:
+            if not date_str:
+                return ''
+            s = str(date_str).strip()
+            from datetime import datetime
+            # Try multiple input formats; output ISO yyyy-mm-dd
+            fmts = [
+                '%Y-%m-%d', '%m/%d/%Y', '%m/%d/%y', '%Y-%m-%d %H:%M:%S', '%m/%d/%Y %H:%M:%S'
+            ]
+            for f in fmts:
+                try:
+                    dt = datetime.strptime(s, f)
+                    return dt.strftime('%Y-%m-%d')
+                except Exception:
+                    continue
+            return s  # fallback (leave as-is if unparsable)
+
+        for code, promo in pam_promos.items():
+            pam_end = promo.get('promo_end_date', '')
+            pam_start = promo.get('promo_start_date', '') or promo.get('promo_srart_date','')  # legacy column
+            orbit_id = code_to_orbit.get(code, '')
+            orbit_dates = orbit_map.get(orbit_id, {}) if orbit_id else {}
+            orbit_end = orbit_dates.get('orbit_end_date', '')
+            orbit_start = orbit_dates.get('orbit_start_date', '') or pam_start  # fallback
+
+            # Normalize ORBIT dates to match PAM formatting (ISO yyyy-mm-dd) if possible
+            orbit_end = _norm(orbit_end)
+            orbit_start = _norm(orbit_start)
+            owner = promo.get('owner') or promo.get('Owner','')
             if owner:
                 owners.add(owner)
-            
-            # Get simulated ORBIT dates (in real implementation, this would come from ORBIT database)
-            # Only check end dates since start dates are manually adjusted before launch
-            orbit_dates = sample_orbit_dates.get(promo_code, {})
-            orbit_start = pam_start  # Use PAM start date as ORBIT start (not checked for mismatches)
-            orbit_end = orbit_dates.get('orbit_end_date', pam_end)
-            
-            # Check for end date mismatch only
-            end_mismatch = orbit_end != pam_end
-            
-            # Create entry for ALL promos (with or without mismatches)
-            promo_entry = {
-                'code': promo_code,
-                'orbit_id': promo_data.get('orbit_id', ''),
+
+            mismatch_type = ''
+            mismatch_severity = ''
+            if orbit_end and pam_end and orbit_end != pam_end:
+                mismatch_type = 'End Date'
+                mismatch_severity = 'warning'
+            elif orbit_end and not pam_end:
+                mismatch_type = 'Missing in PAM'
+                mismatch_severity = 'error'
+            elif pam_end and not orbit_end:
+                mismatch_type = 'Missing in ORBIT'
+                mismatch_severity = 'error'
+
+            entries.append({
+                'code': code,
+                'orbit_id': orbit_id,
                 'orbit_start_date': orbit_start,
                 'orbit_end_date': orbit_end,
                 'promo_start_date': pam_start,
                 'promo_end_date': pam_end,
-                'mismatch_type': 'end_date' if end_mismatch else '',
-                'mismatch_severity': 'warning' if end_mismatch else '',
-                'bill_facing_name': promo_data.get('bill_facing_name', ''),
+                'mismatch_type': mismatch_type,
+                'mismatch_severity': mismatch_severity,
+                'bill_facing_name': promo.get('bill_facing_name', ''),
                 'owner': owner
-            }
-            
-            all_promo_entries.append(promo_entry)
-        
-        return {
-            'promos': all_promo_entries,
-            'owners': sorted(list(owners))
-        }
+            })
+
+        # Date parsing / normalization helpers (standard output: MM/DD/YYYY)
+        from datetime import datetime
+        def _parse(d: str):
+            if not d:
+                return None
+            s = str(d).strip()
+            patterns = ['%Y-%m-%d','%m/%d/%Y','%m/%d/%y','%Y-%m-%d %H:%M:%S','%m/%d/%Y %H:%M:%S']
+            for p in patterns:
+                try:
+                    return datetime.strptime(s, p).date()
+                except Exception:
+                    continue
+            return None
+        def _fmt(d: str):
+            dt = _parse(d)
+            return dt.strftime('%m/%d/%Y') if dt else (str(d).strip() if d else '')
+
+        def sort_key(e: Dict[str, Any]):
+            order = {'error': 0, 'warning': 1, '': 2}
+            return (order.get(e.get('mismatch_severity',''),2), e.get('code',''))
+        normalized_entries: List[Dict[str, Any]] = []
+        for entry in entries:
+            pam_end_raw = entry['promo_end_date']
+            orbit_end_raw = entry['orbit_end_date']
+            pam_start_raw = entry['promo_start_date']
+            orbit_start_raw = entry['orbit_start_date']
+
+            pam_end_fmt = _fmt(pam_end_raw)
+            orbit_end_fmt = _fmt(orbit_end_raw)
+            pam_start_fmt = _fmt(pam_start_raw)
+            orbit_start_fmt = _fmt(orbit_start_raw)
+
+            # Recalculate mismatch on parsed objects to avoid format-only differences
+            pe_dt = _parse(pam_end_raw)
+            oe_dt = _parse(orbit_end_raw)
+            mismatch_type = entry['mismatch_type']
+            mismatch_severity = entry['mismatch_severity']
+            if pe_dt and oe_dt:
+                if pe_dt != oe_dt:
+                    mismatch_type = 'End Date'
+                    mismatch_severity = 'warning'
+                else:
+                    mismatch_type = ''
+                    mismatch_severity = ''
+            elif oe_dt and not pe_dt:
+                mismatch_type = 'Missing in PAM'
+                mismatch_severity = 'error'
+            elif pe_dt and not oe_dt:
+                mismatch_type = 'Missing in ORBIT'
+                mismatch_severity = 'error'
+
+            entry.update({
+                'orbit_end_date': orbit_end_fmt,
+                'orbit_start_date': orbit_start_fmt,
+                'promo_end_date': pam_end_fmt,
+                'promo_start_date': pam_start_fmt,
+                'mismatch_type': mismatch_type,
+                'mismatch_severity': mismatch_severity
+            })
+            normalized_entries.append(entry)
+
+        normalized_entries.sort(key=sort_key)
+
+        return {'promos': normalized_entries, 'owners': sorted(owners)}
+
+    # --- Date Mismatch Sync ---
+    def sync_promo_end_date_from_orbit(self, promo_code: str, user_name: str = "System") -> Dict[str, Any]:
+        """Synchronize promo_end_date in PAM table with the authoritative ORBIT value for a single promo.
+
+        Returns dict: {success: bool, message: str, old_date: str, new_date: str}
+        Records a version history entry with change_type 'Date Mismatch' when an update occurs.
+        """
+        try:
+            before = self.db_manager.get_promo_by_code(promo_code) or {}
+            if not before:
+                return {'success': False, 'message': f'Promotion {promo_code} not found', 'old_date': None, 'new_date': None}
+            orbit_id = before.get('orbit_id') or ''
+            if not orbit_id:
+                return {'success': False, 'message': f'Promotion {promo_code} missing orbit_id', 'old_date': before.get('promo_end_date'), 'new_date': None}
+            orbit_rec = self.db_manager.get_orbit_record_by_orbit_id(str(orbit_id)) or {}
+            orbit_end = orbit_rec.get('promo_end_date') or ''
+            old_end = before.get('promo_end_date') or ''
+            if not orbit_end:
+                return {'success': False, 'message': f'No ORBIT end date available for {promo_code}', 'old_date': old_end, 'new_date': None}
+            # Normalize display formatting (store raw orbit_end as-is to maintain DB fidelity)
+            if orbit_end == old_end:
+                return {'success': True, 'message': f'{promo_code} already synchronized', 'old_date': old_end, 'new_date': old_end}
+            # Update PAM table
+            updated = self.db_manager.update_promo_fields(promo_code, {'promo_end_date': orbit_end})
+            if not updated:
+                return {'success': False, 'message': f'Failed to update promo_end_date for {promo_code}', 'old_date': old_end, 'new_date': old_end}
+            # Record version history diff under dedicated change_type 'Date Mismatch'
+            diff = {'promo_end_date': {'old': old_end, 'new': orbit_end}}
+            desc = f'Date mismatch sync: promo_end_date {old_end} -> {orbit_end}'
+            try:
+                self.db_manager.record_version_entry(promo_code, 'Date Mismatch', desc, user_name, diff)
+            except Exception:
+                pass
+            return {'success': True, 'message': f'{promo_code} updated to ORBIT end date {orbit_end}', 'old_date': old_end, 'new_date': orbit_end}
+        except Exception as e:
+            return {'success': False, 'message': f'Unexpected error syncing {promo_code}: {e}', 'old_date': None, 'new_date': None}

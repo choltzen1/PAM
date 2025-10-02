@@ -35,6 +35,23 @@
   {% block extra_css %}{% endblock %}
   <script defer src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
   {% block head %}{% endblock %}
+  <script>
+    // Fallback runtime enforcement of caret color if CSS specificity fails
+    document.addEventListener('DOMContentLoaded', function(){
+      const style = document.createElement('style');
+      style.textContent = `input,textarea,select,button{caret-color:#000 !important;color:inherit;} .form-control{caret-color:#000 !important;}`;
+      document.head.appendChild(style);
+    });
+  </script>
+  <!-- Highest-precedence global caret override (applies across entire application) -->
+  <style id="global-caret-override">
+    input, textarea, select, button, [contenteditable="true"], .form-control, .btn, body * {
+      caret-color: #000 !important;
+    }
+    @media (forced-colors: active) {
+      input, textarea, select, button, [contenteditable="true"], .form-control { forced-color-adjust: none; caret-color: CanvasText !important; }
+    }
+  </style>
 </head>
 <body>
   <div class="page-content">

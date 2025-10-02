@@ -361,3 +361,79 @@
   color: #212529;
   font-weight: 600;
 }
+
+/* Mode switch (Single vs Prioritize) */
+.mode-switch-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-left: auto; /* push to far right */
+  padding-left: 1rem;
+}
+
+.mode-switch {
+  position: relative;
+  display: inline-block;
+  width: 60px;
+  height: 30px;
+}
+
+.mode-switch input { opacity: 0; width: 0; height: 0; }
+
+.mode-switch .slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: #ccc;
+  transition: .3s;
+  border-radius: 30px;
+  box-shadow: inset 0 0 0 1px #bbb;
+}
+
+.mode-switch .slider:before {
+  position: absolute;
+  content: "";
+  height: 24px; width: 24px;
+  left: 3px; top: 3px;
+  background-color: #fff;
+  transition: .3s;
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.mode-switch input:checked + .slider {
+  background-color: #E20074;
+  box-shadow: inset 0 0 0 1px #b4005a;
+}
+
+.mode-switch input:checked + .slider:before {
+  transform: translateX(30px);
+}
+
+.mode-labels {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.70rem;
+  font-weight: 600;
+  user-select: none;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+}
+
+.mode-labels span { opacity: .45; transition: opacity .25s; }
+.mode-labels span.active { opacity: 1; }
+
+.priority-inputs .form-label { display:block; margin-bottom:2px; }
+.priority-count-select { width:auto; }
+
+/* Priority mode cards */
+.priority-block { margin-bottom:1rem; }
+.priority-row .priority-index { font-size:.55rem; }
+.priority-result-box { margin-top:4px; padding:8px 10px; border-radius:6px; font-size:11px; line-height:1.25; background:#eef5ee; border:1px solid #d0e3d0; box-shadow:0 1px 2px rgba(0,0,0,0.05); }
+.priority-result-box.found { background:#e6f7e9; border-color:#b2e2b8; }
+.priority-result-box.not-found { background:#fff5f5; border-color:#f5c2c2; color:#c92a2a; }
+.priority-result-box.error { background:#fff5f5; border-color:#f1aeb5; color:#c92a2a; }
+.priority-result-box.searching { background:#f1f3f5; border-color:#d6d8db; color:#555; font-style:italic; }
+/* Force hide utility (overrides earlier display flex !important on .apple-dropdown) */
+.hidden-priority { display: none !important; }

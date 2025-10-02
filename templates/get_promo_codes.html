@@ -21,31 +21,18 @@
 <div class="layout-container">
   <!-- Control group with search bar and promo controls -->
   <div class="version-controls">
-    <div class="left-side-controls">
-      <div class="search-section">
-        <input type="text" class="search-input" id="orbitSearchInput" placeholder="Enter Orbit ID">
-      </div>
-      
-      <div class="promo-info">
-        <span class="promo-title" id="promoTitle">Enter an Orbit ID to search</span>
-      </div>
-      
-      <div class="action-buttons">
-        <select class="apple-dropdown">
-          <option value="apple">Apple</option>
-          <option value="bogo-gsm">BOGO GSM</option>
-          <option value="bogo-mi">BOGO MI</option>
-          <option value="bvt-gsm">BVT GSM</option>
-          <option value="bvt-mi">BVT MI</option>
-          <option value="non-0-trade-in">Non 0$ Trade-In</option>
-          <option value="rebate">Rebate</option>
-          <option value="samsung">Samsung</option>
-          <option value="spe">SPE</option>
-          <option value="standard-gsm">Standard GSM</option>
-          <option value="standard-mi">Standard MI</option>
+    <div class="left-side-controls" style="flex:1; align-items:flex-start; flex-direction:column; gap:0.75rem;">
+      <div class="d-flex align-items-center gap-2 flex-wrap">
+        <label for="priorityCount" class="mb-0 fw-semibold small">How many promos:</label>
+        <select id="priorityCount" class="form-select form-select-sm priority-count-select">
+          {% for n in range(1,16) %}
+            <option value="{{ n }}">{{ n }}</option>
+          {% endfor %}
         </select>
-  <button class="btn" id="generatePromoBtn">Get Promo Code</button>
+  <button class="btn" id="generatePromoBtn">Generate Promo</button>
+  <span class="text-muted small" id="multiHint">Enter Orbit IDs below. All filled rows will be generated sequentially.</span>
       </div>
+      <div id="priorityInputsContainer" class="priority-inputs" style="width:100%;"></div>
     </div>
   </div>
 
@@ -117,119 +104,174 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const orbitSearchInput = document.getElementById('orbitSearchInput');
-    const promoTitle = document.getElementById('promoTitle');
-    const promoDescription = document.getElementById('promoDescription');
-   const generateBtn = document.getElementById('generatePromoBtn');
-    generateBtn.addEventListener('click', function(e){
-      e.preventDefault();
-      const enteredOrbit = (orbitSearchInput.value || '').trim();
-      generateBtn.disabled = true;
-      const originalText = generateBtn.textContent;
-      generateBtn.textContent = 'Generating...';
-      // If an orbit id is present attempt full ingest
-      if(enteredOrbit){
-        promoTitle.textContent = 'Generating & Ingesting...';
-        promoDescription.innerHTML = `<em>Requesting next promo code and importing Orbit ID ${enteredOrbit}...</em>`;
-        fetch('/api/generate_next_promo_code?orbit_id=' + encodeURIComponent(enteredOrbit), { method: 'GET' })
-        .then(r=>r.json().then(js=>({ok:r.ok,status:r.status,js})))
-        .then(res=>{
-          if(res.ok && res.js.success){
-            promoTitle.textContent = 'Created Promo ' + res.js.promo_code;
-            promoDescription.innerHTML = `<strong>Promo Code:</strong> <a href="/edit_promo/${res.js.promo_code}" target="_blank" class="created-promo-link">${res.js.promo_code}</a><br>`+
-              `<strong>Orbit ID:</strong> ${res.js.orbit_id}<br>`+
-              (res.js.fields_imported ? `<strong>Imported Fields:</strong> ${res.js.fields_imported}<br>`:'' )+
-              (res.js.base_letter ? `<strong>Base Letter:</strong> ${res.js.base_letter} ${res.js.rolled ? '(Rolled Over)' : ''}`:'' )+
-              (res.js.description ? `<br><strong>Description:</strong> ${res.js.description}` : '');
-            // Insert / update the PDT table with the new promo at the top
-            try {
-              addOrUpdatePdtRow(res.js.orbit_id, res.js.promo_code, (res.js.description || '(No description)'), inferConfig(res.js.description||''));
-            } catch(e){ console.warn('Failed updating PDT table', e); }
-          } else {
-            let errMsg = (res.js && (res.js.error || res.js.message)) || 'Unknown error';
-            if(res.status === 404){
-              errMsg = 'Orbit ID not found in source DB';
-            } else if(res.status === 409){
-              errMsg = 'Orbit already has promo code '+ (res.js.existing_code || '');
-            }
-            promoTitle.textContent = 'Ingest Failed';
-            promoDescription.innerHTML = `<strong>Error:</strong> ${errMsg}`;
-          }
-        })
-        .catch(err=>{
-          promoTitle.textContent = 'Ingest Error';
-          promoDescription.innerHTML = `<strong>Error:</strong> ${err}`;
-        })
-        .finally(()=>{
-          generateBtn.disabled = false;
-          generateBtn.textContent = originalText;
-        });
-      } else {
-        promoTitle.textContent = 'Orbit ID Required';
-        promoDescription.innerHTML = '<em>Please enter an Orbit ID to create a promo.</em>';
-        generateBtn.disabled = false;
-        generateBtn.textContent = originalText;
-      }
-    });
-    
-  // Debounced search with sequence guard to avoid race conditions
-  let searchTimer = null;
-  let lastSeq = 0;
-  let completedSeq = 0;
-  const DEBOUNCE_MS = 250;
-  orbitSearchInput.addEventListener('input', function(){
-    const raw = this.value;
-    const digits = raw.replace(/[^0-9]/g,'');
-    if(searchTimer) clearTimeout(searchTimer);
-    if(digits.length < 4){ return; }
-    const seq = ++lastSeq;
-    searchTimer = setTimeout(()=> doSearch(digits, seq), DEBOUNCE_MS);
-  });
-    
-  // Enter key triggers immediate search bypassing debounce
-  orbitSearchInput.addEventListener('keypress', function(e){
-    if(e.key === 'Enter'){
-      const digits = this.value.replace(/[^0-9]/g,'');
-      if(digits){ lastSeq++; doSearch(digits, lastSeq); }
+  const priorityCount = document.getElementById('priorityCount');
+  const priorityInputsContainer = document.getElementById('priorityInputsContainer');
+  const generateBtn = document.getElementById('generatePromoBtn');
+  const promoDescription = document.getElementById('promoDescription');
+  const promoTitle = document.getElementById('promoTitle');
+
+  const promoTypeOptionsHtml = `
+    <option value="apple">Apple</option>
+    <option value="bogo-gsm">BOGO GSM</option>
+    <option value="bogo-mi">BOGO MI</option>
+    <option value="bvt-gsm">BVT GSM</option>
+    <option value="bvt-mi">BVT MI</option>
+    <option value="non-0-trade-in">Non 0$ Trade-In</option>
+    <option value="rebate">Rebate</option>
+    <option value="samsung">Samsung</option>
+    <option value="spe">SPE</option>
+    <option value="standard-gsm">Standard GSM</option>
+    <option value="standard-mi">Standard MI</option>`;
+
+  function updateGenerateButtonLabel(){
+    const count = parseInt(priorityCount.value,10) || 1;
+    if(count > 1){
+      generateBtn.textContent = 'Generate '+count+' Promos';
+    } else {
+      generateBtn.textContent = 'Generate Promo';
     }
-  });
-    
-  function doSearch(orbitId, seq){
-    promoTitle.textContent = 'Searching...';
-    promoDescription.innerHTML = '<em>Searching for Orbit ID ' + orbitId + '...</em>';
+  }
+
+  function renderPriorityInputs(){
+    const count = Math.min(15, Math.max(1, parseInt(priorityCount.value,10) || 1));
+    priorityInputsContainer.innerHTML='';
+    for(let i=1;i<=count;i++){
+      const block = document.createElement('div');
+      block.className = 'priority-block';
+      const row = document.createElement('div');
+      row.className = 'priority-row d-flex align-items-center gap-2';
+      row.innerHTML = `
+        <div class=\"priority-index badge bg-secondary\">#${i}</div>
+        <input type=\"text\" class=\"form-control form-control-sm priority-orbit-input\" data-priority=\"${i}\" placeholder=\"Orbit ID\" style=\"max-width:140px;\" />
+        <select class=\"apple-dropdown priority-config-select\">${promoTypeOptionsHtml}</select>
+      `;
+      const resultBox = document.createElement('div');
+      resultBox.className = 'priority-result-box';
+      resultBox.id = 'priorityResult-'+i;
+      resultBox.style.display='none';
+      block.appendChild(row);
+      block.appendChild(resultBox);
+      priorityInputsContainer.appendChild(block);
+    }
+    attachPriorityHandlers();
+  }
+  renderPriorityInputs();
+  updateGenerateButtonLabel();
+  priorityCount.addEventListener('change', ()=>{ renderPriorityInputs(); updateGenerateButtonLabel(); });
+
+  const prioritySearchState = { timers:{}, lastSeq:{}, completedSeq:{} };
+
+  function attachPriorityHandlers(){
+    document.querySelectorAll('.priority-orbit-input').forEach(inp=>{
+      const idx = inp.getAttribute('data-priority');
+      inp.addEventListener('input', function(){
+        const raw = this.value || ''; const digits = raw.replace(/[^0-9]/g,'');
+  if(prioritySearchState.timers[idx]) clearTimeout(prioritySearchState.timers[idx]);
+  if(digits.length < 4){ hidePriorityResult(idx); return; }
+        const seq = (prioritySearchState.lastSeq[idx]||0)+1; prioritySearchState.lastSeq[idx]=seq;
+        prioritySearchState.timers[idx] = setTimeout(()=> priorityDoSearch(idx, digits, seq), 300);
+      });
+      inp.addEventListener('keypress', function(e){
+        if(e.key==='Enter'){
+          const digits = (this.value||'').replace(/[^0-9]/g,'');
+          if(digits){ const seq=(prioritySearchState.lastSeq[idx]||0)+1; prioritySearchState.lastSeq[idx]=seq; priorityDoSearch(idx,digits,seq); }
+        }
+      });
+    });
+  }
+
+  function hidePriorityResult(idx){ const box=document.getElementById('priorityResult-'+idx); if(!box) return; box.style.display='none'; box.className='priority-result-box'; box.innerHTML=''; }
+  function showPriorityResult(idx, html, state){ const box=document.getElementById('priorityResult-'+idx); if(!box) return; box.style.display='block'; box.className='priority-result-box '+(state||''); box.innerHTML=html; }
+  function startPrioritySearching(idx, orbitId){ showPriorityResult(idx, `<em>Searching Orbit ID ${orbitId}...</em>`, 'searching'); }
+  function priorityResultFound(idx, orbitId, data){
+    if(data.found){
+      showPriorityResult(idx, `
+        <div><strong>Orbit ID #${orbitId} - Promo Description:</strong> ${data.description || 'No description available'}</div>
+        <div><strong>Promo Code:</strong> ${data.promo_code || '(Not yet created)'}</div>
+        <div><strong>Type:</strong> ${data.type || 'N/A'}${data.pending_creation ? ' (Pending Creation)' : ''}</div>
+        <div><strong>Owner:</strong> ${data.owner || 'Unknown'}</div>
+        <div><strong>Start Date:</strong> ${data.start_date || 'N/A'} &nbsp; <strong>End Date:</strong> ${data.end_date || 'N/A'}</div>
+      `,'found');
+    } else {
+      showPriorityResult(idx, `<strong>Orbit ID ${orbitId} not found.</strong>`,'not-found');
+    }
+  }
+  function priorityResultError(idx, orbitId){ showPriorityResult(idx, `<strong>Error searching Orbit ID ${orbitId}</strong>`,'error'); }
+
+  function priorityDoSearch(idx, orbitId, seq){
+    startPrioritySearching(idx, orbitId);
     fetch('/api/search_orbit/' + orbitId)
       .then(r=>r.json())
       .then(data=>{
-       if(seq < completedSeq) return; // stale
-       completedSeq = seq;
-       if(data.found){
-        promoTitle.textContent = data.initiative_name;
-        promoDescription.innerHTML = `
-          <strong>Orbit ID #${orbitId} - Promo Description:</strong> ${data.description || 'No description available'}<br><br>
-          <strong>Promo Code:</strong> ${data.promo_code || '(Not yet created)'}<br>
-          <strong>Type:</strong> ${data.type}${data.pending_creation ? ' (Pending Creation)' : ''}<br>
-          <strong>Owner:</strong> ${data.owner || 'Unknown'}<br>
-          <strong>Start Date:</strong> ${data.start_date || 'N/A'}<br>
-          <strong>End Date:</strong> ${data.end_date || 'N/A'}
-        `;
-       } else {
-        promoTitle.textContent = 'Orbit ID Not Found';
-        promoDescription.innerHTML = `
-          <strong>Orbit ID #${orbitId}:</strong> ${data.message || 'Not found in promotions database'}<br><br>
-          <em>Please verify the Orbit ID and try again.</em>
-        `;
-       }
+        if(seq < (prioritySearchState.completedSeq[idx]||0)) return; // stale
+        prioritySearchState.completedSeq[idx]=seq;
+        priorityResultFound(idx, orbitId, data);
       })
-      .catch(err=>{
-       if(seq < completedSeq) return; // stale
-       console.error('Error searching orbit data:', err);
-       promoTitle.textContent = 'Search Error';
-       promoDescription.innerHTML = `
-         <strong>Error:</strong> Unable to search for Orbit ID ${orbitId}<br><br>
-         <em>Please try again or contact support if the problem persists.</em>
-       `;
-      });
+      .catch(()=> priorityResultError(idx, orbitId));
   }
+    async function sequentialGenerate(orbits){
+      const summary = [];
+      for(const item of orbits){
+        const { idx, orbitId } = item;
+        if(!orbitId) continue; // skip empties
+        // Indicate generating status in that row's result box
+        showPriorityResult(idx, `<em>Generating promo for Orbit ${orbitId}...</em>`, 'searching');
+        try {
+          const res = await fetch('/api/generate_next_promo_code?orbit_id=' + encodeURIComponent(orbitId));
+          const js = await res.json().catch(()=>({}));
+          if(res.ok && js.success){
+            showPriorityResult(idx, `<strong>Created Promo ${js.promo_code}</strong><br><span class="small">Orbit ${js.orbit_id}</span>`, 'found');
+            summary.push({ orbitId: js.orbit_id, code: js.promo_code, desc: js.description || '(No description)' });
+            try { addOrUpdatePdtRow(js.orbit_id, js.promo_code, (js.description || '(No description)'), inferConfig(js.description||'')); } catch(e){ console.warn(e); }
+          } else {
+            let errMsg = (js && (js.error || js.message)) || 'Unknown error';
+            if(res.status === 404) errMsg = 'Orbit not found';
+            else if(res.status === 409) errMsg = 'Already has promo '+ (js.existing_code || '');
+            showPriorityResult(idx, `<strong>Error:</strong> ${errMsg}`, 'error');
+            summary.push({ orbitId, error: errMsg });
+          }
+        } catch(err){
+          showPriorityResult(idx, `<strong>Error generating for Orbit ${orbitId}</strong>`, 'error');
+          summary.push({ orbitId, error: String(err) });
+        }
+      }
+      return summary;
+    }
+
+    generateBtn.addEventListener('click', async function(e){
+      e.preventDefault();
+      const count = Math.min(15, Math.max(1, parseInt(priorityCount.value,10) || 1));
+      const inputs = [...document.querySelectorAll('.priority-orbit-input')];
+      const filled = inputs.map(inp=>({ idx: inp.getAttribute('data-priority'), orbitId: (inp.value||'').trim() })).filter(o=>o.orbitId);
+      if(!filled.length){
+        if(promoTitle) promoTitle.textContent = 'Orbit ID Required';
+        if(promoDescription) promoDescription.innerHTML = '<em>Please enter at least one Orbit ID to generate.</em>';
+        return;
+      }
+      generateBtn.disabled = true;
+      const originalText = generateBtn.textContent;
+      generateBtn.textContent = 'Generating...';
+      if(promoTitle) promoTitle.textContent = 'Generating Promos...';
+      if(promoDescription) promoDescription.innerHTML = `<em>Generating ${filled.length} promo(s) sequentially...</em>`;
+      const results = await sequentialGenerate(filled);
+      // Build summary HTML
+      const success = results.filter(r=>r.code);
+      const failures = results.filter(r=>r.error);
+      let html = '';
+      if(success.length){
+        html += '<strong>Created:</strong><br>' + success.map(s=>`<a href="/edit_promo/${s.code}" target="_blank" class="created-promo-link">${s.code}</a> (Orbit ${s.orbitId})`).join('<br>');
+      }
+      if(failures.length){
+        html += (html?'<br><br>':'') + '<strong>Errors:</strong><br>' + failures.map(f=>`Orbit ${f.orbitId}: ${f.error}`).join('<br>');
+      }
+      if(!html) html = '<em>No promos created.</em>';
+      if(promoTitle) promoTitle.textContent = success.length ? `Created ${success.length} Promo${success.length>1?'s':''}` : 'Generation Complete';
+      if(promoDescription) promoDescription.innerHTML = html;
+      generateBtn.disabled = false;
+      generateBtn.textContent = originalText;
+    });
+    
+  // Standalone global search summary removed in consolidated mode.
     
     // Populate recent promos table
     fetch('/api/recent_generated_promos')

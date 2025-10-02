@@ -77,6 +77,27 @@ html, body {
   width: 150px;
 }
 
+/* Operator ID input explicit styling for cursor visibility */
+#operatorId {
+  background: #ffffff;
+  color: #111;
+  caret-color: #111; /* ensure caret visible */
+  transition: background-color 0.15s, border-color 0.15s;
+  cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='24' viewBox='0 0 16 24'><rect x='7' y='2' width='2' height='20' fill='black'/></svg>") 8 12, text; /* persistent dark custom caret-like cursor */
+}
+#operatorId:hover:not(:disabled) {
+  background: #fafafa;
+  border-color: #c2c2c2;
+}
+#operatorId:focus {
+  outline: none;
+  background: #fffceb; /* subtle warm highlight */
+  border-color: var(--tmobile-magenta);
+  box-shadow: 0 0 0 2px rgba(226,0,116,0.25);
+}
+#operatorId::placeholder { color: #888; }
+#operatorId:disabled { background: #eee; cursor: not-allowed; }
+
 .results-counter {
   font-size: 2rem;
   font-weight: bold;
