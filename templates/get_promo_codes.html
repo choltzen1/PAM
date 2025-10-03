@@ -38,15 +38,6 @@
 
   <!-- Main content area -->
   <div class="main-content">
-    <!-- Description section -->
-    <div class="description-section">
-      <div class="right-content">
-        <div class="description-text" id="promoDescription">
-          <em>No orbit selected. Please enter an Orbit ID in the search field above to view promotion details.</em>
-        </div>
-      </div>
-    </div>
-
     <!-- Bottom table section with cards -->
     <div class="table-section">
     <!-- PDT header and table -->
@@ -220,7 +211,7 @@ document.addEventListener('DOMContentLoaded', function() {
           const res = await fetch('/api/generate_next_promo_code?orbit_id=' + encodeURIComponent(orbitId));
           const js = await res.json().catch(()=>({}));
           if(res.ok && js.success){
-            showPriorityResult(idx, `<strong>Created Promo ${js.promo_code}</strong><br><span class="small">Orbit ${js.orbit_id}</span>`, 'found');
+            showPriorityResult(idx, `<strong>Created Promo <a href="/edit_promo/${js.promo_code}" target="_blank" class="created-promo-link">${js.promo_code}</a></strong><br><span class="small">Orbit ${js.orbit_id}</span>`, 'found');
             summary.push({ orbitId: js.orbit_id, code: js.promo_code, desc: js.description || '(No description)' });
             try { addOrUpdatePdtRow(js.orbit_id, js.promo_code, (js.description || '(No description)'), inferConfig(js.description||'')); } catch(e){ console.warn(e); }
           } else {

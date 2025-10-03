@@ -7,7 +7,9 @@ function openJiraModal(ticketType = 'bptcr') {
   const promoCode = document.querySelector('input[name="promo_code"]')?.value || 
                    window.promoData?.code || "";
   const orbitId = window.promoData?.orbit_id || "";
-  const initiativeName = window.promoData?.initiative_name || "";
+  // Initiative name fallback: use initiative_name, then bill_facing_name (strip any quotes)
+  const rawInitiativeName = window.promoData?.initiative_name || window.promoData?.bill_facing_name || "";
+  const initiativeName = rawInitiativeName.replace(/["'“”‘’`]/g,'');
   const launchDate = window.promoData?.promo_start_date || "";
   
   // Format the launch date properly
@@ -46,8 +48,30 @@ function openJiraModal(ticketType = 'bptcr') {
       parentSelect.value = dcdOption.value;
     }
   } else {
-    summary = `EFPE Promo Device - New Promo - Promo ${promoCode}${orbitId ? ' - ' + orbitId : ''}${initiativeName ? ' - ' + initiativeName : ''}${formattedLaunchDate}`;
-    description = `JIRA Automation Test`;
+    // Enforce required summary pattern:
+    // EFPE Promo Device - New Promo - Promo {promo_code} - {orbit_id} - {initiative_name} - Launch Date {display_start_date}
+    // Fallbacks: if data missing, leave blank segment but preserve dashes to keep recognizable structure
+    // formattedLaunchDate already includes leading ' - Launch Date ...' per earlier logic
+    let displayLaunch = '';
+    if(formattedLaunchDate){
+      displayLaunch = formattedLaunchDate.replace(/^ - Launch Date\s*/,'');
+    } else if (window.promoData?.promo_start_date){
+      // Fallback parse if earlier block failed to format
+      try {
+        const parts = window.promoData.promo_start_date.split('-');
+        if(parts.length>=3){
+          const y=parseInt(parts[0]); const m=parseInt(parts[1]); const d=parseInt(parts[2]);
+          if(!isNaN(y) && !isNaN(m) && !isNaN(d)){
+            displayLaunch = `${m}/${d}/${y} 12:00 AM`;
+          }
+        }
+      } catch(e) { /* ignore */ }
+    }
+    const safePromo = promoCode || (window.promoData?.code || '');
+    const safeOrbit = orbitId || (window.promoData?.orbit_id || '');
+  const safeInitiative = (initiativeName || '').replace(/["'“”‘’`]/g,'');
+    summary = `EFPE Promo Device - New Promo - Promo ${safePromo} - ${safeOrbit} - ${safeInitiative} - Launch Date ${displayLaunch}`.trim();
+    description = `BPTCR ticket for promotion ${safePromo || '(unspecified code)'} created via PAM.`;
     
     // Update modal title
     document.querySelector('#jiraModal .modal-header h3').textContent = 'Create JIRA Ticket';
@@ -60,6 +84,71 @@ function openJiraModal(ticketType = 'bptcr') {
   document.getElementById('jiraDescription').value = description;
   
   document.getElementById('jiraModal').style.display = 'block';
+
+  // If core fields were blank, attempt a deferred fill once after a short timeout (for any late-populated window.promoData)
+  if(!promoCode || !orbitId || !initiativeName){
+    setTimeout(()=>{
+      if(!document.getElementById('jiraModal') || document.getElementById('jiraModal').style.display !== 'block') return;
+      const pd = window.promoData || {};
+      const p2 = pd.code || promoCode;
+      const o2 = pd.orbit_id || orbitId;
+  const i2 = (pd.initiative_name || pd.bill_facing_name || initiativeName || '').replace(/["'“”‘’`]/g,'');
+      if(p2 && o2 && i2){
+        // Rebuild summary preserving existing launch date fragment at end
+        const current = document.getElementById('jiraSummary').value;
+        const launchFragMatch = current.match(/ - Launch Date .+$/);
+        const launchFrag = launchFragMatch ? launchFragMatch[0] : ' - Launch Date ';
+        document.getElementById('jiraSummary').value = `EFPE Promo Device - New Promo - Promo ${p2} - ${o2} - ${i2}${launchFrag}`;
+      }
+    }, 300);
+  }
+
+  // --- Absolute fallback: pull fresh from PAM API if still missing key fields (ensures DB source of truth) ---
+  (function doApiFallback(){
+    if(ticketType === 'dcd') return; // only for EFPE/BPTCR
+
+    // If we don't even have promoCode yet, try to extract from URL (/edit_promo/<CODE>)
+    let codeCandidate = promoCode;
+    if(!codeCandidate){
+      const m = window.location.pathname.match(/\/edit_promo\/([^\/]+)/);
+      if(m) codeCandidate = m[1];
+    }
+
+    // Decide if we need a fetch: any of orbit / initiative / launch date missing OR promo code was missing before
+    const haveLaunch = / - Launch Date \d{1,2}\/\d{1,2}\/\d{4}/.test(document.getElementById('jiraSummary').value);
+    if(!codeCandidate) return; // cannot fetch without a code
+    if(orbitId && initiativeName && haveLaunch) return; // nothing missing
+
+    // Indicate loading state subtly if the summary is essentially empty after promo label
+    const currentSummary = document.getElementById('jiraSummary').value;
+    if(/Promo\s*-\s*-\s*-\s*- Launch Date\s*$/.test(currentSummary) || currentSummary.endsWith('Launch Date')){
+      document.getElementById('jiraSummary').value = 'Loading promotion details...';
+    }
+
+    fetch(`/api/get_promo_details/${encodeURIComponent(codeCandidate)}`)
+      .then(r=>r.ok ? r.json() : Promise.reject(new Error('HTTP '+r.status)))
+      .then(data => {
+        if(!data || !data.found) return;
+        const o3 = data.orbit_id || orbitId || '';
+  const i3 = (data.initiative_name || data.bill_facing_name || data.description || initiativeName || '').replace(/["'“”‘’`]/g,'');
+        // Format launch date (prefer existing formatted if present)
+        let launchFrag = '';
+        if(data.promo_start_date){
+          try {
+            const parts = data.promo_start_date.split('-');
+            if(parts.length>=3){
+              const y=parseInt(parts[0]); const m=parseInt(parts[1]); const d=parseInt(parts[2]);
+              if(!isNaN(y)&&!isNaN(m)&&!isNaN(d)){
+                launchFrag = ` - Launch Date ${m}/${d}/${y} 12:00 AM`;
+              }
+            }
+          } catch(e){ /* ignore */ }
+        }
+        const finalLaunch = launchFrag || (document.getElementById('jiraSummary').value.match(/ - Launch Date .+$/) || [''])[0] || ' - Launch Date ';
+        document.getElementById('jiraSummary').value = `EFPE Promo Device - New Promo - Promo ${codeCandidate} - ${o3} - ${i3}${finalLaunch}`;
+      })
+      .catch(()=>{/* silent */});
+  })();
 }
 
 function closeJiraModal() {
@@ -98,9 +187,14 @@ function createJiraTicket() {
   .then(response => response.json())
   .then(data => {
     if (data.success) {
-      // Show success message with ticket details
+      // Show success message with ticket details using custom popup with hyperlink
       const ticketTypeDisplay = formData.ticket_type === 'dcd' ? 'DCD ' : '';
-      alert(`✅ ${ticketTypeDisplay}JIRA Ticket Created Successfully!\n\nTicket: ${data.ticket_key}\nURL: ${data.ticket_url}\n\n${data.message || ''}`);
+      showJiraSuccessPopup({
+        key: data.ticket_key,
+        url: data.ticket_url,
+        message: data.message || '',
+        typeLabel: ticketTypeDisplay.trim()
+      });
       
       // Update the appropriate ticket display
       if (data.ticket_key && formData.promo_code) {
@@ -163,6 +257,36 @@ function createJiraTicket() {
     createBtn.innerHTML = originalText;
     createBtn.disabled = false;
   });
+}
+
+// Lightweight success popup with hyperlink to Jira ticket
+function showJiraSuccessPopup(info){
+  if(!info || !info.key) return;
+  // Remove existing if present
+  const existing = document.getElementById('jiraSuccessToast');
+  if(existing) existing.remove();
+  const toast = document.createElement('div');
+  toast.id = 'jiraSuccessToast';
+  toast.style.cssText = 'position:fixed; bottom:20px; right:20px; background:#1c1f23; color:#fff; padding:16px 18px; border-radius:8px; box-shadow:0 4px 16px rgba(0,0,0,0.35); font-family:system-ui,Segoe UI,Roboto,sans-serif; max-width:340px; z-index:99999; display:flex; gap:12px; align-items:flex-start;';
+  toast.innerHTML = `
+    <div style="flex:1;">
+      <div style="font-weight:600; margin-bottom:4px;">${info.typeLabel ? info.typeLabel+' ' : ''}JIRA Ticket Created</div>
+      <div style="font-size:13px; line-height:1.4;">
+        <a href="${info.url}" target="_blank" style="color:#72d4ff; text-decoration:none; font-weight:600;">${info.key}</a><br>
+        ${info.message ? `<span>${escapeHtml(info.message)}</span><br>`:''}
+        <span style="opacity:0.75;">Opens in new tab.</span>
+      </div>
+    </div>
+    <button aria-label="Close" style="background:none; border:none; color:#bbb; cursor:pointer; font-size:16px; line-height:1; padding:0 4px;">&times;</button>
+  `;
+  const closeBtn = toast.querySelector('button');
+  closeBtn.addEventListener('click', ()=> toast.remove());
+  document.body.appendChild(toast);
+  setTimeout(()=>{ if(toast.isConnected) toast.remove(); }, 8000);
+}
+
+function escapeHtml(str){
+  return String(str).replace(/[&<>"']/g, s=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;' }[s]));
 }
 
 // Close modal when clicking outside of it
