@@ -528,9 +528,13 @@ class PromoDataManager:
         self.add_permanent_version_entry(promo_code, entry, is_spe)
     
     def delete_promo(self, promo_code: str):
-        """Delete a promotion (JSON deprecated - no-op for DB)."""
-        # If future: implement soft/hard delete in DB layer.
-        pass
+        """Delete a promotion via DatabaseManager hard delete (if available)."""
+        if hasattr(self.db_manager, 'delete_promo'):
+            try:
+                return self.db_manager.delete_promo(promo_code)
+            except Exception:
+                return False
+        return False
 
     # --- Creation / Orbit ingestion helpers ---
     def _generate_next_sequential_code(self) -> str:

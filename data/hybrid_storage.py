@@ -807,20 +807,38 @@ class HybridPromoDataManager:
         return self._original_manager.add_pcr_version(promo_code, version_number, user_name, is_spe)
     
     def delete_promo(self, promo_code: str):
-        """Delete promotion (clears from cache and delegates to original manager)"""
-        # Clear from cache
+        """Delete promotion from DB + local artifacts and invalidate cache.
+
+        Invokes underlying DatabaseManager.delete_promo (hard delete) if available.
+        Falls back to original manager (no-op) otherwise.
+        """
+        # Remove from cache memory
         if promo_code in self._cache:
             del self._cache[promo_code]
-        
-        # Clear from workflow data
+
+        # Remove from workflow auxiliary file
         workflow_data = self._load_workflow_data()
         if promo_code in workflow_data:
             del workflow_data[promo_code]
             self._save_workflow_data(workflow_data)
-        
-        # Note: Database deletion would need to be implemented in DatabaseManager
-        # For now, just delegate to original manager for local cleanup
-        return self._original_manager.delete_promo(promo_code)
+
+        # Attempt DB hard delete
+        deleted = False
+        if hasattr(self.db_manager, 'delete_promo'):
+            try:
+                deleted = self.db_manager.delete_promo(promo_code)
+            except Exception:
+                deleted = False
+        else:
+            # Fallback to original manager if it implemented something
+            try:
+                self._original_manager.delete_promo(promo_code)
+            except Exception:
+                pass
+
+        # Invalidate cache timestamp so next access reloads
+        self._cache_timestamp = None
+        return deleted
     
     def get_promo_list(self):
         """Get promotion list (optimized to use cache)"""

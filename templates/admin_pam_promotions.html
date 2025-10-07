@@ -1,17 +1,17 @@
 {% extends "base.html" %}
-{% block title %}PAM JSON Promotions - Admin{% endblock %}
+{% block title %}Source Table Promotions - Admin{% endblock %}
 {% block header_left %}
 <div class="global-header-promotions">
   <i class="fas fa-database header-icon"></i>
   <div class="header-text">
-    <h2>PAM JSON Promotions</h2>
-    <p>Manage JSON-layer promotions (create / ingest / delete)</p>
+    <h2>Source Table Promotions</h2>
+    <p>Live records in [PAM].[PAM_Orbit_Data_Updated] (create / ingest / delete)</p>
   </div>
 </div>
 {% endblock %}
 {% block head %}<link rel="stylesheet" href="/static/css/admin.css">{% endblock %}
 {% block content %}
-<div class="admin-dashboard" style="padding-top:10px;">
+<div class="admin-dashboard" style="padding-top:10px;display:flex;flex-direction:column;min-height:0;">
   <div class="filter-bar" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:14px;">
     <form method="get" style="display:flex;gap:8px;align-items:center;">
       <input type="text" name="search" value="{{ search_query }}" placeholder="Search code / owner / name" style="padding:6px 10px;min-width:240px;" />
@@ -29,7 +29,7 @@
     </div>
   </div>
 
-  <div class="table-responsive" style="max-height:70vh;overflow:auto;">
+  <div id="tableContainer" class="table-responsive" style="flex:1 1 auto;overflow:auto;min-height:0;max-height:calc(100vh - 265px);">
     <table class="admin-table" id="pamPromosTable">
       <thead>
         <tr>
@@ -65,7 +65,7 @@
   </div>
 
   <!-- Pagination -->
-  <div class="pagination" style="margin-top:14px;display:flex;gap:8px;align-items:center;">
+  <div class="pagination" style="margin-top:14px;display:flex;gap:8px;align-items:center;flex:0 0 auto;">
     {% set pg = pagination %}
     {% if pg.has_prev %}<a class="btn-admin secondary" href="?page={{ pg.prev_num }}&per_page={{ pg.per_page }}&search={{ search_query }}&owner={{ selected_owner }}">Prev</a>{% else %}<span class="btn-admin disabled" style="opacity:0.4;">Prev</span>{% endif %}
     <span>Page {{ pg.page }} / {{ pg.total_pages or 1 }}</span>
@@ -77,6 +77,22 @@
 </div>
 
 <script>
+// Dynamically ensure table container never overlaps footer by recalculating available height.
+function resizeTableContainer(){
+  const headerHeight = document.querySelector('.global-header-promotions')?.offsetHeight || 0;
+  const filterHeight = document.querySelector('.filter-bar')?.offsetHeight || 0;
+  const paginationHeight = document.querySelector('.pagination')?.offsetHeight || 50;
+  const footer = document.querySelector('footer');
+  const footerHeight = footer ? footer.offsetHeight : 0;
+  const topOffset = headerHeight + filterHeight + 40; // padding/margins fudge
+  const available = window.innerHeight - footerHeight - topOffset - 20; // extra spacing
+  const container = document.getElementById('tableContainer');
+  if(container && available > 200){
+     container.style.maxHeight = available + 'px';
+  }
+}
+window.addEventListener('resize', resizeTableContainer);
+document.addEventListener('DOMContentLoaded', resizeTableContainer);
 function toggleAll(cb){
   document.querySelectorAll('.rowChk').forEach(ch=>{ ch.checked = cb.checked; });
   updateBulkState();

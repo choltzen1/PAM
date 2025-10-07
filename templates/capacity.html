@@ -55,14 +55,11 @@
           <div class="date-filter">
             <label for="week-filter">Week:</label>
             <select id="week-filter" name="week-filter" class="week-dropdown" onchange="filterByWeek()">
-              <option value="08/10/2025-08/16/2025" {% if selected_week == '08/10/2025-08/16/2025' %}selected{% endif %}>08/10/2025 - 08/16/2025</option>
-              <option value="08/17/2025-08/23/2025" {% if selected_week == '08/17/2025-08/23/2025' %}selected{% endif %}>08/17/2025 - 08/23/2025</option>
-              <option value="08/24/2025-08/30/2025" {% if selected_week == '08/24/2025-08/30/2025' %}selected{% endif %}>08/24/2025 - 08/30/2025</option>
-              <option value="08/31/2025-09/06/2025" {% if selected_week == '08/31/2025-09/06/2025' %}selected{% endif %}>08/31/2025 - 09/06/2025</option>
-              <option value="09/07/2025-09/13/2025" {% if selected_week == '09/07/2025-09/13/2025' %}selected{% endif %}>09/07/2025 - 09/13/2025</option>
-              <option value="09/14/2025-09/20/2025" {% if selected_week == '09/14/2025-09/20/2025' %}selected{% endif %}>09/14/2025 - 09/20/2025</option>
-              <option value="09/21/2025-09/27/2025" {% if selected_week == '09/21/2025-09/27/2025' %}selected{% endif %}>09/21/2025 - 09/27/2025</option>
-              <option value="09/28/2025-10/04/2025" {% if selected_week == '09/28/2025-10/04/2025' %}selected{% endif %}>09/28/2025 - 10/04/2025</option>
+              {% for wk in week_options %}
+                {% set parts = wk.split('-') %}
+                {% set display = parts[0] ~ ' - ' ~ parts[1] %}
+                <option value="{{ wk }}" {% if wk == selected_week %}selected{% endif %}>{{ display }}</option>
+              {% endfor %}
             </select>
           </div>
         </div>

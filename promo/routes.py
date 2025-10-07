@@ -412,10 +412,21 @@ def capacity_page():
         total_active_rebates = len(active_rebates)
         total_currently_active = total_active_rdc + total_active_spe + total_active_rebates
 
-        selected_week = request.args.get('week', '08/10/2025-08/16/2025')
+        # Determine current week (Sunday-Saturday) and dynamic week options going forward
+        current_week_start, current_week_end = get_sunday_saturday_week(current_date)
+        week_count = 8  # number of selectable weeks (current + next 7)
+        week_options = []
+        for i in range(week_count):
+            ws = current_week_start + timedelta(weeks=i)
+            we = ws + timedelta(days=6)
+            week_options.append(f"{ws.strftime('%m/%d/%Y')}-{we.strftime('%m/%d/%Y')}")
+
+        selected_week = request.args.get('week')
+        if not selected_week or selected_week not in week_options:
+            selected_week = week_options[0]
         start_date_str, end_date_str = selected_week.split('-')
-        input_start = datetime.strptime(start_date_str, '%m/%d/%Y').date()
-        start_date_wk, end_date_wk = get_sunday_saturday_week(input_start)
+        start_date_wk = datetime.strptime(start_date_str.strip(), '%m/%d/%Y').date()
+        end_date_wk = datetime.strptime(end_date_str.strip(), '%m/%d/%Y').date()
         start_date_dt = datetime.combine(start_date_wk, datetime.min.time())
         end_date_dt = datetime.combine(end_date_wk, datetime.min.time())
 
@@ -428,17 +439,23 @@ def capacity_page():
             except Exception:
                 return False
 
+        # Helper to access either correctly spelled or legacy typo start/end date keys
+        def _start(p):
+            return p.get('promo_start_date') or p.get('promo_srart_date')
+        def _end(p):
+            return p.get('promo_end_date') or p.get('promo_end_date')  # second key kept for clarity / future alias
+
         filtered_rdc = {}
         for promo_key, promo in rdc_data.items():
-            if is_promo_launching_in_week(promo.get('promo_start_date'), start_date_dt, end_date_dt):
+            if is_promo_launching_in_week(_start(promo), start_date_dt, end_date_dt):
                 entry = promo.copy(); entry['type'] = 'RDC'; filtered_rdc[promo_key] = entry
         filtered_spe = {}
         for spe_key, spe in spe_data.items():
-            if is_promo_launching_in_week(spe.get('promo_start_date'), start_date_dt, end_date_dt):
+            if is_promo_launching_in_week(_start(spe), start_date_dt, end_date_dt):
                 entry = spe.copy(); entry['type'] = 'SPE'; filtered_spe[spe_key] = entry
         filtered_rebates = {}
         for rebate_key, rebate in rebates_data.items():
-            if is_promo_launching_in_week(rebate.get('promo_start_date'), start_date_dt, end_date_dt):
+            if is_promo_launching_in_week(_start(rebate), start_date_dt, end_date_dt):
                 entry = rebate.copy(); entry['type'] = 'REBATE'; filtered_rebates[rebate_key] = entry
 
         total_rdc = len(filtered_rdc)
@@ -462,24 +479,22 @@ def capacity_page():
             wl['total'] = wl['rdc'] + wl['spe'] + wl['rebates']
             wl['status'] = 'HIGH' if wl['total'] >= 3 else 'OK'
 
+        # Build schedule starting with current week then next 3 weeks
         next_four_weeks = []
-        current_date_fixed = date(2025, 8, 8)
-        current_week_start, _ = get_sunday_saturday_week(current_date_fixed)
-        next_week_start = current_week_start + timedelta(weeks=1)
         for i in range(4):
-            week_start = next_week_start + timedelta(weeks=i)
+            week_start = current_week_start + timedelta(weeks=i)
             week_end = week_start + timedelta(days=6)
             week_start_dt = datetime.combine(week_start, datetime.min.time())
             week_end_dt = datetime.combine(week_end, datetime.min.time())
             week_promos = []
             for promo in rdc_data.values():
-                if is_promo_launching_in_week(promo.get('promo_start_date'), week_start_dt, week_end_dt):
+                if is_promo_launching_in_week(_start(promo), week_start_dt, week_end_dt):
                     entry = promo.copy(); entry['type'] = 'RDC'; week_promos.append(entry)
             for spe in spe_data.values():
-                if is_promo_launching_in_week(spe.get('promo_start_date'), week_start_dt, week_end_dt):
+                if is_promo_launching_in_week(_start(spe), week_start_dt, week_end_dt):
                     entry = spe.copy(); entry['type'] = 'SPE'; week_promos.append(entry)
             for rebate in rebates_data.values():
-                if is_promo_launching_in_week(rebate.get('promo_start_date'), week_start_dt, week_end_dt):
+                if is_promo_launching_in_week(_start(rebate), week_start_dt, week_end_dt):
                     entry = rebate.copy(); entry['type'] = 'REBATE'; week_promos.append(entry)
             week_label = f"{week_start.strftime('%m/%d/%Y')} - {week_end.strftime('%m/%d/%Y')}"
             next_four_weeks.append({'week_label': week_label, 'promotions': week_promos})
@@ -496,7 +511,8 @@ def capacity_page():
                                active_rebates=total_active_rebates,
                                owner_workload=owner_workload,
                                next_four_weeks=next_four_weeks,
-                               selected_week=standardized_week)
+                               selected_week=standardized_week,
+                               week_options=week_options)
     except Exception as e:
         flash(f'Error loading capacity data: {e}', 'error')
         return render_template('capacity.html',
@@ -510,7 +526,8 @@ def capacity_page():
                                active_rebates=0,
                                owner_workload={},
                                next_four_weeks=[],
-                               selected_week='08/10/2025-08/16/2025')
+                               selected_week='',
+                               week_options=[])
 
     # --- Download & data clear endpoints migrated from legacy app.py ---
     @promo_bp.route('/download_file/<promo_code>/<file_type>', endpoint='download_file')

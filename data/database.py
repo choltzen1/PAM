@@ -1,7 +1,7 @@
 import pandas as pd
 from sqlalchemy import create_engine, text
 import urllib.parse
-from typing import Dict, Any, List, Optional, Hashable
+from typing import Dict, Any, List, Optional
 from datetime import datetime
 import logging
 import os
@@ -193,7 +193,7 @@ class DatabaseManager:
             logger.error(f"Connection test failed: {str(e)}")
             return False
     
-    def get_all_promos(self) -> List[Dict[Hashable, Any]]:
+    def get_all_promos(self) -> List[Dict[str, Any]]:
         """Fetch all promotions from PAM_Orbit_Data table"""
         return self.get_promos_by_execution_type("RDC")
 
@@ -230,7 +230,7 @@ class DatabaseManager:
         except Exception:
             return None
     
-    def get_promos_by_execution_type(self, execution_type: str) -> List[Dict[Hashable, Any]]:
+    def get_promos_by_execution_type(self, execution_type: str) -> List[Dict[str, Any]]:
         """Fetch promotions filtered by Desired_Execution type (RDC, SPE, Rebate)."""
         sql = f"""
             SELECT 
@@ -285,20 +285,20 @@ class DatabaseManager:
         """
         try:
             df = self.get_dataframe(sql, {'execution_type': execution_type})
-            return df.to_dict('records')
+            return [self._sanitize_record(r) for r in df.to_dict('records')]
         except Exception as e:
             logger.error(f"Failed to fetch {execution_type} promotions: {str(e)}")
             return []
     
-    def get_all_spe_promos(self) -> List[Dict[Hashable, Any]]:
+    def get_all_spe_promos(self) -> List[Dict[str, Any]]:
         """Fetch all SPE promotions from database"""
         return self.get_promos_by_execution_type("SPE")
     
-    def get_all_rebates(self) -> List[Dict[Hashable, Any]]:
+    def get_all_rebates(self) -> List[Dict[str, Any]]:
         """Fetch all rebate promotions from database"""
         return self.get_promos_by_execution_type("Rebate")
     
-    def get_all_promotions_unified(self) -> List[Dict[Hashable, Any]]:
+    def get_all_promotions_unified(self) -> List[Dict[str, Any]]:
         """Fetch ALL promotions regardless of Desired_Execution."""
         sql = f"""
             SELECT 
@@ -345,7 +345,7 @@ class DatabaseManager:
         """
         try:
             df = self.get_dataframe(sql)
-            return df.to_dict('records')
+            return [self._sanitize_record(r) for r in df.to_dict('records')]
         except Exception as e:
             logger.error(f"Failed to fetch all promotions: {str(e)}")
             return []
@@ -406,13 +406,13 @@ class DatabaseManager:
         try:
             df = self.get_dataframe(sql, {'promo_code': promo_code})
             if not df.empty:
-                return df.iloc[0].to_dict()
+                return self._sanitize_record(df.iloc[0].to_dict())
             return None
         except Exception as e:
             logger.error(f"Failed to fetch promo {promo_code}: {str(e)}")
             return None
 
-    def get_recent_promos(self, days: int = 30) -> List[Dict[Hashable, Any]]:
+    def get_recent_promos(self, days: int = 30) -> List[Dict[str, Any]]:
         """Fetch promotions created/updated in the last N days"""
         # Some rows have non-date / malformed values in promo_srart_date (stored as text).
         # Direct comparison causes implicit conversion and raises: Conversion failed when converting date and/or time from character string.
@@ -476,7 +476,7 @@ class DatabaseManager:
                     })
             except Exception as diag_err:
                 logger.warning(f"Date diagnostics failed: {diag_err}")
-            return records
+            return [self._sanitize_record(r) for r in records]
         except Exception as e:
             logger.error(f"Failed to fetch recent promos: {str(e)}")
             return []
@@ -498,7 +498,7 @@ class DatabaseManager:
                 continue
         return False
     
-    def get_active_promos(self) -> List[Dict[Hashable, Any]]:
+    def get_active_promos(self) -> List[Dict[str, Any]]:
         """Fetch currently active promotions (today between start and end dates)."""
         sql = f"""
             SELECT 
@@ -518,12 +518,45 @@ class DatabaseManager:
         """
         try:
             df = self.get_dataframe(sql)
-            return df.to_dict('records')
+            return [self._sanitize_record(r) for r in df.to_dict('records')]
         except Exception as e:
             logger.error(f"Failed to fetch active promos: {e}")
             return []
+
+    # ---------------- Sanitization -----------------
+    @staticmethod
+    def _sanitize_record(rec: Dict[Any, Any]) -> Dict[str, Any]:
+        if not rec:
+            return rec
+        strip_chars = '"\'“”‘’`'
+        trans = str.maketrans('', '', strip_chars)
+        cleaned = {}
+        for k, v in rec.items():
+            if isinstance(v, str):
+                cleaned[k] = v.translate(trans)
+            else:
+                cleaned[k] = v
+        return cleaned
+
+        # ---------------- Sanitization -----------------
+        @staticmethod
+        def _sanitize_record(rec: Dict[str, Any]) -> Dict[str, Any]:
+            if not rec:
+                return rec
+            cleaned = {}
+            # Characters to strip entirely from text fields (quotes/backticks/curly quotes)
+            strip_chars = '"\'“”‘’`'
+            trans_table = str.maketrans('', '', strip_chars)
+            for k, v in rec.items():
+                if isinstance(v, str):
+                    # Normalize whitespace and remove undesirable quote characters
+                    nv = v.translate(trans_table)
+                    cleaned[k] = nv
+                else:
+                    cleaned[k] = v
+            return cleaned
     
-    def search_promos(self, search_term: str) -> List[Dict[Hashable, Any]]:
+    def search_promos(self, search_term: str) -> List[Dict[str, Any]]:
         """Search promotions by code, description, or bill facing name (case-insensitive)."""
         sql = f"""
             SELECT 
@@ -584,7 +617,7 @@ class DatabaseManager:
         try:
             pattern = f"%{search_term}%"
             df = self.get_dataframe(sql, {'search_term': pattern})
-            return df.to_dict('records')
+            return [self._sanitize_record(r) for r in df.to_dict('records')]
         except Exception as e:
             logger.error(f"Failed to search promos: {e}")
             return []
@@ -1049,6 +1082,50 @@ class DatabaseManager:
                 conn.execute("DELETE FROM promo_files WHERE promo_code=? AND file_type=?", (code, file_type))
         except Exception as e:
             logger.error(f"Failed to delete promo file metadata for {code}/{file_type}: {e}")
+
+    def delete_promo(self, promo_code: str, user_name: str = 'System') -> bool:
+        """Delete a promotion row from the PAM source table and related metadata.
+
+        This performs a HARD delete (no soft flag). Also removes any promo_extras and promo_files
+        rows plus uploaded files directory if present. Records a version_history audit entry.
+        Returns True on success (even if row absent), False on error.
+        """
+        code = (promo_code or '').strip()
+        if not code:
+            return False
+        try:
+            # 1. Delete from SQL Server source table
+            engine = self.get_engine()
+            del_sql = text(f"DELETE FROM {self.source_table} WHERE code = :code")
+            with engine.begin() as conn:
+                conn.execute(del_sql, { 'code': code })
+
+            # 2. Clean SQLite metadata + version history audit
+            with sqlite3.connect(self._diag_db_path) as conn:
+                try:
+                    conn.execute("DELETE FROM promo_extras WHERE promo_code=?", (code,))
+                    conn.execute("DELETE FROM promo_files WHERE promo_code=?", (code,))
+                    conn.execute(
+                        "INSERT INTO version_history (promo_code, timestamp, change_type, description, user_name, diff_json) VALUES (?,?,?,?,?,?)",
+                        (code, datetime.utcnow().isoformat(), 'Deleted', f'Promo {code} deleted', user_name, None)
+                    )
+                    conn.commit()
+                except Exception as ie:
+                    logger.warning(f"Partial metadata cleanup failure for {code}: {ie}")
+
+            # 3. Remove uploads folder (best-effort)
+            uploads_dir = os.path.join('data','uploads', code)
+            if os.path.isdir(uploads_dir):
+                try:
+                    import shutil
+                    shutil.rmtree(uploads_dir, ignore_errors=True)
+                except Exception:
+                    pass
+            logger.info(f"Deleted promo {code} from source + metadata")
+            return True
+        except Exception as e:
+            logger.error(f"Failed to delete promo {code}: {e}")
+            return False
 
     def insert_promo_record(self, field_map: Dict[str, Any]) -> bool:
         """Insert a brand new promotion row into the PAM source table.
