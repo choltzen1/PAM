@@ -15,14 +15,27 @@ class DummyDB:
         return None
     def convert_db_record_to_json_format(self, rec):
         return dict(rec)
+    def get_promos_by_execution_type(self, exec_type):
+        return []
+    def get_highest_sequential_promo_code(self):
+        return None
+    # Stubs for save_promo dependency chain
+    def update_promo_fields(self, code, field_map):
+        return True
+    def upsert_promo_extras(self, code, extras, user):
+        return True
+    def record_creation_event(self, code, inserted_fields, user='System'):
+        return True
+    def record_update_event(self, code, diff, user='System', window_seconds=60):
+        return True
 
 @pytest.fixture()
 def client(monkeypatch):
     os.environ.setdefault('PAM_VALIDATION_MODE','1')
-    app = factory.create_app({'TESTING': True})
-    # Patch DatabaseManager used inside endpoint
+    # Patch DatabaseManager class before app creation so route instantiation uses dummy
     from data import database
     monkeypatch.setattr(database, 'DatabaseManager', lambda: DummyDB())
+    app = factory.create_app({'TESTING': True})
     with app.test_client() as c:
         yield c
 
@@ -37,15 +50,18 @@ def test_generate_and_ingest_success(client):
 @pytest.fixture()
 def client_not_found(monkeypatch):
     os.environ.setdefault('PAM_VALIDATION_MODE','1')
-    app = factory.create_app({'TESTING': True})
     from data import database
-    # DB returns None for any id
     class NF:
         def get_full_orbit_record_by_orbit_id(self, oid):
             return None
         def convert_db_record_to_json_format(self, rec):
             return dict(rec)
+        def get_promos_by_execution_type(self, exec_type):
+            return []
+        def get_highest_sequential_promo_code(self):
+            return None
     monkeypatch.setattr(database, 'DatabaseManager', NF)
+    app = factory.create_app({'TESTING': True})
     with app.test_client() as c:
         yield c
 

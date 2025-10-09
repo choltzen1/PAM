@@ -806,9 +806,11 @@ def edit_promo(promo_code):
                 # Flash message with performance info
                 flash(f"SQL generated successfully in {generation_time:.2f} seconds ({len(sql_content):,} characters)", "success")
 
-                # Record PCR Version event in version history
+                # Record PCR Version event in history (PCR Version #N)
                 try:
-                    dm.record_sql_generation(promo_code, "Cade Holtzen", generation_time, len(sql_content))
+                    pcr_version = dm.record_sql_generation(promo_code, "Cade Holtzen", generation_time, len(sql_content))
+                    if pcr_version:
+                        flash(f"PCR Version #{pcr_version} recorded", "info")
                 except Exception as vh_err:
                     print(f"Version history PCR record failed: {vh_err}")
                 

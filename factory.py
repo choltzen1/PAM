@@ -24,17 +24,9 @@ def create_app(config: dict | None = None) -> Flask:
         app.config.update(config)
 
     global data_manager
-    if os.getenv('PAM_VALIDATION_MODE') == '1':
-        try:
-            data_manager = PromoDataManager()
-            print("✅ Data manager (validation mode) initialized")
-        except Exception as e:
-            print(f"⚠️  Validation mode fallback, minimal data manager due to init error: {e}")
-            from data.storage import PromoDataManager as FallbackManager
-            data_manager = FallbackManager()
-    else:
-        data_manager = PromoDataManager()
-        print("✅ DB-only promo data manager initialized (JSON disabled for RDC)")
+    # Single initialization path (DB-only model); validation mode no longer diverges
+    data_manager = PromoDataManager()
+    print("✅ DB-only promo data manager initialized (JSON disabled for RDC)")
 
     # Register blueprints
     app.register_blueprint(core_bp)

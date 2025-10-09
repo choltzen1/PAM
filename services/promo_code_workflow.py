@@ -142,7 +142,11 @@ class PromoCodeWorkflow:
         ok = self.db.insert_promo_record(insertion)
         if not ok:
             return {'success': False, 'error': 'Insert failed', 'attempted_fields': list(insertion.keys())}
-        self.db.record_version_entry(new_code, 'Create', f'Created from Orbit {oid}', user, {'orbit_id': oid})
+        # New minimal history creation event
+        try:
+            self.db.record_creation_event(new_code, insertion, user)
+        except Exception:
+            pass
         db_record = self.db.get_promo_by_code(new_code) or {}
         payload = self.db.convert_db_record_to_json_format(db_record)
         payload['success'] = True

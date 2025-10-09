@@ -234,12 +234,15 @@ def generate_and_ingest():
         for code, pdata in existing.items():
             if pdata.get('orbit_id') == orbit_id:
                 return jsonify({'success': False, 'error': 'Orbit already assigned', 'existing_code': code}), 409
-        # Generate next code (reuse logic - inline to avoid extra HTTP call)
-        from data.database import DatabaseManager
+        # Generate next code (fresh DatabaseManager instance; tests monkeypatch class)
         from data.code_tracking import load_issued_codes, record_issued_code
+        from data.database import DatabaseManager
         issued = load_issued_codes()
         dbm = DatabaseManager()
-        highest = dbm.get_highest_sequential_promo_code()
+        try:
+            highest = dbm.get_highest_sequential_promo_code()
+        except Exception:
+            highest = None
         import re
         pat = re.compile(r'^([A-Z])(\d{1,4})$')
         rolled = False
@@ -265,15 +268,19 @@ def generate_and_ingest():
                 break
             num += 1
         record_issued_code(next_code)
-        # Fetch orbit record from DB
-        from data.database import DatabaseManager
-        dbm = DatabaseManager()
-        orbit_row = dbm.get_full_orbit_record_by_orbit_id(orbit_id)
+        # Fetch orbit record (class monkeypatched in tests)
+        try:
+            orbit_row = dbm.get_full_orbit_record_by_orbit_id(orbit_id)
+        except Exception:
+            orbit_row = None
         if not orbit_row:
             return jsonify({'success': False, 'error': f'Orbit {orbit_id} not found in DB'}), 404
         # Convert to JSON storage format if code present or not
         # Use existing convert helper if possible
-        converted = dbm.convert_db_record_to_json_format(orbit_row) if hasattr(dbm, 'convert_db_record_to_json_format') else {}
+        try:
+            converted = dbm.convert_db_record_to_json_format(orbit_row)
+        except Exception:
+            converted = dict(orbit_row)
         # Overlay essentials
         converted['code'] = next_code
         converted['orbit_id'] = orbit_id

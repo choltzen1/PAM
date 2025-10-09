@@ -67,17 +67,7 @@ class DatabaseManager:
                     )
                 """)
                 # Version history augment (diff_json,user_name) + promo_extras + promo_files
-                conn.execute("""
-                    CREATE TABLE IF NOT EXISTS version_history (
-                        id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        promo_code TEXT NOT NULL,
-                        timestamp TEXT NOT NULL,
-                        change_type TEXT NOT NULL,
-                        description TEXT NOT NULL,
-                        user_name TEXT NULL,
-                        diff_json TEXT NULL
-                    )
-                """)
+                # (Version history table intentionally removed - reset state)
                 conn.execute("""
                     CREATE TABLE IF NOT EXISTS promo_extras (
                         promo_code TEXT PRIMARY KEY,
@@ -115,22 +105,39 @@ class DatabaseManager:
                 try:
                     cur = conn.execute("PRAGMA table_info(version_history)")
                     cols = [r[1] for r in cur.fetchall()]
-                    if 'user_name' not in cols:
-                        conn.execute("ALTER TABLE version_history ADD COLUMN user_name TEXT NULL")
-                    if 'diff_json' not in cols:
-                        conn.execute("ALTER TABLE version_history ADD COLUMN diff_json TEXT NULL")
-                    if 'field_changes' in cols and 'diff_json' in cols:
-                        try:
-                            conn.execute("""
-                                UPDATE version_history SET diff_json = field_changes
-                                WHERE (diff_json IS NULL OR diff_json='') AND field_changes IS NOT NULL
-                            """)
-                        except Exception:
-                            pass
+                    # version_history migration skipped (table deprecated/reset)
+                    # New minimal history table (start-over implementation)
+                    conn.execute("""
+                        CREATE TABLE IF NOT EXISTS promo_history (
+                            id INTEGER PRIMARY KEY AUTOINCREMENT,
+                            promo_code TEXT NOT NULL,
+                            timestamp TEXT NOT NULL,
+                            event_type TEXT NOT NULL,
+                            user_name TEXT,
+                            diff_json TEXT
+                        )
+                    """)
+                    try:
+                        conn.execute("CREATE INDEX IF NOT EXISTS idx_promo_history_code_ts ON promo_history(promo_code, timestamp)")
+                    except Exception:
+                        pass
                 except Exception as mig_e:
                     logger.warning(f"Version history migration check failed: {mig_e}")
         except Exception as e:
             logger.warning(f"Failed to ensure diagnostics tables: {e}")
+        # Post-creation column augmentation for promo_extras (add test_status, zlab_status if missing)
+        try:
+            with sqlite3.connect(self._diag_db_path) as conn:
+                cur = conn.execute("PRAGMA table_info(promo_extras)")
+                existing_cols = {r[1] for r in cur.fetchall()}
+                for col in ('test_status','zlab_status'):
+                    if col not in existing_cols:
+                        try:
+                            conn.execute(f"ALTER TABLE promo_extras ADD COLUMN {col} TEXT")
+                        except Exception as ce:
+                            logger.warning(f"Failed adding column {col} to promo_extras: {ce}")
+        except Exception as e:
+            logger.warning(f"Promo extras column migration failed: {e}")
     
     def get_engine(self):
         """Create and return SQLAlchemy engine"""
@@ -969,7 +976,8 @@ class DatabaseManager:
             return {}
 
     def upsert_promo_extras(self, code: str, extras: Dict[str, Any], user: str):
-        fields = ['jira_ticket','initiative_name','sku_link','tradein_link','promo_grace','trade_in_grace','segment_name','sub_segment','segment_group_id','segment_level','flow_indicator']
+        # Extended field list to include testing status fields persisted with extras
+        fields = ['jira_ticket','initiative_name','sku_link','tradein_link','promo_grace','trade_in_grace','segment_name','sub_segment','segment_group_id','segment_level','flow_indicator','test_status','zlab_status']
         cols = []
         vals = []
         for c in fields:
@@ -978,47 +986,272 @@ class DatabaseManager:
         now = datetime.utcnow().isoformat()
         try:
             with sqlite3.connect(self._diag_db_path) as conn:
-                conn.execute("""
-                    INSERT INTO promo_extras (promo_code, jira_ticket, initiative_name, sku_link, tradein_link, promo_grace, trade_in_grace, segment_name, sub_segment, segment_group_id, segment_level, flow_indicator, created_at, updated_at, updated_by)
-                    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+                conn.execute(f"""
+                    INSERT INTO promo_extras (promo_code, {', '.join(fields)}, created_at, updated_at, updated_by)
+                    VALUES ({', '.join(['?']*(len(fields)+4))})
                     ON CONFLICT(promo_code) DO UPDATE SET
-                        jira_ticket=excluded.jira_ticket,
-                        initiative_name=excluded.initiative_name,
-                        sku_link=excluded.sku_link,
-                        tradein_link=excluded.tradein_link,
-                        promo_grace=excluded.promo_grace,
-                        trade_in_grace=excluded.trade_in_grace,
-                        segment_name=excluded.segment_name,
-                        sub_segment=excluded.sub_segment,
-                        segment_group_id=excluded.segment_group_id,
-                        segment_level=excluded.segment_level,
-                        flow_indicator=excluded.flow_indicator,
+                        {', '.join([f"{f}=excluded.{f}" for f in fields])},
                         updated_at=excluded.updated_at,
                         updated_by=excluded.updated_by
                 """, [code, *vals, now, now, user])
         except Exception as e:
             logger.error(f"Failed upsert extras for {code}: {e}")
 
+    # --- Minimal creation helper (test/admin use) ---
+    def insert_minimal_promo(self, field_map: Dict[str, Any], user: str = 'System') -> bool:
+        """Insert a minimal promo row if code not present.
+
+        field_map MUST include 'code'. Only a safe subset of columns will be inserted.
+        Returns True if inserted, False if already exists or failure.
+        """
+        code = field_map.get('code')
+        if not code:
+            return False
+        # Quick existence check
+        try:
+            if self.get_promo_by_code(code):
+                return False
+        except Exception:
+            pass
+        safe_cols = ['code','description','Owner','promo_srart_date','promo_end_date','Desired_Execution']
+        insert_cols = []
+        params = {}
+        for c in safe_cols:
+            if c in field_map and field_map[c] is not None:
+                insert_cols.append(c)
+                params[c] = field_map[c]
+        if 'code' not in insert_cols:
+            return False
+        col_list = ', '.join(insert_cols)
+        val_list = ', '.join([f":{c}" for c in insert_cols])
+        sql = f"INSERT INTO {self.source_table} ({col_list}) VALUES ({val_list})"
+        try:
+            engine = self.get_engine()
+            with engine.begin() as conn:
+                conn.execute(text(sql), params)
+            # Record creation history event with diff (fields old None -> new value)
+            try:
+                self.record_creation_event(code, {k: field_map.get(k) for k in insert_cols}, user=user)
+            except Exception:
+                pass
+            return True
+        except Exception as e:
+            logger.error(f"Failed minimal insert for {code}: {e}")
+            return False
+
     def record_version_entry(self, code: str, change_type: str, description: str, user: str, diff: Optional[Dict[str, Any]] = None):
-        payload = (code, datetime.utcnow().isoformat(), change_type, description, user, json.dumps(diff) if diff else None)
+        """Version history disabled/reset; no-op placeholder."""
+        return
+
+    # ===== New Minimal History API =====
+    def record_creation_event(self, code: str, inserted_fields: Dict[str, Any], user: str = 'System') -> bool:
+        """Record a single creation event with all inserted fields as NULL -> value diffs.
+
+        inserted_fields: mapping of column->value used in initial insert.
+        """
+        try:
+            diff = {}
+            for k, v in (inserted_fields or {}).items():
+                diff[k] = {'old': None, 'new': v}
+            payload = (code, datetime.utcnow().isoformat(), 'Created', user, json.dumps(diff))
+            with sqlite3.connect(self._diag_db_path) as conn:
+                conn.execute(
+                    "INSERT INTO promo_history (promo_code, timestamp, event_type, user_name, diff_json) VALUES (?,?,?,?,?)",
+                    payload
+                )
+            return True
+        except Exception as e:
+            logger.error(f"Failed to record creation event for {code}: {e}")
+            return False
+
+    def record_update_event(self, code: str, diff: Dict[str, Dict[str, Any]], user: str = 'System', window_seconds: int = 60) -> bool:
+        """Record an update (edit) event with 1-minute consolidation window.
+
+        If the most recent promo_history row for this promo is an 'Updated' event by the
+        same user and its timestamp is within window_seconds of now, we MERGE the new diff
+        into that existing row (keeping the original timestamp so the window does not slide).
+
+        Merge semantics for each field:
+          * If field not present yet -> add entire {old,new} pair.
+          * If field present -> keep original 'old', overwrite 'new' with newest value.
+        """
+        if not diff:
+            return False
+        try:
+            now = datetime.utcnow()
+            with sqlite3.connect(self._diag_db_path) as conn:
+                conn.row_factory = sqlite3.Row
+                cur = conn.execute(
+                    "SELECT id, timestamp, user_name, diff_json FROM promo_history WHERE promo_code=? AND event_type='Updated' ORDER BY timestamp DESC, id DESC LIMIT 1",
+                    (code,)
+                )
+                row = cur.fetchone()
+                if row is not None:
+                    try:
+                        ts = datetime.fromisoformat(row['timestamp'])
+                    except Exception:
+                        ts = None
+                    within_window = False
+                    if ts is not None:
+                        delta = (now - ts).total_seconds()
+                        within_window = delta <= window_seconds
+                    same_user = (row['user_name'] or 'System') == user
+                    if within_window and same_user:
+                        # Merge
+                        existing = {}
+                        try:
+                            existing = json.loads(row['diff_json']) if row['diff_json'] else {}
+                        except Exception:
+                            existing = {}
+                        for field, change in diff.items():
+                            if field in existing and isinstance(existing[field], dict):
+                                # Preserve original old; update new value
+                                if isinstance(change, dict) and 'new' in change:
+                                    existing[field]['new'] = change.get('new')
+                            else:
+                                existing[field] = change
+                        conn.execute(
+                            "UPDATE promo_history SET diff_json=? WHERE id=?",
+                            (json.dumps(existing), row['id'])
+                        )
+                        return True
+                # Otherwise insert new row
+                payload = (code, now.isoformat(), 'Updated', user, json.dumps(diff))
+                conn.execute(
+                    "INSERT INTO promo_history (promo_code, timestamp, event_type, user_name, diff_json) VALUES (?,?,?,?,?)",
+                    payload
+                )
+                return True
+        except Exception as e:
+            logger.error(f"Failed to record update event for {code}: {e}")
+            return False
+
+    def record_file_event(self, code: str, file_type: str, original_filename: str, stored_filename: str, size_bytes: int, checksum: Optional[str], user: str = 'System') -> bool:
+        """Record a discrete file upload event (no consolidation) into promo_history.
+
+        file_type expected values for history purposes:
+          - sku_excel -> 'SKU List Uploaded'
+          - tradein_excel -> 'Trade-In List Uploaded'
+          - other types map to generic 'File Uploaded'
+        Diff schema stored under keys representing metadata (original_filename, stored_filename, size_bytes, checksum, file_type).
+        """
+        try:
+            mapping = {
+                'sku_excel': 'SKU List Uploaded',
+                'tradein_excel': 'Trade-In List Uploaded'
+            }
+            event_type = mapping.get(file_type, 'File Uploaded')
+            diff = {
+                'file_type': {'old': None, 'new': file_type},
+                'original_filename': {'old': None, 'new': original_filename},
+                'stored_filename': {'old': None, 'new': stored_filename},
+                'size_bytes': {'old': None, 'new': size_bytes},
+                'checksum': {'old': None, 'new': checksum}
+            }
+            with sqlite3.connect(self._diag_db_path) as conn:
+                conn.execute(
+                    "INSERT INTO promo_history (promo_code, timestamp, event_type, user_name, diff_json) VALUES (?,?,?,?,?)",
+                    (code, datetime.utcnow().isoformat(), event_type, user, json.dumps(diff))
+                )
+            return True
+        except Exception as e:
+            logger.error(f"Failed to record file event for {code}: {e}")
+            return False
+
+    def record_pcr_version_event(self, code: str, generation_time: float, sql_length: int, user: str = 'System') -> bool:
+        """Record a PCR Version event with incrementing version number.
+
+        Fields captured in diff: version (new only), generation_time_seconds, sql_length_chars, generated_at.
+        Event label: PCR Version #N
+        """
+        try:
+            # Count existing PCR Version events to determine next version number
+            version = 1
+            with sqlite3.connect(self._diag_db_path) as conn:
+                cur = conn.execute(
+                    "SELECT COUNT(*) FROM promo_history WHERE promo_code=? AND event_type LIKE 'PCR Version %'",
+                    (code,)
+                )
+                row = cur.fetchone()
+                if row and row[0]:
+                    try:
+                        version = int(row[0]) + 1
+                    except Exception:
+                        version = 1
+                event_type = f"PCR Version #{version}"
+                diff = {
+                    'version': {'old': None, 'new': version},
+                    'generation_time_seconds': {'old': None, 'new': round(generation_time, 4)},
+                    'sql_length_chars': {'old': None, 'new': sql_length},
+                    'generated_at': {'old': None, 'new': datetime.utcnow().isoformat()}
+                }
+                conn.execute(
+                    "INSERT INTO promo_history (promo_code, timestamp, event_type, user_name, diff_json) VALUES (?,?,?,?,?)",
+                    (code, datetime.utcnow().isoformat(), event_type, user, json.dumps(diff))
+                )
+            return True
+        except Exception as e:
+            logger.error(f"Failed to record PCR version event for {code}: {e}")
+            return False
+
+    def record_end_date_system_update(self, code: str, old_end: str, new_end: str, user: str = 'System') -> bool:
+        """Record a system-driven end date update event.
+
+        Event label pattern: System Updates End Date - MM/DD/YYYY (new_end formatted)
+        Diff contains only promo_end_date old -> new.
+        """
+        try:
+            # Format target date for label; fall back to raw string if parsing fails
+            label_date = new_end
+            try:
+                from datetime import datetime as _dt
+                # Accept common date formats
+                for fmt in ("%Y-%m-%d", "%m/%d/%Y", "%Y/%m/%d"):
+                    try:
+                        parsed = _dt.strptime(new_end, fmt)
+                        label_date = parsed.strftime("%m/%d/%Y")
+                        break
+                    except Exception:
+                        continue
+            except Exception:
+                pass
+            event_type = f"System Updates End Date - {label_date}"
+            diff = {
+                'promo_end_date': {'old': old_end, 'new': new_end}
+            }
+            with sqlite3.connect(self._diag_db_path) as conn:
+                conn.execute(
+                    "INSERT INTO promo_history (promo_code, timestamp, event_type, user_name, diff_json) VALUES (?,?,?,?,?)",
+                    (code, datetime.utcnow().isoformat(), event_type, user, json.dumps(diff))
+                )
+            return True
+        except Exception as e:
+            logger.error(f"Failed to record end date system update for {code}: {e}")
+            return False
+
+    def get_creation_events(self, code: str) -> List[Dict[str, Any]]:
+        rows: List[Dict[str, Any]] = []
         try:
             with sqlite3.connect(self._diag_db_path) as conn:
-                try:
-                    conn.execute(
-                        "INSERT INTO version_history (promo_code, timestamp, change_type, description, user_name, diff_json) VALUES (?,?,?,?,?,?)",
-                        payload
-                    )
-                except Exception:
-                    # Legacy fallback schema (changed_by / field_changes ordering)
+                conn.row_factory = sqlite3.Row
+                cur = conn.execute("SELECT promo_code, timestamp, event_type, user_name, diff_json FROM promo_history WHERE promo_code=? ORDER BY timestamp ASC", (code,))
+                for r in cur.fetchall():
+                    diff = None
                     try:
-                        conn.execute(
-                            "INSERT INTO version_history (promo_code, change_type, changed_by, timestamp, description, field_changes) VALUES (?,?,?,?,?,?)",
-                            (code, change_type, user, payload[1], description, payload[5])
-                        )
-                    except Exception as e2:
-                        logger.error(f"Failed to record version history (legacy + current) for {code}: {e2}")
-        except Exception as outer:
-            logger.error(f"Version history insert outer failure for {code}: {outer}")
+                        diff = json.loads(r['diff_json']) if r['diff_json'] else None
+                    except Exception:
+                        diff = None
+                    rows.append({
+                        'promo_code': r['promo_code'],
+                        'timestamp': r['timestamp'],
+                        'change_type': r['event_type'],
+                        'changed_by': r['user_name'] or 'Unknown',
+                        'description': 'Created Promo' if r['event_type'] == 'Created' else r['event_type'],
+                        'field_changes': diff
+                    })
+        except Exception:
+            return []
+        return rows
 
     def count_version_events(self, code: str, change_type: str) -> int:
         """Return count of existing events for promo_code + change_type (SQLite)."""

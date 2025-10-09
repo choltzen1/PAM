@@ -1,14 +1,12 @@
-"""Centralized Version History Service (SQLite-backed).
+"""New minimal Promotion History service (creation events only).
 
-Reads the existing SQLite `version_history` table written by
-`DatabaseManager.record_version_entry` (schema: id, promo_code, timestamp,
-change_type, description, user_name, diff_json). Provides higher-level access
-patterns for UI pages (summary + full history) without coupling the admin
-blueprint directly to low-level SQL.
+Legacy `version_history` table logic removed. We now rely exclusively on
+`promo_history` rows produced by DatabaseManager.record_creation_event.
+Each row: (promo_code, timestamp, event_type='Created', user_name, diff_json).
 
-This intentionally DOES NOT re‑implement write logic; we leverage existing
-calls in the codebase that already insert rows via DatabaseManager.
-Future enhancements could migrate all writers to this service for consistency.
+This reader supplies data in the same structure expected by the existing
+version_history.html template: list of promotions each with 'changes' where
+each change has: change_type, timestamp, changed_by, description, field_changes.
 """
 
 from __future__ import annotations
@@ -26,33 +24,23 @@ class VersionHistoryService:
 
     def _ensure_table(self):  # idempotent
         os.makedirs(os.path.dirname(self.db_path), exist_ok=True)
+        # Only ensure promo_history exists (defensive – DatabaseManager also ensures)
         try:
             with sqlite3.connect(self.db_path) as conn:
                 conn.execute(
                     """
-                    CREATE TABLE IF NOT EXISTS version_history (
+                    CREATE TABLE IF NOT EXISTS promo_history (
                         id INTEGER PRIMARY KEY AUTOINCREMENT,
                         promo_code TEXT NOT NULL,
                         timestamp TEXT NOT NULL,
-                        change_type TEXT NOT NULL,
-                        description TEXT NOT NULL,
-                        user_name TEXT NULL,
-                        diff_json TEXT NULL
+                        event_type TEXT NOT NULL,
+                        user_name TEXT,
+                        diff_json TEXT
                     )
                     """
                 )
-                # Backward compatible migrations
-                try:
-                    cur = conn.execute("PRAGMA table_info(version_history)")
-                    cols = {r[1] for r in cur.fetchall()}
-                    if 'user_name' not in cols:
-                        conn.execute("ALTER TABLE version_history ADD COLUMN user_name TEXT NULL")
-                    if 'diff_json' not in cols:
-                        conn.execute("ALTER TABLE version_history ADD COLUMN diff_json TEXT NULL")
-                except Exception:
-                    pass
+                conn.execute("CREATE INDEX IF NOT EXISTS idx_ph_code_ts ON promo_history(promo_code, timestamp)")
         except Exception:
-            # Fail silently; reader methods will surface errors
             pass
 
     # ---- Read APIs ----
@@ -61,50 +49,42 @@ class VersionHistoryService:
         try:
             with sqlite3.connect(self.db_path) as conn:
                 conn.row_factory = sqlite3.Row
-                cols = {r[1] for r in conn.execute("PRAGMA table_info(version_history)").fetchall()}
-                has_diff = 'diff_json' in cols
-                has_user = 'user_name' in cols
                 cur = conn.execute(
-                    """
-                    SELECT promo_code, timestamp, change_type, description, user_name, diff_json, id
-                    FROM version_history
-                    WHERE promo_code=?
-                    ORDER BY timestamp DESC, id DESC
-                    """,
+                    "SELECT promo_code, timestamp, event_type, user_name, diff_json FROM promo_history WHERE promo_code=? ORDER BY timestamp DESC, id DESC",
                     (promo_code,)
                 )
-                raw_rows = cur.fetchall()
-                for r in raw_rows:
-                    if has_diff:
-                        diff_raw = r['diff_json']
-                    else:
-                        diff_raw = r['field_changes'] if 'field_changes' in r.keys() else None
+                for r in cur.fetchall():
+                    diff = None
                     try:
-                        diff = json.loads(diff_raw) if diff_raw else None
+                        diff = json.loads(r['diff_json']) if r['diff_json'] else None
                     except Exception:
                         diff = None
-                    ctype = r['change_type']
-                    if ctype == 'Edit':  # backward compatibility
-                        ctype = 'Modified'
-                    elif ctype == 'Create':
-                        ctype = 'Created'
-                    if has_user:
-                        changed_by = r['user_name'] or 'Unknown'
+                    evt = r['event_type']
+                    if evt == 'Created':
+                        desc = 'Created Promo'
+                    elif evt == 'Updated':
+                        desc = 'Updated Promo'
+                    elif evt == 'SKU List Uploaded':
+                        desc = 'SKU List Uploaded'
+                    elif evt == 'Trade-In List Uploaded':
+                        desc = 'Trade-In List Uploaded'
+                    elif evt.startswith('PCR Version #'):
+                        desc = evt
+                    elif evt.startswith('System Updates End Date -'):
+                         desc = evt
                     else:
-                        changed_by = r['changed_by'] if 'changed_by' in r.keys() else 'Unknown'
+                        desc = evt
                     rows.append({
-                        'change_type': ctype,
+                        'change_type': 'Created' if evt == 'Created' else evt,
                         'timestamp': r['timestamp'],
-                        'changed_by': changed_by,
-                        'description': r['description'],
+                        'changed_by': r['user_name'] or 'Unknown',
+                        'description': desc,
                         'field_changes': diff
                     })
-                # Inject version numbers for PCR events missing version metadata
-                self._inject_versions(rows)
-                self._inject_version_history_field(rows)
-                self._prune_blank_updates(rows)
+            # Provide synthetic version_history field for template uniformity
+            self._inject_version_history_field(rows)
         except Exception:
-            pass
+            return []
         return rows
 
     def get_all_promotions_with_history(self, fetch_promos: Callable[[], Dict[str, Any]]) -> List[Dict[str, Any]]:
@@ -116,55 +96,44 @@ class VersionHistoryService:
             all_promos = fetch_promos() or {}
         except Exception:
             all_promos = {}
-
+        grouped: Dict[str, List[Dict[str, Any]]] = {}
         try:
             with sqlite3.connect(self.db_path) as conn:
                 conn.row_factory = sqlite3.Row
-                cols = {r[1] for r in conn.execute("PRAGMA table_info(version_history)").fetchall()}
-                has_diff = 'diff_json' in cols
-                has_user = 'user_name' in cols
-                cur = conn.execute(
-                    """
-                    SELECT promo_code, timestamp, change_type, description, user_name, diff_json, id
-                    FROM version_history
-                    ORDER BY timestamp DESC, id DESC
-                    """
-                )
-                grouped: Dict[str, List[Dict[str, Any]]] = {}
-                raw_rows = cur.fetchall()
-                for r in raw_rows:
-                    code = r['promo_code']
-                    if has_diff:
-                        diff_raw = r['diff_json']
-                    else:
-                        diff_raw = r['field_changes'] if 'field_changes' in r.keys() else None
+                cur = conn.execute("SELECT promo_code, timestamp, event_type, user_name, diff_json FROM promo_history ORDER BY timestamp DESC, id DESC")
+                for r in cur.fetchall():
+                    diff = None
                     try:
-                        diff = json.loads(diff_raw) if diff_raw else None
+                        diff = json.loads(r['diff_json']) if r['diff_json'] else None
                     except Exception:
                         diff = None
-                    ctype = r['change_type']
-                    if ctype == 'Edit':
-                        ctype = 'Modified'
-                    elif ctype == 'Create':
-                        ctype = 'Created'
-                    changed_by = r['user_name'] if has_user else (r['changed_by'] if 'changed_by' in r.keys() else 'Unknown')
-                    grouped.setdefault(code, []).append({
-                        'change_type': ctype,
+                    evt = r['event_type']
+                    if evt == 'Created':
+                        desc = 'Created Promo'
+                    elif evt == 'Updated':
+                        desc = 'Updated Promo'
+                    elif evt == 'SKU List Uploaded':
+                        desc = 'SKU List Uploaded'
+                    elif evt == 'Trade-In List Uploaded':
+                        desc = 'Trade-In List Uploaded'
+                    elif evt.startswith('PCR Version #'):
+                        desc = evt
+                    elif evt.startswith('System Updates End Date -'):
+                        desc = evt
+                    else:
+                        desc = evt
+                    grouped.setdefault(r['promo_code'], []).append({
+                        'change_type': 'Created' if evt == 'Created' else evt,
                         'timestamp': r['timestamp'],
-                        'changed_by': changed_by or 'Unknown',
-                        'description': r['description'],
+                        'changed_by': r['user_name'] or 'Unknown',
+                        'description': desc,
                         'field_changes': diff
                     })
         except Exception:
-            return []
-
+            pass
         result: List[Dict[str, Any]] = []
         for code, changes in grouped.items():
-            # Enrich versions for PCR events
-            self._inject_versions(changes)
             self._inject_version_history_field(changes)
-            self._collapse_same_timestamp(changes)
-            self._prune_blank_updates(changes)
             base = all_promos.get(code, {})
             result.append({
                 'promo_code': code,
@@ -176,37 +145,11 @@ class VersionHistoryService:
                 'promo_owner': base.get('owner', ''),
                 'changes': changes
             })
-
         result.sort(key=lambda p: (p['changes'][0]['timestamp'] if p['changes'] else ''), reverse=True)
         return result
 
     # --- helpers ---
-    def _inject_versions(self, changes: List[Dict[str, Any]]):
-        """Assign sequential version numbers to PCR / Date Mismatch SQL events lacking one.
-        Modifies list in-place.
-        """
-        # Work oldest->newest for deterministic numbering
-        pcr_counter = 0
-        dm_counter = 0
-        for ch in sorted(changes, key=lambda c: c.get('timestamp','')):
-            ctype = ch.get('change_type')
-            if ctype == 'PCR Version':
-                pcr_counter += 1
-                fc = ch.get('field_changes') or {}
-                if 'version' not in fc:
-                    fc['version'] = pcr_counter
-                    ch['field_changes'] = fc
-                # Harmonize description if generic
-                if ch.get('description','').startswith('PCR SQL generated'):
-                    ch['description'] = f'PCR Version #{fc["version"]} generated'
-            elif ctype == 'Date Mismatch SQL':
-                dm_counter += 1
-                fc = ch.get('field_changes') or {}
-                if 'version' not in fc:
-                    fc['version'] = dm_counter
-                    ch['field_changes'] = fc
-                if ch.get('description','').startswith('Date mismatch SQL generated'):
-                    ch['description'] = f'Date Mismatch SQL #{fc["version"]} generated'
+    # Legacy helpers removed (no PCR/Date Mismatch events in new minimal history)
 
     def _inject_version_history_field(self, changes: List[Dict[str, Any]]):
         """Ensure every change has a synthetic version_history diff for UI consistency.
@@ -224,89 +167,13 @@ class VersionHistoryService:
                 fc['version_history'] = {'old': None, 'new': [summary]}
 
     def _collapse_same_timestamp(self, changes: List[Dict[str, Any]]):
-        """Collapse multiple Created/Modified entries sharing the exact same timestamp.
-
-        PCR Version / Date Mismatch SQL events are left untouched (even if same timestamp)
-        to preserve discrete version semantics.
-        """
-        if not changes:
-            return
-        precedence = {'Created': 0, 'Create': 0, 'Modified': 1, 'Edit': 1}
-        grouped = {}
-        ordered: List[Dict[str, Any]] = []
-        for ch in changes:
-            ts = ch.get('timestamp')
-            ctype = ch.get('change_type')
-            if ctype not in ('Created','Create','Modified','Edit') or not ts:
-                # passthrough (no collapse key)
-                ordered.append(ch)
-                continue
-            key = ts  # collapse by second-level timestamp
-            existing = grouped.get(key)
-            if not existing:
-                grouped[key] = ch
-                ordered.append(ch)
-            else:
-                # Merge into existing representative
-                rep = existing
-                # Prefer higher precedence (Created beats Modified)
-                if precedence.get(ctype, 99) < precedence.get(rep.get('change_type'), 99):
-                    rep['change_type'] = 'Created' if ctype in ('Created','Create') else 'Modified'
-                    rep['description'] = ch.get('description') or rep.get('description')
-                # Merge field diffs
-                rep_fc = rep.get('field_changes') or {}
-                ch_fc = ch.get('field_changes') or {}
-                # Merge version_history new list
-                if 'version_history' in rep_fc and 'version_history' in ch_fc:
-                    try:
-                        rep_list = rep_fc['version_history'].get('new') or []
-                        add_list = ch_fc['version_history'].get('new') or []
-                        rep_fc['version_history']['new'] = list(dict.fromkeys(rep_list + add_list))
-                    except Exception:
-                        pass
-                elif 'version_history' in ch_fc and 'version_history' not in rep_fc:
-                    rep_fc['version_history'] = ch_fc['version_history']
-                for f, diff in ch_fc.items():
-                    if f == 'version_history':
-                        continue
-                    if f not in rep_fc:
-                        rep_fc[f] = diff
-                rep['field_changes'] = rep_fc
-        # Replace list with collapsed ordering
-        changes.clear()
-        changes.extend(ordered)
+        return  # no-op in minimal mode
 
     def _prune_blank_updates(self, changes: List[Dict[str, Any]]):
-        """Remove Modified events that have no meaningful field-level diffs.
+        return  # no-op (only creation events)
 
-        A 'blank' update is one where field_changes is empty or only contains
-        non-user facing internal keys (version_history + ignored set).
-        """
-        if not changes:
-            return
-        ignored = {
-            'version_history','updated_at','created_at','last_sync','generated_sql',
-            'full_sql','sql_text','pcr_sql','sql_preview','sql_payload','spe_generated_sql'
-        }
-        pruned: List[Dict[str, Any]] = []
-        for ch in changes:
-            ctype = ch.get('change_type')
-            if ctype not in ('Modified','Edit'):
-                pruned.append(ch)
-                continue
-            fc = ch.get('field_changes') or {}
-            # Determine if any renderable diff remains
-            has_renderable = False
-            for f, diff in fc.items():
-                if f in ignored:
-                    continue
-                if isinstance(diff, dict):
-                    has_renderable = True
-                    break
-            if has_renderable:
-                pruned.append(ch)
-        changes.clear()
-        changes.extend(pruned)
+    def _consolidate_initial_creation(self, changes: List[Dict[str, Any]]):
+        return  # no-op (only single creation events expected)
 
 
 # Singleton instance for simple import usage
