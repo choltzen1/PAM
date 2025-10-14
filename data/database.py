@@ -110,14 +110,33 @@ class DatabaseManager:
                     )
                 """)
                 conn.execute("CREATE INDEX IF NOT EXISTS idx_promo_files_code ON promo_files(promo_code)")
-                # Lightweight schema migration: ensure user_name column exists (older DBs lacked it)
+                # Lightweight schema migration: ensure user_name and diff_json columns exist (older DBs lacked them)
                 try:
                     cur = conn.execute("PRAGMA table_info(version_history)")
                     cols = [r[1] for r in cur.fetchall()]
                     if 'user_name' not in cols:
                         conn.execute("ALTER TABLE version_history ADD COLUMN user_name TEXT NULL")
+                    if 'diff_json' not in cols:
+                        conn.execute("ALTER TABLE version_history ADD COLUMN diff_json TEXT NULL")
                 except Exception as mig_e:
                     logger.warning(f"Version history migration check failed: {mig_e}")
+                
+                # Lightweight schema migration: ensure generated_sql columns exist in promo_extras
+                try:
+                    cur = conn.execute("PRAGMA table_info(promo_extras)")
+                    cols = [r[1] for r in cur.fetchall()]
+                    if 'generated_sql' not in cols:
+                        conn.execute("ALTER TABLE promo_extras ADD COLUMN generated_sql TEXT NULL")
+                    if 'sql_generated_at' not in cols:
+                        conn.execute("ALTER TABLE promo_extras ADD COLUMN sql_generated_at TEXT NULL")
+                    if 'sql_generation_time' not in cols:
+                        conn.execute("ALTER TABLE promo_extras ADD COLUMN sql_generation_time TEXT NULL")
+                    if 'sql_length' not in cols:
+                        conn.execute("ALTER TABLE promo_extras ADD COLUMN sql_length INTEGER NULL")
+                    if 'sql_truncated' not in cols:
+                        conn.execute("ALTER TABLE promo_extras ADD COLUMN sql_truncated INTEGER NULL")
+                except Exception as mig_e:
+                    logger.warning(f"Promo extras migration check failed: {mig_e}")
         except Exception as e:
             logger.warning(f"Failed to ensure diagnostics tables: {e}")
         # Diagnostics persistence (SQLite co-located with version history)
@@ -186,14 +205,33 @@ class DatabaseManager:
                     )
                 """)
                 conn.execute("CREATE INDEX IF NOT EXISTS idx_promo_files_code ON promo_files(promo_code)")
-                # Lightweight schema migration: ensure user_name column exists (older DBs lacked it)
+                # Lightweight schema migration: ensure user_name and diff_json columns exist (older DBs lacked them)
                 try:
                     cur = conn.execute("PRAGMA table_info(version_history)")
                     cols = [r[1] for r in cur.fetchall()]
                     if 'user_name' not in cols:
                         conn.execute("ALTER TABLE version_history ADD COLUMN user_name TEXT NULL")
+                    if 'diff_json' not in cols:
+                        conn.execute("ALTER TABLE version_history ADD COLUMN diff_json TEXT NULL")
                 except Exception as mig_e:
                     logger.warning(f"Version history migration check failed: {mig_e}")
+                
+                # Lightweight schema migration: ensure generated_sql columns exist in promo_extras
+                try:
+                    cur = conn.execute("PRAGMA table_info(promo_extras)")
+                    cols = [r[1] for r in cur.fetchall()]
+                    if 'generated_sql' not in cols:
+                        conn.execute("ALTER TABLE promo_extras ADD COLUMN generated_sql TEXT NULL")
+                    if 'sql_generated_at' not in cols:
+                        conn.execute("ALTER TABLE promo_extras ADD COLUMN sql_generated_at TEXT NULL")
+                    if 'sql_generation_time' not in cols:
+                        conn.execute("ALTER TABLE promo_extras ADD COLUMN sql_generation_time TEXT NULL")
+                    if 'sql_length' not in cols:
+                        conn.execute("ALTER TABLE promo_extras ADD COLUMN sql_length INTEGER NULL")
+                    if 'sql_truncated' not in cols:
+                        conn.execute("ALTER TABLE promo_extras ADD COLUMN sql_truncated INTEGER NULL")
+                except Exception as mig_e:
+                    logger.warning(f"Promo extras migration check failed: {mig_e}")
         except Exception as e:
             logger.warning(f"Failed to ensure diagnostics tables: {e}")
     
@@ -357,8 +395,6 @@ class DatabaseManager:
         """Fetch promotions filtered by Desired_Execution type (RDC, SPE, Rebate)"""
         sql = f"""
             SELECT 
-        sql = f"""
-            SELECT 
             code,
             Owner,
             [bill facing name] as bill_facing_name,
@@ -428,8 +464,6 @@ class DatabaseManager:
         """Fetch ALL promotions regardless of type"""
         sql = f"""
             SELECT 
-        sql = f"""
-            SELECT 
             code,
             Owner,
             [bill facing name] as bill_facing_name,
@@ -478,10 +512,6 @@ class DatabaseManager:
         except Exception as e:
             logger.error(f"Failed to fetch all promotions: {str(e)}")
             return []
-    
-    def get_promo_by_code(self, promo_code: str) -> Optional[Dict[str, Any]]:
-        """Fetch specific promotion by code"""
-        sql = f"""
     
     def get_promo_by_code(self, promo_code: str) -> Optional[Dict[str, Any]]:
         """Fetch specific promotion by code"""
@@ -744,10 +774,6 @@ class DatabaseManager:
         """Search promotions by code or description"""
         sql = f"""
             SELECT 
-    def search_promos(self, search_term: str) -> List[Dict[Hashable, Any]]:
-        """Search promotions by code or description"""
-        sql = f"""
-            SELECT 
             code,
             Owner,
             [bill facing name] as bill_facing_name,
@@ -854,8 +880,6 @@ class DatabaseManager:
         Priority: self.orbit_source_table then self.source_table (if different).
         Returns dict or None.
         """
-        base_select = """
-            SELECT 
 
     def get_orbit_record_by_orbit_id(self, orbit_id: str) -> Optional[Dict[str, Any]]:
         """Fetch lightweight orbit intake row by orbit_id.
@@ -1168,7 +1192,7 @@ class DatabaseManager:
             return {}
 
     def upsert_promo_extras(self, code: str, extras: Dict[str, Any], user: str):
-        fields = ['jira_ticket','initiative_name','sku_link','tradein_link','promo_grace','trade_in_grace','segment_name','sub_segment','segment_group_id','segment_level','flow_indicator']
+        fields = ['jira_ticket','initiative_name','sku_link','tradein_link','promo_grace','trade_in_grace','segment_name','sub_segment','segment_group_id','segment_level','flow_indicator','generated_sql','sql_generated_at','sql_generation_time','sql_length','sql_truncated']
         cols = []
         vals = []
         for c in fields:
@@ -1178,8 +1202,8 @@ class DatabaseManager:
         try:
             with sqlite3.connect(self._diag_db_path) as conn:
                 conn.execute("""
-                    INSERT INTO promo_extras (promo_code, jira_ticket, initiative_name, sku_link, tradein_link, promo_grace, trade_in_grace, segment_name, sub_segment, segment_group_id, segment_level, flow_indicator, created_at, updated_at, updated_by)
-                    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+                    INSERT INTO promo_extras (promo_code, jira_ticket, initiative_name, sku_link, tradein_link, promo_grace, trade_in_grace, segment_name, sub_segment, segment_group_id, segment_level, flow_indicator, generated_sql, sql_generated_at, sql_generation_time, sql_length, sql_truncated, created_at, updated_at, updated_by)
+                    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
                     ON CONFLICT(promo_code) DO UPDATE SET
                         jira_ticket=excluded.jira_ticket,
                         initiative_name=excluded.initiative_name,
@@ -1192,6 +1216,11 @@ class DatabaseManager:
                         segment_group_id=excluded.segment_group_id,
                         segment_level=excluded.segment_level,
                         flow_indicator=excluded.flow_indicator,
+                        generated_sql=excluded.generated_sql,
+                        sql_generated_at=excluded.sql_generated_at,
+                        sql_generation_time=excluded.sql_generation_time,
+                        sql_length=excluded.sql_length,
+                        sql_truncated=excluded.sql_truncated,
                         updated_at=excluded.updated_at,
                         updated_by=excluded.updated_by
                 """, [code, *vals, now, now, user])
@@ -1202,8 +1231,8 @@ class DatabaseManager:
         try:
             with sqlite3.connect(self._diag_db_path) as conn:
                 conn.execute(
-                    "INSERT INTO version_history (promo_code, timestamp, change_type, description, user_name, diff_json) VALUES (?,?,?,?,?,?)",
-                    (code, datetime.utcnow().isoformat(), change_type, description, user, json.dumps(diff) if diff else None)
+                    "INSERT INTO version_history (promo_code, timestamp, change_type, description, changed_by, diff_json) VALUES (?,?,?,?,?,?)",
+                    (code, datetime.utcnow().isoformat(), change_type, description, user or 'System', json.dumps(diff) if diff else None)
                 )
         except Exception as e:
             logger.error(f"Failed to record version history for {code}: {e}")
@@ -1289,7 +1318,7 @@ class DatabaseManager:
             return {}
 
     def upsert_promo_extras(self, code: str, extras: Dict[str, Any], user: str):
-        fields = ['jira_ticket','initiative_name','sku_link','tradein_link','promo_grace','trade_in_grace','segment_name','sub_segment','segment_group_id','segment_level','flow_indicator']
+        fields = ['jira_ticket','initiative_name','sku_link','tradein_link','promo_grace','trade_in_grace','segment_name','sub_segment','segment_group_id','segment_level','flow_indicator','generated_sql','sql_generated_at','sql_generation_time','sql_length','sql_truncated']
         cols = []
         vals = []
         for c in fields:
@@ -1299,8 +1328,8 @@ class DatabaseManager:
         try:
             with sqlite3.connect(self._diag_db_path) as conn:
                 conn.execute("""
-                    INSERT INTO promo_extras (promo_code, jira_ticket, initiative_name, sku_link, tradein_link, promo_grace, trade_in_grace, segment_name, sub_segment, segment_group_id, segment_level, flow_indicator, created_at, updated_at, updated_by)
-                    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+                    INSERT INTO promo_extras (promo_code, jira_ticket, initiative_name, sku_link, tradein_link, promo_grace, trade_in_grace, segment_name, sub_segment, segment_group_id, segment_level, flow_indicator, generated_sql, sql_generated_at, sql_generation_time, sql_length, sql_truncated, created_at, updated_at, updated_by)
+                    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
                     ON CONFLICT(promo_code) DO UPDATE SET
                         jira_ticket=excluded.jira_ticket,
                         initiative_name=excluded.initiative_name,
@@ -1313,6 +1342,11 @@ class DatabaseManager:
                         segment_group_id=excluded.segment_group_id,
                         segment_level=excluded.segment_level,
                         flow_indicator=excluded.flow_indicator,
+                        generated_sql=excluded.generated_sql,
+                        sql_generated_at=excluded.sql_generated_at,
+                        sql_generation_time=excluded.sql_generation_time,
+                        sql_length=excluded.sql_length,
+                        sql_truncated=excluded.sql_truncated,
                         updated_at=excluded.updated_at,
                         updated_by=excluded.updated_by
                 """, [code, *vals, now, now, user])
@@ -1323,8 +1357,8 @@ class DatabaseManager:
         try:
             with sqlite3.connect(self._diag_db_path) as conn:
                 conn.execute(
-                    "INSERT INTO version_history (promo_code, timestamp, change_type, description, user_name, diff_json) VALUES (?,?,?,?,?,?)",
-                    (code, datetime.utcnow().isoformat(), change_type, description, user, json.dumps(diff) if diff else None)
+                    "INSERT INTO version_history (promo_code, timestamp, change_type, description, changed_by, diff_json) VALUES (?,?,?,?,?,?)",
+                    (code, datetime.utcnow().isoformat(), change_type, description, user or 'System', json.dumps(diff) if diff else None)
                 )
         except Exception as e:
             logger.error(f"Failed to record version history for {code}: {e}")

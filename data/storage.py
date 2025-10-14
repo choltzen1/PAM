@@ -66,7 +66,12 @@ class PromoDataManager:
         try:
             db_record = self.db_manager.get_promo_by_code(promo_code)
             if db_record:
-                return self.db_manager.convert_db_record_to_json_format(db_record)
+                promo_data = self.db_manager.convert_db_record_to_json_format(db_record)
+                # Merge in extras (jira_ticket, links, SQL, etc.)
+                extras = self.db_manager.get_promo_extras(promo_code)
+                if extras:
+                    promo_data.update(extras)
+                return promo_data
             return {}
         except Exception as e:
             print(f"Database lookup failed for {promo_code}: {e}")
@@ -193,7 +198,8 @@ class PromoDataManager:
         }
         extras_fields = {
             'jira_ticket','initiative_name','sku_link','tradein_link','promo_grace','trade_in_grace',
-            'segment_name','sub_segment','segment_group_id','segment_level','flow_indicator'
+            'segment_name','sub_segment','segment_group_id','segment_level','flow_indicator',
+            'generated_sql','sql_generated_at','sql_generation_time','sql_length','sql_truncated'
         }
 
         base_updates = {}

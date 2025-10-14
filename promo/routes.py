@@ -745,7 +745,9 @@ def edit_promo(promo_code):
             }
         
         # Handle SQL generation
+        print(f"DEBUG: generate_sql value = {request.form.get('generate_sql')}")
         if request.form.get('generate_sql'):
+            print(f"DEBUG: Starting SQL generation for {promo_code}")
             from promo.builders import generate_promo_eligibility_sql
             from datetime import datetime
             import time
@@ -753,9 +755,11 @@ def edit_promo(promo_code):
                 # Start timing SQL generation
                 start_time = time.time()
                 
+                print(f"DEBUG: About to call generate_promo_eligibility_sql with promo_data keys: {promo_data.keys()}")
                 # Generate SQL using the dictionary data
                 sql_content = generate_promo_eligibility_sql(promo_data)
                 
+                print(f"DEBUG: SQL generated, length = {len(sql_content)}")
                 # End timing
                 end_time = time.time()
                 generation_time = end_time - start_time
@@ -768,8 +772,11 @@ def edit_promo(promo_code):
                 promo_data['sql_generated_at'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                 promo_data['sql_generation_time'] = f"{generation_time:.4f}"
                 promo_data['sql_length'] = len(sql_content)
+                
+                print(f"DEBUG: About to save promo")
                 dm.save_promo(promo_code, promo_data, user_name="Cade Holtzen")
                 
+                print(f"DEBUG: Promo saved, flashing message")
                 # Flash message with performance info
                 flash(f"SQL generated successfully in {generation_time:.2f} seconds ({len(sql_content):,} characters)", "success")
 
@@ -786,6 +793,9 @@ def edit_promo(promo_code):
                     print(f"⚠️  NOTICE: SQL generation for {promo_code} took {generation_time:.2f} seconds")
                     
             except Exception as e:
+                print(f"ERROR: SQL generation failed with exception: {e}")
+                import traceback
+                traceback.print_exc()
                 flash(f"Error generating SQL: {str(e)}", "error")
         
         # Handle file uploads

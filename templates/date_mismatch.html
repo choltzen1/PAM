@@ -424,7 +424,7 @@ function batchGenerateSql() {
   }
   
   // Make AJAX request to generate batch SQL
-  fetch('/generate_batch_sql', {
+  fetch('/generate-batch-sql', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -605,7 +605,7 @@ function downloadSqlForPromo(promoCode, orbitEndDate) {
   }
   
   // Trigger download
-  const url = `/generate_sql_for_promo/${promoCode}?operator_id=${operatorId}&orbit_end_date=${encodeURIComponent(orbitEndDate)}`;
+  const url = `/generate-sql-for-promo/${promoCode}?operator_id=${operatorId}&orbit_end_date=${encodeURIComponent(orbitEndDate)}`;
   window.location.href = url;
 }
 
@@ -631,7 +631,7 @@ function toggleSqlPreview(promoCode, orbitEndDate) {
     container.scrollIntoView({ behavior: 'smooth' });
     
     // Load SQL via AJAX
-    const url = `/preview_sql_for_promo/${promoCode}?operator_id=${operatorId}&orbit_end_date=${encodeURIComponent(orbitEndDate)}`;
+    const url = `/preview-sql-for-promo/${promoCode}?operator_id=${operatorId}&orbit_end_date=${encodeURIComponent(orbitEndDate)}`;
     
     fetch(url)
       .then(response => {
