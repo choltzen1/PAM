@@ -45,8 +45,15 @@
       <input type="text" id="search-input" name="search" placeholder="Promo Code or Owner" value="{{ search_query }}" onkeyup="debounceSearch()" />
     </div>
 
+    <div class="filter-group">
+      <label>Status Scope</label>
+      <select id="scope-select" name="scope">
+        <option value="all" {% if scope!='upcoming' %}selected{% endif %}>All</option>
+        <option value="upcoming" {% if scope=='upcoming' %}selected{% endif %}>Upcoming Only</option>
+      </select>
+    </div>
     <div class="action-buttons">
-  <a href="{{ url_for('promo.get_promo_codes_page') }}" class="btn btn-magenta"><i class="fas fa-wrench"></i> Get Promo Code</a>
+      <a href="{{ url_for('promo.get_promo_codes_page') }}" class="btn btn-magenta"><i class="fas fa-wrench"></i> Get Promo Code</a>
     </div>
   </div>
 
@@ -158,22 +165,23 @@
 
 <script>
 let searchTimeout;
+function applyFiltersImmediate() {
+  const search = document.getElementById('search-input').value;
+  const owner = document.getElementById('owner-filter').value;
+  const scope = document.getElementById('scope-select').value;
+  const url = new URL(window.location);
+  url.searchParams.set('search', search);
+  url.searchParams.set('owner', owner);
+  url.searchParams.set('scope', scope);
+  url.searchParams.set('page', '1');
+  window.location.href = url.toString();
+}
 function debounceSearch() {
   clearTimeout(searchTimeout);
-  searchTimeout = setTimeout(() => {
-    const search = document.getElementById('search-input').value;
-    const owner = document.getElementById('owner-filter').value;
-    const url = new URL(window.location);
-    url.searchParams.set('search', search);
-    url.searchParams.set('owner', owner);
-    url.searchParams.set('page', '1');
-    window.location.href = url.toString();
-  }, 500);
+  searchTimeout = setTimeout(applyFiltersImmediate, 400);
 }
-
-document.getElementById('owner-filter').addEventListener('change', function() {
-  debounceSearch();
-});
+document.getElementById('owner-filter').addEventListener('change', applyFiltersImmediate);
+document.getElementById('scope-select').addEventListener('change', applyFiltersImmediate);
 </script>
 
 {% endblock %}

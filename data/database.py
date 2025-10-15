@@ -296,6 +296,121 @@ class DatabaseManager:
         except Exception as e:
             logger.error(f"Failed to fetch {execution_type} promotions: {str(e)}")
             return []
+
+    # --- Optimized paginated query (limited columns, server-side filter & pagination) ---
+    def get_paginated_execution_type(
+        self,
+        execution_type: str,
+        page: int,
+        per_page: int,
+        search: str = "",
+        owner_filter: str = "all",
+        upcoming_only_when_no_query: bool = False,
+        force_upcoming: bool = False,
+    ) -> Dict[str, Any]:
+        """Return paginated promos with optional search/owner filter.
+
+        Behavior per requirements:
+          - Initial (no search & owner_filter=='all'): show ONLY upcoming (start date > today OR NULL)
+          - If search or owner filter applied: include launched (and expired) records matching search.
+        """
+        page = max(page, 1)
+        per_page = max(1, min(per_page, 200))
+        offset = (page - 1) * per_page
+        params: Dict[str, Any] = {
+            'execution_type': execution_type,
+            'limit': per_page,
+            'offset': offset,
+        }
+        where_clauses = ["Desired_Execution = :execution_type"]
+
+        base_query_mode = not search and (owner_filter == 'all')
+        # Apply upcoming filter if explicitly forced OR (no query & upcoming_only_when_no_query)
+        if force_upcoming or (base_query_mode and upcoming_only_when_no_query):
+            where_clauses.append("(promo_srart_date IS NULL OR promo_srart_date > CAST(GETUTCDATE() AS DATE))")
+
+        if owner_filter and owner_filter != 'all':
+            where_clauses.append("Owner = :owner")
+            params['owner'] = owner_filter
+
+        # Search logic
+        if search:
+            s = search.strip().lower()
+            if s and s.isalnum() and len(s) <= 8:  # treat as possible code prefix
+                where_clauses.append("(LOWER(code) LIKE :code_prefix OR LOWER(Owner) LIKE :wild OR LOWER([bill facing name]) LIKE :wild)")
+                params['code_prefix'] = s + '%'
+            else:
+                where_clauses.append("(LOWER(code) LIKE :wild OR LOWER(Owner) LIKE :wild OR LOWER([bill facing name]) LIKE :wild)")
+            params['wild'] = f"%{s}%"
+
+        where_sql = " AND ".join(where_clauses)
+
+        # Count query
+        count_sql = f"SELECT COUNT(1) as cnt FROM {self.source_table} WHERE {where_sql}"
+        # Data query (order: earliest upcoming first when filtering upcoming, else code desc)
+        if force_upcoming or (base_query_mode and upcoming_only_when_no_query):
+            order_clause = "ORDER BY promo_srart_date ASC, code DESC"
+        else:
+            order_clause = "ORDER BY code DESC"
+        data_sql = f"""
+            SELECT code, Owner, [bill facing name] as bill_facing_name, orbit_id,
+                   promo_srart_date, promo_end_date
+            FROM {self.source_table}
+            WHERE {where_sql}
+            {order_clause}
+            OFFSET :offset ROWS FETCH NEXT :limit ROWS ONLY
+        """
+        try:
+            cnt_df = self.get_dataframe(count_sql, params)
+            total_items = int(cnt_df['cnt'].iloc[0]) if not cnt_df.empty else 0
+            data_df = self.get_dataframe(data_sql, params)
+            rows = [self._sanitize_record(r) for r in data_df.to_dict('records')]
+        except Exception as e:
+            logger.error(f"Optimized pagination failed for {execution_type}: {e}")
+            return {
+                'promotions': [],
+                'pagination': {
+                    'page': page,
+                    'per_page': per_page,
+                    'total_items': 0,
+                    'total_pages': 0,
+                    'has_prev': False,
+                    'has_next': False,
+                    'prev_num': None,
+                    'next_num': None
+                },
+                'owners': []
+            }
+
+        total_pages = (total_items + per_page - 1) // per_page if per_page else 0
+
+        # Distinct owners for dropdown (based on upcoming set for base mode; else from filtered dataset)
+        owners: List[str] = []
+        try:
+            owner_where = "Desired_Execution = :execution_type"
+            owner_params = {'execution_type': execution_type}
+            if force_upcoming or (base_query_mode and upcoming_only_when_no_query):
+                owner_where += " AND (promo_srart_date IS NULL OR promo_srart_date > CAST(GETUTCDATE() AS DATE))"
+            owner_sql = f"SELECT DISTINCT Owner FROM {self.source_table} WHERE {owner_where} AND Owner IS NOT NULL ORDER BY Owner"
+            owner_df = self.get_dataframe(owner_sql, owner_params)
+            owners = [o for o in owner_df['Owner'].dropna().tolist() if str(o).strip()]
+        except Exception:
+            pass
+
+        return {
+            'promotions': rows,
+            'pagination': {
+                'page': page,
+                'per_page': per_page,
+                'total_items': total_items,
+                'total_pages': total_pages,
+                'has_prev': page > 1,
+                'has_next': page < total_pages,
+                'prev_num': page - 1 if page > 1 else None,
+                'next_num': page + 1 if page < total_pages else None
+            },
+            'owners': owners
+        }
     
     def get_all_spe_promos(self) -> List[Dict[str, Any]]:
         """Fetch all SPE promotions from database"""

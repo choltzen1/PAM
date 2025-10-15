@@ -51,8 +51,15 @@
       />
     </div>
 
+    <div class="filter-group">
+      <label>Status Scope</label>
+      <select id="scope-select" name="scope">
+        <option value="all" {% if scope!='upcoming' %}selected{% endif %}>All</option>
+        <option value="upcoming" {% if scope=='upcoming' %}selected{% endif %}>Upcoming Only</option>
+      </select>
+    </div>
     <div class="action-buttons">
-  <a href="{{ url_for('promo.get_promo_codes_page') }}" class="btn btn-magenta"><i class="fas fa-wrench"></i> Get Promo Code</a>
+      <a href="{{ url_for('promo.get_promo_codes_page') }}" class="btn btn-magenta"><i class="fas fa-wrench"></i> Get Promo Code</a>
     </div>
   </div>
 

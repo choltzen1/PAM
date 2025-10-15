@@ -208,6 +208,7 @@ class PromoDataManager:
     
     def get_paginated_promos(self, page: int = 1, per_page: int = 25, search: str = "", owner_filter: str = "all") -> Dict[str, Any]:
         """Get paginated promotions with optional filtering (DB only)."""
+        # Legacy (non-optimized) path kept for fallback; new optimized path below.
         try:
             db_records = self.db_manager.get_promos_by_execution_type("RDC")
         except Exception as e:
@@ -306,6 +307,71 @@ class PromoDataManager:
     def get_pam_only_paginated_promos(self, page: int = 1, per_page: int = 25, search: str = "", owner_filter: str = "all") -> Dict[str, Any]:
         """Alias to get_paginated_promos retained so existing route checks succeed."""
         return self.get_paginated_promos(page=page, per_page=per_page, search=search, owner_filter=owner_filter)
+
+    # Optimized path leveraging DB-side filtering/pagination
+    def get_paginated_promos_optimized(self, page: int = 1, per_page: int = 25, search: str = "", owner_filter: str = "all", scope: str = "all") -> Dict[str, Any]:
+        data = self.db_manager.get_paginated_execution_type(
+            execution_type="RDC",
+            page=page,
+            per_page=per_page,
+            search=search,
+            owner_filter=owner_filter,
+            upcoming_only_when_no_query=False,
+            force_upcoming=(scope == 'upcoming'),
+        )
+        # Compute phase only for returned rows (lightweight)
+        from datetime import datetime as _dt
+        today = _dt.utcnow().date()
+        def parse_date(val):
+            if not val:
+                return None
+            try:
+                return _dt.strptime(val[:10], '%Y-%m-%d').date()
+            except Exception:
+                return None
+        for promo in data['promotions']:
+            start = parse_date(promo.get('promo_srart_date'))
+            end = parse_date(promo.get('promo_end_date'))
+            if start and start > today:
+                phase = 'Build'
+            elif end and end < today:
+                phase = 'Expired'
+            else:
+                phase = 'Launched'
+            promo['status'] = phase
+        return data
+
+    def get_paginated_spe_promos_optimized(self, page: int = 1, per_page: int = 25, search: str = "", owner_filter: str = "all", scope: str = "all") -> Dict[str, Any]:
+        """Optimized SPE listing with upcoming-only default; includes launched/expired on query."""
+        data = self.db_manager.get_paginated_execution_type(
+            execution_type="SPE",
+            page=page,
+            per_page=per_page,
+            search=search,
+            owner_filter=owner_filter,
+            upcoming_only_when_no_query=False,
+            force_upcoming=(scope == 'upcoming'),
+        )
+        from datetime import datetime as _dt
+        today = _dt.utcnow().date()
+        def parse_date(val):
+            if not val:
+                return None
+            try:
+                return _dt.strptime(val[:10], '%Y-%m-%d').date()
+            except Exception:
+                return None
+        for promo in data['promotions']:
+            start = parse_date(promo.get('promo_srart_date'))
+            end = parse_date(promo.get('promo_end_date'))
+            if start and start > today:
+                phase = 'Build'
+            elif end and end < today:
+                phase = 'Expired'
+            else:
+                phase = 'Launched'
+            promo['status'] = phase
+        return data
     
     def get_all_spe_promos(self) -> Dict[str, Any]:
         """Get all SPE promotions (DB)."""
