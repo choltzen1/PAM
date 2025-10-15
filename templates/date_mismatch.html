@@ -162,18 +162,18 @@
     </div>
     
     <div class="table-container">
-      <table class="date-mismatch-table">
+      <table class="date-mismatch-table sortable">
         <thead>
           <tr>
             <th class="txt-center">
               <input type="checkbox" id="selectAll" onchange="toggleSelectAll()">
             </th>
-            <th class="txt-left">Promo Owner</th>
-            <th class="txt-center">ORBIT Number</th>
-            <th class="txt-center">Promo Code</th>
-            <th class="txt-center">ORBIT End Date</th>
-            <th class="txt-center">PAM End Date</th>
-            <th class="txt-center">Mismatch Type</th>
+            <th class="txt-left" data-sort-type="string">Promo Owner</th>
+            <th class="txt-center" data-sort-type="string">ORBIT Number</th>
+            <th class="txt-center" data-sort-type="string">Promo Code</th>
+            <th class="txt-center" data-sort-type="date">ORBIT End Date</th>
+            <th class="txt-center" data-sort-type="date">PAM End Date</th>
+            <th class="txt-center" data-sort-type="string">Mismatch Type</th>
             <th class="txt-center">Actions</th>
           </tr>
         </thead>
@@ -186,7 +186,7 @@
             <td class="promo-owner txt-left">{{ promo.owner or 'N/A' }}</td>
             <td class="orbit-number txt-center">{{ promo.orbit_id or 'N/A' }}</td>
             <td class="promo-code txt-center">
-              <a href="{{ url_for('promo.edit_promo', promo_code=promo.code) }}" class="promo-link">
+              <a href="{{ url_for('promo.edit_rdc', promo_code=promo.code) }}" class="promo-link">
                 {{ promo.code }}
               </a>
             </td>
@@ -315,7 +315,7 @@ function batchUpdatePam() {
   const selectedCodes = getSelectedPromoCodes();
   
   if (selectedCodes.length === 0) {
-    alert('Please select promotions to update.');
+  alert('Please select RDC to update.');
     return;
   }
   
@@ -378,7 +378,7 @@ function batchGenerateSql() {
   const selectedCodes = getSelectedPromoCodes();
   
   if (selectedCodes.length === 0) {
-    alert('Please select promotions to generate SQL for.');
+  alert('Please select RDC to generate SQL for.');
     return;
   }
   

@@ -26,6 +26,8 @@ class PromoDataManager:
         os.makedirs(data_dir, exist_ok=True)
         os.makedirs(self.uploads_dir, exist_ok=True)
         os.makedirs(self.promo_uploads_dir, exist_ok=True)
+        # Phase sweep tracking (string date YYYY-MM-DD or None)
+        self._last_phase_sweep_date = None  # type: ignore[attr-defined]
 
     # --- Minimal compatibility API (legacy hybrid manager expectations) ---
     def get_cache_status(self) -> Dict[str, Any]:
@@ -109,6 +111,13 @@ class PromoDataManager:
                 except Exception as extras_err:
                     # Non-fatal; log to stdout for now (could be improved with structured logging)
                     print(f"Attach promo_extras failed for {promo_code}: {extras_err}")
+                # Compute current phase and log transition (detail view)
+                try:
+                    phase = self._compute_phase(converted.get('promo_start_date'), converted.get('promo_end_date'))
+                    converted['phase'] = phase
+                    self._maybe_log_phase_transition(promo_code, phase)
+                except Exception:
+                    converted['phase'] = 'Build'
                 # Attach uploaded file metadata (Excel + generated SQL) if present
                 try:
                     file_rows = self.db_manager.get_promo_files(promo_code)
@@ -207,23 +216,65 @@ class PromoDataManager:
         promo_list: List[Dict[str, Any]] = []
         for record in db_records:
             record_dict: Dict[str, Any] = {str(k): v for k, v in record.items()} if record else {}
-            promo_list.append(self.db_manager.convert_db_record_to_json_format(record_dict))
+            converted = self.db_manager.convert_db_record_to_json_format(record_dict)
+            # Compute phase per promo (without logging yet; bulk logging after filters maybe expensive)
+            try:
+                phase = self._compute_phase(converted.get('promo_start_date'), converted.get('promo_end_date'))
+            except Exception:
+                phase = 'Build'
+            converted['status'] = phase
+            code_val = converted.get('code')
+            if code_val:
+                self._maybe_log_phase_transition(code_val, phase)
+            promo_list.append(converted)
         
         # Apply filters
         if search:
-            search_lower = search.lower()
-            promo_list = [
-                promo for promo in promo_list 
-                if (search_lower in promo.get('code', '').lower() or 
-                    search_lower in promo.get('owner', '').lower() or
-                    search_lower in promo.get('bill_facing_name', '').lower())
-            ]
+            search_lower = (search or '').lower()
+            safe_contains = []
+            for promo in promo_list:
+                code_val = (promo.get('code') or '')
+                owner_val = (promo.get('owner') or '')
+                bfname_val = (promo.get('bill_facing_name') or '')
+                try:
+                    if (search_lower in code_val.lower() or
+                        search_lower in owner_val.lower() or
+                        search_lower in bfname_val.lower()):
+                        safe_contains.append(promo)
+                except Exception:
+                    # Skip any malformed promo dict
+                    continue
+            promo_list = safe_contains
         
         if owner_filter and owner_filter != "all":
-            promo_list = [promo for promo in promo_list if promo.get('owner', '') == owner_filter]
+            promo_list = [promo for promo in promo_list if (promo.get('owner') or '') == owner_filter]
         
-        # Sort by updated_at (most recent first) or code if no updated_at
-        promo_list.sort(key=lambda x: x.get('updated_at', x.get('code', '')), reverse=True)
+        # Phase-aware ordering: upcoming (Build, soonest start first), Launched (soonest end), Expired (most recent end first at tail)
+        from datetime import datetime as _dt
+        today = _dt.utcnow().date()
+        def parse_date(val):
+            if not val:
+                return None
+            try:
+                return _dt.strptime(val[:10], '%Y-%m-%d').date()
+            except Exception:
+                return None
+        def sort_key(p):
+            phase = p.get('status') or 'Build'
+            start = parse_date(p.get('promo_start_date'))
+            end = parse_date(p.get('promo_end_date'))
+            if phase == 'Build':
+                # Days until start (None treated as large number to push unknown further down within Build)
+                delta = (start - today).days if start else 99999
+                return (0, delta, start or today, p.get('code'))
+            if phase == 'Launched':
+                # Days until end ascending
+                remaining = (end - today).days if end else 99999
+                return (1, remaining, end or today, p.get('code'))
+            # Expired: days since end ascending but group placed last
+            since = (today - end).days if end else 99999
+            return (2, since, end or today, p.get('code'))
+        promo_list.sort(key=sort_key)
         
         # Calculate pagination
         total_items = len(promo_list)
@@ -707,6 +758,52 @@ class PromoDataManager:
         payload['success'] = True
         return payload
     
+    # --- Phase computation helpers ---
+    @staticmethod
+    def _compute_phase(start_date: Optional[str], end_date: Optional[str], now: Optional[datetime] = None) -> str:
+        """Compute phase: Build, Launched, Expired.
+
+        Rules:
+          - Build: now < start_date OR start_date missing
+          - Launched: start_date <= now AND (end_date missing OR now <= end_date)
+          - Expired: end_date < now (strictly; i.e., expires only after end date passes)
+
+        Dates are date-only strings YYYY-MM-DD. If unparsable, treat as missing.
+        """
+        if now is None:
+            now = datetime.utcnow()
+        def parse(d: Optional[str]):
+            if not d:
+                return None
+            try:
+                return datetime.strptime(str(d)[:10], "%Y-%m-%d")
+            except Exception:
+                return None
+        s = parse(start_date)
+        e = parse(end_date)
+        today = datetime(year=now.year, month=now.month, day=now.day)
+        # Expired: only if we have an end date and today > end
+        if e is not None and today > e:
+            return 'Expired'
+        # Build: before start OR start missing (and not expired)
+        if s is None or today < s:
+            return 'Build'
+        # Launched: started and not expired (end missing or today <= end)
+        return 'Launched'
+
+    def _maybe_log_phase_transition(self, code: str, phase: str, user: str = 'System'):
+        """Persist phase in promo_extras and log transition if changed."""
+        try:
+            existing = self.db_manager.get_promo_extras(code) or {}
+            old = existing.get('current_phase') if existing else None
+            if old != phase:
+                # Upsert extras with new phase value
+                self.db_manager.upsert_promo_extras(code, {'current_phase': phase}, user)
+                # Record phase change event
+                self.db_manager.record_phase_change_event(code, old, phase, user)
+        except Exception:
+            pass
+
     def delete_spe_promo(self, promo_code: str):
         """Delete an SPE promotion"""
         data = self._load_json(self.spe_file)
@@ -717,14 +814,26 @@ class PromoDataManager:
     def get_promo_list(self) -> List[Dict[str, Any]]:
         """Get a list of all promotions (DB only)."""
         all_promos = self.get_all_promos()
-        now_str = datetime.now().strftime("%Y-%m-%d")
+        # Daily sweep (once per UTC date) before listing
+        try:
+            today = datetime.utcnow().strftime('%Y-%m-%d')
+            if self._last_phase_sweep_date != today:
+                self.sweep_phases()
+                self._last_phase_sweep_date = today
+        except Exception:
+            pass
+        now = datetime.utcnow()
         rows: List[Dict[str, Any]] = []
         for code, promo in all_promos.items():
-            end_date = promo.get('promo_end_date', '') or ''
+            start_date = promo.get('promo_start_date') or ''
+            end_date = promo.get('promo_end_date') or ''
+            phase = self._compute_phase(start_date, end_date, now)
+            # Log transition if changed
+            self._maybe_log_phase_transition(code, phase)
             rows.append({
                 'code': code,
                 'orbit_id': promo.get('orbit_id', ''),
-                'status': 'Active' if end_date > now_str else 'Expired',
+                'status': phase,
                 'description': promo.get('description', ''),
                 'start_date': promo.get('promo_start_date', ''),
                 'end_date': end_date,
@@ -732,6 +841,29 @@ class PromoDataManager:
                 'type': 'RDC'
             })
         return rows
+
+    # --- Phase sweep ---
+    def sweep_phases(self, user: str = 'System') -> Dict[str, int]:
+        """Recompute phases for all promos, logging transitions where phase changed.
+
+        Returns dict with counts: {'processed':N,'updated':M}
+        """
+        promos = self.get_all_promos()
+        processed = 0
+        updated = 0
+        now = datetime.utcnow()
+        for code, promo in promos.items():
+            processed += 1
+            phase = self._compute_phase(promo.get('promo_start_date'), promo.get('promo_end_date'), now)
+            try:
+                existing = self.db_manager.get_promo_extras(code) or {}
+                if existing.get('current_phase') != phase:
+                    self.db_manager.upsert_promo_extras(code, {'current_phase': phase}, user)
+                    self.db_manager.record_phase_change_event(code, existing.get('current_phase'), phase, user)
+                    updated += 1
+            except Exception:
+                continue
+        return {'processed': processed, 'updated': updated}
     
     def get_spe_promo_list(self) -> List[Dict[str, Any]]:
         """DB list of all SPE promotions for display."""

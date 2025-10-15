@@ -55,9 +55,9 @@
         <i class="fas fa-cogs"></i>
         Back to Admin
       </a>
-  <a href="{{ url_for('promo.promotions_page') }}" class="btn btn-primary">
+  <a href="{{ url_for('promo.rdc_page') }}" class="btn btn-primary">
         <i class="fas fa-tags"></i>
-        View Promotions
+  View RDC
       </a>
     </div>
   </div>
@@ -65,17 +65,17 @@
   <!-- Table -->
   <div class="table-container">
     {% if promotions %}
-      <table class="version-table">
+      <table class="version-table sortable">
         <thead>
           <tr>
             <th width="40px"></th>
-            <th>Promo Code</th>
-            <th>Orbit ID</th>
-            <th>Status</th>
-            <th>Bill Facing Name</th>
-            <th>Start Date</th>
-            <th>End Date</th>
-            <th>Promo Owner</th>
+            <th data-sort-type="string">Promo Code</th>
+            <th data-sort-type="string">Orbit ID</th>
+            <th data-sort-type="string">Status</th>
+            <th data-sort-type="string">Bill Facing Name</th>
+            <th data-sort-type="date">Start Date</th>
+            <th data-sort-type="date">End Date</th>
+            <th data-sort-type="string">Promo Owner</th>
           </tr>
         </thead>
         <tbody>
@@ -87,13 +87,13 @@
               </button>
             </td>
             <td class="promo-code">
-              <a href="/edit_promo/{{ promo.promo_code }}" class="promo-code-link">
+              <a href="/edit_rdc/{{ promo.promo_code }}" class="promo-code-link" target="_blank" rel="noopener noreferrer">
                 {{ promo.promo_code }}
               </a>
             </td>
             <td>{{ promo.orbit_id }}</td>
             <td>
-              <span class="status-badge status-{{ promo.status.lower() }}">{{ promo.status }}</span>
+              <span class="status-badge status-phase-{{ promo.status.lower() }}">{{ promo.status }}</span>
             </td>
             <td class="bill-facing-name">{{ promo.bill_facing_name }}</td>
             <td>{{ promo.start_date }}</td>
@@ -264,13 +264,13 @@
   document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('tr.promo-row').forEach(row => {
       row.addEventListener('click', (e) => {
-        // Allow opening edit link with middle/ctrl/meta click without toggling
         const anchor = e.target.closest('a');
-        if (anchor && (e.metaKey || e.ctrlKey || e.button === 1)) return;
-        // Prevent navigation when just expanding via normal left click
-        if (anchor && e.button === 0) {
-          e.preventDefault();
+        if (anchor) {
+          // Let normal navigation (left click) proceed; don't toggle row
+          return;
         }
+        // Avoid double toggle when clicking the explicit expand button
+        if (e.target.closest('.expand-btn')) return;
         const promoCode = row.getAttribute('data-promo');
         toggleRow(promoCode);
       });

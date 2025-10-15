@@ -24,7 +24,6 @@ LEGACY_ENDPOINTS = [
 
 # Required blueprint endpoints (add here if new critical pages introduced)
 REQUIRED_BLUEPRINT_ENDPOINTS = [
-    'promo.promotions_page',
     'promo.rebates_page',
     'promo.date_mismatch_page',
     'promo.get_promo_codes_page',

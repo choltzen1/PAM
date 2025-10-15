@@ -147,20 +147,24 @@ class VersionHistoryManager:
             return curated
     
     def get_all_promotions_with_history(self) -> List[Dict[str, Any]]:
-        """Get all promotions that have version history with their basic info and change counts"""
+        """Return summary (promo_code, total_changes, first_change, last_change) for all promos with history.
+
+        This was previously corrupted by an attempted insertion of generated SQL storage code; restored to a
+        minimal, focused implementation.
+        """
         with sqlite3.connect(self.db_path) as conn:
             conn.row_factory = sqlite3.Row
-            cursor = conn.execute("""
-                SELECT 
-                    promo_code,
-                    COUNT(*) as total_changes,
-                    MIN(timestamp) as first_change,
-                    MAX(timestamp) as last_change
-                FROM version_history 
+            cursor = conn.execute(
+                """
+                SELECT promo_code,
+                       COUNT(*) as total_changes,
+                       MIN(timestamp) as first_change,
+                       MAX(timestamp) as last_change
+                FROM version_history
                 GROUP BY promo_code
                 ORDER BY last_change DESC
-            """)
-            
+                """
+            )
             return [dict(row) for row in cursor.fetchall()]
     
     def record_promo_creation(self, promo_code: str, changed_by: str, promo_data: Dict[str, Any]):

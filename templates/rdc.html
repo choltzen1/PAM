@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}RDC Promotions{% endblock %}
+{% block title %}RDC{% endblock %}
 
 {% block head %}
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
@@ -11,8 +11,8 @@
 <div class="global-header-promotions">
   <i class="bi bi-tags-fill header-icon"></i>
   <div class="header-text">
-    <h2>RDC Promotions</h2>
-    <p>Build, launch and monitor device promotions</p>
+  <h2>RDC</h2>
+  <p>Build, launch and monitor RDC offers</p>
   </div>
 </div>
 {% endblock %}
@@ -42,42 +42,58 @@
 
     <div class="search-group">
       <label class="visually-hidden" for="search-input">Search</label>
-      <input
-        type="text"
-        id="search-input"
-        name="search"
-        placeholder="Promo Code, Owner, or Name"
-        value="{{ search_query }}"
-        onkeyup="debounceSearch()"
-      />
+      <input type="text" id="search-input" name="search" placeholder="Promo Code or Owner" value="{{ search_query }}" onkeyup="debounceSearch()" />
     </div>
 
     <div class="action-buttons">
-  <a href="{{ url_for('promo.get_promo_codes_page') }}" class="btn"><i class="fas fa-wrench"></i> Get Promo Code</a>
+  <a href="{{ url_for('promo.get_promo_codes_page') }}" class="btn btn-magenta"><i class="fas fa-wrench"></i> Get Promo Code</a>
     </div>
   </div>
 
-  <!-- Tabs row -->
-  <div class="promotions-tabs">
-  <a href="{{ url_for('promo.promotions_page') }}" class="tab {% if active_tab=='RDC' %}active{% endif %}">RDC</a>
-  <a href="{{ url_for('promo.spe_page') }}" class="tab {% if active_tab=='SPE' %}active{% endif %}">SPE</a>
-    <button class="tab">Sprint</button>
-    <button class="tab">Functional</button>
-    <button class="tab">Z-Lab</button>
+  <!-- Top Pagination (duplicate of bottom for convenience) -->
+  {% if pagination.total_pages > 1 %}
+  <div class="pagination-container top-pagination">
+    <div class="pagination-info">
+      Showing {{ ((pagination.page - 1) * pagination.per_page + 1) }} to {{ 
+        pagination.page * pagination.per_page if pagination.page * pagination.per_page <= pagination.total_items 
+        else pagination.total_items 
+      }} of {{ pagination.total_items }} promotions
+    </div>
+    <div class="pagination-controls">
+      {% if pagination.has_prev %}
+  <a href="{{ url_for('promo.rdc_page', page=1, search=search_query, owner=selected_owner) }}" class="pagination-btn">First</a>
+  <a href="{{ url_for('promo.rdc_page', page=pagination.prev_num, search=search_query, owner=selected_owner) }}" class="pagination-btn">‹ Prev</a>
+      {% endif %}
+      {% for page_num in range(
+        [pagination.page - 2, 1]|max, 
+        [pagination.page + 2, pagination.total_pages]|min + 1
+      ) %}
+        {% if page_num == pagination.page %}
+          <span class="pagination-btn active">{{ page_num }}</span>
+        {% else %}
+          <a href="{{ url_for('promo.rdc_page', page=page_num, search=search_query, owner=selected_owner) }}" class="pagination-btn">{{ page_num }}</a>
+        {% endif %}
+      {% endfor %}
+      {% if pagination.has_next %}
+  <a href="{{ url_for('promo.rdc_page', page=pagination.next_num, search=search_query, owner=selected_owner) }}" class="pagination-btn">Next ›</a>
+  <a href="{{ url_for('promo.rdc_page', page=pagination.total_pages, search=search_query, owner=selected_owner) }}" class="pagination-btn">Last</a>
+      {% endif %}
+    </div>
   </div>
+  {% endif %}
 
   <!-- Table -->
   <div class="table-container">
-    <table class="promo-table">
+    <table class="promo-table sortable">
       <thead>
         <tr>
-          <th>Promo Code</th>
-          <th>Orbit ID</th>
-          <th>Status</th>
-          <th>Bill Facing Name</th>
-          <th>Start Date</th>
-          <th>End Date</th>
-          <th>Promo Owner</th>
+          <th data-sort-type="string">Promo Code</th>
+          <th data-sort-type="string">Orbit ID</th>
+          <th data-sort-type="string">Status</th>
+          <th data-sort-type="string">Bill Facing Name</th>
+          <th data-sort-type="date">Start Date</th>
+          <th data-sort-type="date">End Date</th>
+          <th data-sort-type="string">Promo Owner</th>
           <th>Action</th>
         </tr>
       </thead>
@@ -86,13 +102,13 @@
         <tr>
           <td>{{ promo.code }}</td>
           <td>{{ promo.orbit_id }}</td>
-          <td>{{ promo.status if promo.status else 'Active' }}</td>
+          <td><span class="status-badge status-phase-{{ (promo.status or 'Build')|lower }}">{{ promo.status or 'Build' }}</span></td>
           <td>{{ promo.bill_facing_name }}</td>
           <td>{{ promo.promo_start_date }}</td>
           <td>{{ promo.promo_end_date }}</td>
           <td class="promo-owner">{{ promo.owner }}</td>
           <td class="promo-actions">
-            <a href="{{ url_for('promo.edit_promo', promo_code=promo.code) }}" class="icon-button" title="Edit"><i class="fas fa-edit"></i></a>
+            <a href="{{ url_for('promo.edit_rdc', promo_code=promo.code) }}" class="icon-button" title="Edit"><i class="fas fa-edit"></i></a>
             <a href="{{ url_for('promo.reviewers_with_code', promo_code=promo.code) }}" class="icon-button" title="Reviewers"><i class="fas fa-users"></i></a>
             <a href="{{ url_for('promo.approvers_page') }}" class="icon-button" title="Approvers"><i class="fas fa-file-signature"></i></a>
             <a href="{{ url_for('promo.updates_page') }}?search={{ promo.code }}" class="icon-button" title="Updates"><i class="fas fa-sync-alt"></i></a>
@@ -116,8 +132,8 @@
     
     <div class="pagination-controls">
       {% if pagination.has_prev %}
-  <a href="{{ url_for('promo.promotions_page', page=1, search=search_query, owner=selected_owner) }}" class="pagination-btn">First</a>
-  <a href="{{ url_for('promo.promotions_page', page=pagination.prev_num, search=search_query, owner=selected_owner) }}" class="pagination-btn">‹ Prev</a>
+  <a href="{{ url_for('promo.rdc_page', page=1, search=search_query, owner=selected_owner) }}" class="pagination-btn">First</a>
+  <a href="{{ url_for('promo.rdc_page', page=pagination.prev_num, search=search_query, owner=selected_owner) }}" class="pagination-btn">‹ Prev</a>
       {% endif %}
       
       {% for page_num in range(
@@ -127,13 +143,13 @@
         {% if page_num == pagination.page %}
           <span class="pagination-btn active">{{ page_num }}</span>
         {% else %}
-          <a href="{{ url_for('promo.promotions_page', page=page_num, search=search_query, owner=selected_owner) }}" class="pagination-btn">{{ page_num }}</a>
+          <a href="{{ url_for('promo.rdc_page', page=page_num, search=search_query, owner=selected_owner) }}" class="pagination-btn">{{ page_num }}</a>
         {% endif %}
       {% endfor %}
       
       {% if pagination.has_next %}
-  <a href="{{ url_for('promo.promotions_page', page=pagination.next_num, search=search_query, owner=selected_owner) }}" class="pagination-btn">Next ›</a>
-  <a href="{{ url_for('promo.promotions_page', page=pagination.total_pages, search=search_query, owner=selected_owner) }}" class="pagination-btn">Last</a>
+  <a href="{{ url_for('promo.rdc_page', page=pagination.next_num, search=search_query, owner=selected_owner) }}" class="pagination-btn">Next ›</a>
+  <a href="{{ url_for('promo.rdc_page', page=pagination.total_pages, search=search_query, owner=selected_owner) }}" class="pagination-btn">Last</a>
       {% endif %}
     </div>
   </div>
@@ -142,7 +158,6 @@
 
 <script>
 let searchTimeout;
-
 function debounceSearch() {
   clearTimeout(searchTimeout);
   searchTimeout = setTimeout(() => {
@@ -151,12 +166,11 @@ function debounceSearch() {
     const url = new URL(window.location);
     url.searchParams.set('search', search);
     url.searchParams.set('owner', owner);
-    url.searchParams.set('page', '1'); // Reset to first page
+    url.searchParams.set('page', '1');
     window.location.href = url.toString();
-  }, 500); // Wait 500ms after user stops typing
+  }, 500);
 }
 
-// Handle owner filter change
 document.getElementById('owner-filter').addEventListener('change', function() {
   debounceSearch();
 });

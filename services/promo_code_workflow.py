@@ -14,6 +14,11 @@ import re
 
 from data.database import DatabaseManager
 from data.storage import PromoDataManager
+from data.sku_group_tracking import (
+    load_issued_sku_group_ids,
+    record_issued_sku_group_id,
+    next_sku_group_id_progressive,
+)
 
 # Issued code tracking (reuse existing helper location if available)
 try:
@@ -105,6 +110,16 @@ class PromoCodeWorkflow:
         if not full_row:
             return {'success': False, 'error': f'Orbit {oid} not found'}
         new_code = self.generate_next_code()
+        # Allocate next sku_group_id (always generate regardless of orbit row value)
+        try:
+            existing_db_ids = set(self.db.get_all_sku_group_ids())
+        except Exception:
+            existing_db_ids = set()
+        existing_all = existing_db_ids | load_issued_sku_group_ids()
+        try:
+            allocated_sku_group_id = next_sku_group_id_progressive(existing_all)
+        except Exception as alloc_err:
+            return {'success': False, 'error': f'SKU group ID allocation failed: {alloc_err}'}
         # Core insertion column mapping (expand to reduce null columns). Only include keys with non-None values.
         candidate_fields = {
             'code': new_code,
@@ -125,7 +140,7 @@ class PromoCodeWorkflow:
             'sales_application': full_row.get('sales_application'),
             'market_group': full_row.get('market_group'),
             'store_group': full_row.get('store_group'),
-            'sku_group_id': full_row.get('sku_group_id'),
+            'sku_group_id': allocated_sku_group_id,
             'device_status_group_id': full_row.get('device_status_group_id'),
             'soc_grouping': full_row.get('soc_grouping'),
             'discount': full_row.get('discount'),
@@ -142,6 +157,11 @@ class PromoCodeWorkflow:
         ok = self.db.insert_promo_record(insertion)
         if not ok:
             return {'success': False, 'error': 'Insert failed', 'attempted_fields': list(insertion.keys())}
+        # Persist sku_group_id tombstone (best effort)
+        try:
+            record_issued_sku_group_id(allocated_sku_group_id)
+        except Exception:
+            pass
         # New minimal history creation event
         try:
             self.db.record_creation_event(new_code, insertion, user)

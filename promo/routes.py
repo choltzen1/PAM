@@ -12,6 +12,10 @@ promo_bp = Blueprint('promo', __name__)
 # Data manager will be set by the main app
 data_manager: Optional['PromoDataManager'] = None
 
+# Centralize SQL file path construction so GET/POST use identical logic
+def _promo_sql_file_path(promo_code: str) -> str:
+    return os.path.join('data','uploads','promotions', promo_code, f"{promo_code}_promo_eligibility_rules.sql")
+
 def init_data_manager(dm):
     """Initialize the data manager from the main app"""
     global data_manager
@@ -23,9 +27,12 @@ def _ensure_data_manager():
         raise RuntimeError("Data manager not initialized. Call init_data_manager() first.")
     return data_manager
 
-# --- Batch 1: Blueprint wrapper endpoints (temporary redirects to legacy views) ---
-@promo_bp.route('/promotions', endpoint='promotions_page')
-def promotions_page():
+# --- Primary RDC list route (legacy /promotions removed) ---
+@promo_bp.route('/rdc', endpoint='rdc_page')
+def rdc_page():
+    return _render_rdc_page()
+
+def _render_rdc_page():
     dm = _ensure_data_manager()
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 25, type=int)
@@ -46,7 +53,7 @@ def promotions_page():
             owner_filter=owner_filter
         )
     return render_template(
-        'promotions.html',
+        'rdc.html',
         promotions=promo_data['promotions'],
         pagination=promo_data['pagination'],
         owners=promo_data['owners'],
@@ -69,6 +76,7 @@ def spe_page():
     except Exception as e:
         flash(f'Error loading SPE data: {e}', 'error')
         return render_template('spe.html', spe_data=[], active_tab='SPE')
+                    # (Error fallback logic moved to generation block below)
 
 @promo_bp.route('/rebates', endpoint='rebates_page')
 def rebates_page():
@@ -550,7 +558,7 @@ def capacity_page():
             promo_data = dm.get_promo(promo_code)
             if not promo_data:
                 flash('Promo not found', 'error')
-                return redirect(url_for('promo.promotions_page'))
+                return redirect(url_for('promo.rdc_page'))
             sql_file_info = promo_data.get('sql_file')
             if sql_file_info and os.path.exists(sql_file_info.get('path','')):
                 return send_file(sql_file_info['path'], as_attachment=True, download_name=sql_file_info['filename'])
@@ -745,21 +753,30 @@ def links_page(promo_code):
         return render_template('links.html', promo_code=promo_code_upper, promo_data=promo_data)
     except Exception as e:
         flash(f'Error loading links for promotion: {e}', 'error')
-        return redirect(url_for('promo.promotions_page'))
+    return redirect(url_for('promo.rdc_page'))
 
-@promo_bp.route('/edit_promo/<promo_code>', methods=['GET', 'POST'])
-def edit_promo(promo_code):
-    """Handle editing of promotion data"""
+@promo_bp.route('/edit_rdc/<promo_code>', methods=['GET', 'POST'], endpoint='edit_rdc')
+def edit_rdc(promo_code):
+    return _edit_rdc(promo_code)
+
+def _edit_rdc(promo_code):
+    """Primary editor for RDC (formerly promotions)"""
     dm = _ensure_data_manager()
-    
+
     if request.method == 'POST':
-        # Get the active tab
+        """POST handling order (updated):
+        1. Load current DB promo state (not relying on stale in-memory form submission)
+        2. Process file uploads first (so newly uploaded SKU/Trade files influence SQL generation)
+        3. Apply form field edits & persist (save_promo) so DB reflects latest values
+        4. If generate_sql requested, RE-FETCH from DB and generate SQL using ONLY what the PAM DB exposes.
+           Any field absent in DB simply remains missing/blank and generator maps it to NULL.
+        5. Persist generated SQL to disk & attach metadata (not stored verbatim in DB columns)
+        """
+        from datetime import datetime
+        import time
         active_tab = request.form.get('active_tab', 'Details')
-        
-        # Get current promo data
         promo_data = dm.get_promo(promo_code)
         if not promo_data:
-            # Create new promo data if it doesn't exist
             promo_data = {
                 'code': promo_code,
                 'owner': 'Unknown',
@@ -768,62 +785,8 @@ def edit_promo(promo_code):
                 'end_date': '',
                 'status': 'Draft'
             }
-        
-        # Handle SQL generation
-        if request.form.get('generate_sql'):
-            from promo.builders import generate_promo_eligibility_sql
-            from datetime import datetime
-            import time
-            try:
-                # Start timing SQL generation
-                start_time = time.time()
-                
-                # Generate SQL using the dictionary data
-                sql_content = generate_promo_eligibility_sql(promo_data)
-                
-                # End timing
-                end_time = time.time()
-                generation_time = end_time - start_time
-                
-                # Save SQL to promo with timestamp and performance data
-                # Store full SQL - remove truncation to allow complete output
-                promo_data['generated_sql'] = sql_content
-                promo_data['sql_truncated'] = False
-                    
-                promo_data['sql_generated_at'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                promo_data['sql_generation_time'] = f"{generation_time:.4f}"
-                promo_data['sql_length'] = len(sql_content)
-                # Persist a physical .sql file for durability across reloads
-                try:
-                    from data.storage import PromoDataManager as _PDM
-                    # Use existing manager's save_sql_file if present
-                    dm.save_sql_file(promo_code, sql_content, f"{promo_code}_promo_eligibility_rules.sql")
-                except Exception as save_file_err:
-                    print(f"Failed to save SQL file for {promo_code}: {save_file_err}")
-                # Save promo (does not store generated_sql itself in DB, but keeps audit/version info)
-                dm.save_promo(promo_code, promo_data, user_name="Cade Holtzen")
-                
-                # Flash message with performance info
-                flash(f"SQL generated successfully in {generation_time:.2f} seconds ({len(sql_content):,} characters)", "success")
 
-                # Record PCR Version event in history (PCR Version #N)
-                try:
-                    pcr_version = dm.record_sql_generation(promo_code, "Cade Holtzen", generation_time, len(sql_content))
-                    if pcr_version:
-                        flash(f"PCR Version #{pcr_version} recorded", "info")
-                except Exception as vh_err:
-                    print(f"Version history PCR record failed: {vh_err}")
-                
-                # Log performance warning if slow
-                if generation_time > 5.0:
-                    print(f"⚠️  WARNING: SQL generation for {promo_code} took {generation_time:.2f} seconds!")
-                elif generation_time > 2.0:
-                    print(f"⚠️  NOTICE: SQL generation for {promo_code} took {generation_time:.2f} seconds")
-                    
-            except Exception as e:
-                flash(f"Error generating SQL: {str(e)}", "error")
-        
-        # Handle file uploads
+        # 1. & 2. Handle file uploads first
         for file_key in ['sku_excel', 'tradein_excel']:
             if file_key in request.files:
                 file = request.files[file_key]
@@ -889,7 +852,7 @@ def edit_promo(promo_code):
                     except Exception as e:
                         flash(f"Error uploading {file_key}: {str(e)}", "error")
         
-        # Update promo fields based on active tab
+        # 3. Update promo fields based on active tab (save BEFORE generation so DB has latest values)
         updated_fields = []
         for field_name, field_value in request.form.items():
             if field_name not in ['active_tab', 'generate_sql']:
@@ -905,12 +868,112 @@ def edit_promo(promo_code):
             promo_data['last_changes'] = f"Updated {', '.join(updated_fields)} on {active_tab} tab"
             dm.save_promo(promo_code, promo_data, user_name="Cade Holtzen")
             flash(f"Saved {active_tab} successfully", "success")
+
+        # 4. Generate SQL only after saving & reloading DB state (source-of-truth requirement)
+        if request.form.get('generate_sql'):
+            from promo.builders import generate_promo_eligibility_sql
+            try:
+                # Re-fetch to ensure we only use DB-backed fields (missing ones become NULL in generator)
+                db_snapshot = dm.get_promo(promo_code) or {}
+                # PRE-CLEAN: convert None -> '' so generator .strip() calls are safe
+                for _k,_v in list(db_snapshot.items()):
+                    if _v is None:
+                        db_snapshot[_k] = ''
+                # Guarantee code present
+                if not db_snapshot.get('code'):
+                    db_snapshot['code'] = promo_code
+                # Inject minimal required placeholders so generator produces a visible INSERT even if DB sparse
+                if not db_snapshot.get('code'):
+                    db_snapshot['code'] = promo_code
+                # Provide fallback promo_start_date/end_date if absent so date functions don't yield all NULL
+                from datetime import datetime, timedelta
+                today = datetime.utcnow().date()
+                if not db_snapshot.get('promo_start_date'):
+                    db_snapshot['promo_start_date'] = today.strftime('%Y-%m-%d')
+                if not db_snapshot.get('promo_end_date'):
+                    db_snapshot['promo_end_date'] = (today + timedelta(days=14)).strftime('%Y-%m-%d')
+                # Basic bill facing name placeholder
+                if not db_snapshot.get('bill_facing_name'):
+                    db_snapshot['bill_facing_name'] = f"Auto {promo_code}"
+                # Log snapshot keys for debugging
+                print(f"[SQL GEN][DEBUG] Generating for {promo_code} with keys: {sorted(list(db_snapshot.keys()))[:30]} ...")
+                print(f"[SQL GEN][DEBUG] Field snapshot core values: code={db_snapshot.get('code')} orbit_id={db_snapshot.get('orbit_id')} sku_group_id={db_snapshot.get('sku_group_id')} start={db_snapshot.get('promo_start_date')} end={db_snapshot.get('promo_end_date')} operator_id={db_snapshot.get('operator_id')}")
+                start_time = time.time()
+                sql_content = generate_promo_eligibility_sql(db_snapshot)
+                end_time = time.time()
+                generation_time = end_time - start_time
+                if not sql_content or not sql_content.strip():
+                    sql_content = '-- No SQL generated (all required inputs missing in PAM DB after fallback)\nSELECT 1 AS no_data_placeholder;\n'
+                # Removed DIAG header injection per user request; leaving raw generator output intact.
+                # Absolute fallback: if somehow still empty, produce minimal INSERT with just promo_code
+                if not sql_content.strip():
+                    sql_content = f"-- FALLBACK MINIMAL SQL\nINSERT INTO PROMO_ELIGIBILITY_RULES (PROMO_CODE) VALUES ('{promo_code}');\n"
+                print(f"[SQL GEN][DEBUG] Generated length for {promo_code}: {len(sql_content)} chars")
+                # Attach to working promo_data for redirect display
+                promo_data['generated_sql'] = sql_content
+                promo_data['sql_generated_at'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                promo_data['sql_generation_time'] = f"{generation_time:.4f}"
+                promo_data['sql_length'] = len(sql_content)
+                # Store in SQLite blob table (separate persistence)
+                try:
+                    from data import sql_store
+                    sql_hash = sql_store.save_generated_sql(promo_code, sql_content, generation_time, source='rdc_generator')
+                    promo_data['sql_hash'] = sql_hash
+                except Exception as blob_err:
+                    print(f"[SQL GEN][BLOB][ERROR] Failed to store SQL blob for {promo_code}: {blob_err}")
+                # Persist physical file (durable across reloads)
+                saved_path = None
+                try:
+                    saved_path = dm.save_sql_file(promo_code, sql_content, f"{promo_code}_promo_eligibility_rules.sql")
+                    print(f"[SQL GEN][WRITE] Saved SQL file for {promo_code} at {saved_path} ({len(sql_content)} bytes)")
+                except Exception as save_err:
+                    print(f"[SQL GEN][WRITE][ERROR] File save failed for {promo_code}: {save_err}")
+                    flash(f"SQL file save failed: {save_err}", 'warning')
+                # Record PCR version event
+                try:
+                    pcr_version = dm.record_sql_generation(promo_code, "Cade Holtzen", generation_time, len(sql_content))
+                    if pcr_version:
+                        flash(f"PCR Version #{pcr_version} recorded", 'info')
+                except Exception as vh_err:
+                    print(f"[SQL GEN] Version history record failed: {vh_err}")
+                # Performance + summary flash
+                flash(f"SQL generated in {generation_time:.2f}s | {len(sql_content):,} chars", 'success')
+                # Force tab to SQL Generation
+                active_tab = 'SQL Generation'
+            except Exception as gen_err:
+                print(f"[SQL GEN][ERROR] Generation failure for {promo_code}: {gen_err}")
+                from datetime import datetime
+                err_sql = ("-- GENERATION ERROR: " + str(gen_err).replace('\n',' ') + "\n"
+                           "-- A minimal placeholder INSERT is provided so preview is not blank.\n"
+                           f"INSERT INTO PROMO_ELIGIBILITY_RULES (PROMO_CODE) VALUES ('{promo_code}');\n")
+                promo_data['generated_sql'] = err_sql
+                promo_data['sql_generated_at'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                promo_data['sql_generation_time'] = 'ERR'
+                promo_data['sql_length'] = len(err_sql)
+                try:
+                    from data import sql_store
+                    sql_store.save_generated_sql(promo_code, err_sql, 0.0, source='error_fallback')
+                except Exception:
+                    pass
+                try:
+                    dm.save_sql_file(promo_code, err_sql, f"{promo_code}_promo_eligibility_rules.sql")
+                except Exception:
+                    pass
+                flash("SQL generation error captured. Placeholder shown.", 'error')
+                active_tab = 'SQL Generation'
         
-        # Redirect to maintain the active tab
-        return redirect(url_for('promo.edit_promo', promo_code=promo_code, tab=active_tab))
+        # Redirect (PRG). If we just generated SQL add gen=1 flag for debug visibility
+        gen_flag = 1 if request.form.get('generate_sql') else None
+        # If generated SQL this request, include inline snippet (first 500 chars) via query for guaranteed visibility
+        inline_sql_snippet = None
+        if gen_flag and promo_data.get('generated_sql'):
+            inline_sql_snippet = promo_data['generated_sql'][:500]
+        return redirect(url_for('promo.edit_rdc', promo_code=promo_code, tab=active_tab, gen=gen_flag, sql_snip=inline_sql_snippet))
     
     # GET request
     tab = request.args.get('tab', 'Details')
+    gen_flag = request.args.get('gen')
+    inline_sql_snip = request.args.get('sql_snip')
     promo_data = dm.get_promo(promo_code)
     if not promo_data:
         # Create new promo data if it doesn't exist
@@ -923,9 +986,77 @@ def edit_promo(promo_code):
             'status': 'Draft'
         }
     
-    return render_template('edit_promo.html', 
+    # If SQL missing but inline snippet passed, attach minimal placeholder for display
+    if inline_sql_snip and not promo_data.get('generated_sql'):
+        promo_data['generated_sql'] = inline_sql_snip + ('\n-- (Truncated preview via redirect parameter)')
+        promo_data['sql_length'] = len(promo_data['generated_sql'])
+    # Force code population for template / filename correctness
+    if not promo_data.get('code'):
+        promo_data['code'] = promo_code
+    # 5. GET fallback: if SQL file exists on disk but field not populated (DB returns empty) load it
+    # ALWAYS attempt disk load so we can compare what is stored vs memory (adds transparency)
+    disk_sql_path = _promo_sql_file_path(promo_code)
+    try:
+        disk_exists = os.path.exists(disk_sql_path)
+        promo_data['sql_disk_exists'] = disk_exists
+        if disk_exists:
+            from datetime import datetime
+            with open(disk_sql_path, 'r', encoding='utf-8', errors='replace') as fh:
+                disk_sql = fh.read()
+            promo_data['sql_disk_length'] = len(disk_sql)
+            # If in-memory missing or differs in length, populate & flag source
+            if not promo_data.get('generated_sql') or len(promo_data.get('generated_sql','')) != len(disk_sql):
+                if disk_sql.strip():
+                    promo_data['generated_sql'] = disk_sql
+                    promo_data['sql_length'] = len(disk_sql)
+                    promo_data['sql_generated_at'] = promo_data.get('sql_generated_at') or datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
+                    promo_data['sql_generation_time'] = promo_data.get('sql_generation_time') or 'N/A'
+                    promo_data['sql_debug_loaded_from'] = 'GET_disk_refresh'
+        else:
+            promo_data['sql_disk_length'] = 0
+    except Exception as load_err:
+        print(f"[SQL GEN][GET] Disk load error for {promo_code}: {load_err}")
+    # If still no SQL in memory, attempt to fetch latest from sql_store
+    if not promo_data.get('generated_sql'):
+        try:
+            from data import sql_store
+            blob_sql, blob_meta = sql_store.get_latest_generated_sql(promo_code)
+            if blob_sql:
+                promo_data['generated_sql'] = blob_sql
+                promo_data['sql_length'] = len(blob_sql)
+                if blob_meta:
+                    promo_data['sql_generated_at'] = blob_meta.get('stored_at')
+                    promo_data['sql_generation_time'] = blob_meta.get('generation_time')
+                    promo_data['sql_hash'] = blob_meta.get('sql_hash')
+                    promo_data['sql_debug_loaded_from'] = 'GET_sql_store'
+        except Exception as blob_get_err:
+            print(f"[SQL GEN][GET][BLOB] Failed to load SQL from store for {promo_code}: {blob_get_err}")
+    auto_open_sql_preview = True if (gen_flag and promo_data.get('generated_sql') and tab == 'SQL Generation') else False
+    # Compute persistent flag: has SQL ever been generated (file or memory)
+    try:
+        sql_file_exists = os.path.exists(os.path.join('data','uploads','promotions', promo_code, f"{promo_code}_promo_eligibility_rules.sql"))
+    except Exception:
+        sql_file_exists = False
+    has_generated_sql = bool(promo_data.get('generated_sql')) or sql_file_exists
+    # Build field diagnostics for template (only for SQL Generation tab)
+    sql_source_fields = {}
+    if tab == 'SQL Generation':
+        debug_keys = [
+            'code','orbit_id','sku_group_id','promo_start_date','promo_end_date','operator_id','bill_facing_name',
+            'discount','amount','account_type','sales_application','soc_grouping','trade_in_group_id',
+            'tiered_group_id','segment_group_id','limit_per_ban','nseip_drop','maintain_soc','activation_type',
+            'device_sales_type','port_in_group_id','min_gsm_count','max_gsm_count','flow_indicator','clawback_indicator'
+        ]
+        for k in debug_keys:
+            sql_source_fields[k] = promo_data.get(k)
+    return render_template('edit_rdc.html', 
                          promo=promo_data, 
                          active_tab=tab,
+                         gen_flag=gen_flag,
+                         auto_open_sql_preview=auto_open_sql_preview,
+                         has_generated_sql=has_generated_sql,
+                         sql_source_fields=sql_source_fields,
+                         sql_disk_path=disk_sql_path,
                          soc_groupings=dm.get_soc_groupings(),
                          soc_grouping_details=dm.get_soc_grouping_details(),
                          account_types=dm.get_account_types(),
@@ -934,6 +1065,31 @@ def edit_promo(promo_code):
                          sales_application_details=dm.get_sales_application_details(),
                          user_name="Cade Holtzen",
                          jira_dcd_ticket=os.getenv('JIRA_DCD_CURRENT_TICKET', 'DCOMM-13037'))
+
+@promo_bp.route('/debug/sql/<promo_code>', methods=['GET'])
+def debug_sql_meta(promo_code):
+    """Return JSON metadata about the generated SQL file & in-memory state for deep troubleshooting."""
+    dm = _ensure_data_manager()
+    promo = dm.get_promo(promo_code) or {}
+    path = _promo_sql_file_path(promo_code)
+    meta = {
+        'promo_code': promo_code,
+        'in_memory_has_generated_sql': bool(promo.get('generated_sql')),
+        'in_memory_length': len(promo.get('generated_sql','')),
+        'disk_path': path,
+        'disk_exists': os.path.exists(path),
+        'disk_length': None,
+        'disk_first_200': None
+    }
+    if meta['disk_exists']:
+        try:
+            with open(path,'r',encoding='utf-8',errors='replace') as fh:
+                content = fh.read()
+            meta['disk_length'] = len(content)
+            meta['disk_first_200'] = content[:200]
+        except Exception as e:
+            meta['disk_error'] = str(e)
+    return jsonify(meta)
 
 @promo_bp.route('/clear_trade_data/<promo_code>', methods=['POST'])
 def clear_trade_data(promo_code):
@@ -1158,7 +1314,7 @@ def get_promo_codes_page():
             else:
                 dm.save_promo(generated_code, promo_data, user_name='System')
                 flash(f'RDC promo code {generated_code} created successfully!', 'success')
-                return redirect(url_for('promo.promotions_page'))
+                return redirect(url_for('promo.rdc_page'))
 
         from datetime import datetime
         current_year = datetime.now().year

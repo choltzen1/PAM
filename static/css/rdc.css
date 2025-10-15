@@ -1,0 +1,30 @@
+/* rdc.css consolidated (previously imported promotions.css) */
+/* ORIGINAL promotions.css CONTENT INLINED BELOW TO ALLOW REMOVAL OF promotions.css */
+/* Promotions Page Specific Styles */
+
+/* Page layout overrides */
+body {
+	font-family: 'Inter', Arial, sans-serif;
+	overflow-x: hidden;
+}
+/* (truncated import source for brevity: retain essential selectors actually used by rdc.html) */
+.promotions-page { min-height: calc(100vh - 120px); padding:1rem 2rem 2rem; box-sizing:border-box; background:#fff; }
+.promotions-tabs { display:flex; gap:0.5rem; margin-bottom:1rem; }
+.tab { flex:1; min-width:60px; text-align:center; padding:0.5rem; border:1px solid var(--tmobile-border); background: var(--tmobile-gray); border-radius:4px 4px 0 0; font-weight:500; cursor:pointer; transition: all .3s ease; color:inherit; text-decoration:none; display:flex; align-items:center; justify-content:center; position:relative; }
+.tab:hover { background:#e9e9e9; border-color:#ccc; }
+.tab.active { background:var(--tmobile-magenta); color:#fff; border-color:var(--tmobile-magenta); font-weight:600; box-shadow:0 2px 8px rgba(226,0,116,0.3); transform:translateY(-1px); }
+.promo-table { width:100%; border-collapse:collapse; margin:0; background:#fff; }
+.promo-table th { background: var(--tmobile-magenta); color:#fff; font-weight:700; text-align:center; padding:1em .5em; font-size:1.12em; white-space:nowrap; }
+.promo-table tbody tr { border-bottom:1px solid #dee2e6; }
+.promo-table tbody tr:nth-child(even) { background:#f8f9fa; }
+.promo-table td { text-align:center; padding:1em .5em; font-size:1.08em; }
+.promo-table td.promo-owner { font-weight:700; }
+.promo-table td.promo-actions { display:flex; justify-content:center; align-items:center; gap:.7em; background:inherit; }
+.promo-table td.promo-actions .icon-button { background:none; border:none; padding:.2em; margin:0 .1em; font-size:1.5em; color:#222; cursor:pointer; border-radius:6px; transition:background .15s,color .15s; }
+.promo-table td.promo-actions .icon-button:hover { background:#f8d6ec; color:var(--tmobile-magenta); }
+.promotions-controls { display:flex; flex-wrap:wrap; align-items:flex-end; gap:1rem; margin:1.5rem 0; }
+.filter-group, .search-group { display:flex; flex-direction:column; gap:0.25rem; }
+.filter-group select, .search-group input { min-width:200px; padding:0.5rem; border:1px solid var(--tmobile-border); border-radius:4px; }
+.pagination-container { display:flex; justify-content:space-between; align-items:center; margin:1.5rem 0; padding:1rem; background:var(--tmobile-gray); border-radius:8px; border:1px solid var(--tmobile-border); }
+.pagination-btn { padding:.5rem .75rem; border:1px solid var(--tmobile-border); background:#fff; color:var(--tmobile-magenta); text-decoration:none; border-radius:4px; font-size:.9rem; transition:all .2s ease; min-width:40px; text-align:center; }
+.pagination-btn:hover, .pagination-btn.active { background:var(--tmobile-magenta); color:#fff; border-color:var(--tmobile-magenta); }

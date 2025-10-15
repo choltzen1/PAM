@@ -47,13 +47,13 @@
   <div class="content-container">
     {% if promo_codes %}
     <div class="table-container">
-      <table class="approvers-table">
+      <table class="approvers-table sortable">
         <thead>
           <tr>
-            <th>Promo Code</th>
-            <th>Promo Owner</th>
-            <th>Device Finance</th>
-            <th>Revenue Accounting</th>
+            <th data-sort-type="string">Promo Code</th>
+            <th data-sort-type="string">Promo Owner</th>
+            <th data-sort-type="string">Device Finance</th>
+            <th data-sort-type="string">Revenue Accounting</th>
             <th>Actions</th>
           </tr>
         </thead>
@@ -61,7 +61,7 @@
           {% for promo_code in promo_codes %}
           <tr class="approver-row" data-promo-code="{{ promo_code }}" data-owner="{{ owners[loop.index0] if loop.index0 < owners|length else 'N/A' }}">
             <td class="promo-code">
-              <a href="{{ url_for('promo.edit_promo', promo_code=promo_code) }}" class="promo-link">
+              <a href="{{ url_for('promo.edit_rdc', promo_code=promo_code) }}" class="promo-link">
                 {{ promo_code }}
               </a>
             </td>

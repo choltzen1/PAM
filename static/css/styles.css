@@ -20,6 +20,22 @@ html, body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
+/* Magenta button variant for primary actions */
+.btn-magenta {
+  background: var(--tmobile-magenta, #E20074);
+  color: #fff !important;
+  border: 1px solid #E20074;
+  transition: background 0.15s ease, box-shadow 0.15s ease;
+}
+.btn-magenta:hover, .btn-magenta:focus {
+  background: #b8005c;
+  color: #fff !important;
+  box-shadow: 0 0 0 3px rgba(226,0,116,0.25);
+}
+.btn-magenta:active {
+  background: #97004d;
+}
+
 /* Global Header */
 .global-header {
   background: var(--tmobile-magenta);

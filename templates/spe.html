@@ -52,30 +52,24 @@
     </div>
 
     <div class="action-buttons">
-  <a href="{{ url_for('promo.get_promo_codes_page') }}" class="btn"><i class="fas fa-wrench"></i> Get Promo Code</a>
+  <a href="{{ url_for('promo.get_promo_codes_page') }}" class="btn btn-magenta"><i class="fas fa-wrench"></i> Get Promo Code</a>
     </div>
   </div>
 
-  <!-- Tabs row -->
-  <div class="promotions-tabs">
-  <a href="{{ url_for('promo.promotions_page') }}" class="tab {% if active_tab=='RDC' %}active{% endif %}">RDC</a>
-  <a href="{{ url_for('promo.spe_page') }}" class="tab {% if active_tab=='SPE' %}active{% endif %}">SPE</a>
-    <button class="tab">Sprint</button>
-    <button class="tab">Functional</button>
-    <button class="tab">Z-Lab</button>  </div>
+  <!-- Top Pagination Placeholder (SPE pagination not yet implemented) -->
 
   <!-- Table -->
   <div class="table-container">
-    <table class="promo-table">
+    <table class="promo-table sortable">
       <thead>
         <tr>
-          <th>Promo Code</th>
-          <th>Orbit ID</th>
-          <th>Status</th>
-          <th>Bill Facing Name</th>
-          <th>Start Date</th>
-          <th>End Date</th>
-          <th>Promo Owner</th>
+          <th data-sort-type="string">Promo Code</th>
+          <th data-sort-type="string">Orbit ID</th>
+          <th data-sort-type="string">Status</th>
+          <th data-sort-type="string">Bill Facing Name</th>
+          <th data-sort-type="date">Start Date</th>
+          <th data-sort-type="date">End Date</th>
+          <th data-sort-type="string">Promo Owner</th>
           <th>Action</th>
         </tr>
       </thead>

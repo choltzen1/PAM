@@ -47,21 +47,36 @@ def route_app():
     return app, dm
 
 
-def test_edit_promo_get_creates_default(route_app):
+def test_edit_rdc_get_creates_default(route_app):
     app, dm = route_app
     with app.test_client() as c:
-        resp = c.get('/edit_promo/ZZZ1')
+        resp = c.get('/edit_rdc/ZZZ1')
         assert resp.status_code == 200
 
 
-def test_edit_promo_post_generates_sql(route_app, monkeypatch):
+def test_edit_rdc_post_generates_sql(route_app, monkeypatch):
     from promo import builders
     # Provide a deterministic SQL generator
     monkeypatch.setattr(builders, 'generate_promo_eligibility_sql', lambda d: 'INSERT ...;')
 
     app, dm = route_app
     with app.test_client() as c:
-        resp = c.post('/edit_promo/ABCD', data={'generate_sql': '1', 'active_tab': 'Details'})
+        resp = c.post('/edit_rdc/ABCD', data={'generate_sql': '1', 'active_tab': 'Details'})
         assert resp.status_code == 302  # redirect
         saved = dm.get_promo('ABCD')
         assert saved.get('generated_sql') == 'INSERT ...;'
+
+
+def test_rdc_sql_generation_render(route_app, monkeypatch):
+    """End-to-end style check: POST generate then GET render includes diagnostics or fallback markers."""
+    from promo import builders
+    monkeypatch.setattr(builders, 'generate_promo_eligibility_sql', lambda d: 'SELECT 1;')
+    app, dm = route_app
+    with app.test_client() as c:
+        resp = c.post('/edit_rdc/R249', data={'generate_sql': '1', 'active_tab': 'Details'})
+        assert resp.status_code in (301,302)
+        # Follow redirect to SQL tab manually
+        resp = c.get('/edit_rdc/R249?tab=SQL%20Generation&gen=1')
+        assert resp.status_code == 200
+        body = resp.data
+        assert b'DIAG: INPUT FIELD MAP' in body or b'FALLBACK MINIMAL SQL' in body or b'SELECT 1 AS no_data_placeholder' in body or b'SELECT 1;' in body

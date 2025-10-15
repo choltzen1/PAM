@@ -192,6 +192,15 @@ def admin_stats():
     except Exception as e:
         return jsonify({'success': False, 'message': f'Failed to get stats: {e}'})
 
+    @admin_bp.route('/admin/phase-recompute', methods=['POST','GET'])
+    def admin_phase_recompute():
+        dm = _ensure_dm()
+        try:
+            result = dm.sweep_phases(user='Admin Phase Sweep')
+            return jsonify({'success': True, 'result': result})
+        except Exception as e:
+            return jsonify({'success': False, 'message': f'Phase sweep failed: {e}'})
+
 @admin_bp.route('/admin/dashboard-summary')
 def admin_dashboard_summary():
     dm = _ensure_dm()

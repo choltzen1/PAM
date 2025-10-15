@@ -359,56 +359,9 @@ class DatabaseManager:
     
     def get_promo_by_code(self, promo_code: str) -> Optional[Dict[str, Any]]:
         """Fetch specific promotion by code."""
-        sql = f"""
-        SELECT 
-            code,
-            Owner,
-            [bill facing name] as bill_facing_name,
-            orbit_id,
-            description,
-            promo_notes,
-            discount,
-            amount,
-            nseip_drop,
-            dcd_web_cart,
-            product_type,
-            bogo,
-            fpd_display_promo,
-            on_menu,
-            market_group,
-            store_group,
-            promo_srart_date,
-            promo_end_date,
-            comm_end_date,
-            promo_duration,
-            delay_time,
-            application_grace_period,
-            device_sales_type,
-            activation_type,
-            active_line_required,
-            maintain_soc,
-            crffc_maintainactivelinedev,
-            limit_per_ban,
-            soc_grouping,
-            account_type,
-            sales_application,
-            operator_id,
-            sku_group_id,
-            device_status_group_id,
-            clawback_indicator,
-            Broken_Trade,
-            Anticipated_volume_take_rates_total,
-            Desired_Execution,
-            Status,
-            crffc_eligibletradeindevices,
-            cat_lobchannelhorizontalname,
-            cat_additionaleligibilityrequirementsname,
-            cat_eligibledevices,
-            cat_channelsname,
-            cat_description
-        FROM {self.source_table}
-        WHERE code = :promo_code
-        """
+        # Pull ALL columns so downstream generator can map any newly added field without code change.
+        # Rationale: we have a broad SQL generation mapping that may evolve; selecting * avoids drifting lists.
+        sql = f"SELECT * FROM {self.source_table} WHERE code = :promo_code"
         
         try:
             df = self.get_dataframe(sql, {'promo_code': promo_code})
@@ -460,7 +413,14 @@ class DatabaseManager:
                     with sqlite3.connect(self._diag_db_path) as c2:
                         c2.execute(
                             "INSERT INTO date_diagnostics_history (captured_at, window_days, total_with_value, valid_dates, invalid_dates, invalid_ratio) VALUES (?,?,?,?,?,?)",
-                            (datetime.utcnow().isoformat(), days, total_with_value, valid_count, invalid_count, ratio)
+                            (
+                                datetime.utcnow().isoformat(),
+                                days,
+                                total_with_value,
+                                valid_count,
+                                invalid_count,
+                                ratio
+                            )
                         )
                 except Exception as pe:
                     logger.warning(f"Failed to persist diagnostics snapshot: {pe}")
@@ -929,6 +889,34 @@ class DatabaseManager:
             "cat_channelsname": db_record.get("cat_channelsname", ""),
             "cat_description": db_record.get("cat_description", "")
         }
+
+        # Pass-through: include any generator-relevant fields that are present in the DB record but not yet mapped above.
+        generator_field_candidates = {
+            'promo_start_date','promo_end_date','promo_srart_date','finance_type','application_grace_period',
+            'promo_grace','trade_in_grace','trade_in_group_id','trade_in_grp_id','promo_grace_period','trade_in_grace_period',
+            'tiered_group_id','tiered_grp_id','segment_group_id','segment_grp_id','segment_name','sub_segment','segment_level',
+            'flow_indicator','bolton_trade_in_grp_id','port_in_group_id','min_gsm_count','max_gsm_count','trade_in_grace_period',
+            'promo_grace_period','maintain_soc','activation_type','device_sales_type','sku_group_id','account_type','sales_application',
+            'soc_grouping','limit_per_ban','delay_time','nseip_drop','discount','amount','operator_id','device_status_group_id',
+            'clawback_indicator'
+        }
+        for k,v in db_record.items():
+            lk = str(k)
+            if lk in generator_field_candidates and lk not in json_record:
+                json_record[lk] = v
+        # Normalize common synonyms / variant column names into expected keys used by generator
+        if 'promo_srart_date' in json_record and not json_record.get('promo_start_date'):
+            json_record['promo_start_date'] = json_record['promo_srart_date']
+        if 'trade_in_grp_id' in json_record and not json_record.get('trade_in_group_id'):
+            json_record['trade_in_group_id'] = json_record['trade_in_grp_id']
+        if 'tiered_grp_id' in json_record and not json_record.get('tiered_group_id'):
+            json_record['tiered_group_id'] = json_record['tiered_grp_id']
+        if 'segment_grp_id' in json_record and not json_record.get('segment_group_id'):
+            json_record['segment_group_id'] = json_record['segment_grp_id']
+        if 'promo_grace_period' in json_record and not json_record.get('promo_grace'):
+            json_record['promo_grace'] = json_record['promo_grace_period']
+        if 'trade_in_grace_period' in json_record and not json_record.get('trade_in_grace'):
+            json_record['trade_in_grace'] = json_record['trade_in_grace_period']
         
         return json_record
 
@@ -1038,6 +1026,24 @@ class DatabaseManager:
         except Exception as e:
             logger.error(f"Failed minimal insert for {code}: {e}")
             return False
+
+    # --- SKU Group ID helpers ---
+    def get_all_sku_group_ids(self) -> list[str]:
+        """Return list of distinct sku_group_id values present in the source table (uppercase, pattern-like)."""
+        sql = f"SELECT DISTINCT sku_group_id FROM {self.source_table} WHERE sku_group_id IS NOT NULL AND LEN(sku_group_id)=3"
+        try:
+            engine = self.get_engine()
+            with engine.connect() as conn:
+                rows = conn.execute(text(sql)).fetchall()
+            vals: list[str] = []
+            for r in rows:
+                val = (r[0] or '').strip().upper()
+                if val:
+                    vals.append(val)
+            return vals
+        except Exception as e:
+            logger.error(f"Failed to fetch sku_group_ids: {e}")
+            return []
 
     def record_version_entry(self, code: str, change_type: str, description: str, user: str, diff: Optional[Dict[str, Any]] = None):
         """Version history disabled/reset; no-op placeholder."""
@@ -1194,6 +1200,26 @@ class DatabaseManager:
             logger.error(f"Failed to record PCR version event for {code}: {e}")
             return False
 
+    def record_phase_change_event(self, code: str, old_phase: Optional[str], new_phase: str, user: str = 'System') -> bool:
+        """Record a phase transition (Build -> Launched -> Expired, etc.).
+
+        Stored as event_type 'Phase Change' with diff {'phase': {'old': old_phase, 'new': new_phase}}
+        (old_phase may be None for initial materialization)
+        """
+        try:
+            diff = {
+                'phase': {'old': old_phase, 'new': new_phase}
+            }
+            with sqlite3.connect(self._diag_db_path) as conn:
+                conn.execute(
+                    "INSERT INTO promo_history (promo_code, timestamp, event_type, user_name, diff_json) VALUES (?,?,?,?,?)",
+                    (code, datetime.utcnow().isoformat(), 'Phase Change', user, json.dumps(diff))
+                )
+            return True
+        except Exception as e:
+            logger.error(f"Failed to record phase change for {code}: {e}")
+            return False
+
     def record_end_date_system_update(self, code: str, old_end: str, new_end: str, user: str = 'System') -> bool:
         """Record a system-driven end date update event.
 
@@ -1338,6 +1364,11 @@ class DatabaseManager:
                 try:
                     conn.execute("DELETE FROM promo_extras WHERE promo_code=?", (code,))
                     conn.execute("DELETE FROM promo_files WHERE promo_code=?", (code,))
+                    # NEW: remove history events for this promo
+                    try:
+                        conn.execute("DELETE FROM promo_history WHERE promo_code=?", (code,))
+                    except Exception:
+                        pass
                     conn.execute(
                         "INSERT INTO version_history (promo_code, timestamp, change_type, description, user_name, diff_json) VALUES (?,?,?,?,?,?)",
                         (code, datetime.utcnow().isoformat(), 'Deleted', f'Promo {code} deleted', user_name, None)

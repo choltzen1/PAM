@@ -265,6 +265,24 @@
   color: #856404;
 }
 
+/* New phase statuses */
+.status-phase-build {
+  background: #ffe8a1;
+  color: #7a5d00;
+}
+.status-phase-launched {
+  background: #d4edda;
+  color: #155724;
+}
+.status-phase-expired {
+  background: #e2e3e5;
+  color: #595d60;
+}
+.status-phase-canceled {
+  background: #f8d7da;
+  color: #721c24;
+}
+
 /* Change history row styling */
 .change-history-row {
   background: #f8f9fa !important;

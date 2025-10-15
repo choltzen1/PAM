@@ -33,7 +33,7 @@ else:
 
 # Basic markers expected in templates to confirm correct page render
 PAGE_MARKERS = {
-    '/promotions': 'Promotions',
+    '/rdc': 'RDC',
     '/spe': 'SPE',
     '/rebates': 'Rebates',
     '/date-mismatch': 'Date Mismatch',

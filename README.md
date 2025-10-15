@@ -177,7 +177,7 @@ Benefits realized:
 
 ### Main Pages
 - **Dashboard** (`/`): Home page with navigation and system overview
-- **Promotions** (`/promotions`): RDC promotion management interface
+- **RDC** (`/rdc`): RDC promotion management interface
 - **SPE** (`/spe`): Special promotional events management
 - **Rebates** (`/rebates`): Rebate program administration
 - **Capacity** (`/capacity`): Capacity planning and workload management

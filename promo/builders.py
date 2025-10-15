@@ -15,22 +15,32 @@ def generate_promo_eligibility_sql(promo_data):
     function_start_time = time.time()
     
     # Check for tier compatibility conflicts before generating SQL
+    # Safe normalization to avoid calling .strip() on None
+    def _s(v):
+        if v is None:
+            return ''
+        try:
+            return str(v).strip()
+        except Exception:
+            return ''
+
     has_trade_data = any([
-        promo_data.get(f'trade_tier_{tier}_amount', '').strip() or 
-        promo_data.get(f'trade_tier_{tier}_make_model', '').strip()
+        _s(promo_data.get(f'trade_tier_{tier}_amount')) or 
+        _s(promo_data.get(f'trade_tier_{tier}_make_model'))
         for tier in range(1, 5)
     ])
-    
+
     has_tiered_data = (
-        promo_data.get('tiered_group_id', '').strip() or
+        _s(promo_data.get('tiered_group_id')) or
         any([
-            promo_data.get(f'tier_{tier}_amount', '').strip() or 
-            promo_data.get(f'tier_{tier}_sku_group_id', '').strip()
+            _s(promo_data.get(f'tier_{tier}_amount')) or 
+            _s(promo_data.get(f'tier_{tier}_sku_group_id'))
             for tier in range(1, 5)
         ])
     )
     
     if has_trade_data and has_tiered_data:
+        print("[GEN][ABORT] Both trade tiers and tiered groups detected; incompatible.")
         return "-- ERROR: Cannot generate SQL - Trade-in tiers and tiered groups cannot be used together.\n-- Please clear one of the configurations before generating SQL."
     
     # Helper function to safely get integer values
@@ -88,12 +98,77 @@ def generate_promo_eligibility_sql(promo_data):
         except ValueError:
             return 'NULL'
     
-    # Alias / normalize known misspelled DB column -> expected form
-    if 'promo_start_date' not in promo_data and promo_data.get('promo_srart_date'):
-        promo_data['promo_start_date'] = promo_data.get('promo_srart_date')
+    # ------------------------------------------------------------------
+    # COLUMN NORMALIZATION (now resolve directly from raw DB column names)
+    # We keep the original promo_data untouched and build a canonical overlay
+    # so the rest of the generator can rely on stable keys.
+    # ------------------------------------------------------------------
+    synonyms = {
+        'code': ['code','CODE','Promo Code','PROMO_CODE'],
+        'orbit_id': ['orbit_id','ORBIT_ID'],
+        'bill_facing_name': ['bill_facing_name','bill facing name','BILL_FACING_NAME','Bill Facing Name'],
+        'promo_start_date': ['promo_start_date','promo_srart_date','PROMO_START_DATE','promo_start','start_date'],
+        'promo_end_date': ['promo_end_date','PROMO_END_DATE','end_date'],
+        'operator_id': ['operator_id','OPERATOR_ID'],
+        'sku_group_id': ['sku_group_id','SKU_GROUP_ID'],
+        'soc_grouping': ['soc_grouping','SOC_GROUPING','soc_group_id','SOC_GROUP_ID'],
+        'account_type': ['account_type','ACCOUNT_TYPE','atst_group_id','ATST_GROUP_ID'],
+        'sales_application': ['sales_application','SALES_APPLICATION','appl_group_id','APPL_GROUP_ID'],
+        'device_sales_type': ['device_sales_type','DEVICE_SALES_TYPE','device_st_group_id','DEVICE_ST_GROUP_ID'],
+        'activation_type': ['activation_type','ACTIVATION_TYPE','line_st_group_id','LINE_ST_GROUP_ID'],
+        'maintain_soc': ['maintain_soc','MAINTAIN_SOC','maint_soc_chk_ind','MAINT_SOC_CHK_IND'],
+        'application_grace_period': ['application_grace_period','APPLICATION_GRACE_PERIOD','app_grace_group_id','APP_GRACE_GROUP_ID'],
+        'trade_in_group_id': ['trade_in_group_id','trade_in_grp_id','TRADE_IN_GRP_ID','Trade_in_grp_id'],
+        'trade_in_grace': ['trade_in_grace','trade_in_grace_period','TRADE_IN_GRACE_PERIOD'],
+        'store_group': ['store_group','STORE_GROUP','store_grp_id','STORE_GRP_ID'],
+        'market_group': ['market_group','MARKET_GROUP','market_grp_id','MARKET_GRP_ID'],
+        'limit_per_ban': ['limit_per_ban','LIMIT_PER_BAN'],
+        'port_in_group_id': ['port_in_group_id','PORT_IN_GROUP_ID','portin_group_id','PORTIN_GROUP_ID'],
+        'discount': ['discount','DISCOUNT','promo_perc_disc','PROMO_PERC_DISC'],
+        'amount': ['amount','AMOUNT','promo_amount','PROMO_AMOUNT'],
+        'bptcr': ['bptcr','BPTCR','document_id','DOCUMENT_ID'],
+        'min_gsm_count': ['min_gsm_count','MIN_GSM_COUNT'],
+        'max_gsm_count': ['max_gsm_count','MAX_GSM_COUNT'],
+        'fpd_display_promo': ['fpd_display_promo','FPD_DISPLAY_PROMO','display_promo','DISPLAY_PROMO'],
+        'tiered_group_id': ['tiered_group_id','tiered_grp_id','TIERED_GRP_ID'],
+        'segment_group_id': ['segment_group_id','segment_grp_id','SEGMENT_GRP_ID'],
+        'product_type': ['product_type','PRODUCT_TYPE'],
+        'promo_grace': ['promo_grace','PROMO_GRACE','promo_grace_period','PROMO_GRACE_PERIOD'],
+        'nseip_drop': ['nseip_drop','NSEIP_DROP','nseip_drop_ind','NSEIP_DROP_IND'],
+        'delay_time': ['delay_time','DELAY_TIME'],
+        'mpss_lookback': ['mpss_lookback','MPSS_LOOKBACK'],
+        'flow_indicator': ['flow_indicator','FLOW_INDICATOR'],
+        'device_status_group_id': ['device_status_group_id','dvc_sts_grp_id','DVC_STS_GRP_ID'],
+        'clawback_indicator': ['clawback_indicator','clawback_ind','CLAWBACK_IND'],
+        'broken_trade': ['broken_trade','Broken_Trade','BROKEN_TRADE'],
+        'segment_name': ['segment_name','SEGMENT_NAME'],
+        'sub_segment': ['sub_segment','SUB_SEGMENT','sub_segment_name','SUB_SEGMENT_NAME'],
+        'segment_level': ['segment_level','SEGMENT_LEVEL']
+    }
+
+    def resolve(canon_key):
+        for k in synonyms.get(canon_key, []):
+            if k in promo_data and promo_data.get(k) not in (None,''):
+                return promo_data.get(k)
+        return None
+
+    # Build canonical overlay
+    canonical = {ck: resolve(ck) for ck in synonyms.keys()}
+    # Specific typo fix is now redundant thanks to synonyms but keep fallback
+    if not canonical.get('promo_start_date') and promo_data.get('promo_srart_date'):
+        canonical['promo_start_date'] = promo_data.get('promo_srart_date')
+    # Merge overlay (prefer canonical values)
+    merged = dict(promo_data)
+    for k,v in canonical.items():
+        if v is not None:
+            merged[k] = v
+    promo_data = merged
     # Collect critical missing fields (diagnostics only)
     critical_fields = ['code','promo_start_date','promo_end_date','bill_facing_name']
     missing_crit = [f for f in critical_fields if not promo_data.get(f)]
+    print(f"[GEN][START] code={promo_data.get('code')} start={promo_data.get('promo_start_date')} end={promo_data.get('promo_end_date')} operator_id={promo_data.get('operator_id')} sku_group_id={promo_data.get('sku_group_id')} tiered_group_id={promo_data.get('tiered_group_id')} trade_in_group_id={promo_data.get('trade_in_group_id')}")
+    if missing_crit:
+        print(f"[GEN][MISSING_CRIT] {missing_crit}")
 
     # Map promo data to SQL fields
     sql_values = {
@@ -246,6 +321,7 @@ def generate_promo_eligibility_sql(promo_data):
     
     # Generate the base SQL statement
     base_sql = f"INSERT INTO PROMO_ELIGIBILITY_RULES ({','.join(columns)}) VALUES ({','.join(values_list)});"
+    print(f"[GEN][BASE_LEN] {len(base_sql)} chars (without ancillary sections)")
     
     # Create template header
     operator_id = promo_data.get('operator_id', '')
@@ -255,7 +331,7 @@ def generate_promo_eligibility_sql(promo_data):
     launch_date = "DAY BEFORE LAUNCH DATE"
     if promo_data.get('promo_start_date'):
         try:
-            start_date = datetime.strptime(promo_data.get('promo_start_date'), '%Y-%m-%d')
+            start_date = datetime.strptime(promo_data.get('promo_start_date') or '', '%Y-%m-%d')
             day_before = start_date - timedelta(days=1)
             launch_date = day_before.strftime('%d/%m/%Y')
         except ValueError:
@@ -270,7 +346,7 @@ def generate_promo_eligibility_sql(promo_data):
     launch_date_formatted = "TBD"
     if promo_data.get('promo_start_date'):
         try:
-            start_date = datetime.strptime(promo_data.get('promo_start_date'), '%Y-%m-%d')
+            start_date = datetime.strptime(promo_data.get('promo_start_date') or '', '%Y-%m-%d')
             # Format without leading zeros (Windows compatible)
             month = str(start_date.month)
             day = str(start_date.day)
@@ -317,6 +393,8 @@ def generate_promo_eligibility_sql(promo_data):
     
     # Generate PROMO_TRADEIN_GROUPS INSERT statements
     tradein_groups_sql = generate_tradein_groups_sql()
+    if tradein_groups_sql:
+        print(f"[GEN][TRADEIN_GROUPS] {len(tradein_groups_sql)} chars")
     
     # Generate PROMO_TIERED_GROUPS INSERT statements
     def generate_tiered_groups_sql():
@@ -346,6 +424,8 @@ def generate_promo_eligibility_sql(promo_data):
     
     # Generate PROMO_TIERED_GROUPS INSERT statements
     tiered_groups_sql = generate_tiered_groups_sql()
+    if tiered_groups_sql:
+        print(f"[GEN][TIERED_GROUPS] {len(tiered_groups_sql)} chars")
     
     # Generate PROMO_DEVICE_GROUPS INSERT statements
     def generate_device_groups_sql():
@@ -442,6 +522,8 @@ def generate_promo_eligibility_sql(promo_data):
     # Generate PROMO_DEVICE_GROUPS INSERT statements
     device_start_time = time.time()
     device_groups_sql = generate_device_groups_sql()
+    if device_groups_sql:
+        print(f"[GEN][DEVICE_GROUPS] {len(device_groups_sql)} chars")
     device_time = time.time() - device_start_time
     if device_time > 1.0:
         print(f"  Device Groups SQL: {device_time:.2f}s")
@@ -468,6 +550,8 @@ def generate_promo_eligibility_sql(promo_data):
     
     # Generate PROMO_SEGMENT_GROUPS INSERT statements
     segment_groups_sql = generate_segment_groups_sql()
+    if segment_groups_sql:
+        print(f"[GEN][SEGMENT_GROUPS] {len(segment_groups_sql)} chars")
     
     # Generate trade-in device SQL from uploaded Excel file
     def generate_tradein_device_sql():
@@ -482,6 +566,8 @@ def generate_promo_eligibility_sql(promo_data):
 
     # Generate trade-in device SQL statements
     tradein_device_sql = generate_tradein_device_sql()
+    if tradein_device_sql:
+        print(f"[GEN][TRADEIN_DEVICE] {len(tradein_device_sql)} chars")
     
     # Generate efpe_generic_params update statement if broken_trade is Y
     efpe_update_sql = ""
@@ -537,6 +623,7 @@ END;{efpe_update_sql}"""
     if total_time > 2.0:
         print(f"⚠️  SQL Generation Performance: {total_time:.2f}s, Output: {len(template_sql):,} chars")
     
+    print(f"[GEN][FINAL_LEN] {len(template_sql)} chars")
     return template_sql
 
 def generate_eligibility_insert(data: dict) -> str:
@@ -652,10 +739,8 @@ def generate_eligibility_insert(data: dict) -> str:
     columns_sql = ','.join(columns)
     values_sql = ','.join(vals)
 
-    return (
-        f"INSERT INTO PROMO_ELIGIBILITY_RULES ({columns_sql}) "
-        f"VALUES ({values_sql});"
-    )
+    # Single-line INSERT (no newline after table name) per formatting requirement
+    return f"INSERT INTO PROMO_ELIGIBILITY_RULES ({columns_sql}) VALUES ({values_sql});"
 
 
 
@@ -677,15 +762,9 @@ def generate_promo_insert(promo: dict) -> str:
     # sanitize single quotes in description
     desc = promo.get("description", "").replace("'", "''")
 
-    template = (
-        "INSERT INTO PROMO_TRADEIN_GROUPS "
-        "(TRADE_IN_GRP_ID, LOAN_SKU_GRP, MK_MDL_GRP_ID, "
-        "SYS_CREATION_DATE, OPERATOR_ID, APPLICATION_ID, "
-        "DL_SERVICE_CODE, TRADEIN_AMOUNT, TRADEIN_GROUP_DESC) "
-        "VALUES ('{grp_id}', '{loan_grp}', '{mdl_grp}', "
-        "sysdate, {op_id}, '{app_id}', '{dl_code}', "
-        "{amount}, '{desc}');"
-    )
+    # Single-line INSERT format
+    template = ("INSERT INTO PROMO_TRADEIN_GROUPS (TRADE_IN_GRP_ID, LOAN_SKU_GRP, MK_MDL_GRP_ID, SYS_CREATION_DATE, OPERATOR_ID, APPLICATION_ID, DL_SERVICE_CODE, TRADEIN_AMOUNT, TRADEIN_GROUP_DESC) "
+                "VALUES ('{grp_id}', '{loan_grp}', '{mdl_grp}', sysdate, {op_id}, '{app_id}', '{dl_code}', {amount}, '{desc}');")
 
     return template.format(
         grp_id=promo.get("trade_in_grp_id"),
@@ -706,11 +785,8 @@ def generate_device_inserts(trade_in_grp_id: str, devices: list[dict]) -> list[s
       - trade_in_grp_id: promo group ID
       - devices: list of dicts, each with a 'sku' key
     """
-    template = (
-        "INSERT INTO PROMO_DEVICE_ELIGIBILITY "
-        "(TRADE_IN_GRP_ID, DEVICE_SKU, ELIGIBLE_DATE) "
-        "VALUES ('{grp_id}', '{sku}', sysdate);"
-    )
+    # Single-line INSERT format
+    template = ("INSERT INTO PROMO_DEVICE_ELIGIBILITY (TRADE_IN_GRP_ID, DEVICE_SKU, ELIGIBLE_DATE) VALUES ('{grp_id}', '{sku}', sysdate);")
 
     stmts = []
     for dev in devices:
