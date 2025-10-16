@@ -29,19 +29,6 @@
 
 {% block content %}
 
-{% if auto_open_sql_preview %}
-<script>
-  document.addEventListener('DOMContentLoaded', function(){
-    const btn = document.getElementById('sqlPreviewBtn');
-    const container = document.getElementById('sqlPreviewContainer');
-    if(btn && container){
-      container.classList.remove('hidden');
-      container.style.display='block';
-      btn.innerHTML = '<i class="fas fa-eye-slash"></i> Hide';
-    }
-  });
-</script>
-{% endif %}
 
 <script>
   document.addEventListener('DOMContentLoaded', function(){
@@ -270,11 +257,11 @@
                 </div>
                 <div class="trade-box">
                   <div class="trade-box-label">Broken trade</div>
-                  <div class="trade-box-input">
-                    <div class="input-group vertical-radio">
-                      <label class="radio-vertical">Y <input type="radio" name="broken_trade" value="Y" {% if promo.broken_trade == 'Y' %}checked{% endif %}></label>
-                      <label class="radio-vertical">N <input type="radio" name="broken_trade" value="N" {% if promo.broken_trade == 'N' %}checked{% endif %}></label>
-                    </div>
+                  <div class="trade-box-input" style="width:100%">
+                    <select class="form-select" name="broken_trade">
+                      <option value="Y" {% if promo.broken_trade == 'Y' %}selected{% endif %}>Y</option>
+                      <option value="N" {% if promo.broken_trade == 'N' %}selected{% endif %}>N</option>
+                    </select>
                   </div>
                 </div>
               </div>
@@ -380,6 +367,7 @@
             </div>
             <div class="save-footer"><button type="submit" class="btn btn-primary">Save BPTCR</button></div>
           {% elif active_tab == 'DCD JIRA' %}
+            
             <div class="dcd-jira-form"><h3 class="dcd-form-title">DCD JIRA Ticket Configuration</h3><p class="dcd-form-subtitle">Configure comprehensive DCD approval ticket with auto-populated data</p><!-- retaining original content omitted for brevity --></div>
           {% elif active_tab == 'Notes' %}
             <div class="grid-form two-col"><div class="col-span-2"><label class="section-label">Notes</label><textarea class="form-control" name="promo_notes" rows="15">{{ promo.promo_notes or '' }}</textarea><small class="form-text text-muted">Add any additional notes, observations, or documentation.</small></div></div>
@@ -407,8 +395,22 @@
             </div>
             <div class="grid-form one-col mt-2" id="sqlSection" {% if not has_generated_sql %}style="display:none;"{% endif %}>
               <label class="section-label">Generated SQL Statement</label>
-              <div class="file-info-card mb-1"><div class="file-info"><i class="fas fa-database"></i><div><div class="file-name">{{ promo.code }}_promo_eligibility_rules.sql</div><div class="file-meta" id="sqlMeta">{% if promo.generated_sql %}Generated on {{ promo.sql_generated_at if promo.sql_generated_at else 'Unknown' }}{% if promo.sql_length %} • {{ "{:,}".format(promo.sql_length) }} characters{% endif %}{% if promo.sql_generation_time %} • Generated in {{ promo.sql_generation_time }}s{% endif %}{% else %}<span id="sqlMetaPlaceholder">SQL generated – metadata pending.</span>{% endif %}</div></div></div><div class="file-actions"><a href="{{ url_for('promo.download_sql', promo_code=promo.code) }}" class="btn btn-sm btn-outline" id="downloadSqlBtn" {% if not promo.generated_sql %}style="display:none;"{% endif %}><i class="fas fa-download"></i> Download SQL</a><button type="button" onclick="toggleSqlPreview()" id="sqlPreviewBtn" class="btn btn-sm btn-outline ml-sm" {% if not promo.generated_sql %}style="display:none;"{% endif %}><i class="fas fa-eye"></i> Preview</button></div></div>
-              <div id="sqlPreviewContainer" class="hidden"><div class="sql-preview-header"><span>SQL Preview (first 1000 characters)</span><button type="button" onclick="loadFullSql()" id="loadFullBtn" class="btn btn-sm btn-link">Load Full SQL</button></div><textarea class="form-control sql-preview-area" id="sqlPreviewArea" rows="15" readonly>{% if promo.generated_sql %}{% if promo.generated_sql|length > 1000 %}{{ promo.generated_sql[:1000] }}...\n\n[SQL truncated for performance - use "Load Full SQL" button or download to see complete statement]{% else %}{{ promo.generated_sql }}{% endif %}{% endif %}</textarea></div>
+              <div class="file-info-card sql-card mb-1">
+                <div class="file-info"><i class="fas fa-database"></i>
+                  <div class="file-details">
+                    <div class="file-name">{{ promo.code }}_promo_eligibility_rules.sql</div>
+                    <div class="file-meta" id="sqlMeta">{% if promo.generated_sql %}Generated on {{ promo.sql_generated_at if promo.sql_generated_at else 'Unknown' }}{% if promo.sql_length %} • {{ "{:,}".format(promo.sql_length) }} characters{% endif %}{% if promo.sql_generation_time %} • Generated in {{ promo.sql_generation_time }}s{% endif %}{% else %}<span id="sqlMetaPlaceholder">SQL generated – metadata pending.</span>{% endif %}</div>
+                  </div>
+                </div>
+                <div class="file-actions">
+                  <a href="{{ url_for('promo.download_sql', promo_code=promo.code) }}" class="btn btn-sm btn-outline" id="downloadSqlBtn" {% if not promo.generated_sql %}style="display:none;"{% endif %}><i class="fas fa-download"></i> Download SQL</a>
+                  <button type="button" onclick="toggleSqlPreview()" id="sqlPreviewBtn" class="btn btn-sm btn-outline ml-sm" {% if not promo.generated_sql %}style="display:none;"{% endif %}><i class="fas fa-eye"></i> Preview</button>
+                </div>
+              </div>
+              <div id="sqlPreviewContainer" class="hidden" style="display:none;">
+                <div class="sql-preview-header"><span>SQL Preview (first 1000 characters)</span><button type="button" onclick="loadFullSql()" id="loadFullBtn" class="btn btn-sm btn-link">Load Full SQL</button></div>
+                <textarea class="form-control sql-preview-area" id="sqlPreviewArea" rows="15" readonly>{% if promo.generated_sql %}{% if promo.generated_sql|length > 1000 %}{{ promo.generated_sql[:1000] }}...\n\n[SQL truncated for performance - use "Load Full SQL" button or download to see complete statement]{% else %}{{ promo.generated_sql }}{% endif %}{% endif %}</textarea>
+              </div>
             </div>
             {% if not has_generated_sql %}<div class="mt-2" id="sqlFirstTimeNotice" style="padding:10px;border:1px dashed #bbb;background:#fafafa;font-size:0.9rem;">No SQL generated yet. Click <strong>Generate SQL</strong>. After the first generation this section will appear automatically.</div>{% endif %}
             <div class="save-footer"><button type="submit" class="btn btn-primary">Save SQL Generation</button><button type="submit" name="generate_sql" value="1" class="btn btn-secondary ml"><i class="fas fa-cog"></i> Generate SQL</button></div>
