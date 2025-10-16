@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "pam/base_pam.html" %}
 {% block title %}Edit RDC {{ promo.code }}{% endblock %}
 
 {% block extra_css %}
@@ -132,26 +132,29 @@
                 <option value="Y" {% if promo.dcd_web_cart == 'Y' %}selected{% endif %}>Yes</option>
                 <option value="N" {% if promo.dcd_web_cart == 'N' %}selected{% endif %}>No</option>
               </select>
-              <label class="grid-full section-label">Product Type</label>
-              <div class="input-group vertical-radio grid-full mb-1">
-                <label class="radio-vertical">B <input type="radio" name="product_type" value="B" {% if promo.product_type == 'B' %}checked{% endif %}></label>
-                <label class="radio-vertical">G <input type="radio" name="product_type" value="G" {% if promo.product_type == 'G' %}checked{% endif %}></label>
-                <label class="radio-vertical">* <input type="radio" name="product_type" value="*" {% if promo.product_type == '*' %}checked{% endif %}></label>
-              </div>
+              <!-- Row: Product Type + BOGO + Bolt Trade-In Group ID (3 columns, no unused filler) -->
+              <label class="section-label">Product Type</label>
               <label class="section-label">BOGO</label>
               <label class="section-label">Bolt Trade-In Group ID</label>
-              <label class="section-label">FPD Display Promo</label>
-              <label class="section-label">On Menu</label>
+              <label class="section-label">&nbsp;</label>
+              <select class="form-select mb-1 col-span-1" name="product_type">
+                {% for val in ['B','G','*'] %}
+                <option value="{{ val }}" {% if promo.product_type == val %}selected{% endif %}>{{ val }}</option>
+                {% endfor %}
+              </select>
               <select class="form-select" name="bogo">
                 <option value="Y" {% if promo.bogo == 'Y' %}selected{% endif %}>Yes</option>
                 <option value="N" {% if promo.bogo == 'N' %}selected{% endif %}>No</option>
               </select>
               <input class="form-control" name="trade_in_group_id" value="{{ promo.trade_in_group_id }}">
-              <select class="form-select" name="fpd_display_promo">
+              <!-- Row: FPD Display Promo + On Menu each span 2 columns to fill width -->
+              <label class="section-label col-span-2">FPD Display Promo</label>
+              <label class="section-label col-span-2">On Menu</label>
+              <select class="form-select col-span-2" name="fpd_display_promo">
                 <option value="Y" {% if promo.fpd_display_promo == 'Y' %}selected{% endif %}>Yes</option>
                 <option value="N" {% if promo.fpd_display_promo == 'N' %}selected{% endif %}>No</option>
               </select>
-              <select class="form-select" name="on_menu">
+              <select class="form-select col-span-2" name="on_menu">
                 <option value="Y" {% if promo.on_menu == 'Y' %}selected{% endif %}>Yes</option>
                 <option value="N" {% if promo.on_menu == 'N' %}selected{% endif %}>No</option>
               </select>
@@ -174,11 +177,11 @@
               <input class="form-control" name="promo_start_date" type="date" value="{{ promo.promo_start_date }}">
               <input class="form-control" name="promo_end_date" type="date" value="{{ promo.promo_end_date }}">
               <input class="form-control" name="comm_end_date" type="date" value="{{ promo.comm_end_date }}">
-              <div class="input-group vertical-radio">
+              <select class="form-select" name="promo_duration">
                 {% for d in ['24','30','36'] %}
-                <label class="radio-vertical">{{ d }} <input type="radio" name="promo_duration" value="{{ d }}" {% if promo.promo_duration == d %}checked{% endif %}></label>
+                <option value="{{ d }}" {% if promo.promo_duration == d %}selected{% endif %}>{{ d }}</option>
                 {% endfor %}
-              </div>
+              </select>
               <label class="section-label">Delay Time</label>
               <label class="section-label">MPSS Lookback</label>
               <label class="section-label">RDC Grace</label>
@@ -188,11 +191,11 @@
               <input class="form-control" name="promo_grace" value="{{ promo.promo_grace }}">
               <input class="form-control" name="trade_in_grace" value="{{ promo.trade_in_grace }}">
               <label class="section-label grid-full">Application Grace Period</label>
-              <div class="input-group vertical-radio grid-full">
+              <select class="form-select grid-full" name="application_grace_period">
                 {% for grace in ['G11','G12','G13','G14','G15','G16','G17','NULL'] %}
-                <label class="radio-vertical">{{ grace }} <input type="radio" name="application_grace_period" value="{{ grace }}" {% if promo.application_grace_period == grace %}checked{% endif %}></label>
+                <option value="{{ grace }}" {% if promo.application_grace_period == grace %}selected{% endif %}>{{ grace }}</option>
                 {% endfor %}
-              </div>
+              </select>
             </div>
             <div class="save-footer"><button type="submit" class="btn btn-primary">Save Dates & Times</button></div>
           {% elif active_tab == 'Requirements' %}
@@ -201,81 +204,101 @@
               <label class="section-label">Activation Type</label>
               <label class="section-label">Active Line Required</label>
               <label class="section-label">Maintain SOC</label>
-              <div class="input-group vertical-radio">
+              <select class="form-select" name="device_sales_type">
                 {% for type in ['J01','S01','*','NULL'] %}
-                <label class="radio-vertical">{{ type }} <input type="radio" name="device_sales_type" value="{{ type }}" {% if promo.device_sales_type == type %}checked{% endif %}></label>
+                <option value="{{ type }}" {% if promo.device_sales_type == type %}selected{% endif %}>{{ type }}</option>
                 {% endfor %}
-              </div>
-              <div class="input-group vertical-radio">
+              </select>
+              <select class="form-select" name="activation_type">
                 {% for type in ['AE1','E01','N01','NA1','*','NULL'] %}
-                <label class="radio-vertical">{{ type }} <input type="radio" name="activation_type" value="{{ type }}" {% if promo.activation_type == type %}checked{% endif %}></label>
+                <option value="{{ type }}" {% if promo.activation_type == type %}selected{% endif %}>{{ type }}</option>
                 {% endfor %}
-              </div>
-              <div class="input-group vertical-radio">
-                <label class="radio-vertical">Y <input type="radio" name="active_line_required" value="Y" {% if promo.active_line_required == 'Y' %}checked{% endif %}></label>
-                <label class="radio-vertical">N <input type="radio" name="active_line_required" value="N" {% if promo.active_line_required == 'N' %}checked{% endif %}></label>
-              </div>
-              <div class="input-group vertical-radio">
-                <label class="radio-vertical">Y <input type="radio" name="maintain_soc" value="Y" {% if promo.maintain_soc == 'Y' %}checked{% endif %}></label>
-                <label class="radio-vertical">N <input type="radio" name="maintain_soc" value="N" {% if promo.maintain_soc == 'N' %}checked{% endif %}></label>
-              </div>
+              </select>
+              <select class="form-select" name="active_line_required">
+                {% for val in ['Y','N'] %}
+                <option value="{{ val }}" {% if promo.active_line_required == val %}selected{% endif %}>{{ val }}</option>
+                {% endfor %}
+              </select>
+              <select class="form-select" name="maintain_soc">
+                {% for val in ['Y','N'] %}
+                <option value="{{ val }}" {% if promo.maintain_soc == val %}selected{% endif %}>{{ val }}</option>
+                {% endfor %}
+              </select>
               <label class="section-label">Maintain Active Line</label>
               <label class="section-label">Limit Per BAN</label>
               <label class="section-label">Minimum GSM Count</label>
               <label class="section-label">Maximum GSM Count</label>
-              <div class="input-group vertical-radio">
-                <label class="radio-vertical">Y <input type="radio" name="maintain_active_line" value="Y" {% if promo.maintain_active_line == 'Y' %}checked{% endif %}></label>
-                <label class="radio-vertical">N <input type="radio" name="maintain_active_line" value="N" {% if promo.maintain_active_line == 'N' %}checked{% endif %}></label>
-              </div>
+              <select class="form-select" name="maintain_active_line">
+                {% for val in ['Y','N'] %}
+                <option value="{{ val }}" {% if promo.maintain_active_line == val %}selected{% endif %}>{{ val }}</option>
+                {% endfor %}
+              </select>
               <input class="form-control" name="limit_per_ban" value="{{ promo.limit_per_ban }}">
               <input class="form-control" name="min_gsm_count" value="{{ promo.min_gsm_count }}">
               <input class="form-control" name="max_gsm_count" value="{{ promo.max_gsm_count if promo.max_gsm_count is not none else '' }}">
+              <!-- Row: Port-In / Flow / Operator / SKU (labels) -->
               <label class="section-label">Port-In Group ID</label>
-              <input class="form-control" name="port_in_group_id" value="{{ promo.port_in_group_id }}">
               <label class="section-label">Flow Indicator</label>
-              <div class="input-group vertical-radio">
-                {% for indicator in ['NULL','100RDC'] %}
-                <label class="radio-vertical">{{ indicator }} <input type="radio" name="flow_indicator" value="{{ indicator }}" {% if promo.flow_indicator == indicator %}checked{% endif %}></label>
-                {% endfor %}
-              </div>
               <label class="section-label">Operator ID</label>
               <label class="section-label">SKU Group ID</label>
-              <label class="section-label">Device Status Group ID</label>
-              <label class="section-label">Clawback Indicator</label>
+              <!-- Row: Port-In / Flow / Operator / SKU (inputs) -->
+              <input class="form-control" name="port_in_group_id" value="{{ promo.port_in_group_id }}">
+              <select class="form-select" name="flow_indicator">
+                {% for indicator in ['NULL','100RDC'] %}
+                <option value="{{ indicator }}" {% if promo.flow_indicator == indicator %}selected{% endif %}>{{ indicator }}</option>
+                {% endfor %}
+              </select>
               <input class="form-control" name="operator_id" value="{{ promo.operator_id }}">
               <input class="form-control" name="sku_group_id" value="{{ promo.sku_group_id }}">
-              <input class="form-control" name="device_status_group_id" value="{{ promo.device_status_group_id }}">
-              <div class="input-group vertical-radio">
-                <label class="radio-vertical">Y <input type="radio" name="clawback_indicator" value="Y" {% if promo.clawback_indicator == 'Y' %}checked{% endif %}></label>
-                <label class="radio-vertical">N <input type="radio" name="clawback_indicator" value="N" {% if promo.clawback_indicator == 'N' %}checked{% endif %}></label>
-              </div>
+              <!-- Row: Device Status / Clawback spanning two columns each -->
+              <label class="section-label col-span-2">Device Status Group ID</label>
+              <label class="section-label col-span-2">Clawback Indicator</label>
+              <input class="form-control col-span-2" name="device_status_group_id" value="{{ promo.device_status_group_id }}">
+              <select class="form-select col-span-2" name="clawback_indicator">
+                {% for val in ['Y','N'] %}
+                <option value="{{ val }}" {% if promo.clawback_indicator == val %}selected{% endif %}>{{ val }}</option>
+                {% endfor %}
+              </select>
             </div>
             <div class="save-footer"><button type="submit" class="btn btn-primary">Save Requirements</button></div>
           {% elif active_tab == 'Trade' %}
-            <div class="grid-form four-col">
-              <label class="section-label col-span-3">Trade-In Group ID</label>
-              <label class="section-label">Broken Trade</label>
-              <input class="form-control col-span-3" name="trade_in_group_id" value="{{ promo.trade_in_group_id }}">
-              <div class="input-group vertical-radio">
-                <label class="radio-vertical">Y <input type="radio" name="broken_trade" value="Y" {% if promo.broken_trade == 'Y' %}checked{% endif %}></label>
-                <label class="radio-vertical">N <input type="radio" name="broken_trade" value="N" {% if promo.broken_trade == 'N' %}checked{% endif %}></label>
+            <div class="trade-section">
+              <div class="trade-top-row">
+                <div class="trade-box trade-box-wide">
+                  <div class="trade-box-label">Trade in group id</div>
+                  <div class="trade-box-input"><input class="form-control" name="trade_in_group_id" value="{{ promo.trade_in_group_id }}"></div>
+                </div>
+                <div class="trade-box">
+                  <div class="trade-box-label">Broken trade</div>
+                  <div class="trade-box-input">
+                    <div class="input-group vertical-radio">
+                      <label class="radio-vertical">Y <input type="radio" name="broken_trade" value="Y" {% if promo.broken_trade == 'Y' %}checked{% endif %}></label>
+                      <label class="radio-vertical">N <input type="radio" name="broken_trade" value="N" {% if promo.broken_trade == 'N' %}checked{% endif %}></label>
+                    </div>
+                  </div>
+                </div>
               </div>
-            </div>
-            <div class="grid-form trade-tiers-grid">
               {% for tier in [1,2,3,4] %}
-              <div class="tier-title">Tier {{ tier }}</div>
-              <label class="section-label">Make Model Grp</label>
-              <label class="section-label">Amount $</label>
-              <label class="section-label">Trade In Cond ID</label>
-              <label class="section-label">Min FMV</label>
-              <label class="section-label">Max FMV</label>
-              <input class="form-control" name="trade_tier_{{ tier }}_make_model" value="{{ promo['trade_tier_%d_make_model' % tier] }}">
-              <input class="form-control" name="trade_tier_{{ tier }}_amount" value="{{ promo['trade_tier_%d_amount' % tier] }}">
-              <input class="form-control" name="trade_tier_{{ tier }}_cond_id" value="{{ promo['trade_tier_%d_cond_id' % tier] }}">
-              <input class="form-control" name="trade_tier_{{ tier }}_min_fmv" value="{{ promo['trade_tier_%d_min_fmv' % tier] }}">
-              <input class="form-control" name="trade_tier_{{ tier }}_max_fmv" value="{{ promo['trade_tier_%d_max_fmv' % tier] }}">
+              <div class="trade-tier-block">
+                <div class="trade-tier-header">Tier {{ tier }}</div>
+                <div class="trade-tier-grid labels">
+                  <div class="trade-box mini"><div class="trade-box-label">Make Model Group</div></div>
+                  <div class="trade-box mini"><div class="trade-box-label">Amount</div></div>
+                  <div class="trade-box mini"><div class="trade-box-label">Trade In Cond ID</div></div>
+                  <div class="trade-box mini"><div class="trade-box-label">Min FMV</div></div>
+                  <div class="trade-box mini"><div class="trade-box-label">Max FMV</div></div>
+                </div>
+                <div class="trade-tier-grid inputs">
+                  <div class="trade-box mini"><div class="trade-box-input"><input class="form-control" name="trade_tier_{{ tier }}_make_model" value="{{ promo['trade_tier_%d_make_model' % tier] }}"></div></div>
+                  <div class="trade-box mini"><div class="trade-box-input"><input class="form-control" name="trade_tier_{{ tier }}_amount" value="{{ promo['trade_tier_%d_amount' % tier] }}"></div></div>
+                  <div class="trade-box mini"><div class="trade-box-input"><input class="form-control" name="trade_tier_{{ tier }}_cond_id" value="{{ promo['trade_tier_%d_cond_id' % tier] }}"></div></div>
+                  <div class="trade-box mini"><div class="trade-box-input"><input class="form-control" name="trade_tier_{{ tier }}_min_fmv" value="{{ promo['trade_tier_%d_min_fmv' % tier] }}"></div></div>
+                  <div class="trade-box mini"><div class="trade-box-input"><input class="form-control" name="trade_tier_{{ tier }}_max_fmv" value="{{ promo['trade_tier_%d_max_fmv' % tier] }}"></div></div>
+                </div>
+              </div>
               {% endfor %}
             </div>
+          
             <div class="save-footer"><div class="action-buttons-row"><button type="button" onclick="clearTradeData()" class="btn btn-outline btn-danger-outline"><i class="fas fa-trash"></i> Clear Trade Data</button><button type="submit" class="btn btn-primary">Save Trade</button></div></div>
           {% elif active_tab == 'Tiers' %}
             <div class="grid-form four-col">
@@ -296,19 +319,19 @@
               <label class="grid-full section-label">Segment Name</label>
               <input class="form-control grid-full mb-1" name="segment_name" value="{{ promo.segment_name }}">
               <label class="grid-full section-label">Sub Segment</label>
-              <div class="input-group vertical-radio grid-full mb-1">
+              <select class="form-select grid-full mb-1" name="sub_segment">
                 {% for segment in ['Active Military','Family','Reserve','Retired','Promo Code'] %}
-                <label class="radio-vertical">{{ segment }} <input type="radio" name="sub_segment" value="{{ segment }}" {% if promo.sub_segment == segment %}checked{% endif %}></label>
+                <option value="{{ segment }}" {% if promo.sub_segment == segment %}selected{% endif %}>{{ segment }}</option>
                 {% endfor %}
-              </div>
+              </select>
               <label class="section-label col-span-2">Segment Group ID</label>
               <label class="section-label col-span-2">Segment Level</label>
               <input class="form-control col-span-2" name="segment_group_id" value="{{ promo.segment_group_id }}">
-              <div class="input-group vertical-radio col-span-2">
+              <select class="form-select col-span-2" name="segment_level">
                 {% for level in ['BAN','LINE','NA'] %}
-                <label class="radio-vertical">{{ level }} <input type="radio" name="segment_level" value="{{ level }}" {% if promo.segment_level == level %}checked{% endif %}></label>
+                <option value="{{ level }}" {% if promo.segment_level == level %}selected{% endif %}>{{ level }}</option>
                 {% endfor %}
-              </div>
+              </select>
             </div>
             <div class="save-footer"><div class="action-buttons-row"><button type="button" onclick="clearSegmentData()" class="btn btn-outline btn-danger-outline"><i class="fas fa-trash"></i> Clear Segment Data</button><button type="submit" class="btn btn-primary">Save Segmentation</button></div></div>
           {% elif active_tab == 'Groupings' %}

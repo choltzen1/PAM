@@ -1,7 +1,7 @@
 import pandas as pd
 from sqlalchemy import create_engine, text
 import urllib.parse
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List, Optional, Tuple
 from datetime import datetime
 import logging
 import os
@@ -14,6 +14,8 @@ import json
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+from .field_map import FIELD_DB_MAP, canonical_to_physical, quote_identifier, EDITABLE_CANONICAL_FIELDS
 
 class DatabaseManager:
     """Manages SQL Server database connections and queries for live promo data"""
@@ -257,7 +259,7 @@ class DatabaseManager:
                 on_menu,
                 market_group,
                 store_group,
-                promo_srart_date,
+                promo_start_date,
                 promo_end_date,
                 comm_end_date,
                 promo_duration,
@@ -327,7 +329,7 @@ class DatabaseManager:
         base_query_mode = not search and (owner_filter == 'all')
         # Apply upcoming filter if explicitly forced OR (no query & upcoming_only_when_no_query)
         if force_upcoming or (base_query_mode and upcoming_only_when_no_query):
-            where_clauses.append("(promo_srart_date IS NULL OR promo_srart_date > CAST(GETUTCDATE() AS DATE))")
+            where_clauses.append("(promo_start_date IS NULL OR promo_start_date > CAST(GETUTCDATE() AS DATE))")
 
         if owner_filter and owner_filter != 'all':
             where_clauses.append("Owner = :owner")
@@ -349,12 +351,12 @@ class DatabaseManager:
         count_sql = f"SELECT COUNT(1) as cnt FROM {self.source_table} WHERE {where_sql}"
         # Data query (order: earliest upcoming first when filtering upcoming, else code desc)
         if force_upcoming or (base_query_mode and upcoming_only_when_no_query):
-            order_clause = "ORDER BY promo_srart_date ASC, code DESC"
+            order_clause = "ORDER BY promo_start_date ASC, code DESC"
         else:
             order_clause = "ORDER BY code DESC"
         data_sql = f"""
             SELECT code, Owner, [bill facing name] as bill_facing_name, orbit_id,
-                   promo_srart_date, promo_end_date
+                   promo_start_date, promo_end_date
             FROM {self.source_table}
             WHERE {where_sql}
             {order_clause}
@@ -390,7 +392,7 @@ class DatabaseManager:
             owner_where = "Desired_Execution = :execution_type"
             owner_params = {'execution_type': execution_type}
             if force_upcoming or (base_query_mode and upcoming_only_when_no_query):
-                owner_where += " AND (promo_srart_date IS NULL OR promo_srart_date > CAST(GETUTCDATE() AS DATE))"
+                owner_where += " AND (promo_start_date IS NULL OR promo_start_date > CAST(GETUTCDATE() AS DATE))"
             owner_sql = f"SELECT DISTINCT Owner FROM {self.source_table} WHERE {owner_where} AND Owner IS NOT NULL ORDER BY Owner"
             owner_df = self.get_dataframe(owner_sql, owner_params)
             owners = [o for o in owner_df['Owner'].dropna().tolist() if str(o).strip()]
@@ -440,7 +442,7 @@ class DatabaseManager:
                 on_menu,
                 market_group,
                 store_group,
-                promo_srart_date,
+                promo_start_date,
                 promo_end_date,
                 comm_end_date,
                 promo_duration,
@@ -489,7 +491,7 @@ class DatabaseManager:
 
     def get_recent_promos(self, days: int = 30) -> List[Dict[str, Any]]:
         """Fetch promotions created/updated in the last N days"""
-        # Some rows have non-date / malformed values in promo_srart_date (stored as text).
+        # Some rows have non-date / malformed values in promo_start_date (stored as text).
         # Direct comparison causes implicit conversion and raises: Conversion failed when converting date and/or time from character string.
         # Use TRY_CONVERT to safely skip bad rows.
         sql = f"""
@@ -497,15 +499,15 @@ class DatabaseManager:
             code,
             Owner,
             description,
-            promo_srart_date,
+            promo_start_date,
             promo_end_date,
             amount,
             operator_id,
             orbit_id
             FROM {self.source_table}
-        WHERE TRY_CONVERT(date, promo_srart_date) IS NOT NULL
-    AND cast(promo_srart_date as date)  >= DATEADD(day, -:days, GETDATE())
-        ORDER BY TRY_CONVERT(date, promo_srart_date) DESC
+        WHERE TRY_CONVERT(date, promo_start_date) IS NOT NULL
+    AND cast(promo_start_date as date)  >= DATEADD(day, -:days, GETDATE())
+        ORDER BY TRY_CONVERT(date, promo_start_date) DESC
         """
         
         try:
@@ -514,15 +516,15 @@ class DatabaseManager:
             # Diagnostic: count invalid date rows skipped
             try:
                 # Pull a lightweight set of raw date values to count invalids
-                raw_sql = f"SELECT promo_srart_date FROM {self.source_table} WHERE promo_srart_date IS NOT NULL"
+                raw_sql = f"SELECT promo_start_date FROM {self.source_table} WHERE promo_start_date IS NOT NULL"
                 raw_df = self.get_dataframe(raw_sql)
                 total_with_value = len(raw_df)
-                valid_mask = raw_df['promo_srart_date'].apply(lambda v: self._is_valid_date_string(v))
+                valid_mask = raw_df['promo_start_date'].apply(lambda v: self._is_valid_date_string(v))
                 valid_count = int(valid_mask.sum())
                 invalid_count = total_with_value - valid_count
                 ratio = (invalid_count / total_with_value) if total_with_value else 0.0
                 if total_with_value and ratio > self.invalid_ratio_threshold:
-                    logger.warning(f"High invalid promo_srart_date ratio: {invalid_count}/{total_with_value} (>{self.invalid_ratio_threshold*100:.0f}%)")
+                    logger.warning(f"High invalid promo_start_date ratio: {invalid_count}/{total_with_value} (>{self.invalid_ratio_threshold*100:.0f}%)")
                 # Persist snapshot
                 try:
                     with sqlite3.connect(self._diag_db_path) as c2:
@@ -587,16 +589,16 @@ class DatabaseManager:
                 code,
                 Owner,
                 description,
-                promo_srart_date,
+                promo_start_date,
                 promo_end_date,
                 amount,
                 operator_id,
                 orbit_id
             FROM {self.source_table}
-            WHERE TRY_CONVERT(date, promo_srart_date) IS NOT NULL
+            WHERE TRY_CONVERT(date, promo_start_date) IS NOT NULL
               AND TRY_CONVERT(date, promo_end_date) IS NOT NULL
-              AND CONVERT(date, GETDATE()) BETWEEN TRY_CONVERT(date, promo_srart_date) AND TRY_CONVERT(date, promo_end_date)
-            ORDER BY TRY_CONVERT(date, promo_srart_date) DESC
+              AND CONVERT(date, GETDATE()) BETWEEN TRY_CONVERT(date, promo_start_date) AND TRY_CONVERT(date, promo_end_date)
+            ORDER BY TRY_CONVERT(date, promo_start_date) DESC
         """
         try:
             df = self.get_dataframe(sql)
@@ -658,7 +660,7 @@ class DatabaseManager:
                 on_menu,
                 market_group,
                 store_group,
-                promo_srart_date,
+                promo_start_date,
                 promo_end_date,
                 comm_end_date,
                 promo_duration,
@@ -693,8 +695,8 @@ class DatabaseManager:
                 OR description LIKE :search_term
                 OR [bill facing name] LIKE :search_term
             )
-              AND TRY_CONVERT(date, promo_srart_date) IS NOT NULL
-            ORDER BY TRY_CONVERT(date, promo_srart_date) DESC
+              AND TRY_CONVERT(date, promo_start_date) IS NOT NULL
+            ORDER BY TRY_CONVERT(date, promo_start_date) DESC
         """
         try:
             pattern = f"%{search_term}%"
@@ -707,7 +709,7 @@ class DatabaseManager:
     def get_orbit_record_by_orbit_id(self, orbit_id: str) -> Optional[Dict[str, Any]]:
         """Return minimal orbit record (bill facing name, dates) preferring orbit source table."""
         query_tpl = """
-            SELECT orbit_id, [bill facing name] AS bill_facing_name, description, Owner, promo_srart_date, promo_end_date
+            SELECT orbit_id, [bill facing name] AS bill_facing_name, description, Owner, promo_start_date, promo_end_date
             FROM {table}
             WHERE orbit_id = :orbit_id
         """
@@ -756,7 +758,7 @@ class DatabaseManager:
                 param_names = [f"p{j}" for j in range(len(chunk))]
                 in_clause = ",".join(f":{n}" for n in param_names)
                 sql = f"""
-                    SELECT orbit_id, promo_srart_date AS orbit_start_date, promo_end_date AS orbit_end_date
+                    SELECT orbit_id, promo_start_date AS orbit_start_date, promo_end_date AS orbit_end_date
                     FROM {table}
                     WHERE orbit_id IN ({in_clause})
                 """
@@ -796,7 +798,7 @@ class DatabaseManager:
                 on_menu,
                 market_group,
                 store_group,
-                promo_srart_date,
+                promo_start_date,
                 promo_end_date,
                 comm_end_date,
                 promo_duration,
@@ -924,7 +926,7 @@ class DatabaseManager:
             "owner": str(db_record.get("Owner", "Unknown")).strip('"'),  # Remove quotes from owner field
             "orbit_id": db_record.get("orbit_id", ""),
             "promo_notes": db_record.get("promo_notes", ""),  # Add promo_notes field
-            "promo_start_date": format_date_for_html(db_record.get("promo_srart_date")),
+            "promo_start_date": format_date_for_html(db_record.get("promo_start_date")),
             "promo_end_date": format_date_for_html(db_record.get("promo_end_date")),
             "amount": str(db_record.get("amount", "")),
             "discount": str(db_record.get("discount", "")),
@@ -957,9 +959,11 @@ class DatabaseManager:
             "sales_application": db_record.get("sales_application", ""),  # Add sales_application
             "device_status_group_id": db_record.get("device_status_group_id", ""),
             "clawback_indicator": "Y" if db_record.get("clawback_indicator") == "Y" else "N",
+            # Bill Facing Name (physical column may be 'bill facing name')
+            "bill_facing_name": db_record.get("bill_facing_name") or db_record.get("bill facing name", ""),
             
-            # Parse cat_description to extract MPSS lookback value
-            "mpss_lookback": self._extract_mpss_lookback(db_record.get("cat_description", "")),
+            # Prefer direct DB column value for MPSS lookback; fall back to extraction from cat_description only if column absent/empty
+            "mpss_lookback": db_record.get("mpss_lookback") or self._extract_mpss_lookback(db_record.get("cat_description", "")),
             
             # Add metadata
             "data_source": "database",
@@ -988,7 +992,8 @@ class DatabaseManager:
             "sql_file": {},
             "last_changes": None,
             "jira_ticket": "",
-            "initiative_name": db_record.get("description", ""),  # Map description to initiative_name for UI
+            # Initiative name from its own column; do not fall back to description to avoid overwriting user edits
+            "initiative_name": db_record.get("initiative_name", ""),
             # Additional fields from database sample
             "crffc_maintainactivelinedev": "Y" if db_record.get("crffc_maintainactivelinedev") == "Y" else "N",
             "Broken_Trade": db_record.get("Broken_Trade", ""),
@@ -1007,21 +1012,27 @@ class DatabaseManager:
 
         # Pass-through: include any generator-relevant fields that are present in the DB record but not yet mapped above.
         generator_field_candidates = {
-            'promo_start_date','promo_end_date','promo_srart_date','finance_type','application_grace_period',
+            'promo_start_date','promo_end_date','finance_type','application_grace_period',
             'promo_grace','trade_in_grace','trade_in_group_id','trade_in_grp_id','promo_grace_period','trade_in_grace_period',
             'tiered_group_id','tiered_grp_id','segment_group_id','segment_grp_id','segment_name','sub_segment','segment_level',
-            'flow_indicator','bolton_trade_in_grp_id','port_in_group_id','min_gsm_count','max_gsm_count','trade_in_grace_period',
-            'promo_grace_period','maintain_soc','activation_type','device_sales_type','sku_group_id','account_type','sales_application',
+            'flow_indicator','flow_ind','bolt_trade_in_grp_id','port_in_group_id','min_gsm_count','max_gsm_count',
+            'maintain_soc','maintain_active_line','activation_type','device_sales_type','sku_group_id','account_type','sales_application',
             'soc_grouping','limit_per_ban','delay_time','nseip_drop','discount','amount','operator_id','device_status_group_id',
-            'clawback_indicator'
+            'clawback_indicator','bptcr','mpss_lookback','promo_tier_1_amount','promo_tier_1_sku_group_id','promo_tier_1_devices',
+            'promo_tier_2_amount','promo_tier_2_sku_group_id','promo_tier_2_devices','promo_tier_3_amount','promo_tier_3_sku_group_id',
+            'promo_tier_3_devices','mk_mdl_grp_tier_1','mk_mdl_grp_tier_1_amount','mk_mdl_grp_tier_1_condition_id','mk_mdl_grp_tier_1_min_fmv',
+            'mk_mdl_grp_tier_1_max_fmv','mk_mdl_grp_tier_2','mk_mdl_grp_tier_2_amount','mk_mdl_grp_tier_2_condition_id','mk_mdl_grp_tier_2_min_fmv',
+            'mk_mdl_grp_tier_2_max_fmv','mk_mdl_grp_tier_3','mk_mdl_grp_tier_3_amount','mk_mdl_grp_tier_3_condition_id','mk_mdl_grp_tier_3_min_fmv',
+            'mk_mdl_grp_tier_3_max_fmv','mk_mdl_grp_tier_4','mk_mdl_grp_tier_4_amount','mk_mdl_grp_tier_4_condition_id','mk_mdl_grp_tier_4_min_fmv',
+            'mk_mdl_grp_tier_4_max_fmv','tradein_link','sku_link','initiative_name','dcd_jira','orbit_link','legal_link','c2_link'
         }
         for k,v in db_record.items():
             lk = str(k)
             if lk in generator_field_candidates and lk not in json_record:
                 json_record[lk] = v
         # Normalize common synonyms / variant column names into expected keys used by generator
-        if 'promo_srart_date' in json_record and not json_record.get('promo_start_date'):
-            json_record['promo_start_date'] = json_record['promo_srart_date']
+        if 'promo_start_date' in json_record and not json_record.get('promo_start_date'):
+            json_record['promo_start_date'] = json_record['promo_start_date']
         if 'trade_in_grp_id' in json_record and not json_record.get('trade_in_group_id'):
             json_record['trade_in_group_id'] = json_record['trade_in_grp_id']
         if 'tiered_grp_id' in json_record and not json_record.get('tiered_group_id'):
@@ -1039,35 +1050,74 @@ class DatabaseManager:
 
     # --- Write helpers for PAM table & SQLite overlays ---
     def update_promo_fields(self, code: str, field_map: Dict[str, Any]) -> bool:
-        """Update mutable fields in PAM source table.
+        """Update mutable fields via canonical->physical mapping (FIELD_DB_MAP).
 
-        field_map: dict of column->value (only columns that exist in self.source_table)
-        Returns True if update succeeded (>=0 rows). Silent if no fields provided.
+        field_map: canonical field name -> value (already synonym-normalized upstream).
+        Returns True on success (even if some fields skipped). Logs diagnostics.
         """
         if not field_map:
             return True
-        # Build dynamic SQL with parameters
-        assignments = []
-        params = {}
-        # Physical column name normalization (handle spaces in underlying schema)
-        col_alias_map = {
-            'bill_facing_name': '[bill facing name]'  # logical -> physical
-        }
-        for i,(col,val) in enumerate(field_map.items()):
-            safe_col = col_alias_map.get(col, col)
-            param_name = f"p{i}"
-            assignments.append(f"{safe_col} = :{param_name}")
-            params[param_name] = val
-        params['code'] = code
-        sql = f"UPDATE {self.source_table} SET " + ", ".join(assignments) + " WHERE code = :code"
+        # Load existing columns (cached) to validate physical names
+        existing_cols = self.get_existing_columns()
+        assignments: List[str] = []
+        params: Dict[str, Any] = {'code': code}
+        skipped: Dict[str, Any] = {}
+        remapped: Dict[str, str] = {}
+        for idx, (canonical, value) in enumerate(field_map.items()):
+            physical = canonical_to_physical(canonical)
+            # 'bill facing name' came from mapping; ensure not overwritten by canonical key itself
+            if existing_cols and physical not in existing_cols:
+                # Allow fallback: if canonical itself (without mapping) exists physically
+                if canonical in existing_cols:
+                    physical = canonical
+                    remapped[canonical] = physical
+                else:
+                    skipped[canonical] = value
+                    continue
+            col_sql = quote_identifier(physical)
+            param_name = f"p{idx}"
+            assignments.append(f"{col_sql} = :{param_name}")
+            params[param_name] = value
+        if not assignments:
+            logger.warning(f"No valid columns to update for {code}; skipped={list(skipped.keys())}")
+            return True
+        sql = f"UPDATE {self.source_table} SET {', '.join(assignments)} WHERE code = :code"
         try:
             engine = self.get_engine()
             with engine.begin() as conn:
                 conn.execute(text(sql), params)
+            if remapped:
+                logger.info(f"Remapped canonical columns for {code}: {remapped}")
+            if skipped:
+                logger.warning(f"Skipped unknown/unavailable columns for {code}: {list(skipped.keys())}")
+            logger.debug(f"Updated {code} columns: {assignments}")
             return True
         except Exception as e:
             logger.error(f"Failed to update promo {code}: {e}")
             return False
+
+    def get_existing_columns(self) -> set:
+        """Return a set of physical column names for the source table (cached per instance)."""
+        if hasattr(self, '_cached_existing_columns') and isinstance(getattr(self, '_cached_existing_columns'), set):
+            return getattr(self, '_cached_existing_columns')
+        try:
+            parts = self.source_table.strip('[]').split('.')
+            if len(parts) == 2:
+                schema, table = [p.strip('[]') for p in parts]
+            else:
+                schema, table = 'dbo', parts[-1].strip('[]')
+            df = self.get_dataframe(
+                """
+                SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS
+                WHERE TABLE_SCHEMA = :schema AND TABLE_NAME = :table
+                """,
+                {'schema': schema, 'table': table}
+            )
+            cols = {r['COLUMN_NAME'] for _, r in df.iterrows()} if not df.empty else set()
+            setattr(self, '_cached_existing_columns', cols)
+            return cols
+        except Exception:
+            return set()
 
     def get_promo_extras(self, code: str) -> Dict[str, Any]:
         try:
@@ -1116,7 +1166,7 @@ class DatabaseManager:
                 return False
         except Exception:
             pass
-        safe_cols = ['code','description','Owner','promo_srart_date','promo_end_date','Desired_Execution']
+        safe_cols = ['code','description','Owner','promo_start_date','promo_end_date','Desired_Execution']
         insert_cols = []
         params = {}
         for c in safe_cols:

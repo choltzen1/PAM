@@ -30,7 +30,7 @@ TARGET_TABLE = os.getenv('PAM_TARGET_TABLE', 'PAM.dbo.Promotions')
 SOURCE_COLUMNS = [
     'code','Owner','bill facing name','orbit_id','description','promo_notes','discount','amount',
     'nseip_drop','dcd_web_cart','product_type','bogo','fpd_display_promo','on_menu','market_group','store_group',
-    'promo_srart_date','promo_end_date','comm_end_date','promo_duration','delay_time','application_grace_period',
+    'promo_start_date','promo_end_date','comm_end_date','promo_duration','delay_time','application_grace_period',
     'device_sales_type','activation_type','active_line_required','maintain_soc','crffc_maintainactivelinedev',
     'limit_per_ban','soc_grouping','account_type','sales_application','operator_id','sku_group_id',
     'device_status_group_id','clawback_indicator','Broken_Trade','Anticipated_volume_take_rates_total','Desired_Execution'
@@ -80,7 +80,7 @@ def sql_literal(val: Any, is_date: bool = False) -> str:
     # Treat empty string as NULL? Keep empty quoted to preserve original unless flagged.
     return f"'{ESCAPE_SINGLE(s)}'"
 
-DATE_SOURCE_INDEXES = {SOURCE_COLUMNS.index(c) for c in ['promo_srart_date','promo_end_date','comm_end_date']}
+DATE_SOURCE_INDEXES = {SOURCE_COLUMNS.index(c) for c in ['promo_start_date','promo_end_date','comm_end_date']}
 
 FETCH_SQL = f"""
 SELECT {', '.join(f'[{c}]' if ' ' in c else c for c in SOURCE_COLUMNS)}

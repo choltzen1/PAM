@@ -107,7 +107,7 @@ def generate_promo_eligibility_sql(promo_data):
         'code': ['code','CODE','Promo Code','PROMO_CODE'],
         'orbit_id': ['orbit_id','ORBIT_ID'],
         'bill_facing_name': ['bill_facing_name','bill facing name','BILL_FACING_NAME','Bill Facing Name'],
-        'promo_start_date': ['promo_start_date','promo_srart_date','PROMO_START_DATE','promo_start','start_date'],
+        'promo_start_date': ['promo_start_date','promo_start_date','PROMO_START_DATE','promo_start','start_date'],
         'promo_end_date': ['promo_end_date','PROMO_END_DATE','end_date'],
         'operator_id': ['operator_id','OPERATOR_ID'],
         'sku_group_id': ['sku_group_id','SKU_GROUP_ID'],
@@ -155,8 +155,8 @@ def generate_promo_eligibility_sql(promo_data):
     # Build canonical overlay
     canonical = {ck: resolve(ck) for ck in synonyms.keys()}
     # Specific typo fix is now redundant thanks to synonyms but keep fallback
-    if not canonical.get('promo_start_date') and promo_data.get('promo_srart_date'):
-        canonical['promo_start_date'] = promo_data.get('promo_srart_date')
+    if not canonical.get('promo_start_date') and promo_data.get('promo_start_date'):
+        canonical['promo_start_date'] = promo_data.get('promo_start_date')
     # Merge overlay (prefer canonical values)
     merged = dict(promo_data)
     for k,v in canonical.items():

@@ -21,9 +21,9 @@ def test_get_recent_promos_injects_diagnostics(monkeypatch):
     # Mock get_dataframe behavior based on SQL content
     def fake_get_dataframe(sql_text, params=None):
         sql_string = str(sql_text)
-        if 'SELECT promo_srart_date FROM' in sql_string:
+        if 'SELECT promo_start_date FROM' in sql_string:
             # Raw date values including invalid entries
-            return pd.DataFrame({'promo_srart_date': [
+            return pd.DataFrame({'promo_start_date': [
                 '01/15/2025',  # valid m/d/Y
                 '2025-02-01',  # valid ISO
                 '13/40/2025',  # invalid
@@ -36,12 +36,12 @@ def test_get_recent_promos_injects_diagnostics(monkeypatch):
             return pd.DataFrame([
                 {
                     'code': 'P001', 'Owner': 'Alice', 'description': 'Promo 1',
-                    'promo_srart_date': '01/15/2025', 'promo_end_date': '02/01/2025',
+                    'promo_start_date': '01/15/2025', 'promo_end_date': '02/01/2025',
                     'amount': 10, 'operator_id': 'OP1', 'orbit_id': 'ORB1'
                 },
                 {
                     'code': 'P002', 'Owner': 'Bob', 'description': 'Promo 2',
-                    'promo_srart_date': '2025-02-01', 'promo_end_date': '2025-03-01',
+                    'promo_start_date': '2025-02-01', 'promo_end_date': '2025-03-01',
                     'amount': 20, 'operator_id': 'OP2', 'orbit_id': 'ORB2'
                 }
             ])

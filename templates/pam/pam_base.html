@@ -87,10 +87,11 @@
   <footer class="footer-nav" style="background:var(--tmobile-magenta);color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0.5em 2em;font-size:1rem;height:60px;box-sizing:border-box;">
     <div id="footer-time">{{ current_datetime }}</div>
     <nav class="footer-links" style="display:flex;gap:1.5em;align-items:center;">
-      <a href="javascript:history.back()" style="color:#fff;text-decoration:none;font-size:1.2em;"><i class="fas fa-chevron-left"></i></a>
-  <a href="{{ url_for('core.PAM_homepage') }}" style="color:#fff;text-decoration:none;font-size:1.2em;"><i class="fas fa-home"></i></a>
-  <a href="{{ url_for('promo.rdc_page') }}" style="color:#fff;text-decoration:none;font-size:1.2em;"><i class="fas fa-tags"></i></a>
-  <a href="{{ url_for('promo.spe_page') }}" style="color:#fff;text-decoration:none;font-size:1.2em;"><i class="fas fa-bolt"></i></a>
+      <a title="Back" href="javascript:history.back()" style="color:#fff;text-decoration:none;font-size:1.2em;"><i class="fas fa-chevron-left"></i></a>
+      <a title="Workspace Hub" href="{{ url_for('core.landing') }}" style="color:#fff;text-decoration:none;font-size:1.2em;"><i class="fas fa-th-large"></i></a>
+      <a title="PAM Home" href="{{ url_for('core.PAM_homepage') }}" style="color:#fff;text-decoration:none;font-size:1.2em;"><i class="fas fa-home"></i></a>
+      <a title="RDC" href="{{ url_for('promo.rdc_page') }}" style="color:#fff;text-decoration:none;font-size:1.2em;"><i class="fas fa-tags"></i></a>
+      <a title="SPE" href="{{ url_for('promo.spe_page') }}" style="color:#fff;text-decoration:none;font-size:1.2em;"><i class="fas fa-bolt"></i></a>
     </nav>
   </footer>
   <script>

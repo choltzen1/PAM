@@ -1,7 +1,7 @@
 from flask import Blueprint, request, render_template, redirect, url_for, flash, jsonify, send_file
 from werkzeug.utils import secure_filename
 import os
-from typing import Optional, TYPE_CHECKING
+from typing import Optional, TYPE_CHECKING, Dict, Any
 
 if TYPE_CHECKING:
     from data.storage import PromoDataManager
@@ -68,7 +68,7 @@ def _render_rdc_page():
                 owner_filter=owner_filter
             )
     return render_template(
-        'rdc.html',
+        'pam/rdc.html',
         promotions=promo_data['promotions'],
         pagination=promo_data['pagination'],
         owners=promo_data['owners'],
@@ -117,7 +117,7 @@ def spe_page():
             if not search and owner_filter == 'all':
                 filtered = []
                 for r in rows:
-                    sd = parse_date(r.get('promo_srart_date'))
+                    sd = parse_date(r.get('promo_start_date'))
                     # Include if no start date OR start date strictly in future
                     if sd is None or sd > today:
                         filtered.append(r)
@@ -146,9 +146,9 @@ def spe_page():
             }
         except Exception as e:
             flash(f'Error loading SPE data: {e}', 'error')
-            return render_template('spe.html', spe_data=[], owners=[], search_query=search, selected_owner=owner_filter, active_tab='SPE')
+            return render_template('pam/spe.html', spe_data=[], owners=[], search_query=search, selected_owner=owner_filter, active_tab='SPE')
     return render_template(
-        'spe.html',
+        'pam/spe.html',
         spe_data=spe_payload['promotions'],
         owners=spe_payload.get('owners', []),
         search_query=search,
@@ -176,23 +176,23 @@ def rebates_page():
         if owner_filter and owner_filter != 'all':
             rebates_list = [r for r in rebates_list if r.get('owner','') == owner_filter]
         owners = dm.get_rebate_owners() if hasattr(dm, 'get_rebate_owners') else []  # type: ignore[attr-defined]
-        return render_template('rebates.html', rebates_data=rebates_list, owners=owners, search_query=search, selected_owner=owner_filter, active_tab='Rebates')
+        return render_template('pam/rebates.html', rebates_data=rebates_list, owners=owners, search_query=search, selected_owner=owner_filter, active_tab='Rebates')
     except Exception as e:
         flash(f'Error loading rebates data: {e}', 'error')
-        return render_template('rebates.html', rebates_data=[], owners=[], search_query='', selected_owner='all', active_tab='Rebates')
+        return render_template('pam/rebates.html', rebates_data=[], owners=[], search_query='', selected_owner='all', active_tab='Rebates')
 
 @promo_bp.route('/date-mismatch', endpoint='date_mismatch_page')
 def date_mismatch_page():
     dm = _ensure_data_manager()
     try:
         mismatch_data = dm.get_date_mismatched_promos()
-        return render_template('date_mismatch.html',
+        return render_template('pam/date_mismatch.html',
                                promos=mismatch_data.get('promos', []),
                                owners=mismatch_data.get('owners', []),
                                user_name='Cade Holtzen')
     except Exception as e:
         flash(f'Error loading date mismatch data: {e}', 'error')
-        return render_template('date_mismatch.html', promos=[], owners=[], user_name='Cade Holtzen')
+        return render_template('pam/date_mismatch.html', promos=[], owners=[], user_name='Cade Holtzen')
 
 @promo_bp.route('/update-pam-date/<promo_code>', methods=['POST'], endpoint='update_pam_date')
 @promo_bp.route('/update_pam_date/<promo_code>', methods=['POST'])  # backward-compatible alias (old JS used underscore)
@@ -295,7 +295,7 @@ def preview_sql_for_promo_bp(promo_code):
 
 @promo_bp.route('/generate-sql-form/<promo_code>', endpoint='generate_sql_form')
 def generate_sql_form_bp(promo_code):
-    return render_template('generate_sql_form.html', promo_codes=[promo_code], is_batch=False)
+    return render_template('pam/generate_sql_form.html', promo_codes=[promo_code], is_batch=False)
 
 @promo_bp.route('/generate-batch-sql-form', methods=['POST'], endpoint='generate_batch_sql_form')
 def generate_batch_sql_form_bp():
@@ -310,13 +310,13 @@ def generate_sql_submit_bp():
         new_end_date = request.form.get('new_end_date','')
         if not operator_id or not operator_id.isdigit() or len(operator_id) != 5:
             flash('Operator ID must be exactly 5 digits', 'error')
-            return render_template('generate_sql_form.html', promo_codes=promo_codes, is_batch=len(promo_codes) > 1, operator_id=operator_id, new_end_date=new_end_date)
+            return render_template('pam/generate_sql_form.html', promo_codes=promo_codes, is_batch=len(promo_codes) > 1, operator_id=operator_id, new_end_date=new_end_date)
         if not promo_codes:
             flash('No promotion codes provided', 'error')
             return redirect(url_for('promo.date_mismatch_page'))
         if not new_end_date:
             flash('New end date is required', 'error')
-            return render_template('generate_sql_form.html', promo_codes=promo_codes, is_batch=len(promo_codes) > 1, operator_id=operator_id, new_end_date=new_end_date)
+            return render_template('pam/generate_sql_form.html', promo_codes=promo_codes, is_batch=len(promo_codes) > 1, operator_id=operator_id, new_end_date=new_end_date)
         from datetime import datetime, timedelta
         sql_statements = []
         for code in promo_codes:
@@ -330,8 +330,8 @@ def generate_sql_submit_bp():
                 sql_statements.append(sql)
             except ValueError:
                 flash(f'Invalid date format: {new_end_date}', 'error')
-                return render_template('generate_sql_form.html', promo_codes=promo_codes, is_batch=len(promo_codes) > 1, operator_id=operator_id, new_end_date=new_end_date)
-        return render_template('sql_results.html', sql_statements=sql_statements, promo_codes=promo_codes)
+                return render_template('pam/generate_sql_form.html', promo_codes=promo_codes, is_batch=len(promo_codes) > 1, operator_id=operator_id, new_end_date=new_end_date)
+        return render_template('pam/sql_results.html', sql_statements=sql_statements, promo_codes=promo_codes)
     except Exception as e:
         flash(f'Error generating SQL: {str(e)}', 'error')
         return redirect(url_for('promo.date_mismatch_page'))
@@ -437,7 +437,7 @@ def edit_spe_page(promo_code):
         'end_date': '',
         'status': 'Draft'
     }
-    return render_template('edit_spe.html', promo=spe_data, spe_data=spe_data, spe_key=promo_code, active_tab=tab,
+    return render_template('pam/edit_spe.html', promo=spe_data, spe_data=spe_data, spe_key=promo_code, active_tab=tab,
                            soc_groupings=json_manager.get_soc_groupings(),
                            soc_grouping_details=json_manager.get_soc_grouping_details(),
                            account_types=json_manager.get_account_types(),
@@ -448,7 +448,7 @@ def edit_spe_page(promo_code):
 
 @promo_bp.route('/test-page', endpoint='test_page')
 def test_page():
-    return render_template('test.html')
+    return render_template('pam/test.html')
 
 @promo_bp.route('/capacity', endpoint='capacity_page')
 def capacity_page():
@@ -529,7 +529,7 @@ def capacity_page():
 
         # Helper to access either correctly spelled or legacy typo start/end date keys
         def _start(p):
-            return p.get('promo_start_date') or p.get('promo_srart_date')
+            return p.get('promo_start_date') or p.get('promo_start_date')
         def _end(p):
             return p.get('promo_end_date') or p.get('promo_end_date')  # second key kept for clarity / future alias
 
@@ -588,7 +588,7 @@ def capacity_page():
             next_four_weeks.append({'week_label': week_label, 'promotions': week_promos})
 
         standardized_week = f"{start_date_wk.strftime('%m/%d/%Y')}-{end_date_wk.strftime('%m/%d/%Y')}"
-        return render_template('capacity.html',
+        return render_template('pam/capacity.html',
                                total_active=total_active,
                                total_rdc=total_rdc,
                                total_spe=total_spe,
@@ -603,7 +603,7 @@ def capacity_page():
                                week_options=week_options)
     except Exception as e:
         flash(f'Error loading capacity data: {e}', 'error')
-        return render_template('capacity.html',
+        return render_template('pam/capacity.html',
                                total_active=0,
                                total_rdc=0,
                                total_spe=0,
@@ -617,103 +617,7 @@ def capacity_page():
                                selected_week='',
                                week_options=[])
 
-    # --- Download & data clear endpoints migrated from legacy app.py ---
-    @promo_bp.route('/download_file/<promo_code>/<file_type>', endpoint='download_file')
-    def download_file(promo_code, file_type):
-        dm = _ensure_data_manager()
-        try:
-            file_path = dm.get_file_path(promo_code, file_type)
-            if file_path and os.path.exists(file_path):
-                return send_file(file_path, as_attachment=True)
-            flash('File not found', 'error')
-            return redirect(url_for('promo.edit_promo', promo_code=promo_code))
-        except Exception as e:
-            flash(f'Error downloading file: {e}', 'error')
-            return redirect(url_for('promo.edit_promo', promo_code=promo_code))
-
-    @promo_bp.route('/download_sql/<promo_code>', endpoint='download_sql')
-    def download_sql(promo_code):
-        dm = _ensure_data_manager()
-        try:
-            promo_data = dm.get_promo(promo_code)
-            if not promo_data:
-                flash('Promo not found', 'error')
-                return redirect(url_for('promo.rdc_page'))
-            sql_file_info = promo_data.get('sql_file')
-            if sql_file_info and os.path.exists(sql_file_info.get('path','')):
-                return send_file(sql_file_info['path'], as_attachment=True, download_name=sql_file_info['filename'])
-            from promo.builders import generate_promo_eligibility_sql
-            sql_statement = generate_promo_eligibility_sql(promo_data)
-            import tempfile
-            temp_dir = tempfile.gettempdir()
-            sql_filename = f"{promo_code}_promo_eligibility_rules.sql"
-            temp_file_path = os.path.join(temp_dir, sql_filename)
-            with open(temp_file_path, 'w', encoding='utf-8') as f:
-                f.write(sql_statement)
-            return send_file(temp_file_path, as_attachment=True, download_name=sql_filename)
-        except Exception as e:
-            flash(f'Error generating SQL download: {e}', 'error')
-            return redirect(url_for('promo.edit_promo', promo_code=promo_code))
-
-    @promo_bp.route('/clear_trade_data/<promo_code>', methods=['POST'], endpoint='clear_trade_data')
-    def clear_trade_data(promo_code):
-        dm = _ensure_data_manager()
-        try:
-            promo_data = dm.get_promo(promo_code)
-            if not promo_data:
-                return jsonify({'success': False, 'error': 'Promo not found'})
-            trade_fields = [
-                'trade_in_group_id','broken_trade',
-                'trade_tier_1_amount','trade_tier_1_cond_id','trade_tier_1_min_fmv','trade_tier_1_max_fmv','trade_tier_1_make_model',
-                'trade_tier_2_amount','trade_tier_2_cond_id','trade_tier_2_min_fmv','trade_tier_2_max_fmv','trade_tier_2_make_model',
-                'trade_tier_3_amount','trade_tier_3_cond_id','trade_tier_3_min_fmv','trade_tier_3_max_fmv','trade_tier_3_make_model',
-                'trade_tier_4_amount','trade_tier_4_cond_id','trade_tier_4_min_fmv','trade_tier_4_max_fmv','trade_tier_4_make_model'
-            ]
-            for f in trade_fields:
-                promo_data[f] = 'N' if f == 'broken_trade' else ''
-            dm.save_promo(promo_code, promo_data, user_name='System')
-            return jsonify({'success': True, 'message': 'Trade data cleared successfully'})
-        except Exception as e:
-            return jsonify({'success': False, 'error': str(e)})
-
-    @promo_bp.route('/clear_tiers_data/<promo_code>', methods=['POST'], endpoint='clear_tiers_data')
-    def clear_tiers_data(promo_code):
-        dm = _ensure_data_manager()
-        try:
-            promo_data = dm.get_promo(promo_code)
-            if not promo_data:
-                return jsonify({'success': False, 'error': 'Promo not found'})
-            tiers_fields = [
-                'tiered_group_id',
-                'tier_1_amount','tier_1_sku_group_id','tier_1_devices',
-                'tier_2_amount','tier_2_sku_group_id','tier_2_devices',
-                'tier_3_amount','tier_3_sku_group_id','tier_3_devices',
-                'tier_4_amount','tier_4_sku_group_id','tier_4_devices'
-            ]
-            for f in tiers_fields:
-                promo_data[f] = ''
-            dm.save_promo(promo_code, promo_data, user_name='System')
-            return jsonify({'success': True, 'message': 'Tiers data cleared successfully'})
-        except Exception as e:
-            return jsonify({'success': False, 'error': str(e)})
-
-    @promo_bp.route('/clear_segment_data/<promo_code>', methods=['POST'], endpoint='clear_segment_data')
-    def clear_segment_data(promo_code):
-        dm = _ensure_data_manager()
-        try:
-            promo_data = dm.get_promo(promo_code)
-            if not promo_data:
-                return jsonify({'success': False, 'error': 'Promo not found'})
-            segment_fields = [
-                'segment_name','sub_segment','segment_group_id','segment_level',
-                'soc_grouping','account_type','sales_application','bptcr'
-            ]
-            for f in segment_fields:
-                promo_data[f] = ''
-            dm.save_promo(promo_code, promo_data, user_name='System')
-            return jsonify({'success': True, 'message': 'Segment data cleared successfully'})
-        except Exception as e:
-            return jsonify({'success': False, 'error': str(e)})
+# --- Download & data clear endpoints migrated from legacy app.py ---
 
 @promo_bp.route('/updates', endpoint='updates_page')
 def updates_page():
@@ -735,7 +639,7 @@ def updates_page():
         first_code = next(iter(all_promos))
         default_promo = all_promos[first_code]
         default_promo['code'] = first_code
-    return render_template('updates.html',
+    return render_template('pam/updates.html',
                            search_query=search,
                            default_promo=default_promo,
                            total_results=len(all_promos))
@@ -771,7 +675,7 @@ def approvers_page():
             {'name': 'Mike Johnson', 'email': 'mike.johnson@company.com'},
             {'name': 'Lisa Chen', 'email': 'lisa.chen@company.com'}
         ]
-        return render_template('approvers.html',
+        return render_template('pam/approvers.html',
                                promo_codes=promo_codes,
                                owners=owners,
                                unique_owners=unique_owners,
@@ -779,7 +683,7 @@ def approvers_page():
                                target_promo_code=target_promo_code)
     except Exception as e:
         flash(f'Error loading approvers data: {e}', 'error')
-        return render_template('approvers.html', promo_codes=[], owners=[], unique_owners=[], revenue_approvers=[], target_promo_code='')
+        return render_template('pam/approvers.html', promo_codes=[], owners=[], unique_owners=[], revenue_approvers=[], target_promo_code='')
 
 @promo_bp.route('/reviewers', defaults={'promo_code': None}, endpoint='reviewers_page')
 @promo_bp.route('/reviewers/<promo_code>', endpoint='reviewers_with_code')
@@ -795,11 +699,11 @@ def reviewers_page(promo_code):
             promo_data = spe_promos.get(promo_code_upper)
         if not promo_data:
             error_message = f"Promotion code '{promo_code}' not found"
-    return render_template('reviewers.html', promo_code=promo_code, promo_data=promo_data, error_message=error_message)
+    return render_template('pam/reviewers.html', promo_code=promo_code, promo_data=promo_data, error_message=error_message)
 
 @promo_bp.route('/links', endpoint='links_main_page')
 def links_main_page():
-    return render_template('links.html')
+    return render_template('pam/links.html')
 
 @promo_bp.route('/links/<promo_code>', methods=['GET','POST'], endpoint='links_page')
 def links_page(promo_code):
@@ -812,7 +716,7 @@ def links_page(promo_code):
             promo_data = spe_promos.get(promo_code_upper)
         if not promo_data:
             error_message = f"Promotion code '{promo_code_upper}' not found"
-            return render_template('links.html', promo_code=promo_code_upper, promo_data=None, error_message=error_message)
+            return render_template('pam/links.html', promo_code=promo_code_upper, promo_data=None, error_message=error_message)
         if request.method == 'POST':
             promo_data['sku_link'] = request.form.get('skuLink', '')
             promo_data['tradein_link'] = request.form.get('tradeLink', '')
@@ -830,10 +734,10 @@ def links_page(promo_code):
                 return redirect(url_for('promo.links_page', promo_code=promo_code_upper))
             except Exception as e:
                 flash(f'Error saving links: {e}', 'error')
-        return render_template('links.html', promo_code=promo_code_upper, promo_data=promo_data)
+        return render_template('pam/links.html', promo_code=promo_code_upper, promo_data=promo_data)
     except Exception as e:
         flash(f'Error loading links for promotion: {e}', 'error')
-    return redirect(url_for('promo.rdc_page'))
+        return redirect(url_for('promo.rdc_page'))
 
 @promo_bp.route('/edit_rdc/<promo_code>', methods=['GET', 'POST'], endpoint='edit_rdc')
 def edit_rdc(promo_code):
@@ -942,6 +846,10 @@ def _edit_rdc(promo_code):
                     if old_value != field_value:
                         promo_data[field_name] = field_value
                         updated_fields.append(field_name)
+        # Normalize bill facing name space variant after gathering updates
+        if 'bill_facing_name' in promo_data:
+            # Ensure both variants point to same value for downstream DB update logic
+            promo_data['bill facing name'] = promo_data.get('bill_facing_name')
         
         # Save changes
         if updated_fields:
@@ -1129,7 +1037,7 @@ def _edit_rdc(promo_code):
         ]
         for k in debug_keys:
             sql_source_fields[k] = promo_data.get(k)
-    return render_template('edit_rdc.html', 
+    return render_template('pam/edit_rdc.html', 
                          promo=promo_data, 
                          active_tab=tab,
                          gen_flag=gen_flag,
@@ -1145,6 +1053,23 @@ def _edit_rdc(promo_code):
                          sales_application_details=dm.get_sales_application_details(),
                          user_name="Cade Holtzen",
                          jira_dcd_ticket=os.getenv('JIRA_DCD_CURRENT_TICKET', 'DCOMM-13037'))
+
+@promo_bp.route('/autosave/<promo_code>', methods=['POST'])
+def autosave_promo(promo_code):
+    """Autosave endpoint to persist partial field changes without full form submission."""
+    dm = _ensure_data_manager()
+    try:
+        payload = request.get_json() or {}
+        # Accept nested {'fields': {...}} or flat JSON
+        raw_changes_candidate = payload.get('fields') if isinstance(payload.get('fields'), dict) else payload
+        raw_changes: Dict[str, Any] = dict(raw_changes_candidate or {})
+        for ro in ['code','promo_code','orbit_id']:
+            if ro in raw_changes:
+                del raw_changes[ro]
+        result = dm.save_promo(promo_code, raw_changes, user_name=payload.get('user','Autosave'))
+        return jsonify({'success': True, 'promo_code': promo_code, **result})
+    except Exception as e:
+        return jsonify({'success': False, 'promo_code': promo_code, 'error': str(e)}), 500
 
 @promo_bp.route('/debug/sql/<promo_code>', methods=['GET'])
 def debug_sql_meta(promo_code):

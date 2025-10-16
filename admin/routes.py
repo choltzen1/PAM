@@ -87,9 +87,9 @@ def admin_dashboard():
         pending_reviews = sum(1 for promo in promotions_data.values() if promo.get('status','').lower() in ['pending','review'])
         users = get_all_users()
         user_groups = get_user_groups()
-        return render_template('admin.html', promotions_count=promotions_count, spe_count=spe_count, pending_reviews=pending_reviews, users=users, user_groups=user_groups)
+        return render_template('pam/admin.html', promotions_count=promotions_count, spe_count=spe_count, pending_reviews=pending_reviews, users=users, user_groups=user_groups)
     except Exception:
-        return render_template('admin.html', promotions_count=847, spe_count=234, pending_reviews=12)
+        return render_template('pam/admin.html', promotions_count=847, spe_count=234, pending_reviews=12)
 
 @admin_bp.route('/admin/pam-promotions')
 def admin_pam_promotions():
@@ -104,7 +104,7 @@ def admin_pam_promotions():
         promo_data = dm.get_pam_only_paginated_promos(page=page, per_page=per_page, search=search, owner_filter=owner)
     else:
         promo_data = dm.get_paginated_promos(page=page, per_page=per_page, search=search, owner_filter=owner)
-    return render_template('admin_pam_promotions.html',
+    return render_template('pam/admin_pam_promotions.html',
                            promotions=promo_data['promotions'],
                            pagination=promo_data['pagination'],
                            owners=promo_data['owners'],
@@ -113,24 +113,24 @@ def admin_pam_promotions():
 
 @admin_bp.route('/admin/user-management', endpoint='user_management')
 def admin_user_management():
-    return render_template('admin_user_management.html')
+    return render_template('pam/admin_user_management.html')
 
 # New subpages for decluttered functionality
 @admin_bp.route('/admin/data')
 def admin_data_page():
-    return render_template('admin_data.html')
+    return render_template('pam/admin_data.html')
 
 @admin_bp.route('/admin/performance')
 def admin_performance_page():
-    return render_template('admin_performance.html')
+    return render_template('pam/admin_performance.html')
 
 @admin_bp.route('/admin/integrations')
 def admin_integrations_page():
-    return render_template('admin_integrations.html')
+    return render_template('pam/admin_integrations.html')
 
 @admin_bp.route('/admin/security')
 def admin_security_page():
-    return render_template('admin_security.html')
+    return render_template('pam/admin_security.html')
 
 @admin_bp.route('/version-history', endpoint='version_history_page')
 def version_history_page():
@@ -142,10 +142,10 @@ def version_history_page():
         else:
             # Fallback: empty list (legacy path previously missing)
             promotions_with_history = []
-        return render_template('version_history.html', promotions=promotions_with_history)
+        return render_template('pam/version_history.html', promotions=promotions_with_history)
     except Exception as e:
         flash(f'Error loading version history: {e}', 'error')
-        return render_template('version_history.html', promotions=[])
+        return render_template('pam/version_history.html', promotions=[])
 
 # --- Admin actions ---
 @admin_bp.route('/admin/backup', methods=['POST'])
@@ -213,8 +213,8 @@ def admin_dashboard_summary():
         active_promos = 0
         today = datetime.now().date()
         for p in promos.values():
-            end = p.get('promo_end_date') or p.get('promo_srart_date')
-            start = p.get('promo_start_date') or p.get('promo_srart_date')
+            end = p.get('promo_end_date') or p.get('promo_start_date')
+            start = p.get('promo_start_date') or p.get('promo_start_date')
             try:
                 if start and end:
                     from datetime import datetime as _dt
@@ -407,9 +407,9 @@ def admin_date_diagnostics():
         }
         try:
             # Updated to reference PAM updated source table
-            raw_df = dbm.get_dataframe("SELECT promo_srart_date FROM [PAM].[PAM_Orbit_Data_Updated] WHERE promo_srart_date IS NOT NULL")
+            raw_df = dbm.get_dataframe("SELECT promo_start_date FROM [PAM].[PAM_Orbit_Data_Updated] WHERE promo_start_date IS NOT NULL")
             total_with_value = len(raw_df)
-            valid_mask = raw_df['promo_srart_date'].apply(lambda v: dbm._is_valid_date_string(v))
+            valid_mask = raw_df['promo_start_date'].apply(lambda v: dbm._is_valid_date_string(v))
             valid = int(valid_mask.sum())
             invalid = total_with_value - valid
             overall = {

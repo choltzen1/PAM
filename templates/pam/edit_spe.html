@@ -1,5 +1,5 @@
 
-{% extends "base.html" %}
+{% extends "pam/base_pam.html" %}
 {% block title %}Edit SPE Promotion – {{ promo.get('code', spe_key) or 'New SPE' }}{% endblock %}
 
 {% block header_left %}
@@ -78,22 +78,16 @@
             <div class="grid-form four-col">
               <label class="section-label col-span-2">Promo Identifier</label>
               <label class="section-label col-span-2">PT Priority Indicator</label>
-              <div class="input-group vertical-radio col-span-2">
+              <select class="form-select col-span-2" name="promo_identifier">
                 {% for val in ['B','F','I','U','Z','NULL'] %}
-                  <label >
-                    {{ val }}
-                    <input type="radio" name="promo_identifier" value="{{ val }}" {% if promo.get('promo_identifier') == val %}checked{% endif %}>
-                  </label>
+                <option value="{{ val }}" {% if promo.get('promo_identifier') == val %}selected{% endif %}>{{ val }}</option>
                 {% endfor %}
-              </div>
-              <div class="input-group vertical-radio col-span-2">
+              </select>
+              <select class="form-select col-span-2" name="pt_priority_indicator">
                 {% for val in ['B','G','NULL'] %}
-                  <label >
-                    {{ val }}
-                    <input type="radio" name="pt_priority_indicator" value="{{ val }}" {% if promo.get('pt_priority_indicator') == val %}checked{% endif %}>
-                  </label>
+                <option value="{{ val }}" {% if promo.get('pt_priority_indicator') == val %}selected{% endif %}>{{ val }}</option>
                 {% endfor %}
-              </div>
+              </select>
 
               <label class="section-label col-span-4">Account Type</label>
               <div class="input-group col-span-4">
@@ -104,30 +98,21 @@
               <label class="section-label">DCD Web Cart</label>
               <label class="section-label">On Menu</label>
               <label class="section-label">Service Priority</label>
-              <div class="input-group vertical-radio">
+              <select class="form-select" name="sales_application">
                 {% for val in ['*','NULL'] %}
-                  <label >
-                    {{ val }}
-                    <input type="radio" name="sales_application" value="{{ val }}" {% if promo.sales_application == val %}checked{% endif %}>
-                  </label>
+                <option value="{{ val }}" {% if promo.sales_application == val %}selected{% endif %}>{{ val }}</option>
                 {% endfor %}
-              </div>
-              <div class="input-group vertical-radio yes-no">
+              </select>
+              <select class="form-select" name="dcd_web_cart">
                 {% for val in ['Y','N'] %}
-                  <label >
-                    {{ val }}
-                    <input type="radio" name="dcd_web_cart" value="{{ val }}" {% if promo.dcd_web_cart == val %}checked{% endif %}>
-                  </label>
+                <option value="{{ val }}" {% if promo.dcd_web_cart == val %}selected{% endif %}>{{ val }}</option>
                 {% endfor %}
-              </div>
-              <div class="input-group vertical-radio yes-no">
+              </select>
+              <select class="form-select" name="on_menu">
                 {% for val in ['Y','N'] %}
-                  <label >
-                    {{ val }}
-                    <input type="radio" name="on_menu" value="{{ val }}" {% if promo.on_menu == val %}checked{% endif %}>
-                  </label>
+                <option value="{{ val }}" {% if promo.on_menu == val %}selected{% endif %}>{{ val }}</option>
                 {% endfor %}
-              </div>
+              </select>
               <input class="form-control" name="service_priority" value="{{ promo.service_priority if promo.service_priority is not none else '' }}">
 
               <label class="section-label">Max Discount</label>
@@ -172,13 +157,11 @@
               <label class="section-label">Port Duration</label>
               <label class="section-label col-span-3">Channel Grace Period</label>
               <input class="form-control" name="port_duration" placeholder="Port Duration" value="{{ promo.port_duration }}">
-              <div class="input-group vertical-radio col-span-3">
+              <select class="form-select col-span-3" name="channel_grace_period">
                 {% for grace in ['G01','G02','G03','G04','G05','NULL'] %}
-                  <label >
-                    {{ grace }}
-                    <input type="radio" name="channel_grace_period" value="{{ grace }}" {% if promo.channel_grace_period == grace %}checked{% endif %}>
-                  </label>                {% endfor %}
-              </div>
+                <option value="{{ grace }}" {% if promo.channel_grace_period == grace %}selected{% endif %}>{{ grace }}</option>
+                {% endfor %}
+              </select>
             </div>
             <div class="save-footer">
               <button type="submit" class="btn btn-primary">Save Dates & Times</button>
@@ -186,59 +169,42 @@
 
           {% elif active_tab == 'Requirements' %}
             <div class="grid-form four-col">              <label class="section-label col-span-4">TFB Channel Group ID</label>
-              <div class="input-group vertical-radio col-span-4 mb-1">
+              <select class="form-select col-span-4 mb-1" name="tfb_channel_group_id">
                 {% for group in ['NULL','A01','A02','A03','A04','A05'] %}
-                  <label >
-                    {{ group }}
-                    <input type="radio" name="tfb_channel_group_id" value="{{ group }}" {% if promo.tfb_channel_group_id == group %}checked{% endif %}>
-                  </label>
+                <option value="{{ group }}" {% if promo.tfb_channel_group_id == group %}selected{% endif %}>{{ group }}</option>
                 {% endfor %}
-              </div>
+              </select>
 
               <label class="section-label col-span-2">Dealer Group ID</label>
               <label class="section-label col-span-2">Updated MRC Ranking</label>
-              <div class="input-group vertical-radio col-span-2">
+              <select class="form-select col-span-2" name="dealer_group_id">
                 {% for group in ['G01','G02','G03','NULL'] %}
-                  <label >
-                    {{ group }}
-                    <input type="radio" name="dealer_group_id" value="{{ group }}" {% if promo.dealer_group_id == group %}checked{% endif %}>
-                  </label>
+                <option value="{{ group }}" {% if promo.dealer_group_id == group %}selected{% endif %}>{{ group }}</option>
                 {% endfor %}
-              </div>
-              <div class="input-group vertical-radio col-span-2">
+              </select>
+              <select class="form-select col-span-2" name="updated_mrc_ranking">
                 {% for ranking in ['GSM','MI','NULL'] %}
-                  <label >
-                    {{ ranking }}
-                    <input type="radio" name="updated_mrc_ranking" value="{{ ranking }}" {% if promo.updated_mrc_ranking == ranking %}checked{% endif %}>
-                  </label>
+                <option value="{{ ranking }}" {% if promo.updated_mrc_ranking == ranking %}selected{% endif %}>{{ ranking }}</option>
                 {% endfor %}
-              </div>              <label class="section-label col-span-2">Suppress Discount Reorder</label>
-              <label class="section-label col-span-2">Retro BAN Evaluation</label>              <div class="input-group vertical-radio yes-no col-span-2">
+              </select>              <label class="section-label col-span-2">Suppress Discount Reorder</label>
+              <label class="section-label col-span-2">Retro BAN Evaluation</label>
+              <select class="form-select col-span-2" name="suppress_discount_reorder">
                 {% for val in ['Yes','No'] %}
-                  <label >
-                    {{ val }}
-                    <input type="radio" name="suppress_discount_reorder" value="{{ val }}" {% if promo.suppress_discount_reorder == val %}checked{% endif %}>
-                  </label>
+                <option value="{{ val }}" {% if promo.suppress_discount_reorder == val %}selected{% endif %}>{{ val }}</option>
                 {% endfor %}
-              </div>
-              <div class="input-group vertical-radio yes-no col-span-2">
+              </select>
+              <select class="form-select col-span-2" name="retro_ban_evaluation">
                 {% for val in ['Yes','No'] %}
-                  <label >
-                    {{ val }}
-                    <input type="radio" name="retro_ban_evaluation" value="{{ val }}" {% if promo.retro_ban_evaluation == val %}checked{% endif %}>
-                  </label>
+                <option value="{{ val }}" {% if promo.retro_ban_evaluation == val %}selected{% endif %}>{{ val }}</option>
                 {% endfor %}
-              </div>
+              </select>
 
               <label class="section-label col-span-4">Port-In Group ID</label>
-              <div class="input-group vertical-radio col-span-4">
+              <select class="form-select col-span-4" name="port_in_group_id">
                 {% for group in ['G02','G03','G04','G05','G06','G07','NULL'] %}
-                  <label >
-                    {{ group }}
-                    <input type="radio" name="port_in_group_id" value="{{ group }}" {% if promo.port_in_group_id == group %}checked{% endif %}>
-                  </label>
+                <option value="{{ group }}" {% if promo.port_in_group_id == group %}selected{% endif %}>{{ group }}</option>
                 {% endfor %}
-              </div>
+              </select>
 
               <label class="section-label col-span-2">Adjustment Code</label>
               <label class="section-label col-span-2">Discount Codes</label>              <input class="form-control col-span-2" name="adjustment_code" value="{{ promo.adjustment_code if promo.adjustment_code is not none else '' }}">
@@ -253,89 +219,63 @@
               <label class="section-label">Total</label>
               <label class="section-label">GSM</label>
               <label class="section-label">MI</label>
-              <label class="section-label">Pure MI</label>              <div class="input-group vertical-radio yes-no">
+              <label class="section-label">Pure MI</label>
+              <select class="form-select" name="total_indicator">
                 {% for val in ['Y','N'] %}
-                  <label >
-                    {{ val }}
-                    <input type="radio" name="total_indicator" value="{{ val }}" {% if promo.total_indicator == val %}checked{% endif %}>
-                  </label>
+                <option value="{{ val }}" {% if promo.total_indicator == val %}selected{% endif %}>{{ val }}</option>
                 {% endfor %}
-              </div>
-              <div class="input-group vertical-radio yes-no">
+              </select>
+              <select class="form-select" name="gsm_indicator">
                 {% for val in ['Y','N'] %}
-                  <label >
-                    {{ val }}
-                    <input type="radio" name="gsm_indicator" value="{{ val }}" {% if promo.gsm_indicator == val %}checked{% endif %}>
-                  </label>
+                <option value="{{ val }}" {% if promo.gsm_indicator == val %}selected{% endif %}>{{ val }}</option>
                 {% endfor %}
-              </div>
-              <div class="input-group vertical-radio yes-no">
+              </select>
+              <select class="form-select" name="mi_indicator">
                 {% for val in ['Y','N'] %}
-                  <label >
-                    {{ val }}
-                    <input type="radio" name="mi_indicator" value="{{ val }}" {% if promo.mi_indicator == val %}checked{% endif %}>
-                  </label>
+                <option value="{{ val }}" {% if promo.mi_indicator == val %}selected{% endif %}>{{ val }}</option>
                 {% endfor %}
-              </div>
-              <div class="input-group vertical-radio yes-no">
+              </select>
+              <select class="form-select" name="pure_mi_indicator">
                 {% for val in ['Y','N'] %}
-                  <label >
-                    {{ val }}
-                    <input type="radio" name="pure_mi_indicator" value="{{ val }}" {% if promo.pure_mi_indicator == val %}checked{% endif %}>
-                  </label>
+                <option value="{{ val }}" {% if promo.pure_mi_indicator == val %}selected{% endif %}>{{ val }}</option>
                 {% endfor %}
-              </div>
+              </select>
 
               <label class="section-label">Virtual MI</label>
               <label class="section-label">Duplicate</label>
               <label class="section-label">Auto Att</label>
-              <label class="section-label">Fax Line</label>              <div class="input-group vertical-radio yes-no">
+              <label class="section-label">Fax Line</label>
+              <select class="form-select" name="virtual_mi_indicator">
                 {% for val in ['Y','N'] %}
-                  <label >
-                    {{ val }}
-                    <input type="radio" name="virtual_mi_indicator" value="{{ val }}" {% if promo.virtual_mi_indicator == val %}checked{% endif %}>
-                  </label>
+                <option value="{{ val }}" {% if promo.virtual_mi_indicator == val %}selected{% endif %}>{{ val }}</option>
                 {% endfor %}
-              </div>
-              <div class="input-group vertical-radio yes-no">
+              </select>
+              <select class="form-select" name="duplicate_indicator">
                 {% for val in ['Y','N'] %}
-                  <label >
-                    {{ val }}
-                    <input type="radio" name="duplicate_indicator" value="{{ val }}" {% if promo.duplicate_indicator == val %}checked{% endif %}>
-                  </label>
+                <option value="{{ val }}" {% if promo.duplicate_indicator == val %}selected{% endif %}>{{ val }}</option>
                 {% endfor %}
-              </div>
-              <div class="input-group vertical-radio yes-no">
+              </select>
+              <select class="form-select" name="auto_att_indicator">
                 {% for val in ['Y','N'] %}
-                  <label >
-                    {{ val }}
-                    <input type="radio" name="auto_att_indicator" value="{{ val }}" {% if promo.auto_att_indicator == val %}checked{% endif %}>
-                  </label>
+                <option value="{{ val }}" {% if promo.auto_att_indicator == val %}selected{% endif %}>{{ val }}</option>
                 {% endfor %}
-              </div>
-              <div class="input-group vertical-radio yes-no">
+              </select>
+              <select class="form-select" name="fax_line_indicator">
                 {% for val in ['Y','N'] %}
-                  <label >
-                    {{ val }}
-                    <input type="radio" name="fax_line_indicator" value="{{ val }}" {% if promo.fax_line_indicator == val %}checked{% endif %}>
-                  </label>
+                <option value="{{ val }}" {% if promo.fax_line_indicator == val %}selected{% endif %}>{{ val }}</option>
                 {% endfor %}
-              </div><label class="section-label col-span-2">Conference</label>
-              <label class="section-label col-span-2">IOT</label>              <div class="input-group vertical-radio yes-no col-span-2">
+              </select><label class="section-label col-span-2">Conference</label>
+              <label class="section-label col-span-2">IOT</label>
+              <select class="form-select col-span-2" name="conference_indicator">
                 {% for val in ['Y','N'] %}
-                  <label >
-                    {{ val }}
-                    <input type="radio" name="conference_indicator" value="{{ val }}" {% if promo.conference_indicator == val %}checked{% endif %}>
-                  </label>
+                <option value="{{ val }}" {% if promo.conference_indicator == val %}selected{% endif %}>{{ val }}</option>
                 {% endfor %}
-              </div>
-              <div class="input-group vertical-radio yes-no col-span-2">
+              </select>
+              <select class="form-select col-span-2" name="iot_indicator">
                 {% for val in ['Y','N'] %}
-                  <label >
-                    {{ val }}
-                    <input type="radio" name="iot_indicator" value="{{ val }}" {% if promo.iot_indicator == val %}checked{% endif %}>
-                  </label>                {% endfor %}
-              </div>
+                <option value="{{ val }}" {% if promo.iot_indicator == val %}selected{% endif %}>{{ val }}</option>
+                {% endfor %}
+              </select>
             </div>
             <div class="save-footer">
               <button type="submit" class="btn btn-primary">Save Line Indicators</button>
@@ -390,22 +330,16 @@
               <label class="section-label">Borrow BO Lines</label>
               <label class="section-label">Lend BO Lines</label>
               <input class="form-control" name="go_line_count" value="{{ promo.go_line_count if promo.go_line_count is not none else '' }}">
-              <input class="form-control" name="bo_line_count" value="{{ promo.bo_line_count if promo.bo_line_count is not none else '' }}">              <div class="input-group vertical-radio yes-no">
+              <input class="form-control" name="bo_line_count" value="{{ promo.bo_line_count if promo.bo_line_count is not none else '' }}">              <select class="form-select" name="borrow_bo_lines">
                 {% for val in ['Y','N'] %}
-                  <label >
-                    {{ val }}
-                    <input type="radio" name="borrow_bo_lines" value="{{ val }}" {% if promo.borrow_bo_lines == val %}checked{% endif %}>
-                  </label>
+                <option value="{{ val }}" {% if promo.borrow_bo_lines == val %}selected{% endif %}>{{ val }}</option>
                 {% endfor %}
-              </div>
-              <div class="input-group vertical-radio yes-no">
+              </select>
+              <select class="form-select" name="lend_bo_lines">
                 {% for val in ['Y','N'] %}
-                  <label >
-                    {{ val }}
-                    <input type="radio" name="lend_bo_lines" value="{{ val }}" {% if promo.lend_bo_lines == val %}checked{% endif %}>
-                  </label>
+                <option value="{{ val }}" {% if promo.lend_bo_lines == val %}selected{% endif %}>{{ val }}</option>
                 {% endfor %}
-              </div>              <label class="section-label grid-full">Soc Discount Mapping</label>
+              </select>              <label class="section-label grid-full">Soc Discount Mapping</label>
               <input class="form-control grid-full" name="soc_discount_mapping" value="{{ promo.soc_discount_mapping if promo.soc_discount_mapping is not none else '' }}">
             </div>
             <div class="save-footer">

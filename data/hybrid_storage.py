@@ -113,7 +113,7 @@ class HybridPromoDataManager:
             # Check if any records are newer than our cache
             for promo in recent_promos:
                 # Look for any timestamp fields that might indicate recent changes
-                for date_field in ['promo_srart_date', 'promo_end_date', 'updated_at', 'created_at']:
+                for date_field in ['promo_start_date', 'promo_end_date', 'updated_at', 'created_at']:
                     if date_field in promo and promo[date_field]:
                         try:
                             db_time = datetime.fromisoformat(str(promo[date_field]).replace('Z', '+00:00'))
@@ -435,9 +435,9 @@ class HybridPromoDataManager:
             ob = orbit_by_code.get(code, {})
             pj = pam_json.get(code, {})
             orbit_end = ob.get('promo_end_date','')
-            orbit_start = ob.get('promo_srart_date','')
+            orbit_start = ob.get('promo_start_date','')
             pam_end = pj.get('promo_end_date','') or ob.get('promo_end_date','')
-            pam_start = pj.get('promo_start_date','') or ob.get('promo_srart_date','')
+            pam_start = pj.get('promo_start_date','') or ob.get('promo_start_date','')
             owner = ob.get('Owner') or pj.get('owner','')
             bill_facing_name = ob.get('bill_facing_name') or pj.get('bill_facing_name','')
             orbit_id = ob.get('orbit_id') or pj.get('orbit_id','')
@@ -671,7 +671,7 @@ class HybridPromoDataManager:
                     'orbit_id': current_promo.get('orbit_id', ''),
                     'status': current_promo.get('status', 'Active'),
                     'bill_facing_name': current_promo.get('bill_facing_name', ''),
-                    'start_date': current_promo.get('promo_start_date', current_promo.get('promo_srart_date', '')),
+                    'start_date': current_promo.get('promo_start_date', current_promo.get('promo_start_date', '')),
                     'end_date': current_promo.get('promo_end_date', ''),
                     'promo_owner': current_promo.get('owner', current_promo.get('Owner', '')),
                     'changes': changes

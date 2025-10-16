@@ -1,0 +1,80 @@
+{% extends "pam/pam_base.html" %}
+{% block title %}Offers Workspace (Placeholder){% endblock %}
+{% block extra_css %}
+<style>
+  .placeholder-hero {display:flex;flex-direction:row;gap:3rem;align-items:center;flex-wrap:wrap;margin-bottom:2.5rem;}
+  .hero-left {max-width:560px;}
+  .hero-badge {background:#E20074;color:#fff;display:inline-block;padding:.4rem .75rem;border-radius:999px;font-size:.7rem;letter-spacing:.08em;font-weight:600;margin-bottom:.75rem;}
+  .gradient-ring {width:200px;height:200px;border-radius:50%;background:radial-gradient(circle at 35% 35%, #ff66b4, #8a0050);position:relative;box-shadow:0 8px 24px rgba(226,0,116,.35),0 2px 6px rgba(0,0,0,.15);}
+  .gradient-ring:after {content:"🎁";font-size:90px;position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#fff;text-shadow:0 4px 10px rgba(0,0,0,.35);}  
+  .roadmap {display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1.25rem;margin-bottom:2.5rem;}
+  .roadmap-card {background:#fff;border:1px solid #ececec;border-radius:14px;padding:1.1rem 1.1rem 1.25rem;position:relative;box-shadow:0 2px 4px rgba(0,0,0,.04);transition:.25s;}
+  .roadmap-card:hover {box-shadow:0 6px 18px rgba(0,0,0,.12);transform:translateY(-3px);}  
+  .roadmap-card h4 {font-size:1rem;margin:0 0 .4rem;font-weight:600;display:flex;align-items:center;gap:.5rem;} 
+  .pill {font-size:.55rem;text-transform:uppercase;letter-spacing:.09em;background:#222;color:#fff;padding:.25rem .55rem;border-radius:999px;}
+  .pill.future {background:#6c2b89;}
+  .pill.now {background:#E20074;}
+  .timeline {border-left:3px solid #E20074;margin:0;padding:0 0 0 1.2rem;list-style:none;}
+  .timeline li {margin:0 0 1.25rem;position:relative;}
+  .timeline li:before {content:"";width:14px;height:14px;background:#E20074;border:3px solid #fff;box-shadow:0 0 0 2px #E20074;position:absolute;left:-1.75rem;top:2px;border-radius:50%;}
+  .cta-box {background:linear-gradient(135deg,#E20074,#9b0061);color:#fff;padding:1.5rem 2rem;border-radius:18px;display:flex;flex-direction:column;gap:.75rem;box-shadow:0 10px 28px -6px rgba(226,0,116,.5);} 
+  .cta-box h3 {margin:0;font-size:1.25rem;font-weight:600;}
+  .cta-actions {display:flex;gap:.75rem;flex-wrap:wrap;}
+  .cta-actions .btn-outline {background:#fff;color:#E20074;font-weight:600;border:none;} 
+  .cta-actions .btn-outline:hover {background:#ffe6f4;}
+  .legend {font-size:.65rem;opacity:.65;letter-spacing:.05em;text-transform:uppercase;margin-top:-.25rem;margin-bottom:1.1rem;font-weight:600;}
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="padding:2.4rem 2.4rem 3rem;max-width:1280px;margin:0 auto;">
+  <div class="placeholder-hero">
+    <div class="hero-left">
+      <span class="hero-badge">IN BUILD</span>
+      <h1 style="margin:.2rem 0 1rem;font-weight:700;letter-spacing:.5px;">Offers Workspace</h1>
+      <p style="font-size:1.05rem;line-height:1.5;max-width:560px;">A centralized experience to compose, simulate, approve and launch cross‑channel consumer offers. We’re laying the groundwork for unified eligibility logic, visual bundling tools, and real‑time performance telemetry.</p>
+      <div class="legend">Core Pillars We’re Targeting</div>
+      <div class="roadmap">
+        <div class="roadmap-card">
+          <h4><i class="fas fa-layer-group"></i> Offer Builder <span class="pill now">MVP</span></h4>
+          <p style="font-size:.8rem;line-height:1.35;margin:0;">Structured creation with reusable components (audiences, benefits, channels) + policy validation.</p>
+        </div>
+        <div class="roadmap-card">
+          <h4><i class="fas fa-vial"></i> Simulation <span class="pill future">Planned</span></h4>
+          <p style="font-size:.8rem;margin:0;">Run what‑if eligibility against historical subscriber cohorts to estimate reach & impact.</p>
+        </div>
+        <div class="roadmap-card">
+          <h4><i class="fas fa-random"></i> Bundling <span class="pill future">Planned</span></h4>
+          <p style="font-size:.8rem;margin:0;">Graph‑driven assembly of stacked or mutually exclusive offers with conflict detection.</p>
+        </div>
+        <div class="roadmap-card">
+          <h4><i class="fas fa-chart-line"></i> Performance <span class="pill future">Planned</span></h4>
+          <p style="font-size:.8rem;margin:0;">Streaming KPIs & attribution stitched across sales and care surfaces.</p>
+        </div>
+      </div>
+    </div>
+    <div class="gradient-ring" aria-hidden="true"></div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:2.25rem;margin-top:1rem;">
+    <div>
+      <h3 style="font-size:1rem;font-weight:600;margin:0 0 .75rem;letter-spacing:.05em;">Near‑Term Milestones</h3>
+      <ul class="timeline">
+        <li><strong>Data Model Finalization</strong> – entity schema & versioning</li>
+        <li><strong>Eligibility Expression Service</strong> – parse + normalize logical rules</li>
+        <li><strong>Offer Draft Lifecycle</strong> – draft & approval workflow APIs</li>
+        <li><strong>Minimal Builder UI</strong> – create + preview JSON payload</li>
+        <li><strong>Initial Promotion Sync</strong> – bridge existing PAM artifacts</li>
+      </ul>
+    </div>
+    <div class="cta-box">
+      <h3>Want Early Access?</h3>
+      <p style="margin:0;line-height:1.4;font-size:.9rem;">We’ll open a limited pilot once the draft lifecycle is stable. Opt‑in to shape features & prioritization.</p>
+      <div class="cta-actions">
+        <a class="btn btn-magenta" style="font-weight:600;" href="mailto:offers-product@company.com?subject=Offers Pilot Interest">Join Pilot</a>
+        <a class="btn btn-outline" href="{{ url_for('core.landing') }}">Return to Hub</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

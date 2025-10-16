@@ -1,0 +1,40 @@
+/* landing.css - Landing hub styles aligned with existing app theme */
+:root {
+  --landing-bg-dark: #2f2f2f;
+  --landing-tile-bg: #ffffff;
+  --landing-tile-border: #d9d9d9;
+  --landing-tile-border-hover: var(--tmobile-magenta);
+  --landing-objective-border: #e0e0e0;
+}
+
+body, .page-content { background: var(--tmobile-gray); }
+
+.landing-wrapper { padding: 1.5rem 2rem 2rem; box-sizing: border-box; }
+.landing-intro { max-width: 1080px; margin: 0 auto 1.5rem auto; }
+.landing-intro h1 { margin: 0 0 .4rem; font-size: 2rem; font-weight: 700; color: #222; letter-spacing: .5px; }
+.landing-intro p.tagline { margin: 0 0 1.25rem; font-size: 1.05rem; color: var(--tmobile-magenta-dark); font-style: italic; }
+.landing-objective { background:#fff; border:1px solid var(--landing-objective-border); border-radius:10px; padding:1.1rem 1.25rem 1.2rem; font-size:.9rem; line-height:1.45; color:#333; box-shadow:0 2px 4px #00000010; }
+.landing-objective strong { color: #000; }
+
+.landing-grid { display:grid; gap:1.25rem; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); max-width: 1000px; margin: 1.8rem auto 0; }
+.landing-tile { position:relative; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:.6rem; background: var(--landing-tile-bg); border:2px solid var(--landing-tile-border); border-radius:16px; padding:2rem .75rem 1.9rem; text-decoration:none; color:#222; font-weight:600; letter-spacing:.4px; font-size:1.05rem; box-shadow:0 3px 8px rgba(0,0,0,.08); transition: border-color .18s ease, box-shadow .18s ease, transform .22s ease, background .22s; overflow:hidden; }
+.landing-tile:hover { border-color: var(--landing-tile-border-hover); box-shadow:0 4px 14px -2px rgba(226,0,116,.35); transform: translateY(-4px); background:#fff; }
+.landing-tile:active { transform: translateY(-1px); }
+.landing-tile .icon-circle { width:70px; height:70px; border-radius:50%; background:linear-gradient(135deg, var(--tmobile-magenta), #ff419f); display:flex; align-items:center; justify-content:center; color:#fff; font-size:2rem; box-shadow:0 6px 16px -2px rgba(226,0,116,.55); }
+.landing-tile .tile-label { text-align:center; line-height:1.15; }
+.landing-tile .tile-sub { font-size:.65rem; font-weight:500; letter-spacing:1px; text-transform:uppercase; color:#666; position:absolute; top:6px; right:10px; }
+.landing-tile.disabled { opacity:.5; cursor:not-allowed; position:relative; }
+.landing-tile.disabled:hover { transform:none; box-shadow:0 3px 8px rgba(0,0,0,.08); border-color: var(--landing-tile-border); }
+.landing-tile.disabled::after { content:"Coming Soon"; position:absolute; bottom:6px; font-size:.6rem; letter-spacing:1px; font-weight:500; color:#555; text-transform:uppercase; }
+
+/* Ribbon marker */
+.landing-tile .ribbon { position:absolute; left:-42px; top:14px; background: var(--tmobile-magenta); color:#fff; font-size:.6rem; padding:4px 44px; transform:rotate(-45deg); box-shadow:0 2px 6px rgba(0,0,0,.25); letter-spacing:1px; font-weight:600; text-transform:uppercase; }
+
+/* Responsive adjustments */
+@media (max-width: 1200px) { .landing-intro h1 { font-size:1.8rem; } }
+@media (max-width: 900px) { .landing-intro h1 { font-size:1.65rem; } .landing-intro p.tagline { font-size:.95rem; } }
+@media (max-width: 640px) { .landing-wrapper { padding: 1.25rem 1rem 1.5rem; } .landing-grid { gap:.85rem; } .landing-intro h1 { font-size:1.45rem; } }
+@media (max-width: 480px) { .landing-grid { grid-template-columns: repeat(auto-fill, minmax(180px,1fr)); } }
+
+/* Footer refinement for landing page */
+.landing-footer-aux { margin-top:2rem; display:flex; justify-content:center; font-size:.7rem; color:#666; }

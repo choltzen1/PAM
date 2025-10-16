@@ -6,6 +6,7 @@ from datetime import datetime
 from werkzeug.datastructures import FileStorage
 from werkzeug.utils import secure_filename
 from .database import DatabaseManager
+from .field_map import FIELD_DB_MAP, READ_ONLY_FIELDS, EDITABLE_CANONICAL_FIELDS
 
 
 class PromoDataManager:
@@ -107,6 +108,13 @@ class PromoDataManager:
                                 continue
                             # Only overlay the defined extra fields set; ignore any accidental columns
                             if k in extras_overlay_fields:
+                                # Do not overwrite non-empty base values with empty/None extras
+                                if k == 'initiative_name' and converted.get('initiative_name') and not v:
+                                    continue
+                                if v is None:
+                                    continue
+                                if isinstance(v, str) and v.strip() == "" and converted.get(k):
+                                    continue
                                 converted[k] = v
                 except Exception as extras_err:
                     # Non-fatal; log to stdout for now (could be improved with structured logging)
@@ -330,7 +338,7 @@ class PromoDataManager:
             except Exception:
                 return None
         for promo in data['promotions']:
-            start = parse_date(promo.get('promo_srart_date'))
+            start = parse_date(promo.get('promo_start_date'))
             end = parse_date(promo.get('promo_end_date'))
             if start and start > today:
                 phase = 'Build'
@@ -362,7 +370,7 @@ class PromoDataManager:
             except Exception:
                 return None
         for promo in data['promotions']:
-            start = parse_date(promo.get('promo_srart_date'))
+            start = parse_date(promo.get('promo_start_date'))
             end = parse_date(promo.get('promo_end_date'))
             if start and start > today:
                 phase = 'Build'
@@ -405,7 +413,7 @@ class PromoDataManager:
                     'code': promo_code,
                     'description': promo_data.get('description',''),
                     'Owner': promo_data.get('Owner') or promo_data.get('owner',''),
-                    'promo_srart_date': promo_data.get('promo_start_date') or datetime.utcnow().strftime('%Y-%m-%d'),
+                    'promo_start_date': promo_data.get('promo_start_date') or datetime.utcnow().strftime('%Y-%m-%d'),
                     'promo_end_date': promo_data.get('promo_end_date') or datetime.utcnow().strftime('%Y-%m-%d'),
                     'Desired_Execution': promo_data.get('Desired_Execution') or 'RDC'
                 }
@@ -427,26 +435,71 @@ class PromoDataManager:
             except Exception:
                 return {'success': False, 'changed': [], 'diff': {}, 'error': 'Base promo not found (creation error)'}
 
-        # 2. Define field partitions
-        base_editable_fields = {
-            'promo_notes','description','Owner','bill facing name','discount','amount','nseip_drop','dcd_web_cart',
-            'product_type','bogo','fpd_display_promo','on_menu','market_group','store_group','promo_srart_date',
-            'promo_end_date','comm_end_date','promo_duration','delay_time','application_grace_period','device_sales_type',
-            'activation_type','active_line_required','maintain_soc','crffc_maintainactivelinedev','limit_per_ban','soc_grouping',
-            'account_type','sales_application','operator_id','sku_group_id','device_status_group_id','clawback_indicator',
-            'Broken_Trade','Anticipated_volume_take_rates_total','Desired_Execution'
+        # Editable canonical fields come from shared field_map
+        base_editable_fields = set(EDITABLE_CANONICAL_FIELDS)
+        # Legacy synonyms that may arrive from UI posts; map them to canonical columns if encountered.
+        synonym_map = {
+            'flow_indicator': 'flow_ind',  # UI may still send old name
+            'jira_ticket': 'dcd_jira',
+            'trade_in_grp_id': 'trade_in_group_id',  # normalize short form
+            'tiered_group_id': 'tiered_grp_id',      # normalize to grp variant per CSV
+            'broken_trade': 'Broken_Trade',          # UI lowercase -> DB camel/pascal
+            # Tiered promo tiers (UI tier_X_* -> promo_tier_X_*)
+            'tier_1_amount': 'promo_tier_1_amount',
+            'tier_1_sku_group_id': 'promo_tier_1_sku_group_id',
+            'tier_1_devices': 'promo_tier_1_devices',
+            'tier_2_amount': 'promo_tier_2_amount',
+            'tier_2_sku_group_id': 'promo_tier_2_sku_group_id',
+            'tier_2_devices': 'promo_tier_2_devices',
+            'tier_3_amount': 'promo_tier_3_amount',
+            'tier_3_sku_group_id': 'promo_tier_3_sku_group_id',
+            'tier_3_devices': 'promo_tier_3_devices',
+            # Trade tiers (UI trade_tier_X_* -> mk_mdl_grp_tier_X_* canonical)
+            'trade_tier_1_make_model': 'mk_mdl_grp_tier_1',
+            'trade_tier_1_amount': 'mk_mdl_grp_tier_1_amount',
+            'trade_tier_1_cond_id': 'mk_mdl_grp_tier_1_condition_id',
+            'trade_tier_1_min_fmv': 'mk_mdl_grp_tier_1_min_fmv',
+            'trade_tier_1_max_fmv': 'mk_mdl_grp_tier_1_max_fmv',
+            'trade_tier_2_make_model': 'mk_mdl_grp_tier_2',
+            'trade_tier_2_amount': 'mk_mdl_grp_tier_2_amount',
+            'trade_tier_2_cond_id': 'mk_mdl_grp_tier_2_condition_id',
+            'trade_tier_2_min_fmv': 'mk_mdl_grp_tier_2_min_fmv',
+            'trade_tier_2_max_fmv': 'mk_mdl_grp_tier_2_max_fmv',
+            'trade_tier_3_make_model': 'mk_mdl_grp_tier_3',
+            'trade_tier_3_amount': 'mk_mdl_grp_tier_3_amount',
+            'trade_tier_3_cond_id': 'mk_mdl_grp_tier_3_condition_id',
+            'trade_tier_3_min_fmv': 'mk_mdl_grp_tier_3_min_fmv',
+            'trade_tier_3_max_fmv': 'mk_mdl_grp_tier_3_max_fmv',
+            'trade_tier_4_make_model': 'mk_mdl_grp_tier_4',
+            'trade_tier_4_amount': 'mk_mdl_grp_tier_4_amount',
+            'trade_tier_4_cond_id': 'mk_mdl_grp_tier_4_condition_id',
+            'trade_tier_4_min_fmv': 'mk_mdl_grp_tier_4_min_fmv',
+            'trade_tier_4_max_fmv': 'mk_mdl_grp_tier_4_max_fmv',
         }
-        extras_fields = {
-            'jira_ticket','initiative_name','sku_link','tradein_link','promo_grace','trade_in_grace',
-            'segment_name','sub_segment','segment_group_id','segment_level','flow_indicator',
-            'test_status','zlab_status'
-        }
+        # Fields that remain only in SQLite extras (testing / status flags)
+        extras_fields = {'test_status','zlab_status'}
+
+        # Normalize incoming promo_data keys based on synonym_map
+        normalized_promo_data = {}
+        for k,v in promo_data.items():
+            target_key = synonym_map.get(k, k)
+            normalized_promo_data[target_key] = v
+        promo_data = normalized_promo_data
+
+        # Validation / sanitization (lightweight) before partitioning
+        def _sanitize(key: str, value: Any) -> Any:
+            if key == 'bptcr':
+                # Expect 5 numeric characters; strip non-digits and enforce length
+                import re
+                digits = ''.join(re.findall(r'\d', str(value)))
+                return digits[:5] if len(digits) >= 5 else digits  # keep partial rather than blank to allow user correction UI-side
+            return value
 
         base_updates = {}
         extras_updates = {}
         for k,v in promo_data.items():
             if k in base_editable_fields:
-                base_updates[k] = v
+                base_updates[k] = _sanitize(k, v)
             elif k in extras_fields:
                 extras_updates[k] = v
 
@@ -497,7 +550,9 @@ class PromoDataManager:
         return {
             'success': True,
             'changed': changed_fields,
-            'diff': diff
+            'diff': diff,
+            'applied_base_fields': list(base_updates.keys()),
+            'applied_extras_fields': list(extras_updates.keys()),
         }
 
     # --- SQL generation/version events (wrappers for previous VersionHistory integration) ---
@@ -802,7 +857,7 @@ class PromoDataManager:
             'description': orbit_row.get('description') or orbit_row.get('bill_facing_name') or f'Orbit {orbit_id_clean}',
             'bill_facing_name': orbit_row.get('bill_facing_name') or orbit_row.get('description'),
             'Owner': orbit_row.get('Owner') or 'Unassigned',
-            'promo_srart_date': orbit_row.get('promo_srart_date'),  # note source column name consistency
+            'promo_start_date': orbit_row.get('promo_start_date'),  # note source column name consistency
             'promo_end_date': orbit_row.get('promo_end_date'),
             'Desired_Execution': desired_execution
         }
@@ -943,7 +998,7 @@ class PromoDataManager:
                     'orbit_id': r.get('orbit_id',''),
                     'status': 'Active' if (end_date and str(end_date) > now_str) else 'Expired',
                     'description': r.get('description',''),
-                    'start_date': r.get('promo_srart_date',''),
+                    'start_date': r.get('promo_start_date',''),
                     'end_date': end_date,
                     'owner': r.get('Owner',''),
                     'type': 'SPE'
@@ -964,7 +1019,7 @@ class PromoDataManager:
                     'orbit_id': r.get('orbit_id',''),
                     'status': 'Active' if (end_date and str(end_date) > now_str) else 'Expired',
                     'description': r.get('description',''),
-                    'start_date': r.get('promo_srart_date',''),
+                    'start_date': r.get('promo_start_date',''),
                     'end_date': end_date,
                     'owner': r.get('Owner',''),
                     'type': 'REBATE'
@@ -1441,7 +1496,7 @@ class PromoDataManager:
 
         for code, promo in pam_promos.items():
             pam_end = promo.get('promo_end_date', '')
-            pam_start = promo.get('promo_start_date', '') or promo.get('promo_srart_date','')  # legacy column
+            pam_start = promo.get('promo_start_date', '') or promo.get('promo_start_date','')  # legacy column
             orbit_id = code_to_orbit.get(code, '')
             orbit_dates = orbit_map.get(orbit_id, {}) if orbit_id else {}
             orbit_end = orbit_dates.get('orbit_end_date', '')

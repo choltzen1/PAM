@@ -1,0 +1,88 @@
+{% extends "pam/pam_base.html" %}
+{% block title %}Research Workspace (Placeholder){% endblock %}
+{% block extra_css %}
+<style>
+  .placeholder-hero {position:relative;display:flex;flex-direction:row;gap:3rem;align-items:flex-start;flex-wrap:wrap;margin-bottom:2.5rem;}
+  .hero-left {max-width:680px;}
+  .hero-badge {background:#E20074;color:#fff;display:inline-block;padding:.4rem .75rem;border-radius:999px;font-size:.7rem;letter-spacing:.08em;font-weight:600;margin-bottom:.75rem;}
+  /* Enlarged hero image and repositioned (absolute on large screens) */
+  .gradient-ring {position:absolute;top:-10px;right:40px;width:380px;height:380px;display:flex;align-items:stretch;justify-content:center;border-radius:18px;overflow:hidden;box-shadow:0 20px 46px -10px rgba(98,0,226,.45),0 8px 22px rgba(0,0,0,.3);} 
+  .gradient-ring img {width:100%;height:100%;object-fit:cover;display:block;}
+  .research-credit {position:absolute;top:380px;right:40px;width:380px;margin-top:.6rem;font-size:.62rem;letter-spacing:.11em;text-transform:uppercase;font-weight:600;color:#555;background:#f3f3f7;padding:.45rem .85rem;border-radius:8px;box-shadow:0 3px 6px rgba(0,0,0,.08);text-align:center;}
+  @media (max-width: 940px){
+    .gradient-ring {position:relative;top:0;right:0;width:300px;height:300px;margin:1.25rem auto 0;border-radius:16px;}
+    .hero-left {max-width:100%;}
+  }
+  .roadmap {display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1.25rem;margin-bottom:2.5rem;}
+  .roadmap-card {background:#fff;border:1px solid #ececec;border-radius:14px;padding:1.1rem 1.1rem 1.25rem;position:relative;box-shadow:0 2px 4px rgba(0,0,0,.04);transition:.25s;}
+  .roadmap-card:hover {box-shadow:0 6px 18px rgba(0,0,0,.12);transform:translateY(-3px);}  
+  .roadmap-card h4 {font-size:1rem;margin:0 0 .4rem;font-weight:600;display:flex;align-items:center;gap:.5rem;} 
+  .pill {font-size:.55rem;text-transform:uppercase;letter-spacing:.09em;background:#222;color:#fff;padding:.25rem .55rem;border-radius:999px;}
+  .pill.future {background:#6c2b89;}
+  .pill.now {background:#E20074;}
+  .timeline {border-left:3px solid #E20074;margin:0;padding:0 0 0 1.2rem;list-style:none;}
+  .timeline li {margin:0 0 1.25rem;position:relative;}
+  .timeline li:before {content:"";width:14px;height:14px;background:#E20074;border:3px solid #fff;box-shadow:0 0 0 2px #E20074;position:absolute;left:-1.75rem;top:2px;border-radius:50%;}
+  .cta-box {background:linear-gradient(135deg,#E20074,#38005b);color:#fff;padding:1.5rem 2rem;border-radius:18px;display:flex;flex-direction:column;gap:.75rem;box-shadow:0 10px 28px -6px rgba(98,0,226,.5);} 
+  .cta-box h3 {margin:0;font-size:1.25rem;font-weight:600;}
+  .cta-actions {display:flex;gap:.75rem;flex-wrap:wrap;}
+  .cta-actions .btn-outline {background:#fff;color:#6c2b89;font-weight:600;border:none;} 
+  .cta-actions .btn-outline:hover {background:#f5e9ff;}
+  .legend {font-size:.65rem;opacity:.65;letter-spacing:.05em;text-transform:uppercase;margin-top:-.25rem;margin-bottom:1.1rem;font-weight:600;}
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="padding:2.4rem 2.4rem 3rem;max-width:1280px;margin:0 auto;">
+  <div class="placeholder-hero">
+    <div class="hero-left">
+      <span class="hero-badge">DISCOVERY</span>
+      <h1 style="margin:.2rem 0 1rem;font-weight:700;letter-spacing:.5px;">Research Workspace</h1>
+      <p style="font-size:1.05rem;line-height:1.5;max-width:560px;">An insight engine for lifecycle analytics: unify activation behavior, promo response, churn signals and device lifecycle events into exploratory canvases you can share and version.</p>
+      <div class="legend">Vision Tracks</div>
+      <div class="roadmap">
+        <div class="roadmap-card">
+          <h4><i class="fas fa-database"></i> Data Fabric <span class="pill now">Design</span></h4>
+          <p style="font-size:.8rem;margin:0;">Semantic layer mapping source tables to analyst‑friendly entities with lineage.</p>
+        </div>
+        <div class="roadmap-card">
+          <h4><i class="fas fa-bezier-curve"></i> Exploration Canvas <span class="pill future">Planned</span></h4>
+          <p style="font-size:.8rem;margin:0;">Drag‑and‑drop measures, temporal slicing, cohort branching & quick compare.</p>
+        </div>
+        <div class="roadmap-card">
+          <h4><i class="fas fa-lightbulb"></i> Insight Library <span class="pill future">Planned</span></h4>
+          <p style="font-size:.8rem;margin:0;">Save, tag and subscribe to curated insight cards with refresh cadence.</p>
+        </div>
+        <div class="roadmap-card">
+          <h4><i class="fas fa-robot"></i> ML Assist <span class="pill future">Planned</span></h4>
+          <p style="font-size:.8rem;margin:0;">Guided anomaly surfacing, uplift drivers & recommended segmentation splits.</p>
+        </div>
+      </div>
+    </div>
+    <div class="gradient-ring" aria-hidden="true">
+      <img src="{{ url_for('static', filename='img/johnny_the_python_whisperer.jpg') }}" alt="Johnny the Python Whisperer" />
+    </div>
+    <div class="research-credit">Brought to you by Johnny the Python Whisperer</div>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:2.25rem;margin-top:1rem;">
+    <div>
+      <h3 style="font-size:1rem;font-weight:600;margin:0 0 .75rem;letter-spacing:.05em;">Discovery Milestones</h3>
+      <ul class="timeline">
+        <li><strong>Source Inventory & Profiling</strong> – latency, coverage, freshness</li>
+        <li><strong>Entity Modeling</strong> – subscriber, device, promo exposure joins</li>
+        <li><strong>Metric Canon Catalog</strong> – standardized KPI definitions</li>
+        <li><strong>Prototype Canvas</strong> – JSON spec for persisted visual queries</li>
+        <li><strong>Security & Row‑Level Policy</strong> – PII minimization & masking</li>
+      </ul>
+    </div>
+    <div class="cta-box">
+      <h3>Shape the Direction</h3>
+      <p style="margin:0;line-height:1.4;font-size:.9rem;">If you run recurring deep‑dive analyses today, we’d love to shadow your process and fold pain points into early prototypes.</p>
+      <div class="cta-actions">
+        <a class="btn btn-magenta" style="font-weight:600;" href="mailto:research-product@company.com?subject=Research Workspace Feedback">Volunteer Session</a>
+        <a class="btn btn-outline" href="{{ url_for('core.landing') }}">Return to Hub</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

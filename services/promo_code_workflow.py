@@ -127,7 +127,7 @@ class PromoCodeWorkflow:
             'description': full_row.get('description') or full_row.get('bill_facing_name') or f'Orbit {oid}',
             'bill_facing_name': full_row.get('bill_facing_name') or full_row.get('description'),
             'Owner': full_row.get('Owner') or full_row.get('owner') or 'Unassigned',
-            'promo_srart_date': full_row.get('promo_srart_date') or full_row.get('promo_start_date'),
+            'promo_start_date': full_row.get('promo_start_date') or full_row.get('promo_start_date'),
             'promo_end_date': full_row.get('promo_end_date'),
             'comm_end_date': full_row.get('comm_end_date'),
             'application_grace_period': full_row.get('application_grace_period'),

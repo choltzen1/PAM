@@ -1,0 +1,3 @@
+{% extends "pam/pam_base.html" %}
+{# Thin compatibility wrapper so legacy extends "pam/base_pam.html" continues to work after renaming to pam_base.html #}
+{% block title %}{% block super %}{% endblock %}{% endblock %}
