@@ -90,5 +90,67 @@
 .sql-preview-header { display:flex; justify-content:space-between; align-items:center; padding:.45rem .7rem; background:#fafafa; border:1px solid #ddd; border-radius:6px 6px 0 0; font-size:.8rem; font-weight:600; }
 .sql-preview-area { border:1px solid #ddd; border-top:none; border-radius:0 0 6px 6px; background:#fdfdfd; }
 
+/* === Wide Screen Expansion === */
+@media (min-width:1600px){
+	.layout-flex { max-width:100%; width:100%; }
+	.right-panel { max-width:none; width:100%; }
+	.left-panel { flex:0 0 380px; }
+	/* Ensure grids stretch gracefully */
+	.grid-form.four-col { grid-template-columns:repeat(4,minmax(220px,1fr)); }
+	.grid-form.two-col { grid-template-columns:repeat(2,minmax(300px,1fr)); }
+}
+@media (min-width:2000px){
+	.layout-flex { padding-right:2vw; padding-left:0; }
+	.right-panel { padding-right:3rem; }
+}
+
+/* DCD JIRA Form Styles */
+.dcd-jira-form { border:1px solid var(--tmobile-border); background:#fff; padding:1.5rem 1.7rem; border-radius:10px; box-shadow:0 2px 8px rgba(0,0,0,0.06); display:flex; flex-direction:column; gap:2rem; }
+.dcd-form-title { margin:0 0 .3rem; font-size:1.4rem; font-weight:700; color:var(--tmobile-magenta); }
+.dcd-form-subtitle { margin:0 0 .5rem; font-size:.9rem; color:#555; }
+.dcd-section { border-top:3px solid var(--tmobile-magenta); padding-top:1rem; display:flex; flex-direction:column; gap:1rem; }
+.dcd-section-title { font-size:1.05rem; font-weight:600; color:var(--tmobile-magenta); margin:0; }
+.dcd-field-grid { display:flex; flex-direction:column; gap:1rem; }
+.dcd-field-row, .dcd-field-row-split > .dcd-field-row, .dcd-field-row-multi > .dcd-field-row { background:#fafafa; border:1px solid #e3e3e3; padding:.75rem 1rem; border-radius:8px; display:flex; flex-direction:column; gap:.4rem; position:relative; }
+.dcd-field-row-split, .dcd-field-row-multi { display:grid; gap:1rem; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); }
+.dcd-field-label { font-weight:600; font-size:.85rem; color:#222; }
+.dcd-field-value { display:flex; flex-direction:column; gap:.45rem; }
+.auto-text { font-size:.85rem; white-space:pre-line; }
+.auto-badge, .required-badge { background:var(--tmobile-magenta); color:#fff; font-size:.65rem; padding:.25rem .45rem; border-radius:4px; font-weight:600; display:inline-block; letter-spacing:.5px; }
+.required-badge { background:#b71c1c; }
+.edit-btn { position:absolute; top:.6rem; right:.6rem; background:#fff; border:1px solid var(--tmobile-border); color:var(--tmobile-magenta); padding:.3rem .5rem; font-size:.7rem; border-radius:4px; cursor:pointer; display:flex; align-items:center; gap:.3rem; }
+.edit-btn:hover { background:#ffe3f3; }
+.edit-input.hidden { display:none; }
+.large-textarea { resize:vertical; }
+.field-help { font-size:.65rem; color:#555; display:flex; align-items:center; gap:.35rem; margin-top:.25rem; }
+.field-help i { color:var(--tmobile-magenta); }
+.dcd-actions { display:flex; gap:.8rem; flex-wrap:wrap; margin-top:.5rem; }
+.dcd-ticket-status { margin-top:.5rem; padding:.6rem .9rem; background:#f5fef8; border:1px solid #42b57b; color:#0d5f3e; border-radius:6px; font-size:.85rem; display:flex; align-items:center; gap:.5rem; }
+.dcd-ticket-status i { color:#42b57b; }
+@media (max-width:900px){
+	.dcd-field-row, .dcd-field-row-split > .dcd-field-row, .dcd-field-row-multi > .dcd-field-row { padding:.65rem .8rem; }
+	.dcd-form-title { font-size:1.25rem; }
+	.dcd-section { padding-top:.8rem; }
+}
+
+/* === Full-height page fit adjustments === */
+html, body { height:100%; }
+/* Reserve footer space so content doesn't run under it */
+.wide-container, .container { min-height:calc(100vh - 55px - 60px); /* header + footer reserve */ display:flex; flex-direction:column; padding-bottom:2.5rem; }
+.layout-flex { flex:1 1 auto; display:flex; }
+.left-panel, .right-panel { height:auto; min-height:100%; }
+/* ensure right panel content stretches while maintaining internal scrolling where needed */
+.right-panel { display:flex; flex-direction:column; }
+.right-panel > form { flex:1 1 auto; display:flex; flex-direction:column; }
+.right-panel .tabs { flex:0 0 auto; }
+.right-panel form > *:last-child { margin-top:auto; }
+@media (min-width:1200px){
+	.wide-container, .container { min-height:calc(100vh - 60px - 70px); }
+}
+
+/* Reverted: removed compact mode & custom ordering; using standard vertical stacking */
+
+
+
 
 

@@ -367,8 +367,391 @@
             </div>
             <div class="save-footer"><button type="submit" class="btn btn-primary">Save BPTCR</button></div>
           {% elif active_tab == 'DCD JIRA' %}
-            
-            <div class="dcd-jira-form"><h3 class="dcd-form-title">DCD JIRA Ticket Configuration</h3><p class="dcd-form-subtitle">Configure comprehensive DCD approval ticket with auto-populated data</p><!-- retaining original content omitted for brevity --></div>
+            <!-- DCD JIRA Ticket Configuration -->
+            <div class="dcd-jira-form">
+              <h3 class="dcd-form-title">DCD JIRA Ticket Configuration</h3>
+              <p class="dcd-form-subtitle">Configure comprehensive DCD approval ticket with auto-populated promotion data</p>
+              <div class="dcd-section">
+                <h4 class="dcd-section-title">Header Information</h4>
+                <div class="dcd-field-grid">
+                  <div class="dcd-field-row auto-filled">
+                    <label class="dcd-field-label">Initiative Name:</label>
+                    <div class="dcd-field-value">
+                      <span class="auto-text">{{ promo.initiative_name or promo.bill_facing_name or 'Auto-filled from promotion data' }}</span>
+                      <span class="auto-badge">Auto</span>
+                      <button type="button" class="edit-btn" onclick="toggleEditField(this)"><i class="fas fa-edit"></i></button>
+                      <input type="text" class="edit-input hidden" name="dcd_initiative_name" value="{{ promo.initiative_name or promo.bill_facing_name or '' }}">
+                    </div>
+                  </div>
+                  <div class="dcd-field-row auto-filled">
+                    <label class="dcd-field-label">Point of contact for review/validating in PRW/PROD:</label>
+                    <div class="dcd-field-value">
+                      <span class="auto-text">{{ promo.owner or 'Auto-filled from promo owner' }}</span>
+                      <span class="auto-badge">Auto</span>
+                      <button type="button" class="edit-btn" onclick="toggleEditField(this)"><i class="fas fa-edit"></i></button>
+                      <input type="text" class="edit-input hidden" name="dcd_point_of_contact" value="{{ promo.owner or '' }}">
+                    </div>
+                  </div>
+                  <div class="dcd-field-row manual-entry">
+                    <label class="dcd-field-label">GTM Point of contact for review/validating in PRW/PROD:</label>
+                    <div class="dcd-field-value">
+                      <input type="text" class="form-control" name="dcd_gtm_contact" placeholder="Enter GTM contact email">
+                      <span class="required-badge">Required</span>
+                    </div>
+                  </div>
+                  <div class="dcd-field-row-split">
+                    <div class="dcd-field-row auto-filled">
+                      <label class="dcd-field-label">LOB:</label>
+                      <div class="dcd-field-value">
+                        {% set auto_lob = promo.cat_lobchannelhorizontalname or 'TMO Postpaid' %}
+                        <span class="auto-text">{{ auto_lob }}</span>
+                        <span class="auto-badge">Auto</span>
+                        <button type="button" class="edit-btn" onclick="toggleEditField(this)"><i class="fas fa-edit"></i></button>
+                        <select class="form-control edit-input hidden" name="dcd_lob">
+                          <option value="TMO Postpaid" {% if auto_lob == 'TMO Postpaid' %}selected{% endif %}>TMO Postpaid</option>
+                          <option value="TMO Prepaid" {% if auto_lob == 'TMO Prepaid' %}selected{% endif %}>TMO Prepaid</option>
+                          <option value="Business" {% if auto_lob == 'Business' %}selected{% endif %}>Business</option>
+                          <option value="{{ auto_lob }}" {% if auto_lob not in ['TMO Postpaid','TMO Prepaid','Business'] %}selected{% endif %}>{{ auto_lob }}</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="dcd-field-row auto-filled">
+                      <label class="dcd-field-label">Promo Type:</label>
+                      <div class="dcd-field-value">
+                        {% set auto_promo_type = 'BOGO' if promo.bogo == 'Y' else ('Trade In (Multi-Tier)' if promo.trade_tier_2_make_model else ('Trade In (Single-Tier)' if promo.trade_tier_1_make_model else 'Device Discount')) %}
+                        <span class="auto-text">{{ auto_promo_type }}</span>
+                        <span class="auto-badge">Auto</span>
+                        <button type="button" class="edit-btn" onclick="toggleEditField(this)"><i class="fas fa-edit"></i></button>
+                        <select class="form-control edit-input hidden" name="dcd_promo_type">
+                          <option value="Trade In (Multi-Tier)" {% if auto_promo_type == 'Trade In (Multi-Tier)' %}selected{% endif %}>Trade In (Multi-Tier)</option>
+                          <option value="Trade In (Single-Tier)" {% if auto_promo_type == 'Trade In (Single-Tier)' %}selected{% endif %}>Trade In (Single-Tier)</option>
+                          <option value="Device Discount" {% if auto_promo_type == 'Device Discount' %}selected{% endif %}>Device Discount</option>
+                          <option value="BOGO" {% if auto_promo_type == 'BOGO' %}selected{% endif %}>BOGO</option>
+                          <option value="Other">Other</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="dcd-section">
+                <h4 class="dcd-section-title">Business Details</h4>
+                <div class="dcd-field-grid">
+                  <div class="dcd-field-row auto-filled">
+                    <label class="dcd-field-label">Expected Business Behavior:</label>
+                    <div class="dcd-field-value">
+                      {% set auto_business_behavior = (promo.description + '\n\n' + promo.promo_notes) if promo.description and promo.promo_notes else (promo.description or promo.promo_notes or '') %}
+                      <span class="auto-text">{{ auto_business_behavior or 'Describe expected business behavior...' }}</span>
+                      <span class="auto-badge">Auto</span>
+                      <button type="button" class="edit-btn" onclick="toggleEditField(this)"><i class="fas fa-edit"></i></button>
+                      <textarea class="form-control large-textarea edit-input hidden" name="dcd_business_behavior" rows="4" placeholder="Describe the expected business behavior, customer experience, and promotional details...">{{ auto_business_behavior }}</textarea>
+                    </div>
+                  </div>
+                  <div class="dcd-field-row-split">
+                    <div class="dcd-field-row auto-filled">
+                      <label class="dcd-field-label">Max Payout:</label>
+                      <div class="dcd-field-value">
+                        {% set auto_max_payout = '$' + (promo.amount|string) if promo.amount else ('Discount: ' + (promo.discount|string) + '%' if promo.discount else 'TBD') %}
+                        <span class="auto-text">{{ auto_max_payout }}</span>
+                        <span class="auto-badge">Auto</span>
+                        <button type="button" class="edit-btn" onclick="toggleEditField(this)"><i class="fas fa-edit"></i></button>
+                        <input type="text" class="edit-input hidden" name="dcd_max_payout" value="{{ auto_max_payout }}">
+                      </div>
+                    </div>
+                    <div class="dcd-field-row auto-filled">
+                      <label class="dcd-field-label">SOC Group:</label>
+                      <div class="dcd-field-value">
+                        <span class="auto-text">{{ promo.soc_grouping or 'G69' }}</span>
+                        <span class="auto-badge">Auto</span>
+                        <button type="button" class="edit-btn" onclick="toggleEditField(this)"><i class="fas fa-edit"></i></button>
+                        <input type="text" class="edit-input hidden" name="dcd_soc_group" value="{{ promo.soc_grouping }}">
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="dcd-section">
+                <h4 class="dcd-section-title">Promotion Configuration Details</h4>
+                <div class="dcd-field-grid">
+                  <div class="dcd-field-row-split">
+                    <div class="dcd-field-row auto-filled">
+                      <label class="dcd-field-label">Promotion start date, time:</label>
+                      <div class="dcd-field-value">
+                        <span class="auto-text">{{ promo.promo_start_date or 'Auto-filled from promo data' }}</span>
+                        <span class="auto-badge">Auto</span>
+                        <button type="button" class="edit-btn" onclick="toggleEditField(this)"><i class="fas fa-edit"></i></button>
+                        <input type="date" class="edit-input hidden" name="dcd_start_date" value="{{ promo.promo_start_date or '' }}">
+                      </div>
+                    </div>
+                    <div class="dcd-field-row auto-filled">
+                      <label class="dcd-field-label">Promotion end date, time:</label>
+                      <div class="dcd-field-value">
+                        <span class="auto-text">{{ promo.promo_end_date or 'Auto-filled from promo data' }}</span>
+                        <span class="auto-badge">Auto</span>
+                        <button type="button" class="edit-btn" onclick="toggleEditField(this)"><i class="fas fa-edit"></i></button>
+                        <input type="date" class="edit-input hidden" name="dcd_end_date" value="{{ promo.promo_end_date or '' }}">
+                      </div>
+                    </div>
+                  </div>
+                  <div class="dcd-field-row-split">
+                    <div class="dcd-field-row auto-filled">
+                      <label class="dcd-field-label">Promo ID:</label>
+                      <div class="dcd-field-value">
+                        <span class="auto-text">Orbit {{ promo.orbit_id or 'TBD' }}</span>
+                        <span class="auto-badge">Auto</span>
+                        <button type="button" class="edit-btn" onclick="toggleEditField(this)"><i class="fas fa-edit"></i></button>
+                        <input type="text" class="edit-input hidden" name="dcd_promo_id" value="Orbit {{ promo.orbit_id or '' }}">
+                      </div>
+                    </div>
+                    <div class="dcd-field-row auto-filled">
+                      <label class="dcd-field-label">Promo Group ID:</label>
+                      <div class="dcd-field-value">
+                        <span class="auto-text">{{ promo.trade_in_group_id or promo.code or 'Auto-filled from promo data' }}</span>
+                        <span class="auto-badge">Auto</span>
+                        <button type="button" class="edit-btn" onclick="toggleEditField(this)"><i class="fas fa-edit"></i></button>
+                        <input type="text" class="edit-input hidden" name="dcd_promo_group_id" value="{{ promo.trade_in_group_id or promo.code or '' }}">
+                      </div>
+                    </div>
+                  </div>
+                  <div class="dcd-field-row auto-filled">
+                    <label class="dcd-field-label">Promotion Customer-Facing Name:</label>
+                    <div class="dcd-field-value">
+                      <span class="auto-text">{{ promo.bill_facing_name or 'Auto-filled from bill facing name' }}</span>
+                      <span class="auto-badge">Auto</span>
+                      <button type="button" class="edit-btn" onclick="toggleEditField(this)"><i class="fas fa-edit"></i></button>
+                      <input type="text" class="edit-input hidden" name="dcd_customer_facing_name" value="{{ promo.bill_facing_name or '' }}">
+                    </div>
+                  </div>
+                  <div class="dcd-field-row auto-filled">
+                    <label class="dcd-field-label">DCP Application Channels:</label>
+                    <div class="dcd-field-value">
+                      {% set auto_channels = 'MyTMO/TLife App, TMO.com' if promo.dcd_web_cart == 'Y' else 'Retail, Care' %}
+                      <span class="auto-text">{{ auto_channels }}</span>
+                      <span class="auto-badge">Auto</span>
+                      <button type="button" class="edit-btn" onclick="toggleEditField(this)"><i class="fas fa-edit"></i></button>
+                      <input type="text" class="edit-input hidden" name="dcd_channels" value="{{ auto_channels }}">
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="dcd-section">
+                <h4 class="dcd-section-title">Device Lists</h4>
+                <div class="dcd-field-grid">
+                  <div class="dcd-field-row {% if promo.cat_eligibledevices %}auto-filled{% else %}manual-entry{% endif %}">
+                    <label class="dcd-field-label">Purchase Devices:</label>
+                    <div class="dcd-field-value">
+                      {% if promo.cat_eligibledevices %}
+                      <span class="auto-text pre-line">{{ promo.cat_eligibledevices|e }}</span>
+                      <span class="auto-badge">Auto</span>
+                      <button type="button" class="edit-btn" onclick="toggleEditField(this)"><i class="fas fa-edit"></i></button>
+                      <textarea class="edit-input hidden form-control large-textarea" name="dcd_purchase_devices" rows="6">{{ promo.cat_eligibledevices|e }}</textarea>
+                      {% else %}
+                      <textarea class="form-control large-textarea" name="dcd_purchase_devices" rows="6" placeholder="List all eligible purchase devices with colors and memory variants..."></textarea>
+                      {% endif %}
+                      <div class="field-help"><i class="fas fa-info-circle"></i> Include all colors and memory variants for each device model</div>
+                    </div>
+                  </div>
+                  <div class="dcd-field-row {% if promo.crffc_eligibletradeindevices %}auto-filled{% else %}manual-entry{% endif %}">
+                    <label class="dcd-field-label">Trade-in devices:</label>
+                    <div class="dcd-field-value">
+                      {% if promo.crffc_eligibletradeindevices %}
+                      <span class="auto-text pre-line">{{ promo.crffc_eligibletradeindevices|e }}</span>
+                      <span class="auto-badge">Auto</span>
+                      <button type="button" class="edit-btn" onclick="toggleEditField(this)"><i class="fas fa-edit"></i></button>
+                      <textarea class="edit-input hidden form-control large-textarea" name="dcd_tradein_devices" rows="8">{{ promo.crffc_eligibletradeindevices|e }}</textarea>
+                      {% else %}
+                      <textarea class="form-control large-textarea" name="dcd_tradein_devices" rows="8" placeholder="Organize by payout tiers (e.g., $500, $250) and list eligible trade-in devices..."></textarea>
+                      {% endif %}
+                      <div class="field-help"><i class="fas fa-info-circle"></i> Organize by payout amount and include all eligible trade-in device models</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="dcd-section">
+                <h4 class="dcd-section-title">Additional Configuration</h4>
+                <div class="dcd-field-grid">
+                  <div class="dcd-field-row-multi">
+                    <div class="dcd-field-row auto-filled">
+                      <label class="dcd-field-label">Account type/sub-type conditions:</label>
+                      <div class="dcd-field-value">
+                        <span class="auto-text">{{ promo.account_type or 'A13 - Individual, Business & Special Consumers' }}</span>
+                        <span class="auto-badge">Auto</span>
+                        <button type="button" class="edit-btn" onclick="toggleEditField(this)"><i class="fas fa-edit"></i></button>
+                        <input type="text" class="edit-input hidden" name="dcd_account_types" value="{{ promo.account_type or 'A13 - Individual, Business & Special Consumers' }}">
+                      </div>
+                    </div>
+                    <div class="dcd-field-row auto-filled">
+                      <label class="dcd-field-label">Transaction types:</label>
+                      <div class="dcd-field-value">
+                        {% set auto_transaction_types = 'New, AAL & Upgrades' if promo.product_type in ['Device','Upgrade'] else 'New & AAL' %}
+                        <span class="auto-text">{{ auto_transaction_types }}</span>
+                        <span class="auto-badge">Auto</span>
+                        <button type="button" class="edit-btn" onclick="toggleEditField(this)"><i class="fas fa-edit"></i></button>
+                        <input type="text" class="edit-input hidden" name="dcd_transaction_types" value="{{ auto_transaction_types }}">
+                      </div>
+                    </div>
+                    <div class="dcd-field-row auto-filled">
+                      <label class="dcd-field-label">Redemption/BAN Limit:</label>
+                      <div class="dcd-field-value">
+                        <span class="auto-text">{{ promo.limit_per_ban or '4' }}</span>
+                        <span class="auto-badge">Auto</span>
+                        <button type="button" class="edit-btn" onclick="toggleEditField(this)"><i class="fas fa-edit"></i></button>
+                        <input type="text" class="edit-input hidden" name="dcd_ban_limit" value="{{ promo.limit_per_ban or '4' }}">
+                      </div>
+                    </div>
+                  </div>
+                  <div class="dcd-field-row-multi">
+                    <div class="dcd-field-row auto-filled">
+                      <label class="dcd-field-label">100% RDC for Activations (Web only):</label>
+                      <div class="dcd-field-value">
+                        <span class="auto-text">N/A</span>
+                        <span class="auto-badge">Auto</span>
+                        <button type="button" class="edit-btn" onclick="toggleEditField(this)"><i class="fas fa-edit"></i></button>
+                        <select class="form-control edit-input hidden" name="dcd_rdc_activations">
+                          <option value="N/A" selected>N/A</option>
+                          <option value="True">True</option>
+                          <option value="False">False</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="dcd-field-row manual-entry">
+                      <label class="dcd-field-label">100% RDC for AAL (Web only):</label>
+                      <div class="dcd-field-value">
+                        <select class="form-control" name="dcd_rdc_aal">
+                          <option value="True">True</option>
+                          <option value="False">False</option>
+                          <option value="N/A">N/A</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="dcd-field-row manual-entry">
+                      <label class="dcd-field-label">100% RDC Upgrades (Web only):</label>
+                      <div class="dcd-field-value">
+                        <select class="form-control" name="dcd_rdc_upgrades">
+                          <option value="True">True</option>
+                          <option value="False">False</option>
+                          <option value="N/A">N/A</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="dcd-field-row-multi">
+                    <div class="dcd-field-row auto-filled">
+                      <label class="dcd-field-label">Broken Trade:</label>
+                      <div class="dcd-field-value">
+                        <span class="auto-text">{{ 'Yes' if promo.broken_trade == 'Y' else 'No' }}</span>
+                        <span class="auto-badge">Auto</span>
+                        <button type="button" class="edit-btn" onclick="toggleEditField(this)"><i class="fas fa-edit"></i></button>
+                        <select class="form-control edit-input hidden" name="dcd_broken_trade">
+                          <option value="No" {% if promo.broken_trade != 'Y' %}selected{% endif %}>No</option>
+                          <option value="Yes" {% if promo.broken_trade == 'Y' %}selected{% endif %}>Yes</option>
+                          <option value="N/A">N/A</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="dcd-field-row auto-filled">
+                      <label class="dcd-field-label">Rebate Details / Promo Code:</label>
+                      <div class="dcd-field-value">
+                        <span class="auto-text">N/A</span>
+                        <span class="auto-badge">Auto</span>
+                        <button type="button" class="edit-btn" onclick="toggleEditField(this)"><i class="fas fa-edit"></i></button>
+                        <input type="text" class="form-control edit-input hidden" name="dcd_rebate_details" value="N/A">
+                      </div>
+                    </div>
+                    <div class="dcd-field-row auto-filled">
+                      <label class="dcd-field-label">Handset Line Condition:</label>
+                      <div class="dcd-field-value">
+                        <span class="auto-text">False</span>
+                        <span class="auto-badge">Auto</span>
+                        <button type="button" class="edit-btn" onclick="toggleEditField(this)"><i class="fas fa-edit"></i></button>
+                        <select class="form-control edit-input hidden" name="dcd_handset_line_condition">
+                          <option value="False" selected>False</option>
+                          <option value="True">True</option>
+                          <option value="N/A">N/A</option>
+                        </select>
+                      </div>
+                      <div class="field-help"><i class="fas fa-info-circle"></i> True if watch promo</div>
+                    </div>
+                  </div>
+                  <div class="dcd-field-row-multi">
+                    <div class="dcd-field-row auto-filled">
+                      <label class="dcd-field-label">Segment Name:</label>
+                      <div class="dcd-field-value">
+                        <span class="auto-text">{{ promo.segment_name or 'N/A' }}</span>
+                        <span class="auto-badge">Auto</span>
+                        <button type="button" class="edit-btn" onclick="toggleEditField(this)"><i class="fas fa-edit"></i></button>
+                        <input type="text" class="edit-input hidden" name="dcd_segment_name" value="{{ promo.segment_name or 'N/A' }}">
+                      </div>
+                    </div>
+                    <div class="dcd-field-row auto-filled">
+                      <label class="dcd-field-label">Segment Level:</label>
+                      <div class="dcd-field-value">
+                        <span class="auto-text">{{ promo.segment_level or 'N/A' }}</span>
+                        <span class="auto-badge">Auto</span>
+                        <button type="button" class="edit-btn" onclick="toggleEditField(this)"><i class="fas fa-edit"></i></button>
+                        <input type="text" class="edit-input hidden" name="dcd_segment_level" value="{{ promo.segment_level or 'N/A' }}">
+                      </div>
+                    </div>
+                    <div class="dcd-field-row auto-filled">
+                      <label class="dcd-field-label">Port-In:</label>
+                      <div class="dcd-field-value">
+                        <span class="auto-text">{{ promo.port_in_group_id or 'N/A' }}</span>
+                        <span class="auto-badge">Auto</span>
+                        <button type="button" class="edit-btn" onclick="toggleEditField(this)"><i class="fas fa-edit"></i></button>
+                        <input type="text" class="edit-input hidden" name="dcd_port_in" value="{{ promo.port_in_group_id or 'N/A' }}">
+                      </div>
+                    </div>
+                  </div>
+                  <div class="dcd-field-row-multi">
+                    <div class="dcd-field-row manual-entry">
+                      <label class="dcd-field-label">Stackable:</label>
+                      <div class="dcd-field-value">
+                        <select class="form-control" name="dcd_stackable"><option value="N/A">N/A</option><option value="Yes">Yes</option><option value="No">No</option></select>
+                      </div>
+                    </div>
+                    <div class="dcd-field-row manual-entry">
+                      <label class="dcd-field-label">YU1:</label>
+                      <div class="dcd-field-value">
+                        <select class="form-control" name="dcd_yu1"><option value="True">True</option><option value="False">False</option><option value="N/A">N/A</option></select>
+                      </div>
+                    </div>
+                    <div class="dcd-field-row manual-entry">
+                      <label class="dcd-field-label">Promo Subtype:</label>
+                      <div class="dcd-field-value">
+                        <select class="form-control" name="dcd_promo_subtype"><option value="Trade-in and Recurring">Trade-in and Recurring</option><option value="Trade-in">Trade-in</option><option value="Recurring">Recurring</option><option value="N/A">N/A</option></select>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="dcd-field-row-multi">
+                    <div class="dcd-field-row manual-entry">
+                      <label class="dcd-field-label">Trade-in Intent:</label>
+                      <div class="dcd-field-value">
+                        <select class="form-control" name="dcd_trade_intent"><option value="YU1">YU1</option><option value="Standard">Standard</option><option value="N/A">N/A</option></select>
+                      </div>
+                    </div>
+                    <div class="dcd-field-row manual-entry">
+                      <label class="dcd-field-label">Reward Disposition:</label>
+                      <div class="dcd-field-value">
+                        <select class="form-control" name="dcd_reward_disposition"><option value="ZERO_FMV">ZERO_FMV</option><option value="ACTUAL_FMV">ACTUAL_FMV</option><option value="N/A">N/A</option></select>
+                      </div>
+                    </div>
+                    <div class="dcd-field-row manual-entry">
+                      <label class="dcd-field-label">SOC/Rate Plan Requirement:</label>
+                      <div class="dcd-field-value">
+                        <input type="text" class="form-control" name="dcd_rate_plan_requirement" placeholder="e.g., W7">
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="dcd-actions">
+                <button type="button" class="btn btn-secondary" onclick="previewDcdTemplate()"><i class="fas fa-eye"></i> Preview Template</button>
+                <button type="button" class="btn btn-primary" onclick="createDcdJiraTicket()"><i class="fas fa-ticket-alt"></i> Create DCD JIRA Ticket</button>
+              </div>
+              {% if promo.dcd_jira_ticket %}
+              <div class="dcd-ticket-status"><i class="fas fa-check-circle"></i> <strong>DCD JIRA Ticket Created:</strong> <a href="https://t-mobile.atlassian.net/browse/{{ promo.dcd_jira_ticket }}" target="_blank">{{ promo.dcd_jira_ticket }}</a></div>
+              {% endif %}
+            </div>
           {% elif active_tab == 'Notes' %}
             <div class="grid-form two-col"><div class="col-span-2"><label class="section-label">Notes</label><textarea class="form-control" name="promo_notes" rows="15">{{ promo.promo_notes or '' }}</textarea><small class="form-text text-muted">Add any additional notes, observations, or documentation.</small></div></div>
             <div class="save-footer"><button type="submit" class="btn btn-primary">Save Notes</button></div>
@@ -429,5 +812,50 @@ function deleteUploadedFile(type,code){if(!confirm('Delete file?'))return;fetch(
 function clearTradeData(){fetch(`/clear_trade_data/${'{{ promo.code }}'}`,{method:'POST',headers:{'Content-Type':'application/json'}}).then(r=>r.json()).then(d=>{if(d.success)location.reload();else alert('Error clearing trade data');});}
 function clearTiersData(){fetch(`/clear_tiers_data/${'{{ promo.code }}'}`,{method:'POST',headers:{'Content-Type':'application/json'}}).then(r=>r.json()).then(d=>{if(d.success)location.reload();else alert('Error clearing tiers data');});}
 function clearSegmentData(){fetch(`/clear_segment_data/${'{{ promo.code }}'}`,{method:'POST',headers:{'Content-Type':'application/json'}}).then(r=>r.json()).then(d=>{if(d.success)location.reload();else alert('Error clearing segment data');});}
+// Generic inline edit toggle for DCD JIRA auto-filled fields
+function toggleEditField(btn){
+  // limit scope to dcd jira form
+  const row = btn.closest('.dcd-field-row');
+  if(!row) return;
+  const valueContainer = row.querySelector('.dcd-field-value');
+  if(!valueContainer) return;
+  const autoText = valueContainer.querySelector('.auto-text');
+  const editInput = valueContainer.querySelector('.edit-input');
+  if(!editInput) return;
+  const isHidden = editInput.classList.contains('hidden');
+  if(isHidden){
+    // Enter edit mode
+    editInput.classList.remove('hidden');
+    if(autoText) autoText.style.display='none';
+    row.classList.add('editing');
+    btn.innerHTML='<i class="fas fa-check"></i>';
+    btn.title='Apply';
+    // Focus input
+    setTimeout(()=>{editInput.focus();},0);
+  } else {
+    // Apply changes and exit edit mode
+    let newVal='';
+    if(editInput.tagName==='TEXTAREA' || editInput.tagName==='INPUT'){
+      newVal = editInput.value.trim();
+    } else if(editInput.tagName==='SELECT'){
+      newVal = editInput.options[editInput.selectedIndex]?.text || editInput.value;
+    }
+    if(autoText){
+      autoText.textContent = newVal || (autoText.textContent || '');
+      autoText.style.display='';
+    }
+    editInput.classList.add('hidden');
+    row.classList.remove('editing');
+    btn.innerHTML='<i class="fas fa-edit"></i>';
+    btn.title='Edit';
+  }
+}
+// DCD JIRA collapsible sections (only runs if DCD form present)
+document.addEventListener('DOMContentLoaded',()=>{
+  // Basic init for DCD JIRA form (no collapsing now)
+  const dcdForm=document.querySelector('.dcd-jira-form');
+  if(!dcdForm) return;
+  // Future enhancements could go here (validation, auto-save, etc.)
+});
 </script>
 {% endblock %}
