@@ -20,10 +20,20 @@
         <div class="icon-circle"><i class="bi {{ t.icon }}"></i></div>
         <div class="tile-label">{{ t.label }}</div>
         {% if t.sub %}<div class="tile-sub">{{ t.sub }}</div>{% endif %}
+        {% if t.desc %}
+          <div class="tile-desc">{{ t.desc }}</div>
+        {% else %}
+          {% if t.label == 'PAM' %}
+            <div class="tile-desc">Promotion Automation Manager — generate, manage, and track promotional codes, workflows, and lifecycle history.</div>
+          {% elif t.label == 'Offers' %}
+            <div class="tile-desc">Workspace in development for constructing offer bundles, incentive structures, and cross-channel packaging.</div>
+          {% elif t.label == 'Research' %}
+            <div class="tile-desc">Upcoming hub for performance analytics, experimentation results, and exploratory promo insights.</div>
+          {% endif %}
+        {% endif %}
       </a>
     {% endfor %}
   </div>
-  <div class="landing-footer-aux">&copy; 2025 T-Mobile Internal</div>
 </div>
 {% endblock %}
 {% block extra_js %}
