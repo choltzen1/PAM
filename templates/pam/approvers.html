@@ -67,22 +67,19 @@
             </td>
             <td class="promo-owner">{{ owners[loop.index0] if loop.index0 < owners|length else 'N/A' }}</td>
             <td class="device-finance-cell">
-              <div class="dropdown-container">
-                <select class="form-select device-finance-select" data-promo="{{ promo_code }}">
-                  <option value="">Select Device Finance Approver</option>
-                  <option value="placeholder">Device Finance Approver 1</option>
-                  <option value="placeholder2">Device Finance Approver 2</option>
-                </select>
+              <div class="checkbox-container">
+                <label class="checkbox-label">
+                  <input type="checkbox" class="device-finance-checkbox" data-promo="{{ promo_code }}">
+                  <span>Send to Device Finance</span>
+                </label>
               </div>
             </td>
             <td class="revenue-accounting-cell">
-              <div class="dropdown-container">
-                <select class="form-select revenue-accounting-select" data-promo="{{ promo_code }}">
-                  <option value="">Select Revenue Accounting Approver</option>
-                  {% for approver in revenue_approvers %}
-                  <option value="{{ approver.email }}" data-name="{{ approver.name }}">{{ approver.name }}</option>
-                  {% endfor %}
-                </select>
+              <div class="checkbox-container">
+                <label class="checkbox-label">
+                  <input type="checkbox" class="revenue-accounting-checkbox" data-promo="{{ promo_code }}">
+                  <span>Send to Revenue Accounting</span>
+                </label>
               </div>
             </td>
             <td class="actions">
@@ -121,41 +118,77 @@ function refreshData() {
 
 function sendApprovalRequest(promoCode) {
   const row = document.querySelector(`tr[data-promo-code="${promoCode}"]`);
-  const deviceFinanceSelect = row.querySelector('.device-finance-select');
-  const revenueAccountingSelect = row.querySelector('.revenue-accounting-select');
+  const deviceFinanceCheckbox = row.querySelector('.device-finance-checkbox');
+  const revenueAccountingCheckbox = row.querySelector('.revenue-accounting-checkbox');
   
-  const deviceFinanceApprover = deviceFinanceSelect.value;
-  const revenueAccountingApprover = revenueAccountingSelect.value;
-  const revenueAccountingName = revenueAccountingSelect.selectedOptions[0]?.dataset.name;
+  const sendToDeviceFinance = deviceFinanceCheckbox.checked;
+  const sendToRevenueAccounting = revenueAccountingCheckbox.checked;
   
-  if (!deviceFinanceApprover && !revenueAccountingApprover) {
-    alert('Please select at least one approver before sending the request.');
+  if (!sendToDeviceFinance && !sendToRevenueAccounting) {
+    alert('Please select at least one department to send the approval request to.');
     return;
   }
   
   let message = `Send approval request for ${promoCode}?\n\n`;
   
-  if (deviceFinanceApprover) {
-    message += `Device Finance: ${deviceFinanceApprover}\n`;
+  if (sendToDeviceFinance) {
+    message += `✓ Device Finance\n`;
   }
   
-  if (revenueAccountingApprover) {
-    message += `Revenue Accounting: ${revenueAccountingName} (${revenueAccountingApprover})\n`;
+  if (sendToRevenueAccounting) {
+    message += `✓ Revenue Accounting\n`;
   }
   
   if (confirm(message)) {
-    // TODO: Implement actual email sending functionality
-    alert(`Approval request sent for ${promoCode}!\n\nThis will be integrated with email functionality.`);
-    
-    // Optionally disable the send button temporarily
+    // Disable the send button temporarily
     const sendBtn = row.querySelector('.send-btn');
     sendBtn.disabled = true;
-    sendBtn.innerHTML = '<i class="fas fa-check"></i> Sent';
+    sendBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
     
-    setTimeout(() => {
+    // Send the approval email
+    fetch('{{ url_for("promo.send_approval_email") }}', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        promo_code: promoCode,
+        device_finance: sendToDeviceFinance,
+        revenue_accounting: sendToRevenueAccounting
+      })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        alert(`✓ Approval request sent for ${promoCode}!\n\n${data.message}`);
+        
+        // Update button to show success
+        sendBtn.innerHTML = '<i class="fas fa-check"></i> Sent';
+        
+        // Reset after 3 seconds
+        setTimeout(() => {
+          sendBtn.disabled = false;
+          sendBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Send';
+          // Uncheck the checkboxes
+          deviceFinanceCheckbox.checked = false;
+          revenueAccountingCheckbox.checked = false;
+          // Disable send button again
+          sendBtn.disabled = true;
+          sendBtn.classList.remove('btn-primary');
+          sendBtn.classList.add('btn-secondary');
+        }, 3000);
+      } else {
+        alert(`✗ Failed to send approval request:\n\n${data.message}`);
+        sendBtn.disabled = false;
+        sendBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Send';
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      alert(`✗ Error sending approval request:\n\n${error.message}`);
       sendBtn.disabled = false;
       sendBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Send';
-    }, 3000);
+    });
   }
 }
 
@@ -199,16 +232,16 @@ document.getElementById('promo-search').addEventListener('input', function() {
   });
 });
 
-// Auto-enable send button when approvers are selected
+// Auto-enable send button when checkboxes are selected
 document.addEventListener('change', function(e) {
-  if (e.target.classList.contains('device-finance-select') || e.target.classList.contains('revenue-accounting-select')) {
+  if (e.target.classList.contains('device-finance-checkbox') || e.target.classList.contains('revenue-accounting-checkbox')) {
     const row = e.target.closest('tr');
     const sendBtn = row.querySelector('.send-btn');
-    const deviceFinanceSelect = row.querySelector('.device-finance-select');
-    const revenueAccountingSelect = row.querySelector('.revenue-accounting-select');
+    const deviceFinanceCheckbox = row.querySelector('.device-finance-checkbox');
+    const revenueAccountingCheckbox = row.querySelector('.revenue-accounting-checkbox');
     
-    // Enable send button if at least one approver is selected
-    const hasSelection = deviceFinanceSelect.value || revenueAccountingSelect.value;
+    // Enable send button if at least one checkbox is checked
+    const hasSelection = deviceFinanceCheckbox.checked || revenueAccountingCheckbox.checked;
     sendBtn.disabled = !hasSelection;
     
     if (hasSelection) {

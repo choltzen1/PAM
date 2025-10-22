@@ -685,6 +685,110 @@ def approvers_page():
         flash(f'Error loading approvers data: {e}', 'error')
         return render_template('pam/approvers.html', promo_codes=[], owners=[], unique_owners=[], revenue_approvers=[], target_promo_code='')
 
+@promo_bp.route('/send-approval-email', methods=['POST'], endpoint='send_approval_email')
+def send_approval_email():
+    """Send approval email via Database Mail with promo details"""
+    from services.mail_service import MailService
+    
+    try:
+        dm = _ensure_data_manager()
+        data = request.get_json()
+        promo_code = data.get('promo_code', '').upper()
+        send_to_device_finance = data.get('device_finance', False)
+        send_to_revenue_accounting = data.get('revenue_accounting', False)
+        
+        if not promo_code:
+            return jsonify({'success': False, 'message': 'Promo code is required'}), 400
+        
+        if not send_to_device_finance and not send_to_revenue_accounting:
+            return jsonify({'success': False, 'message': 'At least one recipient is required'}), 400
+        
+        # Fetch promo details from database
+        promo_data = dm.get_promo(promo_code)
+        if not promo_data:
+            # Try SPE or rebates
+            from data.storage import PromoDataManager as JSONManager
+            json_manager = JSONManager()
+            spe_data = json_manager.get_all_spe_promos()
+            promo_data = spe_data.get(promo_code)
+            if not promo_data:
+                rebates_data = json_manager.get_all_rebates()
+                promo_data = rebates_data.get(promo_code)
+        
+        if not promo_data:
+            return jsonify({'success': False, 'message': f'Promo code {promo_code} not found'}), 404
+        
+        # Extract promo details
+        bill_facing_name = promo_data.get('bill_facing_name', 'Unknown')
+        version_number = promo_data.get('version_number', promo_data.get('version', '1'))
+        
+        # Calculate deadline: promo end date - 1 day at 11:59 EST
+        from datetime import datetime, timedelta
+        promo_end_date_str = promo_data.get('promo_end_date', promo_data.get('end_date'))
+        deadline = 'the specified deadline'
+        
+        if promo_end_date_str:
+            try:
+                # Parse the date - handle various date formats
+                promo_end = None
+                if isinstance(promo_end_date_str, str):
+                    # Try common date formats
+                    for date_format in ['%m/%d/%Y', '%Y-%m-%d', '%d/%m/%Y']:
+                        try:
+                            promo_end = datetime.strptime(promo_end_date_str, date_format)
+                            break
+                        except ValueError:
+                            continue
+                else:
+                    promo_end = promo_end_date_str
+                
+                # Calculate deadline: end date - 1 day at 11:59 EST
+                if promo_end:
+                    deadline_date = promo_end - timedelta(days=1)
+                    deadline = deadline_date.strftime('%m/%d/%Y') + ' 11:59 EST'
+            except Exception:
+                deadline = 'the specified deadline'
+        
+        # Build PAM reviewers page URL for the promo
+        pam_url = f"{request.host_url.rstrip('/')}{url_for('promo.reviewers_with_code', promo_code=promo_code)}"
+        
+        # Get desired_execution from promo data (RDC, SPE, or Rebate)
+        promo_desired_execution = promo_data.get('Desired_Execution', 'Unknown')
+        
+        # Determine which departments are selected for email body context
+        departments = []
+        if send_to_device_finance:
+            departments.append('Device Finance')
+        if send_to_revenue_accounting:
+            departments.append('Revenue Accounting')
+        departments_str = ' & '.join(departments)
+        
+        # Format subject line with promo's desired_execution type
+        subject = f'{promo_desired_execution} Approval request - {promo_code} - {bill_facing_name} - Version #{version_number}'
+        
+        # Format body email with PAM link and calculated deadline
+        body = f'''Hello All,<br><br>Please review and provide approval for {promo_code} - {bill_facing_name} - Version #{version_number}.<br><br><a href="{pam_url}">PAM - Promotions Automation Manager</a><br><br>Please provide approval prior to {deadline}.<br><br>Please let me know if there are any questions and concerns.<br><br>Thank you!'''
+        
+        # Send email to test recipient
+        mail_service = MailService()
+        result = mail_service.send_approval_email(
+            recipients='cade.holtzen1@t-mobile.com',
+            subject=subject,
+            body=body,
+            body_format='HTML'
+        )
+        
+        if result['success']:
+            return jsonify({'success': True, 'message': result['message']}), 200
+        else:
+            return jsonify({'success': False, 'message': result['message']}), 500
+    
+    except Exception as e:
+        error_msg = f'Error sending approval email: {str(e)}'
+        import logging
+        logging.error(error_msg, exc_info=True)
+        return jsonify({'success': False, 'message': error_msg}), 500
+
 @promo_bp.route('/reviewers', defaults={'promo_code': None}, endpoint='reviewers_page')
 @promo_bp.route('/reviewers/<promo_code>', endpoint='reviewers_with_code')
 def reviewers_page(promo_code):
