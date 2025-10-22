@@ -1323,9 +1323,9 @@ def get_promo_codes_page():
 
         from datetime import datetime
         current_year = datetime.now().year
-        return render_template('get_promo_codes.html', current_year=current_year)
+        return render_template('pam/get_promo_codes.html', current_year=current_year)
     except Exception as e:
         flash(f"Error creating promo code: {str(e)}", 'error')
         from datetime import datetime
         current_year = datetime.now().year
-        return render_template('get_promo_codes.html', current_year=current_year)
+        return render_template('pam/get_promo_codes.html', current_year=current_year)
