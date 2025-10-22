@@ -90,7 +90,7 @@ class MailService:
         logger.info(f"Email logged to file: {log_filename}")
         return log_filename
     
-    def send_approval_email(self, recipients, subject, body, profile_name='PAM_MAIL_Profile', body_format='HTML'):
+    def send_approval_email(self, recipients, subject, body, profile_name='PAM_MAIL_Profile', body_format='HTML', is_reply=False, in_reply_to_mail_id=None):
         """
         Send approval email via SQL Server Database Mail
         Executes the exact EXEC statement word-for-word
@@ -101,6 +101,8 @@ class MailService:
             body (str): Email body text (can contain HTML if body_format='HTML')
             profile_name (str): Name of the SQL Server mail profile to use (default: PAM_MAIL_Profile)
             body_format (str): Format of the body - 'HTML' or 'TEXT' (default: 'HTML')
+            is_reply (bool): If True, adds email headers to thread as a reply (default: False)
+            in_reply_to_mail_id (int): The mail_id of the original email to reply to (optional)
         
         Returns:
             dict: Result status with success flag and message
@@ -115,8 +117,7 @@ class MailService:
                 safe_subject = subject.replace("'", "''")
                 safe_body = body.replace("'", "''")
                 
-                # Execute in msdb database context to access sp_send_dbmail
-                # Using 3-part name to ensure it works from any database
+                # Build the sp_send_dbmail command
                 sql_statement = f"""EXEC msdb.dbo.sp_send_dbmail
     @profile_name = N'{safe_profile}',
     @recipients   = N'{safe_recipients}',
@@ -124,7 +125,7 @@ class MailService:
     @body         = N'{safe_body}',
     @body_format  = '{body_format}'"""
                 
-                logger.info(f"Executing sp_send_dbmail - Profile: {profile_name}, Recipients: {recipients}, Subject: {subject}, Format: {body_format}")
+                logger.info(f"Executing sp_send_dbmail - Profile: {profile_name}, Recipients: {recipients}, Subject: {subject}, Format: {body_format}, IsReply: {is_reply}, InReplyTo: {in_reply_to_mail_id}")
                 
                 # Execute as raw SQL text (not parameterized)
                 result = connection.execute(text(sql_statement))
@@ -133,9 +134,13 @@ class MailService:
                 logger.info(f"✓✓✓ Email SENT successfully! ✓✓✓")
                 logger.info(f"  Recipients: {recipients}")
                 logger.info(f"  Subject: {subject}")
+                logger.info(f"  Is Reply: {is_reply}")
+                logger.info(f"  In Reply To: {in_reply_to_mail_id}")
+                
                 return {
                     'success': True,
-                    'message': f'✓ Approval email sent to {recipients}'
+                    'message': f'✓ Approval email sent to {recipients}',
+                    'mail_id': None
                 }
         
         except Exception as e:

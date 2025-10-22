@@ -2,6 +2,7 @@ from flask import Blueprint, request, render_template, redirect, url_for, flash,
 from werkzeug.utils import secure_filename
 import os
 from typing import Optional, TYPE_CHECKING, Dict, Any
+from services.mail_service import MailService
 
 if TYPE_CHECKING:
     from data.storage import PromoDataManager
@@ -722,29 +723,29 @@ def send_approval_email():
         bill_facing_name = promo_data.get('bill_facing_name', 'Unknown')
         version_number = promo_data.get('version_number', promo_data.get('version', '1'))
         
-        # Calculate deadline: promo end date - 1 day at 11:59 EST
+        # Calculate deadline: promo start date - 1 day at 11:59 EST
         from datetime import datetime, timedelta
-        promo_end_date_str = promo_data.get('promo_end_date', promo_data.get('end_date'))
+        promo_start_date_str = promo_data.get('promo_start_date', promo_data.get('start_date'))
         deadline = 'the specified deadline'
         
-        if promo_end_date_str:
+        if promo_start_date_str:
             try:
                 # Parse the date - handle various date formats
-                promo_end = None
-                if isinstance(promo_end_date_str, str):
+                promo_start = None
+                if isinstance(promo_start_date_str, str):
                     # Try common date formats
                     for date_format in ['%m/%d/%Y', '%Y-%m-%d', '%d/%m/%Y']:
                         try:
-                            promo_end = datetime.strptime(promo_end_date_str, date_format)
+                            promo_start = datetime.strptime(promo_start_date_str, date_format)
                             break
                         except ValueError:
                             continue
                 else:
-                    promo_end = promo_end_date_str
+                    promo_start = promo_start_date_str
                 
-                # Calculate deadline: end date - 1 day at 11:59 EST
-                if promo_end:
-                    deadline_date = promo_end - timedelta(days=1)
+                # Calculate deadline: start date - 1 day at 11:59 EST
+                if promo_start:
+                    deadline_date = promo_start - timedelta(days=1)
                     deadline = deadline_date.strftime('%m/%d/%Y') + ' 11:59 EST'
             except Exception:
                 deadline = 'the specified deadline'
@@ -779,12 +780,81 @@ def send_approval_email():
         )
         
         if result['success']:
+            # Track this approval request for later reply
+            from data.approval_email_tracking import store_approval_request
+            store_approval_request(promo_code, version_number, subject, 'cade.holtzen1@t-mobile.com')
+            
             return jsonify({'success': True, 'message': result['message']}), 200
         else:
             return jsonify({'success': False, 'message': result['message']}), 500
     
     except Exception as e:
         error_msg = f'Error sending approval email: {str(e)}'
+        import logging
+        logging.error(error_msg, exc_info=True)
+        return jsonify({'success': False, 'message': error_msg}), 500
+
+@promo_bp.route('/approve-promo', methods=['POST'])
+def approve_promo():
+    """Handle promo approval and send reply email"""
+    try:
+        data = request.get_json()
+        promo_code = data.get('promo_code', '').upper()
+        version_number = data.get('version_number', '1')
+        
+        if not promo_code:
+            return jsonify({'success': False, 'message': 'Promo code is required'}), 400
+        
+        # Fetch promo details from database
+        dm = _ensure_data_manager()
+        promo_data = dm.get_promo(promo_code)
+        if not promo_data:
+            # Try SPE or rebates
+            from data.storage import PromoDataManager as JSONManager
+            json_manager = JSONManager()
+            spe_data = json_manager.get_all_spe_promos()
+            promo_data = spe_data.get(promo_code)
+            if not promo_data:
+                rebates_data = json_manager.get_all_rebates()
+                promo_data = rebates_data.get(promo_code)
+        
+        if not promo_data:
+            return jsonify({'success': False, 'message': f'Promo code {promo_code} not found'}), 404
+        
+        # Extract promo details
+        bill_facing_name = promo_data.get('bill_facing_name', 'Unknown')
+        promo_desired_execution = promo_data.get('Desired_Execution', 'Unknown')
+        
+        # Get the original approval request's mail ID for threading
+        from data.approval_email_tracking import get_approval_tracking, store_approval_reply
+        tracking = get_approval_tracking(promo_code, version_number)
+        request_mail_id = tracking.get('request_mail_id') if tracking else None
+        
+        # Build approval email subject and body
+        approval_subject = f'RE: {promo_desired_execution} Approval request - {promo_code} - {bill_facing_name} - Version #{version_number}'
+        approval_body = f'''Hello All,<br><br>I am writing to confirm that I have approved {promo_code} - {bill_facing_name} - Version #{version_number}.<br><br>Please proceed with the next steps.<br><br>Thank you!'''
+        
+        # Send approval reply email
+        mail_service = MailService()
+        result = mail_service.send_approval_email(
+            recipients='cade.holtzen1@t-mobile.com',
+            subject=approval_subject,
+            body=approval_body,
+            body_format='HTML',
+            is_reply=True,
+            in_reply_to_mail_id=request_mail_id
+        )
+        
+        if result['success']:
+            # Track this approval reply
+            store_approval_reply(promo_code, version_number)
+            
+            return jsonify({'success': True, 'message': f'Approval sent for {promo_code} Version #{version_number}'}), 200
+        else:
+            return jsonify({'success': False, 'message': result['message']}), 500
+    
+    except Exception as e:
+        error_msg = f'Error approving promo: {str(e)}'
         import logging
         logging.error(error_msg, exc_info=True)
         return jsonify({'success': False, 'message': error_msg}), 500

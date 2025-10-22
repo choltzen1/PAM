@@ -21,18 +21,20 @@
 {% block content %}
 
   <div class="container wide-container reviewers-scroll-container">
-    <!-- Search controls -->
-    <div class="search-section reviewers-search-section">
-      <div class="reviewers-search-card">
-        <label for="promo-search" class="reviewers-search-label">Search Promo Code</label>
-        <input
-          type="text"
-          id="promo-search"
-          name="promo_code"
-          class="form-control"
-          class="reviewers-search-input"
-          placeholder="Enter promo code"
-          value="{{ promo_code or '' }}"
+    <!-- Top controls: Search and Approval side-by-side -->
+    <div class="top-controls-wrapper">
+      <!-- Search controls -->
+      <div class="search-section reviewers-search-section">
+        <div class="reviewers-search-card">
+          <label for="promo-search" class="reviewers-search-label">Search Promo Code</label>
+          <input
+            type="text"
+            id="promo-search"
+            name="promo_code"
+            class="form-control"
+            class="reviewers-search-input"
+            placeholder="Enter promo code"
+            value="{{ promo_code or '' }}"
           onkeypress="handleSearchKeyPress(event)"
         />
         <button 
@@ -49,6 +51,34 @@
           Back to RDC
         </a>
       </div>
+    </div>
+
+    {% if promo_code and promo_data %}
+    <div class="approval-card">
+      <div class="approval-header">
+        <i class="fas fa-check-circle"></i>
+        <span>Approval</span>
+      </div>
+      <div class="approval-content">
+        <div class="approval-controls">
+          <div class="version-control">
+            <label for="version-select">Select Version:</label>
+            <select id="version-select" class="form-control version-dropdown">
+              <option value="">Choose a version...</option>
+              {% if promo_data.version_number %}
+                <option value="{{ promo_data.version_number }}" selected>Version #{{ promo_data.version_number }}</option>
+              {% else %}
+                <option value="1">Version #1</option>
+              {% endif %}
+            </select>
+          </div>
+          <button class="btn btn-success approve-btn" onclick="approvePromo()">
+            <i class="fas fa-check"></i> Approve
+          </button>
+        </div>
+      </div>
+    </div>
+    {% endif %}
     </div>
 
     {% if error_message %}
@@ -539,6 +569,96 @@
   padding: 0.5rem 1rem;
 }
 
+.top-controls-wrapper {
+  display: flex;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.search-section.reviewers-search-section {
+  flex: 1;
+}
+
+.approval-card {
+  flex: 1;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  border: 1px solid #e0e0e0;
+  overflow: hidden;
+}
+
+.approval-header {
+  background: #28a745;
+  color: white;
+  padding: 0.75rem 1rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.approval-header i {
+  font-size: 1rem;
+}
+
+.approval-content {
+  padding: 1.5rem;
+}
+
+.approval-controls {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-end;
+  flex-direction: column;
+}
+
+.version-control {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.version-control label {
+  font-weight: 600;
+  color: #333;
+  font-size: 0.9rem;
+}
+
+.version-dropdown {
+  padding: 0.5rem 1rem;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  width: 100%;
+}
+
+.approve-btn {
+  background: #28a745;
+  color: white;
+  padding: 0.5rem 1.5rem;
+  border-radius: 6px;
+  font-weight: 600;
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  white-space: nowrap;
+  width: 100%;
+  justify-content: center;
+}
+
+.approve-btn:hover {
+  background: #218838;
+}
+
+.approve-btn i {
+  margin-right: 0.25rem;
+}
+
 .btn {
   padding: 0.5rem 1rem;
   border-radius: 6px;
@@ -583,6 +703,56 @@ function handleSearchKeyPress(event) {
   if (event.key === 'Enter') {
     searchPromo();
   }
+}
+
+function approvePromo() {
+  const versionSelect = document.getElementById('version-select');
+  const selectedVersion = versionSelect.value;
+  
+  if (!selectedVersion) {
+    alert('Please select a version to approve');
+    return;
+  }
+  
+  // Get promo code from URL
+  const urlParts = window.location.pathname.split('/');
+  const promoCode = urlParts[urlParts.length - 1];
+  
+  // Show loading state
+  const approveBtn = document.querySelector('.approve-btn');
+  const originalText = approveBtn.innerHTML;
+  approveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+  approveBtn.disabled = true;
+  
+  // Send approval to backend
+  fetch('/approve-promo', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      promo_code: promoCode,
+      version_number: selectedVersion
+    })
+  })
+  .then(response => response.json())
+  .then(data => {
+    approveBtn.innerHTML = originalText;
+    approveBtn.disabled = false;
+    
+    if (data.success) {
+      alert('Approval email sent successfully!');
+      // Reset version select
+      versionSelect.value = '';
+    } else {
+      alert('Error: ' + data.message);
+    }
+  })
+  .catch(error => {
+    approveBtn.innerHTML = originalText;
+    approveBtn.disabled = false;
+    alert('Error sending approval: ' + error);
+  });
 }
 </script>
 {% endblock %}
