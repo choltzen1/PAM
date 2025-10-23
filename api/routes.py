@@ -223,29 +223,32 @@ def generate_and_ingest():
       6. Save via data_manager.save_promo.
       7. Return success payload.
     """
+    if not data_manager:
+        return jsonify({'success': False, 'error': 'Data manager unavailable'}), 500
     try:
-        if not data_manager:
-            return jsonify({'success': False, 'error': 'Data manager unavailable'}), 500
         body = request.get_json() or {}
         orbit_id = (body.get('orbit_id') or '').strip()
         if not orbit_id:
             return jsonify({'success': False, 'error': 'orbit_id required'}), 400
-        # Check if orbit already assigned
+        # Existing promo check
         existing = data_manager.get_all_promos() or {}
         for code, pdata in existing.items():
             if pdata.get('orbit_id') == orbit_id:
                 return jsonify({'success': False, 'error': 'Orbit already assigned', 'existing_code': code}), 409
-        # Generate next code (fresh DatabaseManager instance; tests monkeypatch class)
+        # Generate next sequential code using issued codes file
         from data.code_tracking import load_issued_codes, record_issued_code
-        from data.database import DatabaseManager
         issued = load_issued_codes()
-        dbm = DatabaseManager()
-        try:
-            highest = dbm.get_highest_sequential_promo_code()
-        except Exception:
-            highest = None
         import re
         pat = re.compile(r'^([A-Z])(\d{1,4})$')
+        seq_codes = [c for c in issued if pat.match(c)]
+        highest = None
+        if seq_codes:
+            def key(c):
+                m = pat.match(c)
+                if not m:
+                    return ('', -1)
+                return (m.group(1), int(m.group(2)))
+            highest = sorted(seq_codes, key=key)[-1]
         rolled = False
         if not highest:
             base_letter = 'R'; num = 1
@@ -256,12 +259,12 @@ def generate_and_ingest():
             else:
                 base_letter = m.group(1)
                 num = int(m.group(2)) + 1
-                if num > 9999:
-                    if base_letter == 'Z':
-                        return jsonify({'success': False, 'error': 'Exhausted code space'}), 400
-                    base_letter = chr(ord(base_letter)+1)
-                    num = 1
-                    rolled = True
+            if num > 9999:
+                if base_letter == 'Z':
+                    return jsonify({'success': False, 'error': 'Exhausted code space'}), 400
+                base_letter = chr(ord(base_letter)+1)
+                num = 1
+                rolled = True
         while True:
             width = 3 if num <= 999 else 4
             next_code = f"{base_letter}{num:0{width}d}"
@@ -269,39 +272,38 @@ def generate_and_ingest():
                 break
             num += 1
         record_issued_code(next_code)
-        # Fetch orbit record (class monkeypatched in tests)
-        try:
-            orbit_row = dbm.get_full_orbit_record_by_orbit_id(orbit_id)
-        except Exception:
-            orbit_row = None
-        if not orbit_row:
-            return jsonify({'success': False, 'error': f'Orbit {orbit_id} not found in DB'}), 404
-        # Convert to JSON storage format if code present or not
-        # Use existing convert helper if possible
-        try:
-            converted = dbm.convert_db_record_to_json_format(orbit_row)
-        except Exception:
-            converted = dict(orbit_row)
-        # Overlay essentials
-        converted['code'] = next_code
-        converted['orbit_id'] = orbit_id
-        if not converted.get('description'):
-            converted['description'] = orbit_row.get('description','')
-        if not converted.get('bill_facing_name'):
-            converted['bill_facing_name'] = orbit_row.get('bill_facing_name') or orbit_row.get('description','')
-        # Persist
+        # Orbit fetch
+        from data.orbit_database import OrbitDatabaseManager
+        odm = OrbitDatabaseManager()
+        orbit_row = odm.get_orbit_record(orbit_id)
+        if not orbit_row or orbit_row.get('_error'):
+            # Fallback to legacy DatabaseManager for test compatibility
+            try:
+                from data.database import DatabaseManager
+                legacy_dbm = DatabaseManager()
+                legacy_row = legacy_dbm.get_full_orbit_record_by_orbit_id(orbit_id)
+            except Exception:
+                legacy_row = None
+            if legacy_row:
+                orbit_row = legacy_row if isinstance(legacy_row, dict) else dict(legacy_row)
+            else:
+                err = orbit_row.get('_error') if isinstance(orbit_row, dict) else 'unknown error'
+                status = 404 if err == 'not found' else 500
+                return jsonify({'success': False, 'error': f'Orbit {orbit_id} not found' if status == 404 else err}), status
+        converted = {
+            'code': next_code,
+            'orbit_id': orbit_id,
+            'bill_facing_name': orbit_row.get('bill_facing_name') or orbit_row.get('description',''),
+            'description': orbit_row.get('description',''),
+            'owner': orbit_row.get('Owner') or orbit_row.get('owner')
+        }
+        if orbit_row.get('promo_start_date'):
+            converted['start_date'] = orbit_row.get('promo_start_date')
+        if orbit_row.get('promo_end_date'):
+            converted['end_date'] = orbit_row.get('promo_end_date')
         data_manager.save_promo(next_code, converted, user_name='System')
         saved = data_manager.get_promo(next_code) or {}
-        return jsonify({
-            'success': True,
-            'promo_code': next_code,
-            'orbit_id': orbit_id,
-            'rolled': rolled,
-            'base_letter': base_letter,
-            'fields_imported': len(converted.keys()),
-            'owner': saved.get('owner'),
-            'description': saved.get('description')
-        })
+        return jsonify({'success': True, 'promo_code': next_code, 'orbit_id': orbit_id, 'rolled': rolled, 'base_letter': base_letter, 'fields_imported': len(converted), 'owner': saved.get('owner'), 'description': saved.get('description')})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 

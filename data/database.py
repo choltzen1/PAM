@@ -259,7 +259,7 @@ class DatabaseManager:
                 on_menu,
                 market_group,
                 store_group,
-                promo_start_date,
+                promo_srart_date AS promo_start_date,
                 promo_end_date,
                 comm_end_date,
                 promo_duration,
@@ -442,7 +442,7 @@ class DatabaseManager:
                 on_menu,
                 market_group,
                 store_group,
-                promo_start_date,
+                promo_srart_date AS promo_start_date,
                 promo_end_date,
                 comm_end_date,
                 promo_duration,
@@ -589,7 +589,7 @@ class DatabaseManager:
                 code,
                 Owner,
                 description,
-                promo_start_date,
+                promo_srart_date AS promo_start_date,
                 promo_end_date,
                 amount,
                 operator_id,
@@ -708,8 +708,10 @@ class DatabaseManager:
 
     def get_orbit_record_by_orbit_id(self, orbit_id: str) -> Optional[Dict[str, Any]]:
         """Return minimal orbit record (bill facing name, dates) preferring orbit source table."""
+        # NOTE: Source table uses a misspelled column 'promo_srart_date'. We alias it as promo_start_date.
         query_tpl = """
-            SELECT orbit_id, [bill facing name] AS bill_facing_name, description, Owner, promo_start_date, promo_end_date
+            SELECT orbit_id, [bill facing name] AS bill_facing_name, description, Owner,
+                   promo_srart_date AS promo_start_date, promo_end_date
             FROM {table}
             WHERE orbit_id = :orbit_id
         """
@@ -758,7 +760,7 @@ class DatabaseManager:
                 param_names = [f"p{j}" for j in range(len(chunk))]
                 in_clause = ",".join(f":{n}" for n in param_names)
                 sql = f"""
-                    SELECT orbit_id, promo_start_date AS orbit_start_date, promo_end_date AS orbit_end_date
+                    SELECT orbit_id, promo_srart_date AS orbit_start_date, promo_end_date AS orbit_end_date
                     FROM {table}
                     WHERE orbit_id IN ({in_clause})
                 """
@@ -798,7 +800,7 @@ class DatabaseManager:
                 on_menu,
                 market_group,
                 store_group,
-                promo_start_date,
+                promo_srart_date AS promo_start_date,
                 promo_end_date,
                 comm_end_date,
                 promo_duration,
