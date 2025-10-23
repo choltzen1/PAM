@@ -98,8 +98,7 @@ document.addEventListener('DOMContentLoaded', function() {
   const priorityCount = document.getElementById('priorityCount');
   const priorityInputsContainer = document.getElementById('priorityInputsContainer');
   const generateBtn = document.getElementById('generatePromoBtn');
-  const promoDescription = document.getElementById('promoDescription');
-  const promoTitle = document.getElementById('promoTitle');
+  // Removed global promo status box; each generated promo now self-contains its details.
 
   const promoTypeOptionsHtml = `
     <option value="apple">Apple</option>
@@ -201,7 +200,6 @@ document.addEventListener('DOMContentLoaded', function() {
       .catch(()=> priorityResultError(idx, orbitId));
   }
     async function sequentialGenerate(orbits){
-      const summary = [];
       for(const item of orbits){
         const { idx, orbitId } = item;
         if(!orbitId) continue; // skip empties
@@ -211,22 +209,56 @@ document.addEventListener('DOMContentLoaded', function() {
           const res = await fetch('/api/generate_next_promo_code?orbit_id=' + encodeURIComponent(orbitId));
           const js = await res.json().catch(()=>({}));
           if(res.ok && js.success){
-            showPriorityResult(idx, `<strong>Created Promo <a href="/edit_rdc/${js.promo_code}" target="_blank" class="created-promo-link">${js.promo_code}</a></strong><br><span class="small">Orbit ${js.orbit_id}</span>`, 'found');
-            summary.push({ orbitId: js.orbit_id, code: js.promo_code, desc: js.description || '(No description)' });
+            let createdCode = js.promo_code || js.code || js.existing_code || '';
+            // Fallback: if code still missing, try recent promos API to locate newest by orbit
+            if(!createdCode && js.orbit_id){
+              try {
+                const recent = await fetch('/api/recent_generated_promos').then(r=>r.json()).catch(()=>null);
+                if(recent && recent.promos && Array.isArray(recent.promos)){
+                  const match = recent.promos.find(p=>String(p.orbit_id) === String(js.orbit_id));
+                  if(match && match.code) createdCode = match.code;
+                }
+              } catch(e){ /* ignore */ }
+            }
+            // Authoritative DB query for orbit -> code mapping
+            if(js.orbit_id){
+              try {
+                const dbLookup = await fetch(`/api/promo_code_by_orbit/${encodeURIComponent(js.orbit_id)}`).then(r=>r.json()).catch(()=>null);
+                if(dbLookup && dbLookup.success && dbLookup.promo_code){
+                  createdCode = dbLookup.promo_code;
+                }
+              } catch(e){ /* ignore */ }
+            }
+            // Row-level result box with details
+            if(createdCode){
+              let baseHtml = `<strong>Created Promo: <a href="/edit_rdc/${createdCode}?tab=Details" target="_blank" class="created-promo-link">${createdCode}</a></strong><br><span class="small">Orbit ${js.orbit_id}</span>`;
+              try {
+                const det = await fetch('/api/get_promo_details/' + createdCode).then(r=>r.json()).catch(()=>null);
+                if(det && det.found){
+                  const ownerLine = det.owner ? `Owner: ${det.owner}` : '';
+                  const dateLine = (det.promo_start_date && det.promo_end_date) ? `${det.promo_start_date} - ${det.promo_end_date}` : '';
+                  const detailsLines = [ownerLine, dateLine].filter(Boolean).join('<br>');
+                  if(detailsLines){
+                    baseHtml += `<div class="small mt-1"><strong>Details:</strong><br>${detailsLines}</div>`;
+                  }
+                }
+              } catch(e){ /* ignore details errors */ }
+              showPriorityResult(idx, baseHtml, 'found');
+            } else {
+              showPriorityResult(idx, `<strong>Created Promo: (Code Unavailable)</strong><br><span class="small">Orbit ${js.orbit_id}</span>`, 'found');
+            }
             try { addOrUpdatePdtRow(js.orbit_id, js.promo_code, (js.description || '(No description)'), inferConfig(js.description||'')); } catch(e){ console.warn(e); }
           } else {
             let errMsg = (js && (js.error || js.message)) || 'Unknown error';
             if(res.status === 404) errMsg = 'Orbit not found';
             else if(res.status === 409) errMsg = 'Already has promo '+ (js.existing_code || '');
             showPriorityResult(idx, `<strong>Error:</strong> ${errMsg}`, 'error');
-            summary.push({ orbitId, error: errMsg });
           }
         } catch(err){
           showPriorityResult(idx, `<strong>Error generating for Orbit ${orbitId}</strong>`, 'error');
-          summary.push({ orbitId, error: String(err) });
         }
       }
-      return summary;
+      return true;
     }
 
     generateBtn.addEventListener('click', async function(e){
@@ -234,30 +266,11 @@ document.addEventListener('DOMContentLoaded', function() {
       const count = Math.min(15, Math.max(1, parseInt(priorityCount.value,10) || 1));
       const inputs = [...document.querySelectorAll('.priority-orbit-input')];
       const filled = inputs.map(inp=>({ idx: inp.getAttribute('data-priority'), orbitId: (inp.value||'').trim() })).filter(o=>o.orbitId);
-      if(!filled.length){
-        if(promoTitle) promoTitle.textContent = 'Orbit ID Required';
-        if(promoDescription) promoDescription.innerHTML = '<em>Please enter at least one Orbit ID to generate.</em>';
-        return;
-      }
+      if(!filled.length){ return; }
       generateBtn.disabled = true;
       const originalText = generateBtn.textContent;
       generateBtn.textContent = 'Generating...';
-      if(promoTitle) promoTitle.textContent = 'Generating Promos...';
-      if(promoDescription) promoDescription.innerHTML = `<em>Generating ${filled.length} promo(s) sequentially...</em>`;
-      const results = await sequentialGenerate(filled);
-      // Build summary HTML
-      const success = results.filter(r=>r.code);
-      const failures = results.filter(r=>r.error);
-      let html = '';
-      if(success.length){
-  html += '<strong>Created:</strong><br>' + success.map(s=>`<a href="/edit_rdc/${s.code}" target="_blank" class="created-promo-link">${s.code}</a> (Orbit ${s.orbitId})`).join('<br>');
-      }
-      if(failures.length){
-        html += (html?'<br><br>':'') + '<strong>Errors:</strong><br>' + failures.map(f=>`Orbit ${f.orbitId}: ${f.error}`).join('<br>');
-      }
-      if(!html) html = '<em>No promos created.</em>';
-      if(promoTitle) promoTitle.textContent = success.length ? `Created ${success.length} Promo${success.length>1?'s':''}` : 'Generation Complete';
-      if(promoDescription) promoDescription.innerHTML = html;
+      await sequentialGenerate(filled);
       generateBtn.disabled = false;
       generateBtn.textContent = originalText;
     });

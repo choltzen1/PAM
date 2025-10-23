@@ -179,6 +179,42 @@ def update_testing_status():
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
+@api_bp.route('/promo_code_by_orbit/<orbit_id>', methods=['GET'])
+def promo_code_by_orbit(orbit_id):
+    """Return promo code for a given orbit_id by scanning PAM promos.
+
+    Implementation detail: current data_manager exposes get_all_promos() returning
+    mapping code -> promo_data (each contains orbit_id). We iterate to locate match.
+    If multiple promos share orbit_id, we return the first encountered (could refine with timestamp ordering later).
+    """
+    try:
+        if not data_manager:
+            return jsonify({'success': False, 'error': 'Data manager unavailable'}), 500
+        oid = (orbit_id or '').strip()
+        if not oid:
+            return jsonify({'success': False, 'error': 'orbit_id required'}), 400
+        promos = data_manager.get_all_promos() or {}
+        # Normalize list form
+        if isinstance(promos, list):
+            norm = {}
+            for rec in promos:
+                c = str(rec.get('code','')).strip()
+                if c:
+                    norm[c] = rec
+            promos = norm
+        found_code = None
+        found_record = None
+        for code, pdata in promos.items():
+            if str(pdata.get('orbit_id') or '').strip() == oid:
+                found_code = code
+                found_record = pdata
+                break
+        if not found_code:
+            return jsonify({'success': False, 'error': 'No promo found for orbit_id'}), 404
+        return jsonify({'success': True, 'promo_code': found_code, 'orbit_id': oid})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 @api_bp.route('/generate_next_promo_code', methods=['GET'])
 def generate_next_promo_code():
         """Atomically create (or detect existing) a promo from an orbit record.
