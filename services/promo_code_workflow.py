@@ -124,8 +124,12 @@ class PromoCodeWorkflow:
         candidate_fields = {
             'code': new_code,
             'orbit_id': oid,
-            'description': full_row.get('description') or full_row.get('bill_facing_name') or f'Orbit {oid}',
-            'bill_facing_name': full_row.get('bill_facing_name') or full_row.get('description'),
+            # Strict mapping: orbit.description -> initiative_name (nullable)
+            'initiative_name': full_row.get('description'),
+            # Strict mapping: orbit.cat_description -> description (nullable)
+            'description': full_row.get('cat_description'),
+            # Preserve bill_facing_name separately; do not use for initiative/description fallback
+            'bill_facing_name': full_row.get('bill_facing_name'),
             'Owner': full_row.get('Owner') or full_row.get('owner') or 'Unassigned',
             'promo_start_date': full_row.get('promo_start_date') or full_row.get('promo_start_date'),
             'promo_end_date': full_row.get('promo_end_date'),

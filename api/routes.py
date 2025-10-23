@@ -122,7 +122,7 @@ def search_orbit(orbit_id):
             'type': 'RDC',  # execution type not derived from orbit table now
             'promo_code': '',
             'pending_creation': True,
-            'initiative_name': result.get('bill_facing_name') or result.get('description','Unknown'),
+                'initiative_name': result.get('initiative_name') or result.get('bill_facing_name') or result.get('description','Unknown'),
             'description': result.get('description',''),
             'owner': result.get('owner',''),
             'start_date': result.get('start_date',''),

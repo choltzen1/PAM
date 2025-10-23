@@ -465,7 +465,8 @@ class DatabaseManager:
                 clawback_indicator,
                 Broken_Trade,
                 Anticipated_volume_take_rates_total,
-                Desired_Execution
+                Desired_Execution,
+                cat_description
             FROM {self.source_table}
             ORDER BY code DESC
         """
@@ -791,6 +792,7 @@ class DatabaseManager:
                 [bill facing name] AS bill_facing_name,
                 orbit_id,
                 description,
+                cat_description,
                 promo_notes,
                 discount,
                 amount,
