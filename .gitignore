@@ -69,3 +69,4 @@ version_history.db
 *_backup.py
 *_old.py
 *_clean.py
+data/__pycache__/storage.cpython-313.pyc
