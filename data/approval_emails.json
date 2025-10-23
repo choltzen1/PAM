@@ -7,5 +7,14 @@
     "request_timestamp": "2025-10-22T20:18:54.122951",
     "approval_timestamp": null,
     "approved": false
+  },
+  "R359_v1": {
+    "promo_code": "R359",
+    "version_number": "1",
+    "request_subject": "RDC Approval request - R359 - Bill Name - Version #1",
+    "request_recipients": "cade.holtzen1@t-mobile.com",
+    "request_timestamp": "2025-10-22T21:47:39.590141",
+    "approval_timestamp": null,
+    "approved": false
   }
 }

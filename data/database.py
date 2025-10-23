@@ -241,6 +241,8 @@ class DatabaseManager:
     
     def get_promos_by_execution_type(self, execution_type: str) -> List[Dict[str, Any]]:
         """Fetch promotions filtered by Desired_Execution type (RDC, SPE, Rebate)."""
+        # NOTE: Some legacy environments used a misspelled column 'promo_srart_date'. The current
+        # table uses 'promo_start_date'. We select the correct name and alias for downstream code.
         sql = f"""
             SELECT 
                 code,
@@ -259,7 +261,7 @@ class DatabaseManager:
                 on_menu,
                 market_group,
                 store_group,
-                promo_srart_date AS promo_start_date,
+                promo_start_date AS promo_start_date,
                 promo_end_date,
                 comm_end_date,
                 promo_duration,

@@ -27,7 +27,8 @@ def create_app(config: dict | None = None) -> Flask:
     global data_manager
     # Single initialization path (DB-only model); validation mode no longer diverges
     data_manager = PromoDataManager()
-    print("✅ DB-only promo data manager initialized (JSON disabled for RDC)")
+    # Avoid using Unicode symbols that can break in certain Windows code pages.
+    print("DB-only promo data manager initialized (JSON disabled for RDC)")
 
     # Register blueprints
     app.register_blueprint(core_bp)
