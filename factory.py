@@ -11,7 +11,8 @@ from api.routes import api_bp, init_data_manager as init_api_data_manager
 from jira.routes import jira_bp
 from data.storage import PromoDataManager
 
-load_dotenv()
+_loaded_env = load_dotenv()
+print(f"[startup] .env loaded={_loaded_env} ORBIT_DB_SERVER={os.getenv('ORBIT_DB_SERVER')} ORBIT_DB_DATABASE={os.getenv('ORBIT_DB_DATABASE')} PAM_DB_SERVER={os.getenv('PAM_DB_SERVER')} PAM_DB_DATABASE={os.getenv('PAM_DB_DATABASE')}")
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 data_manager = None  # will be initialized in create_app

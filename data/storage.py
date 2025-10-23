@@ -1,5 +1,6 @@
 import json
 import os
+from dotenv import load_dotenv
 import shutil
 from typing import Dict, Any, List, Optional
 from datetime import datetime
@@ -12,6 +13,11 @@ from .field_map import FIELD_DB_MAP, READ_ONLY_FIELDS, EDITABLE_CANONICAL_FIELDS
 class PromoDataManager:
     """Manages persistent storage for promotion data using live database connection"""
     def __init__(self, data_dir: str = "data"):
+        # Ensure environment variables are loaded before initializing DatabaseManager
+        try:
+            load_dotenv()
+        except Exception:
+            pass
         self.data_dir = data_dir
         self.uploads_dir = os.path.join(data_dir, "uploads")
         self.promo_uploads_dir = os.path.join(self.uploads_dir, "promotions")

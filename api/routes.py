@@ -94,39 +94,40 @@ def get_promo_details(promo_code):
 @api_bp.route('/search_orbit/<orbit_id>', methods=['GET'])
 def search_orbit(orbit_id):
     try:
-        from services.promo_code_workflow import PromoCodeWorkflow
-        workflow = PromoCodeWorkflow(data_manager)
-        lookup = workflow.orbit_lookup(orbit_id)
-        if not lookup.get('found'):
-            return jsonify({'found': False, 'message': f'Orbit ID {orbit_id} not located'})
-        if lookup.get('existing_code'):
-            # Already a promo: use its Desired_Execution value
-            promo = data_manager.get_promo(lookup['existing_code']) if data_manager else {}
-            exec_type = promo.get('Desired_Execution') or promo.get('desired_execution') or 'RDC'
-            return jsonify({
-                'found': True,
-                'type': exec_type,
-                'promo_code': lookup['existing_code'],
-                'initiative_name': promo.get('bill_facing_name', promo.get('description','Unknown')) if promo else '',
-                'description': promo.get('description','') if promo else '',
-                'owner': promo.get('owner','') if promo else '',
-                'start_date': promo.get('promo_start_date','') if promo else '',
-                'end_date': promo.get('promo_end_date','') if promo else ''
-            })
-        # Intake-only
-        orbit_row = lookup.get('orbit') or {}
-        inferred_exec = orbit_row.get('Desired_Execution') or orbit_row.get('desired_execution') or 'RDC'
+        # Orbit-only lookup (no promo table fallback)
+        from services.promo_codes_service import orbit_search
+        from flask import request
+        debug = request.args.get('debug') in ('1','true','yes')
+        result = orbit_search(orbit_id)
+        # Map standalone payload to legacy response shape if needed
+        if not result.get('found'):
+            msg = result.get('error') or f'Orbit ID {orbit_id} not located'
+            payload = {'found': False, 'message': msg}
+            if debug:
+                import os
+                payload['debug'] = {
+                    'orbit_id': orbit_id,
+                    'source_table': result.get('source_table'),
+                    'env': {
+                        'ORBIT_DB_SERVER': os.getenv('ORBIT_DB_SERVER'),
+                        'ORBIT_DB_DATABASE': os.getenv('ORBIT_DB_DATABASE'),
+                        'ORBIT_TABLE': os.getenv('ORBIT_TABLE'),
+                        'ORBIT_CONNECTION_STRING': bool(os.getenv('ORBIT_CONNECTION_STRING'))
+                    },
+                    'used_connection_string': result.get('_used_connection'),
+                }
+            return jsonify(payload)
         return jsonify({
             'found': True,
-            'type': inferred_exec,
-            'pending_creation': True,
+            'type': 'RDC',  # execution type not derived from orbit table now
             'promo_code': '',
-            'initiative_name': orbit_row.get('bill_facing_name') or orbit_row.get('description','Unknown'),
-            'description': orbit_row.get('description',''),
-            'owner': orbit_row.get('owner',''),
-            'start_date': orbit_row.get('promo_start_date',''),
-            'end_date': orbit_row.get('promo_end_date',''),
-            'source_table': lookup.get('table')
+            'pending_creation': True,
+            'initiative_name': result.get('bill_facing_name') or result.get('description','Unknown'),
+            'description': result.get('description',''),
+            'owner': result.get('owner',''),
+            'start_date': result.get('start_date',''),
+            'end_date': result.get('end_date',''),
+            'source_table': result.get('source_table')
         })
     except Exception as e:
         return jsonify({'found': False, 'error': str(e)})
