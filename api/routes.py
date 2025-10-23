@@ -215,6 +215,32 @@ def promo_code_by_orbit(orbit_id):
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
+@api_bp.route('/set_sales_application', methods=['POST'])
+def set_sales_application():
+    """Set sales_application for a given promo code.
+
+    JSON body: { "promo_code": "R123", "sales_application": "S15" }
+    Returns success flag and updated value.
+    """
+    try:
+        if not data_manager:
+            return jsonify({'success': False, 'error': 'Data manager unavailable'}), 500
+        payload = request.get_json() or {}
+        promo_code = (payload.get('promo_code') or '').strip()
+        sales_app = (payload.get('sales_application') or '').strip()
+        if not promo_code or not sales_app:
+            return jsonify({'success': False, 'error': 'promo_code and sales_application required'}), 400
+        # Load existing promo
+        promo = data_manager.get_promo(promo_code)
+        if not promo:
+            return jsonify({'success': False, 'error': 'Promo not found'}), 404
+        # Update field and persist
+        promo['sales_application'] = sales_app
+        data_manager.save_promo(promo_code, promo, user_name='System')
+        return jsonify({'success': True, 'promo_code': promo_code, 'sales_application': sales_app})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 @api_bp.route('/generate_next_promo_code', methods=['GET'])
 def generate_next_promo_code():
         """Atomically create (or detect existing) a promo from an orbit record.

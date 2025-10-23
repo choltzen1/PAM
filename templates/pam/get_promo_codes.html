@@ -201,7 +201,7 @@ document.addEventListener('DOMContentLoaded', function() {
   }
     async function sequentialGenerate(orbits){
       for(const item of orbits){
-        const { idx, orbitId } = item;
+        const { idx, orbitId, config } = item;
         if(!orbitId) continue; // skip empties
         // Indicate generating status in that row's result box
         showPriorityResult(idx, `<em>Generating promo for Orbit ${orbitId}...</em>`, 'searching');
@@ -229,6 +229,18 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
               } catch(e){ /* ignore */ }
             }
+            // If Apple selected, set sales_application to S15 after creation
+            let salesAppSet = false;
+            if(createdCode && config === 'apple'){
+              try {
+                const setResp = await fetch('/api/set_sales_application', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ promo_code: createdCode, sales_application: 'S15' })
+                }).then(r=>r.json()).catch(()=>null);
+                if(setResp && setResp.success){ salesAppSet = true; }
+              } catch(e){ /* ignore */ }
+            }
             // Row-level result box with details
             if(createdCode){
               let baseHtml = `<strong>Created Promo: <a href="/edit_rdc/${createdCode}?tab=Details" target="_blank" class="created-promo-link">${createdCode}</a></strong><br><span class="small">Orbit ${js.orbit_id}</span>`;
@@ -237,7 +249,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 if(det && det.found){
                   const ownerLine = det.owner ? `Owner: ${det.owner}` : '';
                   const dateLine = (det.promo_start_date && det.promo_end_date) ? `${det.promo_start_date} - ${det.promo_end_date}` : '';
-                  const detailsLines = [ownerLine, dateLine].filter(Boolean).join('<br>');
+                  const salesAppLine = (salesAppSet || det.sales_application) ? `Sales Application: ${salesAppSet ? 'S15' : (det.sales_application||'')}` : '';
+                  const detailsLines = [ownerLine, dateLine, salesAppLine].filter(Boolean).join('<br>');
                   if(detailsLines){
                     baseHtml += `<div class="small mt-1"><strong>Details:</strong><br>${detailsLines}</div>`;
                   }
@@ -265,7 +278,11 @@ document.addEventListener('DOMContentLoaded', function() {
       e.preventDefault();
       const count = Math.min(15, Math.max(1, parseInt(priorityCount.value,10) || 1));
       const inputs = [...document.querySelectorAll('.priority-orbit-input')];
-      const filled = inputs.map(inp=>({ idx: inp.getAttribute('data-priority'), orbitId: (inp.value||'').trim() })).filter(o=>o.orbitId);
+      const filled = inputs.map(inp=>{
+        const row = inp.closest('.priority-row');
+        const sel = row ? row.querySelector('.priority-config-select') : null;
+        return { idx: inp.getAttribute('data-priority'), orbitId: (inp.value||'').trim(), config: (sel && sel.value || '').toLowerCase() };
+      }).filter(o=>o.orbitId);
       if(!filled.length){ return; }
       generateBtn.disabled = true;
       const originalText = generateBtn.textContent;
