@@ -81,7 +81,7 @@
             </div>
           </div>
           <div class="panel-footer" style="justify-content:space-between;">
-            <div style="font-size:11px; color:#555;" id="formHint">Enter code and label; items optional for SOC/Account; ignored for Sales Apps.</div>
+            <div style="font-size:11px; color:#555;" id="formHint">Enter code, label, and optional items (comma separated) for all kinds (SOC, Account Types, Sales Apps).</div>
             <div style="display:flex; gap:6px;">
               <button class="btn-admin mini-btn" onclick="saveReferenceGrouping()"><i class="fas fa-save"></i> Save</button>
               <button class="btn-admin secondary mini-btn" onclick="cancelReferenceGroupingForm()">Cancel</button>
@@ -114,9 +114,8 @@ function cancelReferenceGroupingForm(){
   document.getElementById('referenceGroupingForm').style.display='none';
 }
 function adjustItemsLabel(){
-  const kind = document.getElementById('refKind').value;
   const labelEl = document.getElementById('refItemsLabel');
-  if(kind==='sales'){ labelEl.textContent='Items not used for Sales Apps (ignored)'; } else { labelEl.textContent='Items (comma separated)'; }
+  labelEl.textContent='Items (comma separated)';
 }
 function loadReferenceGroupings(){
   const kind = document.getElementById('refKind').value;
@@ -147,18 +146,21 @@ function renderReferenceGroupings(){
     const div = document.createElement('div');
     div.className='reference-row';
     const itemsHtml = (g.items||[]).map(i=>`<span class='sku-pill'>${i}</span>`).join('');
+    const editing = (editingReferenceGrouping === g.code);
     div.innerHTML = `
       <div class='reference-row-header'>
         <div style='flex:1 1 auto;'>
-          <span class='code-badge'>${g.code}</span>
-          <div class='row-meta'>${(g.label||'').replace(/</g,'&lt;')}</div>
+          ${editing ? `<input class='inline-edit-code' id='editCode_${g.code}' value='${g.code}' placeholder='Code' />` : `<span class='code-badge'>${g.code}</span>`}
+          ${editing ? `<input class='inline-edit-input' id='editLabel_${g.code}' value='${(g.label||'').replace(/'/g,"&#39;")}' placeholder='Label' />` : `<div class='row-meta'>${(g.label||'').replace(/</g,'&lt;')}</div>`}
         </div>
         <div class='row-actions'>
-          <button class='btn-admin mini-btn' onclick='editReferenceGrouping("${g.code}")' title='Edit'><i class='fas fa-edit'></i></button>
-          <button class='btn-admin secondary mini-btn' onclick='deleteReferenceGrouping("${g.code}")' title='Delete'><i class='fas fa-trash'></i></button>
+          ${editing ? `<button class='btn-admin mini-btn' onclick='inlineSaveGrouping("${g.code}")' title='Save'><i class="fas fa-save"></i></button><button class='btn-admin secondary mini-btn' onclick='cancelInlineEdit()' title='Cancel'><i class="fas fa-times"></i></button>` : `<button class='btn-admin mini-btn' onclick='startInlineEdit("${g.code}")' title='Edit'><i class='fas fa-edit'></i></button><button class='btn-admin secondary mini-btn' onclick='deleteReferenceGrouping("${g.code}")' title='Delete'><i class='fas fa-trash'></i></button>`}
         </div>
       </div>
-      <div class='row-items pill-cluster'>${itemsHtml}</div>
+      <div class='row-items pill-cluster'>
+        ${editing ? `<textarea class='inline-edit-textarea' id='editItems_${g.code}' rows='2' placeholder='Items (comma separated)'>${(g.items||[]).join(', ')}</textarea>` : itemsHtml}
+      </div>
+      ${editing ? `<div class='inline-rename-hint'>Changing the code will create a new entry and remove the old code.</div>`:''}
     `;
     list.appendChild(div);
   });
@@ -179,17 +181,52 @@ function toggleSort(){
 }
 function onKindChange(){ searchValue=''; document.getElementById('searchBox').value=''; loadReferenceGroupings(); }
 function reloadCurrent(){ loadReferenceGroupings(); }
-function editReferenceGrouping(code){
+function startInlineEdit(code){
   const g = referenceGroupings.find(x=>x.code===code);
   if(!g) return;
   editingReferenceGrouping = code;
-  document.getElementById('referenceGroupingFormTitle').textContent='Edit Reference Grouping';
-  document.getElementById('refCode').value=g.code;
-  document.getElementById('refLabel').value=g.label||'';
-  document.getElementById('refItems').value=(g.items||[]).join(', ');
-  document.getElementById('refCode').disabled=true;
-  document.getElementById('referenceGroupingForm').style.display='block';
-  adjustItemsLabel();
+  renderReferenceGroupings();
+  // focus label input
+  const labelInput = document.getElementById(`editLabel_${code}`);
+  if(labelInput){ labelInput.focus(); }
+}
+function cancelInlineEdit(){
+  editingReferenceGrouping = null;
+  renderReferenceGroupings();
+}
+function inlineSaveGrouping(origCode){
+  const g = referenceGroupings.find(x=>x.code===origCode);
+  if(!g) return;
+  const kind = document.getElementById('refKind').value;
+  const codeEl = document.getElementById(`editCode_${origCode}`);
+  const labelEl = document.getElementById(`editLabel_${origCode}`);
+  const itemsEl = document.getElementById(`editItems_${origCode}`);
+  const newCode = (codeEl ? codeEl.value : origCode).trim();
+  if(!newCode){ alert('Code required'); return; }
+  const label = (labelEl ? labelEl.value : g.label || '').trim();
+  const rawItems = itemsEl ? itemsEl.value : '';
+  const items = rawItems.split(/[,\n]/).map(x=>x.trim()).filter(x=>x);
+  // If code unchanged use PUT; else create new then delete old
+  if(newCode === origCode){
+    const payload = { code: newCode, label, items };
+    fetch(`/admin/reference-groupings/${origCode}?type=${kind}`, { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) })
+      .then(r=>r.json())
+      .then(data=>{ if(!data.success){ alert(data.message||'Update failed'); return; } editingReferenceGrouping=null; loadReferenceGroupings(); })
+      .catch(e=>alert('Error: '+e));
+  } else {
+    const createPayload = { code: newCode, label, items };
+    fetch(`/admin/reference-groupings?type=${kind}`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(createPayload) })
+      .then(r=>r.json())
+      .then(data=>{ if(!data.success){ alert(data.message||'Create failed'); return; }
+        // Delete old
+        fetch(`/admin/reference-groupings/${origCode}?type=${kind}`, { method:'DELETE' })
+          .then(r2=>r2.json())
+          .then(d2=>{ if(!d2.success){ alert('Old code delete failed: '+(d2.message||'')); }
+            editingReferenceGrouping=null; loadReferenceGroupings(); })
+          .catch(e2=>alert('Delete error: '+e2));
+      })
+      .catch(e=>alert('Error: '+e));
+  }
 }
 function saveReferenceGrouping(){
   const kind = document.getElementById('refKind').value;
@@ -197,7 +234,6 @@ function saveReferenceGrouping(){
   const label = document.getElementById('refLabel').value.trim();
   const rawItems = document.getElementById('refItems').value;
   let items = rawItems.split(/[,\n]/).map(x=>x.trim()).filter(x=>x);
-  if(kind==='sales'){ items = []; }
   if(!code){ alert('Code required'); return; }
   const payload = { code, label, items };
   const url = editingReferenceGrouping ? `/admin/reference-groupings/${code}?type=${kind}` : `/admin/reference-groupings?type=${kind}`;
