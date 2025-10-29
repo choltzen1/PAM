@@ -29,6 +29,11 @@ def _ensure_dm():
 # --- Helper persistence functions (mirroring legacy) ---
 USER_DATA_FILE = os.path.join('data', 'users.json')
 USER_GROUPS_FILE = os.path.join('data', 'user_groups.json')
+REFERENCE_GROUPINGS_FILES = {
+    'soc': os.path.join('static', 'soc_grouping.txt'),
+    'account': os.path.join('static', 'account_types.txt'),
+    'sales': os.path.join('static', 'sales_apps.txt')
+}
 
 def get_user_groups():
     try:
@@ -50,6 +55,136 @@ def save_user_groups(groups):
         os.makedirs(os.path.dirname(USER_GROUPS_FILE), exist_ok=True)
         with open(USER_GROUPS_FILE, 'w') as f:
             json.dump(groups, f, indent=2)
+    except Exception:
+        pass
+
+
+# --- Reference Groupings (txt-backed) Utilities ---
+# Standard Format v1 Specification:
+#   First line: "# PAM_GROUPINGS v1" (header comment)
+#   Comment lines start with '#', blank lines skipped.
+#   Data line format: CODE|LABEL|ITEM1,ITEM2,...
+#     - CODE: token (no internal pipe)
+#     - LABEL: free text (no internal pipe; any '-' or '–' retained)
+#     - ITEMS: comma-separated list (may be empty). For sales apps currently empty.
+# Legacy formats (existing mixed styles with dashes and pipes) are auto-parsed and
+# re-written into v1 upon save.
+STANDARD_GROUPINGS_HEADER = '# PAM_GROUPINGS v1'
+def _get_reference_file(kind: str) -> str:
+    if kind not in REFERENCE_GROUPINGS_FILES:
+        raise ValueError('Invalid grouping type')
+    return REFERENCE_GROUPINGS_FILES[kind]
+
+def load_reference_groupings(kind: str) -> list:
+    """Load groupings for a given kind using the standardized v1 format; fallback to legacy parsing.
+
+    Returns list of dicts: {code, label, items, raw}
+    """
+    path = _get_reference_file(kind)
+    results: list[dict] = []
+    if not os.path.exists(path):
+        return results
+    try:
+        with open(path, 'r', encoding='utf-8') as f:
+            lines = [ln.rstrip('\n') for ln in f]
+        # Detect standard format: header present OR majority of data lines contain two pipes
+        data_lines = [ln for ln in lines if ln.strip() and not ln.strip().startswith('#')]
+        pipe_like = sum(1 for ln in data_lines if ln.count('|') >= 2)
+        is_standard = any(ln.startswith(STANDARD_GROUPINGS_HEADER) for ln in lines) or (data_lines and pipe_like / max(len(data_lines),1) > 0.6)
+        if is_standard:
+            for raw in data_lines:
+                # Skip malformed lines gracefully
+                if raw.count('|') < 2:
+                    continue
+                code, label, items_part = (raw.split('|', 2) + ['', '', ''])[:3]
+                code = code.strip()
+                label = label.strip()
+                items_part = items_part.strip()
+                if not code:
+                    continue
+                # Split items by comma and strip
+                items = [it.strip() for it in items_part.split(',') if it.strip()] if items_part else []
+                results.append({'code': code, 'label': label, 'items': items, 'raw': raw})
+            return results
+        # Legacy fallback parsing retains prior behavior
+        import re
+        for raw in data_lines:
+            line = raw.strip()
+            code = None
+            label = ''
+            items: list[str] = []
+            if kind == 'soc':
+                # Legacy patterns
+                if line.lower().startswith('group '):
+                    m = re.match(r'^Group\s+([A-Za-z0-9]+)\s*-\s*(.*)$', line.split('|')[0])
+                    if m:
+                        code = m.group(1).strip(); label = m.group(2).strip()
+                    if '|' in line:
+                        details = line.split('|',1)[1].strip()
+                        if details:
+                            items = [d.strip() for d in details.split(',') if d.strip()]
+                else:
+                    # Pattern CODE - LABEL|items OR CODE|LABEL
+                    head, tail = (line.split('|',1)+[''])[:2]
+                    if ' - ' in head:
+                        parts = head.split(' - ',1)
+                        code = parts[0].strip(); label = parts[1].strip()
+                    else:
+                        # CODE|LABEL style already split above
+                        if '|' in line:
+                            code = head.strip(); label = tail.strip(); tail = ''
+                    if tail.strip():
+                        items = [d.strip() for d in tail.split(',') if d.strip()]
+            elif kind == 'account':
+                head, tail = (line.split('|',1)+[''])[:2]
+                if ' – ' in head:
+                    parts = head.split(' – ',1)
+                elif ' - ' in head:
+                    parts = head.split(' - ',1)
+                else:
+                    parts = [head,'']
+                code = parts[0].strip(); label = parts[1].strip()
+                if tail.strip():
+                    items = [d.strip() for d in re.split(r';', tail) if d.strip()]
+            else:  # sales
+                if ' - ' in line:
+                    parts = line.split(' - ',1)
+                    code = parts[0].strip(); label = parts[1].strip()
+                else:
+                    code = line
+                    label = ''
+            if code:
+                results.append({'code': code, 'label': label, 'items': items, 'raw': raw})
+    except Exception:
+        pass
+    return results
+
+def save_reference_groupings(kind: str, groups: list):
+    """Persist groups in standardized v1 format regardless of legacy input."""
+    path = _get_reference_file(kind)
+    # Normalize & sort unique codes
+    normalized = {}
+    for g in groups:
+        code = (g.get('code') or '').strip()
+        if not code:
+            continue
+        label = (g.get('label') or '').strip()
+        # Avoid pipe in label/items by replacing with '/' to preserve parser simplicity
+        label = label.replace('|','/')
+        items = [it.strip().replace('|','/') for it in (g.get('items') or []) if it.strip()]
+        normalized[code.upper()] = {'code': code.upper(), 'label': label, 'items': items}
+    ordered = [normalized[k] for k in sorted(normalized.keys())]
+    lines = [STANDARD_GROUPINGS_HEADER, f"# Generated {datetime.now().isoformat()} kind={kind}"]
+    for g in ordered:
+        items_part = ','.join(g['items']) if g['items'] else ''
+        lines.append(f"{g['code']}|{g['label']}|{items_part}")
+    try:
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        tmp = path + '.tmp'
+        with open(tmp, 'w', encoding='utf-8') as f:
+            for ln in lines:
+                f.write(ln + '\n')
+        os.replace(tmp, path)
     except Exception:
         pass
 
@@ -131,6 +266,11 @@ def admin_integrations_page():
 @admin_bp.route('/admin/security')
 def admin_security_page():
     return render_template('pam/admin_security.html')
+
+@admin_bp.route('/admin/groupings')
+def admin_groupings_page():
+    """Dedicated management page for device & reference groupings."""
+    return render_template('pam/admin_groupings.html')
 
 @admin_bp.route('/version-history', endpoint='version_history_page')
 def version_history_page():
@@ -551,3 +691,68 @@ def admin_create_group():
         return jsonify({'success': True, 'message': f'Group {group_id} created successfully', 'group': new_group})
     except Exception as e:
         return jsonify({'success': False, 'message': f'Failed to create group: {e}'})
+
+
+# --- Reference Groupings CRUD (txt-backed) ---
+@admin_bp.route('/admin/reference-groupings', methods=['GET'])
+def admin_list_reference_groupings():
+    kind = request.args.get('type','soc').strip()
+    try:
+        groups = load_reference_groupings(kind)
+        return jsonify({'success': True, 'type': kind, 'groups': groups})
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'Failed to load {kind} groupings: {e}'})
+
+@admin_bp.route('/admin/reference-groupings', methods=['POST'])
+def admin_create_reference_grouping():
+    kind = request.args.get('type','soc').strip()
+    try:
+        data = request.get_json(force=True)
+        code = (data.get('code') or '').strip()
+        label = (data.get('label') or '').strip()
+        items = data.get('items') or []
+        if not code:
+            return jsonify({'success': False, 'message': 'code required'}), 400
+        groups = load_reference_groupings(kind)
+        if any(g['code'].lower()==code.lower() for g in groups):
+            return jsonify({'success': False, 'message': 'code exists'}), 400
+        groups.append({'code': code, 'label': label, 'items': items, 'raw': None})
+        save_reference_groupings(kind, groups)
+        return jsonify({'success': True, 'message': 'Grouping added', 'group': {'code': code, 'label': label, 'items': items}})
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'Failed to add grouping: {e}'})
+
+@admin_bp.route('/admin/reference-groupings/<code>', methods=['PUT'])
+def admin_update_reference_grouping(code):
+    kind = request.args.get('type','soc').strip()
+    try:
+        data = request.get_json(force=True)
+        label = (data.get('label') or '').strip()
+        items = data.get('items') or []
+        groups = load_reference_groupings(kind)
+        found = False
+        for g in groups:
+            if g['code'].lower() == code.lower():
+                g['label'] = label
+                g['items'] = items
+                found = True
+                break
+        if not found:
+            return jsonify({'success': False, 'message': 'code not found'}), 404
+        save_reference_groupings(kind, groups)
+        return jsonify({'success': True, 'message': 'Grouping updated'})
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'Failed to update grouping: {e}'})
+
+@admin_bp.route('/admin/reference-groupings/<code>', methods=['DELETE'])
+def admin_delete_reference_grouping(code):
+    kind = request.args.get('type','soc').strip()
+    try:
+        groups = load_reference_groupings(kind)
+        new_groups = [g for g in groups if g['code'].lower()!=code.lower()]
+        if len(new_groups) == len(groups):
+            return jsonify({'success': False, 'message': 'code not found'}), 404
+        save_reference_groupings(kind, new_groups)
+        return jsonify({'success': True, 'message': 'Grouping deleted'})
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'Failed to delete grouping: {e}'})

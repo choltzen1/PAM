@@ -650,38 +650,62 @@ def updates_page():
 def approvers_page():
     dm = _ensure_data_manager()
     try:
-        target_promo_code = request.args.get('promo_code', '').strip()
-        rdc_data = dm.get_all_promos()
-        from data.storage import PromoDataManager as JSONManager
-        json_manager = JSONManager()
-        spe_data = json_manager.get_all_spe_promos()
-        rebates_data = json_manager.get_all_rebates()
-        all_promos = []
-        for promo_key, promo in rdc_data.items():
-            all_promos.append({'code': promo.get('code', promo_key), 'owner': promo.get('owner','Unknown'), 'type':'RDC'})
-        for spe_key, spe in spe_data.items():
-            all_promos.append({'code': spe.get('code', spe_key), 'owner': spe.get('owner','Unknown'), 'type':'SPE'})
-        for rebate_key, rebate in rebates_data.items():
-            all_promos.append({'code': rebate.get('code', rebate_key), 'owner': rebate.get('owner','Unknown'), 'type':'REBATE'})
+        import logging
+        log = logging.getLogger(__name__)
+
+        target_promo_code = request.args.get('promo_code', '').strip().upper()
+
+        # Use existing data manager (already initialized with DB credentials)
+        rdc_data = dm.get_all_promos() or {}
+        spe_data = {}
+        rebates_data = {}
+        # Guard for presence of methods (older data managers may not expose SPE/Rebate)
+        if hasattr(dm, 'get_all_spe_promos'):
+            spe_data = dm.get_all_spe_promos() or {}
+        if hasattr(dm, 'get_all_rebates'):
+            rebates_data = dm.get_all_rebates() or {}
+
+        all_promos: list[dict[str,str]] = []
+        def _append_all(source: dict[str, Any], ptype: str):
+            for code_key, promo in source.items():
+                # Some converters place code in promo['code']; fall back to key
+                code = str(promo.get('code') or code_key).upper()
+                owner = (promo.get('owner') or promo.get('Owner') or 'Unknown').strip() or 'Unknown'
+                all_promos.append({'code': code, 'owner': owner, 'type': ptype})
+        _append_all(rdc_data, 'RDC')
+        _append_all(spe_data, 'SPE')
+        _append_all(rebates_data, 'REBATE')
+
+        if not all_promos:
+            log.info("Approvers page: no promotions returned from data manager")
+
+        # Optionally prioritize a searched promo code at top
         if target_promo_code:
-            target_promos = [p for p in all_promos if p['code'] == target_promo_code]
-            other_promos = [p for p in all_promos if p['code'] != target_promo_code]
-            all_promos = target_promos + other_promos
+            prioritized = [p for p in all_promos if p['code'] == target_promo_code]
+            remainder = [p for p in all_promos if p['code'] != target_promo_code]
+            all_promos = prioritized + remainder
+            log.debug(f"Approvers page: prioritized {target_promo_code}, total promos {len(all_promos)}")
+
         promo_codes = [p['code'] for p in all_promos]
         owners = [p['owner'] for p in all_promos]
-        unique_owners = sorted(list(set(owners)))
+        unique_owners = sorted({o for o in owners if o and o.lower() != 'unknown'})
+
+        # Placeholder revenue approvers until integrated with user management
         revenue_approvers = [
             {'name': 'John Smith', 'email': 'john.smith@company.com'},
             {'name': 'Sarah Davis', 'email': 'sarah.davis@company.com'},
             {'name': 'Mike Johnson', 'email': 'mike.johnson@company.com'},
             {'name': 'Lisa Chen', 'email': 'lisa.chen@company.com'}
         ]
-        return render_template('pam/approvers.html',
-                               promo_codes=promo_codes,
-                               owners=owners,
-                               unique_owners=unique_owners,
-                               revenue_approvers=revenue_approvers,
-                               target_promo_code=target_promo_code)
+
+        return render_template(
+            'pam/approvers.html',
+            promo_codes=promo_codes,
+            owners=owners,
+            unique_owners=unique_owners,
+            revenue_approvers=revenue_approvers,
+            target_promo_code=target_promo_code,
+        )
     except Exception as e:
         flash(f'Error loading approvers data: {e}', 'error')
         return render_template('pam/approvers.html', promo_codes=[], owners=[], unique_owners=[], revenue_approvers=[], target_promo_code='')
@@ -697,11 +721,12 @@ def send_approval_email():
         promo_code = data.get('promo_code', '').upper()
         send_to_device_finance = data.get('device_finance', False)
         send_to_revenue_accounting = data.get('revenue_accounting', False)
+        send_trade = data.get('trade', False)
         
         if not promo_code:
             return jsonify({'success': False, 'message': 'Promo code is required'}), 400
         
-        if not send_to_device_finance and not send_to_revenue_accounting:
+        if not send_to_device_finance and not send_to_revenue_accounting and not send_trade:
             return jsonify({'success': False, 'message': 'At least one recipient is required'}), 400
         
         # Fetch promo details from database
@@ -783,6 +808,29 @@ def send_approval_email():
             # Track this approval request for later reply
             from data.approval_email_tracking import store_approval_request
             store_approval_request(promo_code, version_number, subject, 'cade.holtzen1@t-mobile.com')
+            
+            # Send trade devices email if trade is selected
+            if send_trade:
+                trade_devices = promo_data.get('eligible_trade_in_devices', 'No trade-in devices listed')
+                trade_subject = f'Trade Devices - {promo_code} - {bill_facing_name} - Version #{version_number}'
+                
+                # Format trade devices for display
+                if isinstance(trade_devices, str):
+                    devices_list = trade_devices
+                else:
+                    devices_list = str(trade_devices)
+                
+                trade_body = f'''Here are the eligible trade-in devices for {promo_code} - {bill_facing_name} - Version #{version_number}:<br><br><strong>Eligible Trade-In Devices:</strong><br>{devices_list.replace(chr(10), '<br>')}'''
+                
+                trade_result = mail_service.send_approval_email(
+                    recipients='cade.holtzen1@t-mobile.com',
+                    subject=trade_subject,
+                    body=trade_body,
+                    body_format='HTML'
+                )
+                
+                if trade_result['success']:
+                    result['message'] += ' + Trade devices email sent'
             
             return jsonify({'success': True, 'message': result['message']}), 200
         else:

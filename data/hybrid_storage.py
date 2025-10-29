@@ -965,17 +965,18 @@ class HybridPromoDataManager:
             if not content:
                 return []
             
-            sales_apps = []
-            lines = content.split('\n')
-            
-            for line in lines:
-                line = line.strip()
-                if line and ' - ' in line:
-                    code = line.split(' - ')[0].strip()
-                    if code:
-                        sales_apps.append(code)
-            
-            return sales_apps
+            codes = []
+            for raw in content.split('\n'):
+                line = raw.strip()
+                if not line or line.startswith('#'):
+                    continue
+                parts = line.split('|')
+                if not parts:
+                    continue
+                code = parts[0].strip()
+                if code:
+                    codes.append(code)
+            return codes
         except FileNotFoundError:
             print(f"Warning: sales_apps.txt file not found.")
             return []
@@ -994,32 +995,29 @@ class HybridPromoDataManager:
             
             if not content:
                 return "No sales application information found."
-            
-            details = []
-            lines = content.split('\n')
-            
-            for line in lines:
-                line = line.strip()
-                if not line:
+            out_blocks = []
+            for raw in content.split('\n'):
+                line = raw.strip()
+                if not line or line.startswith('#'):
                     continue
-                    
-                if ' - ' in line:
-                    parts = line.split(' - ', 1)
-                    if len(parts) >= 2:
-                        sales_app = parts[0].strip()
-                        description = parts[1].strip()
-                        
-                        details.append(f"<strong>{sales_app}</strong>")
-                        if description:
-                            details.append(description)
-                        details.append("")
+                parts = line.split('|')
+                if len(parts) < 1:
+                    continue
+                code = parts[0].strip()
+                label = parts[1].strip() if len(parts) > 1 else ''
+                items_part = parts[2].strip() if len(parts) > 2 else ''
+                block_parts = ["<div class='grouping-row'>"]
+                if label:
+                    block_parts.append(f"<div class='grouping-head'><strong>{code}</strong> - {label}</div>")
                 else:
-                    if line:
-                        # Handle lines without - separator
-                        details.append(f"<strong>{line}</strong>")
-                        details.append("")
-            
-            return "<br>".join(details)
+                    block_parts.append(f"<div class='grouping-head'><strong>{code}</strong></div>")
+                if items_part:
+                    items = [i.strip() for i in items_part.split(',') if i.strip()]
+                    if items:
+                        block_parts.append("<ul class='grouping-items'>" + "".join(f"<li>{i}</li>" for i in items) + "</ul>")
+                block_parts.append("</div>")
+                out_blocks.append("".join(block_parts))
+            return "".join(out_blocks) or "No sales application information found."
         
         except FileNotFoundError:
             return "Sales Applications file not found."

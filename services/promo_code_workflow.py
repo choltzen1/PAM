@@ -80,7 +80,7 @@ class PromoCodeWorkflow:
             num += 1
 
     # --------------- Creation -----------------------
-    def create_from_orbit(self, orbit_id: str, execution_type: str = 'RDC', user: str = 'System') -> Dict[str, Any]:
+    def create_from_orbit(self, orbit_id: str, execution_type: str = 'RDC', user: str = 'System', config: str = '') -> Dict[str, Any]:
         """Ingest orbit record and create promo if not already present.
 
         Returns success False with existing_code if already created.
@@ -110,6 +110,7 @@ class PromoCodeWorkflow:
         if not full_row:
             return {'success': False, 'error': f'Orbit {oid} not found'}
         new_code = self.generate_next_code()
+        cfg = (config or '').lower()
         # Allocate next sku_group_id (always generate regardless of orbit row value)
         try:
             existing_db_ids = set(self.db.get_all_sku_group_ids())
@@ -121,6 +122,19 @@ class PromoCodeWorkflow:
         except Exception as alloc_err:
             return {'success': False, 'error': f'SKU group ID allocation failed: {alloc_err}'}
         # Core insertion column mapping (expand to reduce null columns). Only include keys with non-None values.
+        # Defaults pulled from orbit row; override based on config before insertion dict assembly
+        device_sales_type = full_row.get('device_sales_type')
+        activation_type = full_row.get('activation_type')
+        product_type = full_row.get('product_type')
+        if cfg == 'standard gsm' or cfg == 'standard_gsm' or cfg == 'standard-gsm':
+            product_type = 'G'
+            device_sales_type = 'S01'
+            activation_type = 'NA1'
+        elif cfg == 'standard mi' or cfg == 'standard_mi' or cfg == 'standard-mi':
+            product_type = 'B'
+            device_sales_type = 'S01'
+            activation_type = 'NA1'
+
         candidate_fields = {
             'code': new_code,
             'orbit_id': oid,
@@ -135,8 +149,8 @@ class PromoCodeWorkflow:
             'promo_end_date': full_row.get('promo_end_date'),
             'comm_end_date': full_row.get('comm_end_date'),
             'application_grace_period': full_row.get('application_grace_period'),
-            'device_sales_type': full_row.get('device_sales_type'),
-            'activation_type': full_row.get('activation_type'),
+            'device_sales_type': device_sales_type,
+            'activation_type': activation_type,
             'active_line_required': full_row.get('active_line_required'),
             'maintain_soc': full_row.get('maintain_soc'),
             'limit_per_ban': full_row.get('limit_per_ban'),
@@ -151,7 +165,7 @@ class PromoCodeWorkflow:
             'amount': full_row.get('amount'),
             'nseip_drop': full_row.get('nseip_drop'),
             'dcd_web_cart': full_row.get('dcd_web_cart'),
-            'product_type': full_row.get('product_type'),
+            'product_type': product_type,
             'bogo': full_row.get('bogo'),
             'fpd_display_promo': full_row.get('fpd_display_promo'),
             'on_menu': full_row.get('on_menu'),

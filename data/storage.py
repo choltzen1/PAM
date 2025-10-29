@@ -1080,40 +1080,34 @@ class PromoDataManager:
         ]
     
     def get_soc_grouping_details(self) -> str:
-        """Return the full SOC grouping details as formatted text."""
+        """Return formatted HTML with CODE - LABEL and bullet list of items using standardized pipe format."""
         soc_file_path = os.path.join(os.path.dirname(__file__), '..', 'static', 'soc_grouping.txt')
-        details = []
-        
         try:
-            with open(soc_file_path, 'r', encoding='utf-8') as file:
-                for line in file:
-                    line = line.strip()
-                    if line and '|' in line:
-                        # Split on the first | to separate group info from details
-                        group_part, details_part = line.split('|', 1)
-                        
-                        # Format the group part
-                        details.append(f"<strong>{group_part.strip()}</strong>")
-                        
-                        # Format the details part if it exists
-                        if details_part.strip():
-                            # Split details by comma and format as bullet points
-                            detail_items = [item.strip() for item in details_part.split(',') if item.strip()]
-                            for item in detail_items:
-                                details.append(f"• {item}")
-                        
-                        details.append("")  # Add blank line between groups
-                    elif line:
-                        # Handle lines without | separator
-                        details.append(f"<strong>{line}</strong>")
-                        details.append("")
-            
-            return "<br>".join(details)
-        
-        except FileNotFoundError:
-            return "SOC Grouping file not found."
+            if not os.path.exists(soc_file_path):
+                return "SOC Grouping file not found."
+            out_blocks = []
+            with open(soc_file_path, 'r', encoding='utf-8') as f:
+                for raw in f:
+                    line = raw.strip()
+                    if not line or line.startswith('#'):
+                        continue
+                    # Expect CODE|LABEL|items
+                    parts = line.split('|')
+                    if len(parts) < 2:
+                        continue
+                    code = parts[0].strip()
+                    label = parts[1].strip()
+                    items_part = parts[2].strip() if len(parts) > 2 else ''
+                    block = [f"<div class='grouping-row'><div class='grouping-head'><strong>{code}</strong> - {label}</div>"]
+                    if items_part:
+                        items = [i.strip() for i in items_part.split(',') if i.strip()]
+                        if items:
+                            block.append("<ul class='grouping-items'>" + "".join(f"<li>{i}</li>" for i in items) + "</ul>")
+                    block.append("</div>")
+                    out_blocks.append("".join(block))
+            return "".join(out_blocks) or "No SOC groupings found"
         except Exception as e:
-            return f"Error reading SOC groupings: {str(e)}"
+            return f"Error reading SOC groupings: {e}"
     
     def get_account_types(self) -> List[str]:
         """Get list of account type codes from account_types.txt"""
@@ -1124,46 +1118,33 @@ class PromoDataManager:
         ]
     
     def get_account_type_details(self) -> str:
-        """Get detailed account type information from account_types.txt"""
+        """Return formatted HTML for account types using standardized pipe format."""
         try:
             account_types_file = os.path.join(os.path.dirname(__file__), '..', 'static', 'account_types.txt')
-            
-            with open(account_types_file, 'r', encoding='utf-8') as file:
-                content = file.read().strip()
-            
-            if not content:
-                return "No account type information found."
-            
-            details = []
-            lines = content.split('\n')
-            
-            for line in lines:
-                line = line.strip()
-                if not line:
-                    continue
-                    
-                if '|' in line:
+            if not os.path.exists(account_types_file):
+                return "Account Types file not found."
+            out_blocks = []
+            with open(account_types_file, 'r', encoding='utf-8') as f:
+                for raw in f:
+                    line = raw.strip()
+                    if not line or line.startswith('#'):
+                        continue
                     parts = line.split('|')
-                    if len(parts) >= 2:
-                        account_type = parts[0].strip()
-                        description = parts[1].strip()
-                        
-                        details.append(f"<strong>{account_type}</strong>")
-                        if description:
-                            details.append(description)
-                        details.append("")
-                else:
-                    if line:
-                        # Handle lines without | separator
-                        details.append(f"<strong>{line}</strong>")
-                        details.append("")
-            
-            return "<br>".join(details)
-        
-        except FileNotFoundError:
-            return "Account Types file not found."
+                    if len(parts) < 2:
+                        continue
+                    code = parts[0].strip()
+                    label = parts[1].strip()
+                    items_part = parts[2].strip() if len(parts) > 2 else ''
+                    block = [f"<div class='grouping-row'><div class='grouping-head'><strong>{code}</strong> - {label}</div>"]
+                    if items_part:
+                        items = [i.strip() for i in items_part.split(',') if i.strip()]
+                        if items:
+                            block.append("<ul class='grouping-items'>" + "".join(f"<li>{i}</li>" for i in items) + "</ul>")
+                    block.append("</div>")
+                    out_blocks.append("".join(block))
+            return "".join(out_blocks) or "No account types found"
         except Exception as e:
-            return f"Error reading account types: {str(e)}"
+            return f"Error reading account types: {e}"
     
     def get_sales_applications(self) -> List[str]:
         """Get list of sales application codes from sales_apps.txt"""
@@ -1176,17 +1157,19 @@ class PromoDataManager:
             if not content:
                 return []
             
-            sales_apps = []
-            lines = content.split('\n')
-            
-            for line in lines:
-                line = line.strip()
-                if line and ' - ' in line:
-                    code = line.split(' - ')[0].strip()
-                    if code:
-                        sales_apps.append(code)
-            
-            return sales_apps
+            codes: List[str] = []
+            for raw in content.split('\n'):
+                line = raw.strip()
+                if not line or line.startswith('#'):
+                    continue
+                # Standard pipe format CODE|LABEL|ITEMS (ITEMS optional)
+                parts = line.split('|')
+                if not parts:
+                    continue
+                code = parts[0].strip()
+                if code:
+                    codes.append(code)
+            return codes
         except FileNotFoundError:
             print(f"Warning: sales_apps.txt file not found.")
             return []
@@ -1195,46 +1178,39 @@ class PromoDataManager:
             return []
     
     def get_sales_application_details(self) -> str:
-        """Get detailed sales application information from sales_apps.txt"""
+        """Return formatted HTML for sales applications using standardized pipe format."""
         try:
             sales_apps_file = os.path.join(os.path.dirname(__file__), '..', 'static', 'sales_apps.txt')
-            
-            with open(sales_apps_file, 'r', encoding='utf-8') as file:
-                content = file.read().strip()
-            
-            if not content:
-                return "No sales application information found."
-            
-            details = []
-            lines = content.split('\n')
-            
-            for line in lines:
-                line = line.strip()
-                if not line:
-                    continue
-                    
-                if ' - ' in line:
-                    parts = line.split(' - ', 1)
-                    if len(parts) >= 2:
-                        sales_app = parts[0].strip()
-                        description = parts[1].strip()
-                        
-                        details.append(f"<strong>{sales_app}</strong>")
-                        if description:
-                            details.append(description)
-                        details.append("")
-                else:
-                    if line:
-                        # Handle lines without - separator
-                        details.append(f"<strong>{line}</strong>")
-                        details.append("")
-            
-            return "<br>".join(details)
-        
-        except FileNotFoundError:
-            return "Sales Applications file not found."
+            if not os.path.exists(sales_apps_file):
+                return "Sales Applications file not found."
+            out_blocks = []
+            with open(sales_apps_file, 'r', encoding='utf-8') as f:
+                for raw in f:
+                    line = raw.strip()
+                    if not line or line.startswith('#'):
+                        continue
+                    parts = line.split('|')
+                    if len(parts) < 2:
+                        continue
+                    code = parts[0].strip()
+                    label = parts[1].strip() if len(parts) > 1 else ''
+                    items_part = parts[2].strip() if len(parts) > 2 else ''
+                    block_parts = ["<div class='grouping-row'>"]
+                    # Build head: CODE plus optional label
+                    if label:
+                        block_parts.append(f"<div class='grouping-head'><strong>{code}</strong> - {label}</div>")
+                    else:
+                        block_parts.append(f"<div class='grouping-head'><strong>{code}</strong></div>")
+                    # Items list
+                    if items_part:
+                        items = [i.strip() for i in items_part.split(',') if i.strip()]
+                        if items:
+                            block_parts.append("<ul class='grouping-items'>" + "".join(f"<li>{i}</li>" for i in items) + "</ul>")
+                    block_parts.append("</div>")
+                    out_blocks.append("".join(block_parts))
+            return "".join(out_blocks) or "No sales applications found"
         except Exception as e:
-            return f"Error reading sales applications: {str(e)}"
+            return f"Error reading sales applications: {e}"
     
     # File Upload Methods
     

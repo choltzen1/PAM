@@ -206,7 +206,14 @@ document.addEventListener('DOMContentLoaded', function() {
         // Indicate generating status in that row's result box
         showPriorityResult(idx, `<em>Generating promo for Orbit ${orbitId}...</em>`, 'searching');
         try {
-          const res = await fetch('/api/generate_next_promo_code?orbit_id=' + encodeURIComponent(orbitId));
+          // Include config param for standard gsm/mi selections
+          let extra = '';
+          if(config === 'standard gsm' || config === 'standard_gsm' || config === 'standard-gsm'){
+            extra = '&config=standard_gsm';
+          } else if(config === 'standard mi' || config === 'standard_mi' || config === 'standard-mi') {
+            extra = '&config=standard_mi';
+          }
+          const res = await fetch('/api/generate_next_promo_code?orbit_id=' + encodeURIComponent(orbitId) + extra);
           const js = await res.json().catch(()=>({}));
           if(res.ok && js.success){
             let createdCode = js.promo_code || js.code || js.existing_code || '';

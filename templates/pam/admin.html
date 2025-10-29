@@ -87,6 +87,7 @@
         <a href="{{ url_for('promo.links_main_page') }}" class="btn-admin secondary"><i class="fas fa-link"></i> Links</a>
         <a href="{{ url_for('admin_bp.version_history_page') }}" class="btn-admin secondary"><i class="fas fa-history"></i> Version History</a>
         <a href="/admin/user-management" class="btn-admin secondary"><i class="fas fa-users"></i> Users</a>
+        <a href="/admin/groupings" class="btn-admin secondary"><i class="fas fa-object-group"></i> Groupings</a>
       </div>
     </div>
 
@@ -119,6 +120,7 @@
       <div class="small-hint" style="margin-top:6px;color:#888;font-size:12px;">Actions here permanently remove rows from the source table.</div>
       <div class="card-actions" style="margin-top:12px;">
         <a href="/admin/pam-promotions" class="btn-admin"><i class="fas fa-arrow-right"></i> Open Manager</a>
+        <button class="btn-admin secondary" onclick="openModal('deviceGroupingsModal')"><i class="fas fa-object-group"></i> Device Groupings</button>
       </div>
     </div>
   </div>
@@ -300,6 +302,40 @@
         </div>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- Device Groupings Modal -->
+<div id="deviceGroupingsModal" class="modal">
+  <div class="modal-content" style="max-width: 900px; max-height:85vh; overflow-y:auto;">
+    <div class="modal-header">
+      <h2 class="modal-title">Device Groupings</h2>
+      <span class="close" onclick="closeModal('deviceGroupingsModal')">&times;</span>
+    </div>
+    <div class="groupings-toolbar" style="display:flex; gap:8px; margin-bottom:12px;">
+      <button class="btn-admin" onclick="showCreateGroupingForm()"><i class="fas fa-plus"></i> New Grouping</button>
+      <button class="btn-admin secondary" onclick="reloadGroupings()"><i class="fas fa-sync"></i> Refresh</button>
+    </div>
+    <div id="groupingForm" style="display:none; border:1px solid #ddd; padding:12px; border-radius:6px; margin-bottom:14px;">
+      <h4 id="groupingFormTitle">Create Device Grouping</h4>
+      <div class="form-group">
+        <label>Description</label>
+        <input type="text" id="groupingDescription" class="form-control" placeholder="e.g. New iPhone 16 Launch Bundle">
+      </div>
+      <div class="form-group">
+        <label>SKUs (comma or newline separated)</label>
+        <textarea id="groupingSkus" class="form-control" rows="4" placeholder="Enter SKUs"></textarea>
+      </div>
+      <div class="form-group">
+        <label>Optional Existing SKU Group ID (3 chars)</label>
+        <input type="text" id="groupingSkuGroupId" maxlength="3" class="form-control" placeholder="Leave blank to auto allocate">
+      </div>
+      <div class="form-actions" style="margin-top:8px; display:flex; gap:8px;">
+        <button class="btn-admin" onclick="saveGrouping()"><i class="fas fa-save"></i> Save</button>
+        <button class="btn-admin secondary" onclick="cancelGroupingForm()">Cancel</button>
+      </div>
+    </div>
+    <div id="deviceGroupingsContainer" class="groupings-container" style="display:grid; gap:10px; grid-template-columns:repeat(auto-fill,minmax(260px,1fr));"></div>
   </div>
 </div>
 
@@ -743,6 +779,8 @@ setInterval(loadCacheStatus, 60000);
 let currentUsers = {};
 let currentGroups = {};
 let editingUser = null;
+let editingGrouping = null;
+let currentGroupings = {};
 
 function showUserTab(tabName) {
   // Hide all tabs
@@ -936,6 +974,116 @@ document.addEventListener('DOMContentLoaded', function() {
   console.log('Admin Dashboard loaded successfully');
   loadCacheStatus(); // Load cache status immediately
 });
+
+// Device Groupings Functions
+function reloadGroupings(){
+  fetch('/admin/device-groupings')
+    .then(r=>r.json())
+    .then(data=>{
+      if(!data.success){showAlert('Failed to load groupings: '+data.message,'error');return;}
+      currentGroupings = data.groupings || {};
+      renderGroupings();
+    })
+    .catch(e=>showAlert('Error loading groupings: '+e,'error'));
+}
+
+function renderGroupings(){
+  const container = document.getElementById('deviceGroupingsContainer');
+  if(!container) return;
+  container.innerHTML='';
+  const entries = Object.entries(currentGroupings);
+  if(!entries.length){
+    container.innerHTML = '<div style="color:#666;">No groupings created yet.</div>';
+    return;
+  }
+  entries.forEach(([gid, g])=>{
+    const card = document.createElement('div');
+    card.className='grouping-card';
+    card.style.border='1px solid #ccc';
+    card.style.padding='10px';
+    card.style.borderRadius='6px';
+    card.innerHTML = `
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <strong>${g.sku_group_id}</strong>
+        <div style="display:flex; gap:4px;">
+          <button class="btn-admin" style="font-size:0.7rem;" onclick="editGrouping('${gid}')"><i class="fas fa-edit"></i></button>
+          <button class="btn-admin secondary" style="font-size:0.7rem;" onclick="deleteGrouping('${gid}')"><i class="fas fa-trash"></i></button>
+        </div>
+      </div>
+      <div style="font-size:12px; color:#555; margin-top:4px;">${(g.description||'').replace(/</g,'&lt;')}</div>
+      <div style="margin-top:6px; font-size:11px; max-height:90px; overflow:auto;">${(g.skus||[]).map(s=>`<span style='display:inline-block; background:#f4f4f4; padding:2px 4px; margin:2px; border-radius:4px;'>${s}</span>`).join('')}</div>
+      <div style="font-size:10px; margin-top:6px; color:#888;">Created: ${g.created_date? new Date(g.created_date).toLocaleString():''}</div>
+    `;
+    container.appendChild(card);
+  });
+}
+
+function showCreateGroupingForm(){
+  editingGrouping = null;
+  document.getElementById('groupingFormTitle').textContent='Create Device Grouping';
+  document.getElementById('groupingDescription').value='';
+  document.getElementById('groupingSkus').value='';
+  document.getElementById('groupingSkuGroupId').value='';
+  document.getElementById('groupingSkuGroupId').disabled=false;
+  document.getElementById('groupingForm').style.display='block';
+}
+
+function editGrouping(gid){
+  const g = currentGroupings[gid];
+  if(!g) return;
+  editingGrouping = gid;
+  document.getElementById('groupingFormTitle').textContent='Edit Device Grouping';
+  document.getElementById('groupingDescription').value=g.description||'';
+  document.getElementById('groupingSkus').value=(g.skus||[]).join('\n');
+  document.getElementById('groupingSkuGroupId').value=g.sku_group_id||'';
+  document.getElementById('groupingSkuGroupId').disabled=true; // prevent changing allocated id
+  document.getElementById('groupingForm').style.display='block';
+}
+
+function cancelGroupingForm(){
+  document.getElementById('groupingForm').style.display='none';
+  editingGrouping=null;
+}
+
+function saveGrouping(){
+  const desc = document.getElementById('groupingDescription').value.trim();
+  let rawSkuText = document.getElementById('groupingSkus').value;
+  const providedId = document.getElementById('groupingSkuGroupId').value.trim();
+  const parts = rawSkuText.split(/[\n,]/).map(s=>s.trim()).filter(s=>s);
+  if(!parts.length){ showAlert('Enter at least one SKU','error'); return; }
+  const payload = { description: desc, skus: parts };
+  if(!editingGrouping && providedId){ payload.sku_group_id = providedId; }
+  const url = editingGrouping ? `/admin/device-groupings/${editingGrouping}` : '/admin/device-groupings';
+  const method = editingGrouping ? 'PUT' : 'POST';
+  fetch(url, { method, headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) })
+    .then(r=>r.json())
+    .then(data=>{
+      if(!data.success){showAlert(data.message||'Save failed','error');return;}
+      showAlert(data.message,'success');
+      cancelGroupingForm();
+      reloadGroupings();
+    })
+    .catch(e=>showAlert('Error saving grouping: '+e,'error'));
+}
+
+function deleteGrouping(gid){
+  if(!confirm('Delete grouping '+gid+'?')) return;
+  fetch(`/admin/device-groupings/${gid}`, { method:'DELETE' })
+    .then(r=>r.json())
+    .then(data=>{
+      if(!data.success){showAlert(data.message||'Delete failed','error');return;}
+      showAlert(data.message,'success');
+      reloadGroupings();
+    })
+    .catch(e=>showAlert('Error deleting grouping: '+e,'error'));
+}
+
+// Auto-load groupings when modal opens
+document.getElementById('deviceGroupingsModal')?.addEventListener('click', (e)=>{ /* placeholder */ });
+function openModal(modalId){
+  document.getElementById(modalId).style.display='block';
+  if(modalId==='deviceGroupingsModal'){ reloadGroupings(); }
+}
 </script>
 
 {% endblock %}

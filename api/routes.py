@@ -261,9 +261,10 @@ def generate_next_promo_code():
                 if not orbit_id:
                         return jsonify({'success': False, 'error': 'orbit_id required'}), 400
                 exec_type = (request.args.get('execution_type') or 'RDC').strip() or 'RDC'
+                config = (request.args.get('config') or '').strip().lower()
                 from services.promo_code_workflow import PromoCodeWorkflow
                 workflow = PromoCodeWorkflow(data_manager)
-                result = workflow.create_from_orbit(orbit_id, execution_type=exec_type, user='System')
+                result = workflow.create_from_orbit(orbit_id, execution_type=exec_type, user='System', config=config)
                 if result.get('success') and 'code' in result:
                         result['promo_code'] = result['code']
                 status = 200 if result.get('success') else (409 if result.get('existing_code') else 400)

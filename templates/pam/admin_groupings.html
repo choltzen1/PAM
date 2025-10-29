@@ -1,0 +1,222 @@
+{% extends "pam/base_pam.html" %}
+{% block title %}Groupings Management - PAM{% endblock %}
+{% block header_left %}
+<div class="global-header-promotions">
+  <i class="fas fa-object-group header-icon"></i>
+  <div class="header-text">
+    <h2>Groupings Management</h2>
+  <p>Manage canonical reference groupings (SOC, Account Types, Sales Apps)</p>
+  </div>
+</div>
+{% endblock %}
+{% block head %}
+<style>
+  .groupings-layout { max-width:1180px; margin:0 auto; }
+  .panel { border:1px solid #d6d6dc; border-radius:10px; background:#fff; box-shadow:0 2px 4px rgba(0,0,0,0.06); display:flex; flex-direction:column; }
+  .panel-header { padding:12px 16px; border-bottom:1px solid #eee; font-weight:600; display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+  .panel-header > span { flex:1 1 auto; }
+  .toolbar { display:flex; gap:6px; flex-wrap:wrap; align-items:center; }
+  .panel-body { padding:0; }
+  .panel-section { padding:14px 18px; }
+  .panel-section + .panel-section { border-top:1px solid #f1f1f4; }
+  .sku-pill { display:inline-block; background:#f8f9fb; border:1px solid #e0e2e6; padding:3px 7px; margin:2px; border-radius:14px; font-size:11px; line-height:14px; white-space:nowrap; }
+  .sku-pill:hover { background:#eef1f5; }
+  .reference-row { border:1px solid #ececee; border-radius:8px; padding:10px 12px; font-size:12px; margin-bottom:10px; background:#fafbfc; position:relative; }
+  .reference-row.collapsed .row-items { display:none; }
+  .reference-row-header { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; }
+  .code-badge { display:inline-block; background:#5e0066; color:#fff; padding:2px 8px; font-size:11px; border-radius:12px; font-weight:600; letter-spacing:0.5px; box-shadow:0 1px 2px rgba(0,0,0,0.15); }
+  .count-badge { background:#eef0f4; border:1px solid #d1d5da; padding:4px 10px; border-radius:20px; font-size:11px; font-weight:600; }
+  .actions-inline button, .toolbar button { font-size:0.65rem; padding:4px 7px; }
+  .mini-btn { font-size:0.65rem; padding:4px 7px; }
+  .empty-hint { color:#666; font-size:13px; margin:10px 0; text-align:center; }
+  .search-box { flex:1 1 200px; min-width:180px; }
+  .search-box input { width:100%; padding:6px 9px; border:1px solid #ccc; border-radius:6px; font-size:12px; }
+  .pill-cluster { margin-top:6px; }
+  .row-meta { font-size:11px; color:#444; margin-top:4px; }
+  .toggle-collapse { cursor:pointer; color:#5e0066; font-size:11px; font-weight:600; }
+  .toggle-collapse:hover { text-decoration:underline; }
+  .row-actions { display:flex; gap:4px; }
+  .view-mode-btn.active { background:#5e0066; color:#fff; }
+  .form-inline-grid { display:grid; grid-template-columns: repeat(auto-fit,minmax(210px,1fr)); gap:10px; }
+  .panel-footer { padding:10px 16px; background:#f8f8fa; border-top:1px solid #eee; display:flex; justify-content:flex-end; gap:6px; }
+</style>
+{% endblock %}
+{% block content %}
+<div class="groupings-page">
+  <div class="page-intro" style="margin-bottom:16px;">
+  <p>This page manages reference groupings sourced from legacy text files (SOC, Account Types, Sales Apps). Edits update the underlying .txt files.</p>
+  </div>
+  <div class="groupings-layout">
+    <!-- Reference Groupings Panel -->
+    <div class="panel" id="referenceGroupingsPanel">
+      <div class="panel-header">
+        <span><i class="fas fa-layer-group"></i> Reference Groupings <span id="groupingsCount" class="count-badge" title="Visible / Total">0</span></span>
+        <div class="toolbar">
+          <select id="refKind" class="form-control mini-btn" onchange="onKindChange()" title="Grouping type">
+            <option value="soc">SOC</option>
+            <option value="account">Account Types</option>
+            <option value="sales">Sales Apps</option>
+          </select>
+          <div class="search-box"><input id="searchBox" type="text" placeholder="Search code, label, item..." oninput="onSearchInput()" /></div>
+          <button class="btn-admin mini-btn" onclick="toggleSort()" id="sortBtn" title="Toggle sort order"><i class="fas fa-sort-alpha-down"></i></button>
+          <button class="btn-admin mini-btn" onclick="showReferenceGroupingForm()" title="New"><i class="fas fa-plus"></i></button>
+          <button class="btn-admin secondary mini-btn" onclick="reloadCurrent()" title="Reload"><i class="fas fa-sync"></i></button>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div id="referenceGroupingForm" style="display:none; border:1px solid #d3d3d8; padding:14px 16px; border-radius:10px; margin:14px 0; background:#fcfcfd;">
+          <h4 id="referenceGroupingFormTitle" style="margin-top:0; font-size:15px;">Create Reference Grouping</h4>
+          <div class="form-inline-grid">
+            <div>
+              <label class="small">Code</label>
+              <input type="text" id="refCode" class="form-control" placeholder="e.g. G99" />
+            </div>
+            <div>
+              <label class="small">Label</label>
+              <input type="text" id="refLabel" class="form-control" placeholder="Short label" />
+            </div>
+            <div style="grid-column:1/-1;">
+              <label class="small" id="refItemsLabel">Items (comma separated)</label>
+              <textarea id="refItems" class="form-control" rows="3" placeholder="Item1, Item2"></textarea>
+            </div>
+          </div>
+          <div class="panel-footer" style="justify-content:space-between;">
+            <div style="font-size:11px; color:#555;" id="formHint">Enter code and label; items optional for SOC/Account; ignored for Sales Apps.</div>
+            <div style="display:flex; gap:6px;">
+              <button class="btn-admin mini-btn" onclick="saveReferenceGrouping()"><i class="fas fa-save"></i> Save</button>
+              <button class="btn-admin secondary mini-btn" onclick="cancelReferenceGroupingForm()">Cancel</button>
+            </div>
+          </div>
+        </div>
+        <div id="referenceGroupingsList" style="padding:16px 18px 4px;"></div>
+      </div>
+    </div>
+
+<script>
+let editingReferenceGrouping = null;
+let referenceGroupings = [];
+let filteredGroupings = [];
+let sortAsc = true;
+let searchValue = '';
+// Reference groupings
+function showReferenceGroupingForm(){
+  editingReferenceGrouping = null;
+  document.getElementById('referenceGroupingFormTitle').textContent='Create Reference Grouping';
+  document.getElementById('refCode').value='';
+  document.getElementById('refLabel').value='';
+  document.getElementById('refItems').value='';
+  document.getElementById('refCode').disabled=false;
+  document.getElementById('referenceGroupingForm').style.display='block';
+  adjustItemsLabel();
+}
+function cancelReferenceGroupingForm(){
+  editingReferenceGrouping = null;
+  document.getElementById('referenceGroupingForm').style.display='none';
+}
+function adjustItemsLabel(){
+  const kind = document.getElementById('refKind').value;
+  const labelEl = document.getElementById('refItemsLabel');
+  if(kind==='sales'){ labelEl.textContent='Items not used for Sales Apps (ignored)'; } else { labelEl.textContent='Items (comma separated)'; }
+}
+function loadReferenceGroupings(){
+  const kind = document.getElementById('refKind').value;
+  adjustItemsLabel();
+  fetch(`/admin/reference-groupings?type=${kind}`)
+    .then(r=>r.json())
+    .then(data=>{ if(!data.success){ alert('Failed loading reference groupings'); return; } referenceGroupings = data.groups||[]; applyFilterAndRender(); })
+    .catch(e=>alert('Error: '+e));
+}
+function applyFilterAndRender(){
+  const sv = searchValue.trim().toLowerCase();
+  filteredGroupings = referenceGroupings.filter(g=>{
+    if(!sv) return true;
+    const hay = [g.code, g.label, ...(g.items||[])].join(' ').toLowerCase();
+    return hay.includes(sv);
+  });
+  filteredGroupings.sort((a,b)=>{
+    if(a.code === b.code) return 0;
+    return sortAsc ? (a.code > b.code ? 1 : -1) : (a.code < b.code ? 1 : -1);
+  });
+  renderReferenceGroupings();
+}
+function renderReferenceGroupings(){
+  const list = document.getElementById('referenceGroupingsList');
+  list.innerHTML='';
+  if(!filteredGroupings.length){ list.innerHTML='<div class="empty-hint">No reference groupings.</div>'; updateCount(); return; }
+  filteredGroupings.forEach(g=>{
+    const div = document.createElement('div');
+    div.className='reference-row';
+    const itemsHtml = (g.items||[]).map(i=>`<span class='sku-pill'>${i}</span>`).join('');
+    div.innerHTML = `
+      <div class='reference-row-header'>
+        <div style='flex:1 1 auto;'>
+          <span class='code-badge'>${g.code}</span>
+          <div class='row-meta'>${(g.label||'').replace(/</g,'&lt;')}</div>
+        </div>
+        <div class='row-actions'>
+          <button class='btn-admin mini-btn' onclick='editReferenceGrouping("${g.code}")' title='Edit'><i class='fas fa-edit'></i></button>
+          <button class='btn-admin secondary mini-btn' onclick='deleteReferenceGrouping("${g.code}")' title='Delete'><i class='fas fa-trash'></i></button>
+        </div>
+      </div>
+      <div class='row-items pill-cluster'>${itemsHtml}</div>
+    `;
+    list.appendChild(div);
+  });
+  updateCount();
+}
+function updateCount(){
+  const badge = document.getElementById('groupingsCount');
+  badge.textContent = `${filteredGroupings.length}/${referenceGroupings.length}`;
+}
+function onSearchInput(){
+  searchValue = document.getElementById('searchBox').value;
+  applyFilterAndRender();
+}
+function toggleSort(){
+  sortAsc = !sortAsc;
+  document.getElementById('sortBtn').innerHTML = sortAsc ? '<i class="fas fa-sort-alpha-down"></i>' : '<i class="fas fa-sort-alpha-up"></i>';
+  applyFilterAndRender();
+}
+function onKindChange(){ searchValue=''; document.getElementById('searchBox').value=''; loadReferenceGroupings(); }
+function reloadCurrent(){ loadReferenceGroupings(); }
+function editReferenceGrouping(code){
+  const g = referenceGroupings.find(x=>x.code===code);
+  if(!g) return;
+  editingReferenceGrouping = code;
+  document.getElementById('referenceGroupingFormTitle').textContent='Edit Reference Grouping';
+  document.getElementById('refCode').value=g.code;
+  document.getElementById('refLabel').value=g.label||'';
+  document.getElementById('refItems').value=(g.items||[]).join(', ');
+  document.getElementById('refCode').disabled=true;
+  document.getElementById('referenceGroupingForm').style.display='block';
+  adjustItemsLabel();
+}
+function saveReferenceGrouping(){
+  const kind = document.getElementById('refKind').value;
+  const code = document.getElementById('refCode').value.trim();
+  const label = document.getElementById('refLabel').value.trim();
+  const rawItems = document.getElementById('refItems').value;
+  let items = rawItems.split(/[,\n]/).map(x=>x.trim()).filter(x=>x);
+  if(kind==='sales'){ items = []; }
+  if(!code){ alert('Code required'); return; }
+  const payload = { code, label, items };
+  const url = editingReferenceGrouping ? `/admin/reference-groupings/${code}?type=${kind}` : `/admin/reference-groupings?type=${kind}`;
+  const method = editingReferenceGrouping ? 'PUT' : 'POST';
+  fetch(url,{method, headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)})
+    .then(r=>r.json())
+    .then(data=>{ if(!data.success){ alert(data.message||'Save failed'); return; } cancelReferenceGroupingForm(); loadReferenceGroupings(); })
+    .catch(e=>alert('Error: '+e));
+}
+function deleteReferenceGrouping(code){
+  const kind = document.getElementById('refKind').value;
+  if(!confirm('Delete '+code+'?')) return;
+  fetch(`/admin/reference-groupings/${code}?type=${kind}`,{method:'DELETE'})
+    .then(r=>r.json())
+    .then(data=>{ if(!data.success){ alert(data.message||'Delete failed'); return; } loadReferenceGroupings(); })
+    .catch(e=>alert('Error: '+e));
+}
+
+// Init
+document.addEventListener('DOMContentLoaded', ()=>{ loadReferenceGroupings(); });
+</script>
+{% endblock %}

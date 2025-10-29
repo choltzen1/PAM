@@ -16,5 +16,14 @@
     "request_timestamp": "2025-10-22T21:47:39.590141",
     "approval_timestamp": null,
     "approved": false
+  },
+  "R367_v1": {
+    "promo_code": "R367",
+    "version_number": "1",
+    "request_subject": "RDC Approval request - R367 - Samsung Trade ID250610 - Version #1",
+    "request_recipients": "cade.holtzen1@t-mobile.com",
+    "request_timestamp": "2025-10-23T17:08:16.274194",
+    "approval_timestamp": null,
+    "approved": false
   }
 }
