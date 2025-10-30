@@ -1,0 +1,105 @@
+{% extends 'research/research_base.html' %}
+{% block title %}PETE - Promo Escalation Tool{% endblock %}
+{% block content %}
+<div id="research-app" class="pete-form-flow">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 style="font-size:1.3rem; margin:0;">PETE Troubleshooting</h2>
+    <a href="{{ url_for('research.index') }}" class="btn btn-secondary btn-sm">Back</a>
+  </div>
+  <div class="row g-4">
+    <div class="col-lg-4">
+      <div class="card rs-card">
+        <div class="card-body">
+          <h5 class="card-title">🤖 Ask PETEbot</h5>
+          <form method="post" class="mb-2" autocomplete="off">
+            <input type="hidden" name="form_name" value="chat_form" />
+            <input type="text" name="prompt" class="form-control form-control-sm mb-2" placeholder="Ask about a promo (e.g. R188 SKUs)">
+            <button class="btn btn-primary btn-sm w-100">Ask</button>
+          </form>
+          <div class="pete-chat-log" style="max-height:300px; overflow:auto; font-size:.65rem;">
+            {% for msg in chat_history %}
+              <div class="chat-msg {{ msg.role }}"><span class="role fw-bold text-secondary">{{ msg.role|capitalize }}</span><div class="text">{{ msg.content }}</div></div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-8">
+      <div class="card rs-card">
+        <div class="card-body">
+          <h5 class="card-title">📘 Do you have an EIP_ID?</h5>
+          <form method="post" class="row gy-2 gx-2 align-items-end">
+            <input type="hidden" name="form_name" value="data_form" />
+            <div class="col-12 col-md-3">
+              <label class="form-label">Mode</label>
+              <select class="form-select form-select-sm" name="has_eip" id="has_eip" onchange="togglePeteMode()">
+                <option value="Yes">Yes</option>
+                <option value="No">No</option>
+              </select>
+            </div>
+            <div class="col-12 col-md-5" id="eip_group">
+              <label class="form-label">EIP_ID</label>
+              <input type="text" class="form-control form-control-sm" name="eip_id" value="{{ eip_id }}" placeholder="Enter EIP_ID">
+            </div>
+            <div class="col-12 col-md-5 d-none" id="ban_group">
+              <label class="form-label">BAN</label>
+              <input type="text" class="form-control form-control-sm" name="ban" placeholder="Enter BAN">
+            </div>
+            <div class="col-12 col-md-2">
+              <button class="btn btn-success btn-sm w-100">Run</button>
+            </div>
+          </form>
+          {% if eip_df is defined and eip_df is not none and eip_df.shape[0] > 0 %}
+            <hr/>
+            <h6>🔍 EIP_IDs Found for BAN</h6>
+            <div class="table-responsive small">{{ eip_df.to_html(classes='table table-sm table-striped', index=False) | safe }}</div>
+            <form method="post" class="row g-2 align-items-end mt-2">
+              <input type="hidden" name="form_name" value="data_form" />
+              <input type="hidden" name="action" value="run_lookup_from_select" />
+              <div class="col-12 col-md-8">
+                <label class="form-label">Select an EIP_ID</label>
+                <select class="form-select form-select-sm" name="selected_eip">
+                  <option value="">-- choose --</option>
+                  {% for eid in eip_df['EQUIP_ID'].astype(str).unique() %}
+                    <option value="{{ eid }}">{{ eid }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="col-12 col-md-4">
+                <button class="btn btn-primary btn-sm w-100">Run Promo Lookup</button>
+              </div>
+            </form>
+          {% endif %}
+          {% if df_html %}
+            <hr/><h6>✅ Promo Data Pulled</h6>{{ df_html|safe }}
+          {% endif %}
+          {% if order_ids is defined and order_ids|length > 0 %}
+            <hr/><h6>📦 Order Detail IDs</h6>
+            <p class="small mb-2">{{ order_ids|join(', ') }}</p>
+          {% endif %}
+          {% if error_df_html %}
+            <hr/><h6>⚠️ Promo Error Reasons</h6>{{ error_df_html|safe }}
+          {% endif %}
+          {% if rate_plan_df_html %}
+            <hr/><h6>📋 Rate Plan Info (BAN {{ used_ban }})</h6>{{ rate_plan_df_html|safe }}
+          {% endif %}
+          {% if aal_df_html %}
+            <hr/><h6>➕ Active Add-a-Line (AAL) Subscribers</h6>{{ aal_df_html|safe }}
+          {% endif %}
+          {% if trade_df_html %}
+            <hr/><h6>📦 Trade Data (QR Replica)</h6>{{ trade_df_html|safe }}
+          {% elif trade_query_attempted and (order_ids|length == 0) %}
+            <div class="alert alert-info mt-3">No Order Detail IDs available for Trade Data pull.</div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+function togglePeteMode(){const mode=document.getElementById('has_eip').value;document.getElementById('eip_group').classList.toggle('d-none',mode!=='Yes');document.getElementById('ban_group').classList.toggle('d-none',mode!=='No');}
+togglePeteMode();
+</script>
+{% endblock %}

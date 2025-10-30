@@ -36,9 +36,9 @@ def landing_page():
             'key': 'research',
             'label': 'Research',
             'icon': 'bi-search-heart',
-            'url': url_for('core.research_workspace'),
-            'ribbon': 'Preview',
-            'sub': 'Placeholder'
+            'url': url_for('research.index'),
+            'ribbon': 'Alpha',
+            'sub': 'Data & Eligibility'
         }
     ]
     objective = (
@@ -49,8 +49,6 @@ def landing_page():
 def offers_workspace():
     return render_template('pam/offers_placeholder.html')
 
-@core_bp.route('/research', endpoint='research_workspace')
-def research_workspace():
-    return render_template('pam/research_placeholder.html')
+# Research workspace handled by research blueprint (/research)
 
 __all__ = ['core_bp']

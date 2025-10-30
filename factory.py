@@ -10,6 +10,7 @@ from core import core_bp
 from api.routes import api_bp, init_data_manager as init_api_data_manager
 from jira.routes import jira_bp
 from data.storage import PromoDataManager
+from research import research_bp
 
 _loaded_env = load_dotenv()
 print(f"[startup] .env loaded={_loaded_env} ORBIT_DB_SERVER={os.getenv('ORBIT_DB_SERVER')} ORBIT_DB_DATABASE={os.getenv('ORBIT_DB_DATABASE')} PAM_DB_SERVER={os.getenv('PAM_DB_SERVER')} PAM_DB_DATABASE={os.getenv('PAM_DB_DATABASE')}")
@@ -36,6 +37,7 @@ def create_app(config: dict | None = None) -> Flask:
     app.register_blueprint(admin_bp)
     app.register_blueprint(jira_bp)
     app.register_blueprint(api_bp)
+    app.register_blueprint(research_bp)
 
     # Initialize data manager in blueprints
     init_promo_data_manager(data_manager)

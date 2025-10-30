@@ -1,0 +1,65 @@
+<section id="query-console" class="rs-query-console">
+  <div class="rs-grid">
+    <div class="rs-card" id="card-promo-eligibility">
+      <h5>Promo Eligibility</h5>
+      <form id="promo-eligibility-form">
+        <input type="text" id="promo_code" placeholder="Promo code (e.g. P1234)">
+        <button type="submit" class="btn btn-primary">Lookup</button>
+      </form>
+      <small class="helper">Returns SKU, SOC, segment, port & device group context (first 10k rows).</small>
+      <div id="promo-eligibility-result" class="result-mount"></div>
+    </div>
+
+    <div class="rs-card" id="card-eip">
+      <h5>EIP / Equipment Lookup</h5>
+      <form id="eip-form">
+        <input type="text" id="eip_id" placeholder="EIP ID">
+        <button type="submit" class="btn btn-primary">Lookup</button>
+      </form>
+      <small class="helper">Includes BAN, MSISDN, program, status & related agreement fields.</small>
+      <div id="eip-result" class="result-mount"></div>
+    </div>
+
+    <div class="rs-card" id="card-ban">
+      <h5>BAN Context</h5>
+      <form id="ban-form">
+        <input type="text" id="ban" placeholder="BAN">
+        <button type="submit" class="btn btn-primary">Lookup</button>
+      </form>
+      <small class="helper">Pulls latest rate plans & active AAL lines.</small>
+      <div id="ban-rate-plans" class="result-mount"></div>
+      <div id="ban-aal-lines" class="result-mount" style="margin-top:.35rem"></div>
+    </div>
+
+    <div class="rs-card" id="card-trade">
+      <h5>Trade Data</h5>
+      <form id="trade-form">
+        <input type="text" id="order_ids" placeholder="Comma separated ORDER_LINE_IDs">
+        <button type="submit" class="btn btn-primary">Lookup</button>
+      </form>
+      <small class="helper">Replica trade-in data for provided order line IDs.</small>
+      <div id="trade-result" class="result-mount"></div>
+    </div>
+
+    <div class="rs-card" id="card-promo-errors">
+      <h5>Promo Error Reasons</h5>
+      <form id="promo-error-form">
+        <input type="text" id="eip_error_id" placeholder="EIP ID">
+        <button type="submit" class="btn btn-primary">Lookup</button>
+      </form>
+      <small class="helper">Diagnostic reasons why promo eligibility may fail.</small>
+      <div id="promo-error-result" class="result-mount"></div>
+    </div>
+
+    <div class="rs-card" id="card-extract">
+      <h5>Extract Promo Code</h5>
+      <form id="extract-form">
+        <textarea id="extract_text" rows="3" placeholder="Paste arbitrary text"></textarea>
+        <button type="submit" class="btn btn-secondary">Extract</button>
+      </form>
+      <small class="helper">Pattern finds first uppercase alphas + digits sequence.</small>
+      <div id="extract-result" class="result-mount"></div>
+    </div>
+  </div>
+  <div class="rs-footer-note">Results limited to first 10,000 rows where applicable. All queries isolated via research connection pool.</div>
+</section>

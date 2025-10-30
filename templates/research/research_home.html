@@ -1,0 +1,33 @@
+{% extends 'research/research_base.html' %}
+{% block title %}Research Workspace{% endblock %}
+{% block content %}
+<div class="landing-wrapper research-landing">
+  <div class="landing-intro">
+    <h1>Research Workspace</h1>
+    <p class="tagline">Select a diagnostic space to begin.</p>
+  </div>
+  <div class="landing-grid">
+    <a class="landing-tile" href="{{ url_for('research.pete') }}" data-key="pete">
+      <div class="ribbon">Live</div>
+      <div class="icon-circle"><i class="bi bi-tools"></i></div>
+      <div class="tile-label">PETE</div>
+      <div class="tile-sub">Promo Escalation</div>
+      <div class="tile-desc">Promo & equipment troubleshooting: EIP lookup, BAN context, rate plans, errors, trade, eligibility chat.</div>
+    </a>
+    <a class="landing-tile disabled" href="#" data-key="spete" aria-disabled="true">
+      <div class="ribbon">Planned</div>
+      <div class="icon-circle"><i class="bi bi-graph-up"></i></div>
+      <div class="tile-label">SPETE</div>
+      <div class="tile-sub">Segmentation</div>
+      <div class="tile-desc">Service promotional data (coming soon).</div>
+    </a>
+    <a class="landing-tile disabled" href="#" data-key="repete" aria-disabled="true">
+      <div class="ribbon">Planned</div>
+      <div class="icon-circle"><i class="bi bi-clock-history"></i></div>
+      <div class="tile-label">Re-PETE</div>
+      <div class="tile-sub">Historical Diff</div>
+      <div class="tile-desc">Rebate research and data (coming soon).</div>
+    </a>
+  </div>
+  </div>
+{% endblock %}
