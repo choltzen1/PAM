@@ -18,30 +18,30 @@
       <div class="card rs-card">
         <div class="card-body">
           <h5 class="card-title">📘 Do you have an EIP_ID?</h5>
-          <form method="post" class="row gy-2 gx-2 align-items-end">
+          <form method="post" class="row gy-2 gx-2 align-items-end pete-mode-form">
             <input type="hidden" name="form_name" value="data_form" />
-            <div class="col-12 col-md-4 d-flex align-items-center gap-2">
+            <div class="col-12 col-md-3 d-flex align-items-center gap-2">
               <div>
                 <label class="form-label mb-0" style="font-size:.75rem;letter-spacing:.5px;">MODE</label><br>
                 <div class="form-check form-check-inline">
-                  <input class="form-check-input" type="radio" name="has_eip" id="mode_eip" value="Yes" checked onchange="toggleMode()">
+                  <input class="form-check-input" type="radio" name="has_eip" id="mode_eip" value="Yes">
                   <label class="form-check-label" for="mode_eip">EIP_ID</label>
                 </div>
                 <div class="form-check form-check-inline">
-                  <input class="form-check-input" type="radio" name="has_eip" id="mode_ban" value="No" onchange="toggleMode()">
+                  <input class="form-check-input" type="radio" name="has_eip" id="mode_ban" value="No">
                   <label class="form-check-label" for="mode_ban">BAN</label>
                 </div>
               </div>
             </div>
-            <div class="col-12 col-md-5" id="input_eip">
+            <div class="col-12 col-md-5 mode-input pete-hidden" id="input_eip">
               <label class="form-label">EIP_ID</label>
-              <input type="text" class="form-control form-control-sm" name="eip_id" value="{{ eip_id }}" placeholder="Enter EIP_ID">
+              <input type="text" class="form-control form-control-sm" name="eip_id" value="" placeholder="Enter EIP_ID">
             </div>
-            <div class="col-12 col-md-5 d-none" id="input_ban">
+            <div class="col-12 col-md-5 mode-input pete-hidden" id="input_ban">
               <label class="form-label">BAN</label>
-              <input type="text" class="form-control form-control-sm" name="ban" value="{{ last_ban }}" placeholder="Enter BAN">
+              <input type="text" class="form-control form-control-sm" name="ban" value="" placeholder="Enter BAN">
             </div>
-            <div class="col-12 col-md-3">
+            <div class="col-12 col-md-2">
               <button class="btn btn-success btn-sm w-100">Run</button>
             </div>
           </form>
@@ -142,10 +142,27 @@
 {% block extra_js %}
 <script>
 function toggleMode(){
-  const eip = document.getElementById('mode_eip').checked;
-  document.getElementById('input_eip').classList.toggle('d-none', !eip);
-  document.getElementById('input_ban').classList.toggle('d-none', eip);
+  const eipRadio = document.getElementById('mode_eip');
+  const banRadio = document.getElementById('mode_ban');
+  const eipWrap = document.getElementById('input_eip');
+  const banWrap = document.getElementById('input_ban');
+  // hide both initially
+  eipWrap.classList.add('pete-hidden');
+  banWrap.classList.add('pete-hidden');
+  eipWrap.querySelector('input').removeAttribute('required');
+  banWrap.querySelector('input').removeAttribute('required');
+  if (eipRadio.checked){
+  eipWrap.classList.remove('pete-hidden');
+    eipWrap.querySelector('input').setAttribute('required','required');
+  } else if (banRadio.checked){
+  banWrap.classList.remove('pete-hidden');
+    banWrap.querySelector('input').setAttribute('required','required');
+  }
 }
+// bind events immediately (script is after DOM so safe)
+document.getElementById('mode_eip').addEventListener('change', toggleMode);
+document.getElementById('mode_ban').addEventListener('change', toggleMode);
+// initial state
 toggleMode();
 // Chat panel logic
 function toggleChatPanel(){
@@ -204,6 +221,9 @@ document.addEventListener('DOMContentLoaded', peteBindCopy);
   @media (max-width: 992px){
      #peteChatPanel{top:60px;height:calc(100vh - 70px);}
   }
+  /* Active mode input highlight */
+  /* Removed active-mode highlight per updated requirement */
+  .pete-hidden{display:none !important;}
 </style>
 <div id="peteChatPanel" aria-hidden="true">
   <header>
