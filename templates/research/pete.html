@@ -2,57 +2,53 @@
 {% block title %}PETE - Promo Escalation Tool{% endblock %}
 {% block content %}
 <div id="research-app" class="pete-form-flow">
+  <style>
+    .neon-banner{display:flex;align-items:center;justify-content:center;background:#000000cc;border:2px solid #E20074;padding:10px 14px;border-radius:12px;margin-bottom:18px;box-shadow:0 0 10px #E20074,0 0 20px #E20074,0 0 30px #E20074;}
+    .neon-banner h1{color:#fff;font-size:1.15rem;margin:0;text-shadow:0 0 5px #E20074,0 0 10px #E20074,0 0 15px #E20074;letter-spacing:.5px;}
+  </style>
+  <div class="neon-banner"><h1>PETE: Promo Escalation Troubleshooting Engine</h1></div>
   <div class="d-flex justify-content-between align-items-center mb-3">
     <h2 style="font-size:1.3rem; margin:0;">PETE Troubleshooting</h2>
-    <a href="{{ url_for('research.index') }}" class="btn btn-secondary btn-sm">Back</a>
+  </div>
+  <div class="mb-3">
+    <button type="button" class="btn btn-outline-primary btn-sm" onclick="toggleChatPanel()" id="chatToggleBtn" aria-expanded="false" aria-controls="peteChatPanel">💬 PETEbot Chat</button>
   </div>
   <div class="row g-4">
-    <div class="col-lg-4">
-      <div class="card rs-card">
-        <div class="card-body">
-          <h5 class="card-title">🤖 Ask PETEbot</h5>
-          <form method="post" class="mb-2" autocomplete="off">
-            <input type="hidden" name="form_name" value="chat_form" />
-            <input type="text" name="prompt" class="form-control form-control-sm mb-2" placeholder="Ask about a promo (e.g. R188 SKUs)">
-            <button class="btn btn-primary btn-sm w-100">Ask</button>
-          </form>
-          <div class="pete-chat-log" style="max-height:300px; overflow:auto; font-size:.65rem;">
-            {% for msg in chat_history %}
-              <div class="chat-msg {{ msg.role }}"><span class="role fw-bold text-secondary">{{ msg.role|capitalize }}</span><div class="text">{{ msg.content }}</div></div>
-            {% endfor %}
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="col-lg-8">
+    <div class="col-12">
       <div class="card rs-card">
         <div class="card-body">
           <h5 class="card-title">📘 Do you have an EIP_ID?</h5>
           <form method="post" class="row gy-2 gx-2 align-items-end">
             <input type="hidden" name="form_name" value="data_form" />
-            <div class="col-12 col-md-3">
-              <label class="form-label">Mode</label>
-              <select class="form-select form-select-sm" name="has_eip" id="has_eip" onchange="togglePeteMode()">
-                <option value="Yes">Yes</option>
-                <option value="No">No</option>
-              </select>
+            <div class="col-12 col-md-4 d-flex align-items-center gap-2">
+              <div>
+                <label class="form-label mb-0" style="font-size:.75rem;letter-spacing:.5px;">MODE</label><br>
+                <div class="form-check form-check-inline">
+                  <input class="form-check-input" type="radio" name="has_eip" id="mode_eip" value="Yes" checked onchange="toggleMode()">
+                  <label class="form-check-label" for="mode_eip">EIP_ID</label>
+                </div>
+                <div class="form-check form-check-inline">
+                  <input class="form-check-input" type="radio" name="has_eip" id="mode_ban" value="No" onchange="toggleMode()">
+                  <label class="form-check-label" for="mode_ban">BAN</label>
+                </div>
+              </div>
             </div>
-            <div class="col-12 col-md-5" id="eip_group">
+            <div class="col-12 col-md-5" id="input_eip">
               <label class="form-label">EIP_ID</label>
               <input type="text" class="form-control form-control-sm" name="eip_id" value="{{ eip_id }}" placeholder="Enter EIP_ID">
             </div>
-            <div class="col-12 col-md-5 d-none" id="ban_group">
+            <div class="col-12 col-md-5 d-none" id="input_ban">
               <label class="form-label">BAN</label>
-              <input type="text" class="form-control form-control-sm" name="ban" placeholder="Enter BAN">
+              <input type="text" class="form-control form-control-sm" name="ban" value="{{ last_ban }}" placeholder="Enter BAN">
             </div>
-            <div class="col-12 col-md-2">
+            <div class="col-12 col-md-3">
               <button class="btn btn-success btn-sm w-100">Run</button>
             </div>
           </form>
-          {% if eip_df is defined and eip_df is not none and eip_df.shape[0] > 0 %}
+          {% if eip_ids %}
             <hr/>
-            <h6>🔍 EIP_IDs Found for BAN</h6>
-            <div class="table-responsive small">{{ eip_df.to_html(classes='table table-sm table-striped', index=False) | safe }}</div>
+            <h6>🔍 EIP_IDs Found for BAN {{ last_ban }}</h6>
+            {% if eip_df_html %}<div class="table-responsive small">{{ eip_df_html | safe }}</div>{% endif %}
             <form method="post" class="row g-2 align-items-end mt-2">
               <input type="hidden" name="form_name" value="data_form" />
               <input type="hidden" name="action" value="run_lookup_from_select" />
@@ -60,7 +56,7 @@
                 <label class="form-label">Select an EIP_ID</label>
                 <select class="form-select form-select-sm" name="selected_eip">
                   <option value="">-- choose --</option>
-                  {% for eid in eip_df['EQUIP_ID'].astype(str).unique() %}
+                  {% for eid in eip_ids %}
                     <option value="{{ eid }}">{{ eid }}</option>
                   {% endfor %}
                 </select>
@@ -69,25 +65,70 @@
                 <button class="btn btn-primary btn-sm w-100">Run Promo Lookup</button>
               </div>
             </form>
+          {% elif last_mode == 'No' and eip_list_attempted and not eip_ids %}
+            <hr/>
+            <div class="alert alert-warning small">No EIP accounts found for BAN {{ last_ban }}.</div>
           {% endif %}
           {% if df_html %}
-            <hr/><h6>✅ Promo Data Pulled</h6>{{ df_html|safe }}
+            <div class="pete-data-section">
+              <div class="pete-data-header">
+                <h6>✅ Promo Data Pulled</h6>
+                <div class="actions">
+                  <button type="button" class="copy-btn" data-copy-target="#promoDataTable">COPY</button>
+                </div>
+              </div>
+              <div class="table-wrap" id="promoDataTable">{{ df_html|safe }}</div>
+              {% if main_fallback_used %}<div class="small-note">Primary dataset missing BAN — fallback account query executed.</div>{% endif %}
+              {% if missing_ban %}<div class="small-note">No BAN found. Rate Plan & AAL data skipped.</div>{% endif %}
+              {% if missing_order_ids %}<div class="small-note">ORDER_DETAIL_ID not present; trade data may be unavailable.</div>{% endif %}
+            </div>
           {% endif %}
           {% if order_ids is defined and order_ids|length > 0 %}
-            <hr/><h6>📦 Order Detail IDs</h6>
-            <p class="small mb-2">{{ order_ids|join(', ') }}</p>
+            <div class="pete-data-section">
+              <div class="pete-data-header">
+                <h6>📦 Order Detail IDs</h6>
+                <div class="actions">
+                  <button type="button" class="copy-btn" data-copy-text="{{ order_ids|join(', ') }}">COPY</button>
+                </div>
+              </div>
+              <p class="small mb-2" style="font-size:.6rem;">{{ order_ids|join(', ') }}</p>
+            </div>
           {% endif %}
           {% if error_df_html %}
-            <hr/><h6>⚠️ Promo Error Reasons</h6>{{ error_df_html|safe }}
+            <div class="pete-data-section">
+              <div class="pete-data-header">
+                <h6>⚠️ Promo Error Reasons</h6>
+                <div class="actions"><button type="button" class="copy-btn" data-copy-target="#errorReasonsTable">COPY</button></div>
+              </div>
+              <div class="table-wrap" id="errorReasonsTable">{{ error_df_html|safe }}</div>
+            </div>
           {% endif %}
           {% if rate_plan_df_html %}
-            <hr/><h6>📋 Rate Plan Info (BAN {{ used_ban }})</h6>{{ rate_plan_df_html|safe }}
+            <div class="pete-data-section">
+              <div class="pete-data-header">
+                <h6>📋 Rate Plan Info (BAN {{ used_ban }})</h6>
+                <div class="actions"><button type="button" class="copy-btn" data-copy-target="#ratePlanTable">COPY</button></div>
+              </div>
+              <div class="table-wrap" id="ratePlanTable">{{ rate_plan_df_html|safe }}</div>
+            </div>
           {% endif %}
           {% if aal_df_html %}
-            <hr/><h6>➕ Active Add-a-Line (AAL) Subscribers</h6>{{ aal_df_html|safe }}
+            <div class="pete-data-section">
+              <div class="pete-data-header">
+                <h6>➕ Active Add-a-Line (AAL) Subscribers</h6>
+                <div class="actions"><button type="button" class="copy-btn" data-copy-target="#aalTable">COPY</button></div>
+              </div>
+              <div class="table-wrap" id="aalTable">{{ aal_df_html|safe }}</div>
+            </div>
           {% endif %}
           {% if trade_df_html %}
-            <hr/><h6>📦 Trade Data (QR Replica)</h6>{{ trade_df_html|safe }}
+            <div class="pete-data-section">
+              <div class="pete-data-header">
+                <h6>📦 Trade Data (QR Replica)</h6>
+                <div class="actions"><button type="button" class="copy-btn" data-copy-target="#tradeTable">COPY</button></div>
+              </div>
+              <div class="table-wrap" id="tradeTable">{{ trade_df_html|safe }}</div>
+            </div>
           {% elif trade_query_attempted and (order_ids|length == 0) %}
             <div class="alert alert-info mt-3">No Order Detail IDs available for Trade Data pull.</div>
           {% endif %}
@@ -96,10 +137,93 @@
     </div>
   </div>
 </div>
+<div class="text-center mt-3" style="font-size:.55rem;opacity:.7;">Version 2.0.1 · © 2025 Promo Ops · Flask adaptation of PETE Streamlit flow</div>
 {% endblock %}
 {% block extra_js %}
 <script>
-function togglePeteMode(){const mode=document.getElementById('has_eip').value;document.getElementById('eip_group').classList.toggle('d-none',mode!=='Yes');document.getElementById('ban_group').classList.toggle('d-none',mode!=='No');}
-togglePeteMode();
+function toggleMode(){
+  const eip = document.getElementById('mode_eip').checked;
+  document.getElementById('input_eip').classList.toggle('d-none', !eip);
+  document.getElementById('input_ban').classList.toggle('d-none', eip);
+}
+toggleMode();
+// Chat panel logic
+function toggleChatPanel(){
+  const panel = document.getElementById('peteChatPanel');
+  const btn = document.getElementById('chatToggleBtn');
+  const isOpen = panel.classList.toggle('open');
+  btn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+  btn.innerText = isOpen ? '✖ Close PETEbot' : '💬 PETEbot Chat';
+}
+// Copy buttons
+function peteBindCopy(){
+  document.querySelectorAll('.copy-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const targetSel = btn.getAttribute('data-copy-target');
+      const copyTextAttr = btn.getAttribute('data-copy-text');
+      let text = '';
+      if (copyTextAttr){
+        text = copyTextAttr;
+      } else if (targetSel){
+        const el = document.querySelector(targetSel);
+        if (el){
+          // extract plain text from table preserving cells separated by tabs and rows by newlines
+          const t = el.querySelector('table');
+          if (t){
+            const rows = Array.from(t.querySelectorAll('tr')).map(r => Array.from(r.querySelectorAll('th,td')).map(c => c.innerText.trim()).join('\t')).join('\n');
+            text = rows;
+          } else {
+            text = el.innerText.trim();
+          }
+        }
+      }
+      if (!text) return;
+      navigator.clipboard.writeText(text).then(()=>{btn.innerText='COPIED';setTimeout(()=>btn.innerText='COPY',1500);});
+    });
+  });
+}
+document.addEventListener('DOMContentLoaded', peteBindCopy);
 </script>
+<style>
+  /* Off-canvas chat panel (light theme for readability) */
+  #peteChatPanel{position:fixed;top:70px;right:0;width:340px;max-width:90%;height:calc(100vh - 90px);background:#fdfdfd;border-left:3px solid #E20074;box-shadow:0 0 10px rgba(226,0,116,.4);z-index:1050;display:flex;flex-direction:column;transform:translateX(100%);transition:transform .3s ease;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;}
+  #peteChatPanel.open{transform:translateX(0);}
+  #peteChatPanel header{padding:8px 12px;background:linear-gradient(90deg,#222,#444);border-bottom:1px solid #ddd;color:#fff;font-size:.75rem;display:flex;align-items:center;justify-content:space-between;}
+  #peteChatPanel header .title{font-weight:600;letter-spacing:.5px;}
+  #peteChatPanel .inner{padding:10px;overflow:auto;font-size:.65rem;}
+  #peteChatPanel form input[type=text]{background:#ffffff;color:#222;border:1px solid #bbb;font-size:.7rem;}
+  #peteChatPanel form input[type=text]::placeholder{color:#888;}
+  #peteChatPanel .chat-msg{margin-bottom:8px;line-height:1.25;}
+  #peteChatPanel .chat-msg .role{font-size:.55rem;text-transform:uppercase;margin-right:4px;letter-spacing:.5px;color:#555;display:inline-block;min-width:42px;}
+  #peteChatPanel .chat-msg .text{display:inline-block;max-width:90%;}
+  #peteChatPanel .chat-msg.user .text{background:#e7f1ff;border:1px solid #b5d4ff;color:#0d3b66;padding:4px 6px;border-radius:6px;}
+  #peteChatPanel .chat-msg.assistant .text{background:#eef9f3;border:1px solid #b9e8d1;color:#0c3d2e;padding:4px 6px;border-radius:6px;}
+  #peteChatPanel .chat-msg.user .text code,#peteChatPanel .chat-msg.assistant .text code{background:#fff;padding:2px 3px;border-radius:3px;font-size:.6rem;border:1px solid #eee;}
+  #peteChatPanel .chat-msg:last-child{margin-bottom:2px;}
+  #peteChatPanel .pete-chat-log{padding-bottom:4px;}
+  @media (max-width: 992px){
+     #peteChatPanel{top:60px;height:calc(100vh - 70px);}
+  }
+</style>
+<div id="peteChatPanel" aria-hidden="true">
+  <header>
+    <span class="title">PETEbot</span>
+    <button type="button" class="btn btn-sm btn-outline-light" onclick="toggleChatPanel()">Close</button>
+  </header>
+  <div class="inner">
+    <form method="post" class="mb-2" autocomplete="off">
+      <input type="hidden" name="form_name" value="chat_form" />
+      <input type="text" name="prompt" class="form-control form-control-sm mb-2" placeholder="Ask about a promo (e.g. R188 SKUs)">
+      <button class="btn btn-primary btn-sm w-100">Ask</button>
+    </form>
+    <div class="pete-chat-log">
+      {% for msg in chat_history %}
+        <div class="chat-msg {{ msg.role }}"><span class="role fw-bold text-secondary">{{ msg.role|capitalize }}</span><div class="text">{{ msg.content }}</div></div>
+      {% endfor %}
+      {% if chat_history|length == 0 %}
+        <div class="text-muted" style="font-size:.6rem;">No chat yet. Ask PETEbot about a promo code or SKU group.</div>
+      {% endif %}
+    </div>
+  </div>
+</div>
 {% endblock %}

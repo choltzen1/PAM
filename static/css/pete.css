@@ -1,0 +1,40 @@
+/* PETE specific table and data section enhancements */
+:root {
+  --pete-accent: #E20074;
+  --pete-bg-alt: #fbf7fb;
+  --pete-border: 1px solid #e3e6ea;
+  --pete-radius: 12px;
+  --pete-font-xs: .62rem;
+}
+
+.pete-data-section { margin-top:1.65rem; margin-bottom:1.5rem; }
+.pete-data-section:first-of-type { margin-top:1rem; }
+.pete-data-header { display:flex; align-items:center; justify-content:space-between; gap:.75rem; margin-bottom:.5rem; }
+.pete-data-header h6 { margin:0; font-size:.75rem; font-weight:600; letter-spacing:.6px; text-transform:uppercase; color:#222; }
+.pete-data-header .actions { display:flex; gap:.4rem; }
+
+.table-wrap { position:relative; border:var(--pete-border); border-radius:var(--pete-radius); background:#fff; box-shadow:0 1px 3px rgba(0,0,0,.04); overflow-x:auto; overflow-y:auto; max-height:360px; }
+.table-wrap.scroll-shadow::after { content:""; position:absolute; top:0; right:0; width:35px; height:100%; pointer-events:none; background:linear-gradient(270deg,#fff,rgba(255,255,255,0)); }
+
+.pete-table { width:100%; border-collapse:separate; border-spacing:0; font-size:.67rem; }
+.pete-table thead th { position:sticky; top:0; background:linear-gradient(#fff,#f7f8fa); font-weight:600; letter-spacing:.5px; padding:6px 8px; border-bottom:var(--pete-border); border-right:var(--pete-border); text-transform:uppercase; white-space:nowrap; }
+.pete-table thead th:last-child { border-right:none; }
+.pete-table tbody td { padding:5px 8px; border-bottom:var(--pete-border); border-right:var(--pete-border); white-space:nowrap; }
+.pete-table tbody td:last-child { border-right:none; }
+.pete-table tbody tr:nth-child(odd) { background:#fcfcfd; }
+.pete-table tbody tr:nth-child(even) { background:#fff; }
+.pete-table tbody tr:hover { background:#fff0fa; }
+
+/* highlight important columns when class applied */
+.pete-col-highlight td.highlight, .pete-col-highlight th.highlight { background:#ffe0f4 !important; }
+
+.copy-btn { font-size:var(--pete-font-xs); padding:.3rem .55rem; line-height:1; border:1px solid var(--pete-accent); background:var(--pete-accent); color:#fff; border-radius:6px; cursor:pointer; }
+.copy-btn:hover { filter:brightness(1.05); }
+
+.small-note { font-size:.55rem; letter-spacing:.4px; color:#555; margin-top:.4rem; }
+
+/* Responsive adjustments */
+@media (max-width: 1000px){
+  .pete-data-header h6 { font-size:.7rem; }
+  .pete-table { font-size:.64rem; }
+}

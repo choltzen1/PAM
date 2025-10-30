@@ -8,49 +8,60 @@ import re
 
 # --- Core Query Functions ---
 
-def get_main_data(eip_id: str) -> pd.DataFrame:
+def get_main_data_primary(eip_id: str) -> pd.DataFrame:
     engine = get_research_engine()
-    safe = str(eip_id).replace("'","''")
-    query_primary = f"""
+    safe = str(eip_id or '').strip().replace("'","''")
+    if not safe or safe.lower() == 'none':
+        return pd.DataFrame()
+    query = f"""
     SELECT * FROM RDC.Daily_EFPE_Basic 
     WHERE discounted_equipment_id = '{safe}'
     """
-    df = pd.read_sql(query_primary, engine)
-    if df.empty or 'BAN' not in df.columns or df['BAN'].dropna().empty:
-        fallback_query = f"""
-        SELECT *
-        FROM openquery(OFSLL, '
-            SELECT /*+ full(acc) parallel(acc,8) */
-                   acc.acc_nbr as EQUIP_ID,    
-                   ase.ase_sku_nbr_tmo as EQUIP_SKU, 
-                   acc.acc_status_cd_tmo as EQUIP_STATUS,
-                   sac.sac_nbr as BAN,
-                   phone_number as MSISDN, 
-                   acc.creation_date as EQUIP_CREATED_AT,
-                   DECODE(NVL(acc.acc_jump_program_type_cd_tmo,''UNDEFINED''),''UNDEFINED'',
-           DECODE(acc.acc_contract_type_cd_tmo,''U'',''Upgrade'',acc.acc_jump_program_type_cd_tmo),
-           acc.acc_jump_program_type_cd_tmo) AS UPGRADE_PROGRAM,   
-                   acc.acc_order_line_id_tmo as ORDER_DETAIL_ID,   
-                   agr.agr_source_cd as PLAN_APPLICATION_ID,
-                   agr.agr_status_code as PLAN_STATUS,
-                   NVL(agr.agr_start_dt,TRUNC(acc.creation_date)) as PLAN_START_DATE
-              FROM OFSLLPROD.EDS_ACCOUNTS_TMO acc,
-                   OFSLLPROD.EDS_AGREEMENTS_TMO agr,
-                   OFSLLPROD.SUPER_ACCOUNTS_ sac,
-                   OFSLLPROD.ASSETS_ ase,
-                   DFS_ADMIN.ULID_PHONE_REF u 
-             WHERE agr.agr_agreement_nbr = acc.acc_agreement_nbr_tmo
-               AND acc.acc_prd_product = ''LOAN'' 
-               AND sac.sac_nbr = acc.acc_sac_nbr
-               AND ase.ase_aad_id = acc.acc_aad_id
-               AND ase.ase_ast_type = ''H''
-               AND acc.acc_nbr IN (''{safe}'')
-               AND u.account_number = acc.acc_sac_nbr
-               AND u.universal_line_id = acc.acc_ulid_nbr_tmo
-        ')
-        """
-        df = pd.read_sql(fallback_query, engine)
-    return df
+    return pd.read_sql(query, engine)
+
+def get_main_data_fallback(eip_id: str) -> pd.DataFrame:
+    engine = get_research_engine()
+    safe = str(eip_id or '').strip().replace("'","''")
+    if not safe or safe.lower() == 'none':
+        return pd.DataFrame()
+    query = f"""
+    SELECT *
+    FROM openquery(OFSLL, '
+        SELECT /*+ full(acc) parallel(acc,8) */
+               acc.acc_nbr as EQUIP_ID,    
+               ase.ase_sku_nbr_tmo as EQUIP_SKU, 
+               acc.acc_status_cd_tmo as EQUIP_STATUS,
+               sac.sac_nbr as BAN,
+               phone_number as MSISDN, 
+               acc.creation_date as EQUIP_CREATED_AT,
+               DECODE(NVL(acc.acc_jump_program_type_cd_tmo,''UNDEFINED''),''UNDEFINED'',
+       DECODE(acc.acc_contract_type_cd_tmo,''U'',''Upgrade'',acc.acc_jump_program_type_cd_tmo),acc.acc_jump_program_type_cd_tmo) AS UPGRADE_PROGRAM,   
+               acc.acc_order_line_id_tmo as ORDER_DETAIL_ID,   
+               agr.agr_source_cd as PLAN_APPLICATION_ID,
+               agr.agr_status_code as PLAN_STATUS,
+               NVL(agr.agr_start_dt,TRUNC(acc.creation_date)) as PLAN_START_DATE
+          FROM OFSLLPROD.EDS_ACCOUNTS_TMO acc,
+               OFSLLPROD.EDS_AGREEMENTS_TMO agr,
+               OFSLLPROD.SUPER_ACCOUNTS_ sac,
+               OFSLLPROD.ASSETS_ ase,
+               DFS_ADMIN.ULID_PHONE_REF u 
+         WHERE agr.agr_agreement_nbr = acc.acc_agreement_nbr_tmo
+           AND acc.acc_prd_product = ''LOAN'' 
+           AND sac.sac_nbr = acc.acc_sac_nbr
+           AND ase.ase_aad_id = acc.acc_aad_id
+           AND ase.ase_ast_type = ''H''
+           AND acc.acc_nbr IN (''{safe}'')
+           AND u.account_number = acc.acc_sac_nbr
+           AND u.universal_line_id = acc.acc_ulid_nbr_tmo
+    ')
+    """
+    return pd.read_sql(query, engine)
+
+def get_main_data(eip_id: str) -> pd.DataFrame:
+    primary = get_main_data_primary(eip_id)
+    if primary.empty or 'BAN' not in primary.columns or primary['BAN'].dropna().empty:
+        return get_main_data_fallback(eip_id)
+    return primary
 
 def get_order_detail_ids(eip_id: str) -> pd.DataFrame:
     """Fetch ORDER_DETAIL_ID for a given EIP when not present in primary dataset.

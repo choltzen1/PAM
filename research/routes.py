@@ -26,6 +26,7 @@ from .pete_workflow import (
     run_selected_eip,
     process_chat,
     gather_template_context,
+    run_ban_to_eip_list_for_mode,
 )
 
 @research_bp.route('/pete', methods=['GET', 'POST'])
@@ -46,21 +47,24 @@ def pete():
             session['pete_just_posted'] = True
             return redirect(url_for('research.pete'))
         if form_name == 'data_form':
-            mode = request.form.get('has_eip','Yes')
+            mode = request.form.get('has_eip','Yes')  # 'Yes' => EIP_ID, 'No' => BAN discovery
             if request.form.get('action') == 'run_lookup_from_select':
                 selected = request.form.get('selected_eip','').strip()
                 if selected:
                     run_selected_eip(selected)
                 session['pete_just_posted'] = True
                 return redirect(url_for('research.pete'))
-            if mode == 'Yes':
+            session['last_mode'] = mode
+            if mode == 'Yes':  # EIP lookup
                 eip_id = request.form.get('eip_id','').strip()
                 if eip_id:
                     run_eip_lookup(eip_id)
-            else:
+            else:  # BAN discovery path
                 ban = request.form.get('ban','').strip()
+                session['last_ban'] = ban
+                session['eip_id'] = ''
                 if ban:
-                    run_ban_to_eip_list(ban)
+                    run_ban_to_eip_list_for_mode(ban)
             session['pete_just_posted'] = True
             return redirect(url_for('research.pete'))
     ctx = gather_template_context()
