@@ -18,7 +18,28 @@
     <h2 style="font-size:1.3rem; margin:0;">PETE Troubleshooting</h2>
   </div>
   <div class="mb-3">
-    <button type="button" class="btn btn-outline-primary btn-sm" onclick="toggleChatPanel()" id="chatToggleBtn" aria-expanded="false" aria-controls="peteChatPanel">💬 PETEbot Chat</button>
+    <button type="button" class="btn btn-outline-primary btn-sm" id="chatToggleBtn" aria-expanded="false" aria-controls="peteChatInline" onclick="toggleInlineChat()">💬 PETEbot Chat</button>
+  </div>
+  <!-- Inline PETEbot Chat Interface (hidden until toggled) -->
+  <div class="pete-chat-inline mb-4" id="peteChatInline" aria-hidden="true">
+    <div class="pete-chat-stream" id="peteChatStream">
+      {% for msg in chat_history %}
+        <div class="pmsg {{ msg.role }}">
+          <div class="bubble">
+            <span class="role">{{ msg.role|capitalize }}</span>
+            <span class="text">{{ msg.content }}</span>
+          </div>
+        </div>
+      {% endfor %}
+      {% if chat_history|length == 0 %}
+        <div class="pmsg empty"><div class="bubble"><span class="text muted">No chat yet. Try: R160 eligibility context</span></div></div>
+      {% endif %}
+    </div>
+    <form method="post" class="pete-chat-bar mt-2" autocomplete="off">
+      <input type="hidden" name="form_name" value="chat_form" />
+      <input type="text" name="prompt" class="pete-chat-input" placeholder="Ask PETEbot anything (promo code, SKU group, status)..." />
+      <button class="pete-chat-send" aria-label="Send">Send</button>
+    </form>
   </div>
   <div class="row g-4">
     <div class="col-12">
@@ -172,12 +193,16 @@ document.getElementById('mode_ban').addEventListener('change', toggleMode);
 // initial state
 toggleMode();
 // Chat panel logic
-function toggleChatPanel(){
-  const panel = document.getElementById('peteChatPanel');
+function toggleInlineChat(){
+  const chat = document.getElementById('peteChatInline');
   const btn = document.getElementById('chatToggleBtn');
-  const isOpen = panel.classList.toggle('open');
-  btn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
-  btn.innerText = isOpen ? '✖ Close PETEbot' : '💬 PETEbot Chat';
+  const stream = document.getElementById('peteChatStream');
+  const nowOpen = !chat.classList.contains('open');
+  chat.classList.toggle('open', nowOpen);
+  chat.setAttribute('aria-hidden', nowOpen ? 'false' : 'true');
+  btn.setAttribute('aria-expanded', nowOpen ? 'true' : 'false');
+  btn.innerText = nowOpen ? '✖ Close PETEbot' : '💬 PETEbot Chat';
+  if(nowOpen && stream){ stream.scrollTop = stream.scrollHeight; }
 }
 // Copy buttons
 function peteBindCopy(){
@@ -220,51 +245,49 @@ document.addEventListener('DOMContentLoaded', () => {
     wrap.appendChild(scroller);
     scroller.appendChild(tbl);
   });
+  // Bind AJAX chat submit (no page reload)
+  const chatForm = document.querySelector('#peteChatInline form.pete-chat-bar');
+  if(chatForm){
+    chatForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const input = chatForm.querySelector('.pete-chat-input');
+      const sendBtn = chatForm.querySelector('.pete-chat-send');
+      const stream = document.getElementById('peteChatStream');
+      const prompt = (input.value || '').trim();
+      if(!prompt) return;
+      sendBtn.disabled = true; sendBtn.innerText='…';
+      try {
+        const resp = await fetch('/research/pete/chat', {
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({prompt})
+        });
+        const data = await resp.json();
+        if(data.messages){
+          const empty = stream.querySelector('.pmsg.empty');
+          if(empty) empty.remove();
+          data.messages.forEach(m => {
+            const div = document.createElement('div');
+            div.className = 'pmsg '+m.role;
+            div.innerHTML = '<div class="bubble"><span class="role">'+m.role.charAt(0).toUpperCase()+m.role.slice(1)+'</span><span class="text"></span></div>';
+            div.querySelector('.text').textContent = m.content;
+            stream.appendChild(div);
+          });
+          stream.scrollTop = stream.scrollHeight;
+        }
+        input.value='';
+      } catch(err){
+        console.error('PETE chat error', err);
+      } finally {
+        sendBtn.disabled=false; sendBtn.innerText='Send'; input.focus();
+      }
+    });
+  }
 });
 </script>
 <style>
-  /* Off-canvas chat panel (light theme for readability) */
-  #peteChatPanel{position:fixed;top:70px;right:0;width:340px;max-width:90%;height:calc(100vh - 90px);background:#fdfdfd;border-left:3px solid #E20074;box-shadow:0 0 10px rgba(226,0,116,.4);z-index:1050;display:flex;flex-direction:column;transform:translateX(100%);transition:transform .3s ease;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;}
-  #peteChatPanel.open{transform:translateX(0);}
-  #peteChatPanel header{padding:8px 12px;background:linear-gradient(90deg,#222,#444);border-bottom:1px solid #ddd;color:#fff;font-size:.75rem;display:flex;align-items:center;justify-content:space-between;}
-  #peteChatPanel header .title{font-weight:600;letter-spacing:.5px;}
-  #peteChatPanel .inner{padding:10px;overflow:auto;font-size:.65rem;}
-  #peteChatPanel form input[type=text]{background:#ffffff;color:#222;border:1px solid #bbb;font-size:.7rem;}
-  #peteChatPanel form input[type=text]::placeholder{color:#888;}
-  #peteChatPanel .chat-msg{margin-bottom:8px;line-height:1.25;}
-  #peteChatPanel .chat-msg .role{font-size:.55rem;text-transform:uppercase;margin-right:4px;letter-spacing:.5px;color:#555;display:inline-block;min-width:42px;}
-  #peteChatPanel .chat-msg .text{display:inline-block;max-width:90%;}
-  #peteChatPanel .chat-msg.user .text{background:#e7f1ff;border:1px solid #b5d4ff;color:#0d3b66;padding:4px 6px;border-radius:6px;}
-  #peteChatPanel .chat-msg.assistant .text{background:#eef9f3;border:1px solid #b9e8d1;color:#0c3d2e;padding:4px 6px;border-radius:6px;}
-  #peteChatPanel .chat-msg.user .text code,#peteChatPanel .chat-msg.assistant .text code{background:#fff;padding:2px 3px;border-radius:3px;font-size:.6rem;border:1px solid #eee;}
-  #peteChatPanel .chat-msg:last-child{margin-bottom:2px;}
-  #peteChatPanel .pete-chat-log{padding-bottom:4px;}
-  @media (max-width: 992px){
-     #peteChatPanel{top:60px;height:calc(100vh - 70px);}
-  }
-  /* Active mode input highlight */
-  /* Removed active-mode highlight per updated requirement */
+  /* Chat styles moved to static/css/pete.css */
   .pete-hidden{display:none !important;}
 </style>
-<div id="peteChatPanel" aria-hidden="true">
-  <header>
-    <span class="title">PETEbot</span>
-    <button type="button" class="btn btn-sm btn-outline-light" onclick="toggleChatPanel()">Close</button>
-  </header>
-  <div class="inner">
-    <form method="post" class="mb-2" autocomplete="off">
-      <input type="hidden" name="form_name" value="chat_form" />
-      <input type="text" name="prompt" class="form-control form-control-sm mb-2" placeholder="Ask about a promo (e.g. R188 SKUs)">
-      <button class="btn btn-primary btn-sm w-100">Ask</button>
-    </form>
-    <div class="pete-chat-log">
-      {% for msg in chat_history %}
-        <div class="chat-msg {{ msg.role }}"><span class="role fw-bold text-secondary">{{ msg.role|capitalize }}</span><div class="text">{{ msg.content }}</div></div>
-      {% endfor %}
-      {% if chat_history|length == 0 %}
-        <div class="text-muted" style="font-size:.6rem;">No chat yet. Ask PETEbot about a promo code or SKU group.</div>
-      {% endif %}
-    </div>
-  </div>
-</div>
+<!-- Removed off-canvas chat panel; using inline chat instead -->
 {% endblock %}

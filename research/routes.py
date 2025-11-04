@@ -36,7 +36,7 @@ def pete():
     if request.method == 'GET':
         # Skip clearing if this GET is the redirect after a POST (PRG pattern)
         if not session.pop('pete_just_posted', False):
-            for k in ["df_main","promo_errors","rate_plans","aal_lines","trade_data","eip_list","used_ban","eip_id","order_ids"]:
+            for k in ["df_main","promo_errors","rate_plans","aal_lines","trade_data","eip_list","used_ban","eip_id","order_ids","chat_history"]:
                 session.pop(k, None)
             session["trade_query_attempted"] = False
             # Also clear discovery attempt flags so stale 'No accounts found' does not appear on plain refresh
@@ -72,6 +72,24 @@ def pete():
             return redirect(url_for('research.pete'))
     ctx = gather_template_context()
     return render_template('research/pete.html', **ctx)
+
+@research_bp.route('/pete/chat', methods=['POST'])
+def pete_chat():
+    """AJAX endpoint for PETE chat; returns latest two messages (user + assistant) and full history."""
+    ensure_session_defaults()
+    data = {}
+    if request.is_json:
+        data = request.get_json(silent=True) or {}
+        prompt = (data.get('prompt') or '').strip()
+    else:
+        prompt = (request.form.get('prompt') or '').strip()
+    if not prompt:
+        return jsonify({'error': 'empty prompt'}), 400
+    # Reuse workflow chat processor
+    process_chat(prompt)
+    history = session.get('chat_history', [])
+    last_two = history[-2:] if len(history) >= 2 else history
+    return jsonify({'messages': last_two, 'chat_history': history, 'count': len(history)})
 
 @research_bp.route('/api/main-data')
 def api_main_data():

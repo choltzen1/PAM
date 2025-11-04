@@ -272,3 +272,28 @@ html, body { height:100%; }
   .pete-data-header h6 { font-size:.7rem; }
   .pete-table { font-size:.64rem; }
 }
+
+/* -----------------------------
+   PETE Chat Component (migrated from inline template)
+   ----------------------------- */
+.pete-chat-inline { display:none; background:rgba(0,0,0,.35); backdrop-filter:blur(4px); border:1px solid rgba(255,255,255,.18); border-radius:14px; padding:12px 14px 10px; color:#f5f5f7; margin-bottom:22px; }
+.pete-chat-inline.open { display:block; }
+.pete-chat-bar { display:flex; gap:8px; align-items:center; margin:0 0 10px; }
+.pete-chat-input { flex:1; background:#1f1f22; border:1px solid #35363a; color:#ffffff !important; padding:10px 14px; font-size:.8rem; border-radius:24px; outline:none; caret-color:#ffffff !important; -webkit-text-fill-color:#ffffff !important; }
+.pete-chat-input::placeholder { color:#bbbbbb; }
+.pete-chat-input:focus { border-color:#E20074; box-shadow:0 0 0 2px rgba(226,0,116,.35); }
+.pete-chat-input:-webkit-autofill { -webkit-box-shadow:0 0 0px 1000px #1f1f22 inset; -webkit-text-fill-color:#ffffff !important; }
+.pete-chat-send { background:#E20074; color:#fff; border:none; font-size:.72rem; letter-spacing:.5px; padding:10px 18px; border-radius:24px; cursor:pointer; font-weight:600; }
+.pete-chat-send:hover { filter:brightness(1.1); }
+.pete-chat-stream { max-height:200px; overflow-y:auto; padding-right:4px; display:flex; flex-direction:column; gap:6px; }
+.pete-chat-stream::-webkit-scrollbar { width:8px; }
+.pete-chat-stream::-webkit-scrollbar-track { background:#1f1f22; border-radius:8px; }
+.pete-chat-stream::-webkit-scrollbar-thumb { background:#4b4d52; border-radius:8px; }
+.pete-chat-stream::-webkit-scrollbar-thumb:hover { background:#5b5d62; }
+.pmsg .bubble { display:flex; flex-direction:column; gap:2px; background:#26272b; border:1px solid #383a3f; padding:6px 10px 7px; border-radius:10px; font-size:.65rem; width:100%; line-height:1.25; box-sizing:border-box; color:#fff; }
+.pmsg.user .bubble { background:#243447; border-color:#35536b; color:#fff; }
+.pmsg.assistant .bubble { background:#252d23; border-color:#395b33; color:#fff; }
+.pmsg .role { font-size:.5rem; text-transform:uppercase; letter-spacing:.6px; opacity:.75; color:#e0e0e0; }
+.pmsg .text { white-space:pre-wrap; color:#fff; }
+.pmsg.empty .bubble { background:#26272b; border-style:dashed; opacity:.7; }
+@media (max-width: 992px){ .pete-chat-stream { max-height:160px; } }
