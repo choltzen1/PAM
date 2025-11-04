@@ -38,12 +38,21 @@
 /* PETE specific table and data section enhancements */
 :root {
   --pete-accent: #E20074;
-  --pete-bg-alt: #fbf7fb;
+  --pete-bg-alt: #d0d2d3;
   --pete-border: 1px solid #e3e6ea;
   --pete-radius: 12px;
-  --pete-font-xs: .62rem;
+  --pete-font-scale: 1.2; /* global scale multiplier for PETE fine-tuning */
+  --pete-font-xs: calc(.62rem * var(--pete-font-scale));
   --pete-gradient: linear-gradient(135deg,#E20074 0%, #640056 55%, #2a0130 100%);
   --pete-topbar-height: 64px; /* approximate header height; adjust if needed */
+  --pete-panel-bg: #d0d2d3; /* slightly darker neutral grey (was #f6f7f9) */
+  --pete-panel-bg-alt: #d0d2d3; /* inner surface grey (was #fdfdfe) */
+  /* To revert to earlier brighter look: set panel-bg:#f6f7f9 and panel-bg-alt:#fdfdfe */
+  --pete-border-outer: #c7ccd1; /* outer container border */
+  --pete-border-row: #dadde0;   /* horizontal separators */
+  --pete-border-vert: #e3e6e8;  /* subtle vertical separators */
+  --pete-border-header: #b9bfc4; /* header bottom border */
+  --pete-border-grid: rgba(0,0,0,0.28); /* NEW: minimal internal grid line color */
 }
 
 /* Page Theme Container */
@@ -54,24 +63,31 @@
 
 /* (Removed dark theme card & section styling; unified on light variants) */
 /* Light panel variant (requested revert to light theme for content blocks) */
-.pete-light-card { background:#ffffff; border:1px solid #d6d8dc; border-radius:var(--pete-radius); padding:14px 16px 18px; color:#111; box-shadow:0 1px 2px rgba(0,0,0,.08), 0 4px 10px -2px rgba(0,0,0,.06); }
-.pete-light-section { background:#ffffff; border:1px solid #d6d8dc; border-radius:12px; padding:12px 14px 18px; margin-bottom:24px; box-shadow:0 1px 2px rgba(0,0,0,.06); color:#111; }
-.pete-light-section .pete-data-header h6 { background:transparent; color:#222; }
+.pete-light-card { background:var(--pete-panel-bg); border:1px solid #d6d8dc; border-radius:var(--pete-radius); padding:14px 16px 18px; color:#111; box-shadow:0 1px 2px rgba(0,0,0,.06), 0 3px 8px -2px rgba(0,0,0,.05); }
+.pete-light-section { background:transparent; border:none; border-radius:12px; padding:6px 0 10px; margin-bottom:28px; box-shadow:none; color:#111; }
+.pete-light-section .pete-data-header h6 { background:rgba(255,255,255,0.35); backdrop-filter:blur(2px); padding:4px 8px; border-radius:6px; color:#222; }
 .pete-light-section .copy-btn { background:var(--pete-accent); border-color:var(--pete-accent); color:#fff; }
 .pete-light-section .copy-btn:hover { filter:brightness(1.07); }
 
 /* Light tables inside light sections */
-.pete-light-section .table-wrap { background:#fff; border:1px solid #d6d8dc; box-shadow:none; }
+.pete-light-section .table-wrap { background:var(--pete-panel-bg-alt); border:1px solid #d6d8dc; box-shadow:none; }
+.pete-search-card { background:var(--pete-panel-bg); border:1px solid #d6d8dc; border-radius:12px; padding:16px 18px 20px; box-shadow:0 1px 3px rgba(0,0,0,.08); margin-bottom:32px; }
+.pete-search-card .card-title { font-size:.95rem; font-weight:600; margin-bottom:12px; }
+.pete-search-card hr { margin:14px 0; }
+
+/* Space between multiple data sections now relies on margin-bottom in .pete-light-section */
+.pete-light-section .table-wrap, .pete-light-section p.small, .pete-light-section .small-note { margin-left:4px; margin-right:4px; }
 .pete-light-section .table-wrap table { color:#222; }
-.pete-light-section .table-wrap table thead th { background:linear-gradient(#fff,#f2f4f6); color:#222; border-color:#d6d8dc; }
-.pete-light-section .table-wrap table tbody td { border-color:#e4e6e8; }
-.pete-light-section .table-wrap table tbody tr:nth-child(odd) { background:#fafbfc; }
-.pete-light-section .table-wrap table tbody tr:nth-child(even) { background:#ffffff; }
-.pete-light-section .table-wrap table tbody tr:hover { background:#fff0fa; }
+.pete-light-section .table-wrap table { background:var(--pete-panel-bg-alt); }
+.pete-light-section .table-wrap table thead th { background:linear-gradient(var(--pete-panel-bg-alt), var(--pete-panel-bg)); color:#222; border-color:#d6d8dc; }
+.pete-light-section .table-wrap table tbody td { border-color:#e4e6e8; background:var(--pete-panel-bg-alt); }
+.pete-light-section .table-wrap table tbody tr:nth-child(odd) { background:var(--pete-panel-bg-alt); }
+.pete-light-section .table-wrap table tbody tr:nth-child(even) { background:var(--pete-panel-bg); }
+.pete-light-section .table-wrap table tbody tr:hover { background:#d0d2d3; }
 
 /* Scope to revert inputs to light within the light card/sections */
 .pete-light-scope input.form-control,
-.pete-light-scope select.form-select { background:#ffffff !important; color:#111 !important; border:1px solid #c3c6ca !important; }
+.pete-light-scope select.form-select { background:var(--pete-panel-bg-alt) !important; color:#111 !important; border:1px solid #c3c6ca !important; }
 .pete-light-scope .form-check-label { color:#111 !important; }
 /* Specific styling for EIP_ID and BAN search inputs */
 .pete-light-scope input[name="eip_id"],
@@ -135,7 +151,7 @@
 /* Base input styling (light) now that dark theme is removed */
 #research-app.pete-theme input.form-control,
 #research-app.pete-theme select.form-select {
-  background:#ffffff !important;
+  background:var(--pete-panel-bg-alt) !important;
   border:1px solid #c3c6ca;
   color:#111 !important;
   font-size:.7rem;
@@ -146,7 +162,7 @@
 #research-app.pete-theme input.form-control:active,
 #research-app.pete-theme select.form-select:focus,
 #research-app.pete-theme select.form-select:active {
-  background:#ffffff !important;
+  background:var(--pete-panel-bg-alt) !important;
   color:#111 !important;
   border-color: var(--pete-accent);
   box-shadow:0 0 0 2px rgba(226,0,116,.35);
@@ -154,8 +170,8 @@
 }
 #research-app.pete-theme input.form-control:-webkit-autofill,
 #research-app.pete-theme input.form-control:-webkit-autofill:focus {
-  -webkit-box-shadow:0 0 0px 1000px #ffffff inset !important;
-  box-shadow:0 0 0px 1000px #ffffff inset !important;
+  -webkit-box-shadow:0 0 0px 1000px var(--pete-panel-bg-alt) inset !important;
+  box-shadow:0 0 0px 1000px var(--pete-panel-bg-alt) inset !important;
   -webkit-text-fill-color:#111 !important;
   caret-color:#111 !important;
 }
@@ -205,20 +221,43 @@ html, body { height:100%; }
 .pete-data-header h6 { margin:0; font-size:.75rem; font-weight:600; letter-spacing:.6px; text-transform:uppercase; color:#222; }
 .pete-data-header .actions { display:flex; gap:.4rem; }
 
-.table-wrap { position:relative; border:var(--pete-border); border-radius:var(--pete-radius); background:#fff; box-shadow:0 1px 3px rgba(0,0,0,.04); overflow-x:auto; overflow-y:auto; max-height:360px; }
+.table-wrap { position:relative; border:1px solid var(--pete-border-grid); border-radius:var(--pete-radius); background:var(--pete-panel-bg-alt); box-shadow:none; overflow-y:auto; overflow-x:hidden; max-height:360px; padding:0; }
+/* Inner horizontal scroller to preserve outer rounded corners without square scrollbar strip */
+.table-wrap .pete-scroll { overflow-x:auto; overflow-y:visible; padding-bottom:4px; /* space below content so scrollbar floats inside radius */ }
+.table-wrap .pete-scroll::-webkit-scrollbar { height:8px; }
+.table-wrap .pete-scroll::-webkit-scrollbar-track { background:var(--pete-panel-bg-alt); border-radius:12px; }
+.table-wrap .pete-scroll::-webkit-scrollbar-thumb { background:#b8bcc0; border-radius:12px; }
+.table-wrap .pete-scroll::-webkit-scrollbar-thumb:hover { background:#a9aeb2; }
 .table-wrap.scroll-shadow::after { content:""; position:absolute; top:0; right:0; width:35px; height:100%; pointer-events:none; background:linear-gradient(270deg,#fff,rgba(255,255,255,0)); }
-
-.pete-table { width:100%; border-collapse:separate; border-spacing:0; font-size:.67rem; }
-.pete-table thead th { position:sticky; top:0; background:linear-gradient(#fff,#f7f8fa); font-weight:600; letter-spacing:.5px; padding:6px 8px; border-bottom:var(--pete-border); border-right:var(--pete-border); text-transform:uppercase; white-space:nowrap; }
-.pete-table thead th:last-child { border-right:none; }
-.pete-table tbody td { padding:5px 8px; border-bottom:var(--pete-border); border-right:var(--pete-border); white-space:nowrap; }
-.pete-table tbody td:last-child { border-right:none; }
-.pete-table tbody tr:nth-child(odd) { background:#fcfcfd; }
-.pete-table tbody tr:nth-child(even) { background:#fff; }
-.pete-table tbody tr:hover { background:#fff0fa; }
-
-/* highlight important columns when class applied */
+/* Light scrollbar styling (WebKit) */
+#research-app.pete-theme .table-wrap::-webkit-scrollbar { height:10px; width:10px; }
+#research-app.pete-theme .table-wrap::-webkit-scrollbar-track { background:var(--pete-panel-bg-alt); border-radius:20px; }
+#research-app.pete-theme .table-wrap::-webkit-scrollbar-thumb { background:#c4c9cf; border-radius:20px; border:2px solid var(--pete-panel-bg-alt); }
+#research-app.pete-theme .table-wrap::-webkit-scrollbar-thumb:hover { background:#b6bcc2; }
+/* Firefox */
+#research-app.pete-theme .table-wrap { scrollbar-color: #c4c9cf var(--pete-panel-bg-alt); scrollbar-width: thin; }
+/* FLAT SINGLE-LINE GRID (collapsed) */
+/* Natural-width table: allow columns to size to full content and rely on horizontal scroll in .table-wrap */
+.pete-table { width:max-content; min-width:100%; border-collapse:collapse; table-layout:auto; font-size:calc(.67rem * var(--pete-font-scale)); border:none; border-radius:0; background:var(--pete-panel-bg-alt); }
+/* Minimal internal separators: only right + bottom lines, hairline color */
+.pete-table thead th, .pete-table tbody td { vertical-align:middle; padding:2px 4px; white-space:nowrap; background:var(--pete-panel-bg-alt); font-size:inherit; border-right:1px solid var(--pete-border-grid); border-bottom:1px solid var(--pete-border-grid); }
+/* Remove bottom border on last row and right border on last column for clean outer radius */
+.pete-table tbody tr:last-child td { border-bottom:none; }
+.pete-table thead tr th:last-child, .pete-table tbody tr td:last-child { border-right:none; }
+/* Header styling */
+.pete-table thead th { font-size:calc(.68rem * var(--pete-font-scale)); letter-spacing:.45px; line-height:1.18; position:sticky; top:0; background:linear-gradient(var(--pete-panel-bg-alt), var(--pete-panel-bg)); font-weight:600; text-transform:uppercase; }
+/* Zebra striping remains subtle */
+.pete-table tbody tr:nth-child(even) td { background:var(--pete-panel-bg); }
+.pete-table tbody tr:hover td { background:#eceff1; }
+/* Index / first column emphasis */
+.pete-table tbody td:first-child { text-align:center; font-weight:400; font-family:Consolas, "Courier New", monospace; width:54px; }
+/* Highlight */
+.pete-table td.highlight, .pete-table th.highlight { background:#ffe0f4 !important; }
+/* Column highlight mode */
 .pete-col-highlight td.highlight, .pete-col-highlight th.highlight { background:#ffe0f4 !important; }
+
+/* Order Detail ID single-value box */
+.order-id-box { background:var(--pete-panel-bg-alt); border:1px solid #000; border-radius:0; font-size:calc(.72rem * var(--pete-font-scale)); padding:3px 6px; display:inline-block; min-width:160px; }
 
 .copy-btn { font-size:var(--pete-font-xs); padding:.3rem .55rem; line-height:1; border:1px solid var(--pete-accent); background:var(--pete-accent); color:#fff; border-radius:6px; cursor:pointer; }
 .copy-btn:hover { filter:brightness(1.05); }

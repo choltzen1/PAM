@@ -10,7 +10,7 @@
   <div class="pete-hero-banner">
     <img src="/static/img/p2c2-promo-ops-logo.png" alt="P2C2 Promo Ops Logo">
     <div class="hero-text">
-      <div class="pete-title">PETE: Promo Escalation Troubleshooting Engine</div>
+      <div class="pete-title">PETE: Promo Enrollment Troubleshooting Engine</div>
       <div class="pete-sub">Rapid diagnostic surface for promo eligibility, account context & escalation triage</div>
     </div>
   </div>
@@ -23,8 +23,7 @@
   <div class="row g-4">
     <div class="col-12">
       <div class="pete-light-scope">
-        <div class="pete-light-card rs-card">
-        <div class="card-body p-0">
+        <div class="pete-search-card rs-card">
           <h5 class="card-title">📘 Do you have an EIP_ID?</h5>
           <form method="post" class="row gy-2 gx-2 align-items-end pete-mode-form mb-2">
             <input type="hidden" name="form_name" value="data_form" />
@@ -54,7 +53,7 @@
           </form>
           {% if eip_ids %}
             <hr/>
-            <h6>🔍 EIP_IDs Found for BAN {{ last_ban }}</h6>
+            <h6 style="font-size:.7rem; letter-spacing:.5px; text-transform:uppercase; color:#222;">🔍 EIP_IDs Found for BAN {{ last_ban }}</h6>
             {% if eip_df_html %}<div class="table-responsive small">{{ eip_df_html | safe }}</div>{% endif %}
             <form method="post" class="row g-2 align-items-end mt-2">
               <input type="hidden" name="form_name" value="data_form" />
@@ -76,6 +75,7 @@
             <hr/>
             <div class="alert alert-warning small">No EIP accounts found for BAN {{ last_ban }}.</div>
           {% endif %}
+        </div> <!-- end search card -->
           {% if df_html %}
             <div class="pete-data-section pete-light-section">
               <div class="pete-data-header">
@@ -93,12 +93,12 @@
           {% if order_ids is defined and order_ids|length > 0 %}
             <div class="pete-data-section pete-light-section">
               <div class="pete-data-header">
-                <h6>📦 Order Detail IDs</h6>
+                <h6>📦 Order Detail ID</h6>
                 <div class="actions">
-                  <button type="button" class="copy-btn" data-copy-text="{{ order_ids|join(', ') }}">COPY</button>
+                  <button type="button" class="copy-btn" data-copy-target="#orderIdBox">COPY</button>
                 </div>
               </div>
-              <p class="small mb-2" style="font-size:.6rem;">{{ order_ids|join(', ') }}</p>
+              <div class="order-id-box" id="orderIdBox">{{ order_ids[0] }}</div>
             </div>
           {% endif %}
           {% if error_df_html %}
@@ -139,8 +139,7 @@
           {% elif trade_query_attempted and (order_ids|length == 0) %}
             <div class="alert alert-info mt-3">No Order Detail IDs available for Trade Data pull.</div>
           {% endif %}
-        </div>
-        </div>
+  </div>
       </div>
     </div>
   </div>
@@ -208,6 +207,20 @@ function peteBindCopy(){
   });
 }
 document.addEventListener('DOMContentLoaded', peteBindCopy);
+// Wrap tables in inner horizontal scroller to preserve rounded outer corners
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.table-wrap').forEach(wrap => {
+    // Skip if already processed
+    if (wrap.querySelector('.pete-scroll')) return;
+    const tbl = wrap.querySelector('table');
+    if (!tbl) return;
+    const scroller = document.createElement('div');
+    scroller.className = 'pete-scroll';
+    // Move table inside scroller
+    wrap.appendChild(scroller);
+    scroller.appendChild(tbl);
+  });
+});
 </script>
 <style>
   /* Off-canvas chat panel (light theme for readability) */

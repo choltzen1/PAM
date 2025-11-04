@@ -255,7 +255,8 @@ def process_chat(prompt: str):
 def serialize_df(df: Any):
     if not isinstance(df, pd.DataFrame) or df.empty:
         return None
-    return df.to_html(classes='table table-sm table-striped', index=False)
+    # Uniform borderless HTML table for PETE UI; use shared .pete-table styling
+    return df.to_html(classes='pete-table', index=False, border=0)
 
 def gather_template_context() -> Dict:
     df_main = normalize_datetime_columns(_decode_df(session.get('df_main')))
@@ -279,7 +280,7 @@ def gather_template_context() -> Dict:
         'main_fallback_used': session.get('main_fallback_used', False),
         'missing_ban': session.get('missing_ban', False),
         'missing_order_ids': session.get('missing_order_ids', False),
-        'eip_df_html': eip_list.to_html(classes='table table-sm table-striped', index=False) if not eip_list.empty else None,
+    'eip_df_html': eip_list.to_html(classes='pete-table', index=False, border=0) if not eip_list.empty else None,
         'eip_ids': eip_ids,
         'df_html': serialize_df(df_main),
         'error_df_html': serialize_df(promo_errors),
