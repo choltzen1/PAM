@@ -59,6 +59,119 @@ def _decode_df(raw: Any) -> pd.DataFrame:
     except Exception:
         return pd.DataFrame()
 
+DATE_COL_HINTS = [
+    "DATE",        # generic date
+    "_DATE",       # explicit suffix
+    "DT",          # short datetime marker
+    "TIME",        # time columns
+    "CREATED",     # creation timestamps
+    "EFFECTIVE",   # effective period start
+    "EXPIRATION",  # expiration markers
+    "ISSUE_DATE",  # issue dates
+    "UPDATED",     # last updated
+    "UPDATE",      # alternate update
+    "START",       # start date/time
+    "END"          # end date/time
+]
+
+EXCLUDE_EXACT = {
+    'ID', 'EQUIP_ID', 'DISCOUNTED_EQUIPMENT_ID', 'ORDER_DETAIL_ID',
+    'PLAN_APPLICATION_ID', 'LINE_ST_GROUP_ID'
+}
+
+# Columns that should always be treated as epoch timestamps even if they lack standard date hints.
+# Add headers here (uppercase) as needed when source systems deliver them as numeric epochs.
+FORCE_DATETIME_COLUMNS = {
+    'START_DATE',
+    'EXPIRATION_DATE',
+    'CREATED_AT',
+    'UPDATED_AT',
+    'LAST_EVENT_OCCURRED_ON',
+    'EQUIP_CREATED_AT',
+    'EIP_PLAN_START_DATE',
+    'SYS_CREATION_DATE',
+    'SYS_UPDATE_DATE',
+    'SOC_EFFECTIVE_DATE',
+    'SOC_EFFECTIVE_ISSUE_DATE',
+    'SOC_EXPIRATION_DATE',
+    'SOC_EXPIRATION_ISSUE_DATE',
+    'EffectiveDate',
+    'SaleExpirationDate',
+    'INIT_ACTIVATION_DATE',
+    'SUB_STATUS_DATE',
+    'IXC_EFFECTIVE_DATE',
+    'COMMIT_START_DATE',
+    'COMMIT_END_DATE',
+    'PAPER_WORK_DATE',
+    'NEXT_CTN_CHG_DATE',
+    'PRV_CTN_CHG_DATE',
+    'NEXT_BAN_MOVE_DATE',
+    'PRV_BAN_MOVE_DATE',
+    'SUB_STS_ISSUE_DATE',
+    'EARLIEST_ACTV_DATE',
+    'LST_COM_ACTV_DATE',
+    'SUB_MIG_DATE'
+    }
+
+def _looks_like_epoch(series: pd.Series) -> str | None:
+    """Heuristic to decide if numeric values represent epoch seconds or milliseconds.
+    Returns the unit string ('ms' or 's') or None if not epoch-like.
+    """
+    if series.empty:
+        return None
+    # Require at least one non-null numeric value
+    vals = pd.to_numeric(series.dropna(), errors='coerce')
+    vals = vals[vals.notna()]
+    if vals.empty:
+        return None
+    # Large numbers (>1e11) are almost certainly milliseconds since epoch
+    median_val = vals.median()
+    if median_val > 1e11:  # ~ 1973 in ms threshold, safe for modern data
+        return 'ms'
+    if 1e9 < median_val < 1e11:  # seconds since epoch for contemporary dates
+        return 's'
+    return None
+
+def normalize_datetime_columns(df: pd.DataFrame) -> pd.DataFrame:
+    """Convert epoch numeric date/time columns into human-readable strings.
+
+    Safeguards added to avoid converting identifier columns (e.g. *_ID).
+    Conversion now ONLY occurs when:
+      - Column name contains one of DATE_COL_HINTS AND
+      - Column name is not an excluded exact identifier AND
+      - Column name does not simply end with '_ID' (unless it also contains 'DATE') AND
+      - Numeric values look like epoch seconds/milliseconds.
+    """
+    if df is None or df.empty:
+        return df
+    out = df.copy()
+    for col in out.columns:
+        name_upper = col.upper()
+        if name_upper in EXCLUDE_EXACT:
+            continue
+        # Blocks plain *_ID columns unless they explicitly include DATE
+        if name_upper.endswith('_ID') and 'DATE' not in name_upper:
+            continue
+        ser = out[col]
+        if ser.dropna().empty or not pd.api.types.is_numeric_dtype(ser):
+            continue
+        # Require a name hint; this prevents converting generic numeric IDs
+        name_has_hint = any(h in name_upper for h in DATE_COL_HINTS)
+        if not name_has_hint and name_upper not in FORCE_DATETIME_COLUMNS:
+            continue
+        unit = _looks_like_epoch(ser)
+        if not unit:
+            continue
+        try:
+            coerced = pd.to_numeric(ser, errors='coerce')
+            dt = pd.to_datetime(coerced, unit=unit, utc=True).dt.tz_convert(None)
+            has_time = any(x.hour != 0 or x.minute != 0 or x.second != 0 for x in dt.dropna())
+            formatted = dt.dt.strftime('%Y-%m-%d %H:%M') if has_time else dt.dt.strftime('%Y-%m-%d')
+            out[col] = formatted.where(~dt.isna(), other=pd.NA)
+        except Exception:
+            continue
+    return out
+
 def run_eip_lookup(eip_id: str):
     eip_id = (eip_id or '').strip()
     if not eip_id or eip_id.lower() == 'none':
@@ -145,11 +258,11 @@ def serialize_df(df: Any):
     return df.to_html(classes='table table-sm table-striped', index=False)
 
 def gather_template_context() -> Dict:
-    df_main = _decode_df(session.get('df_main'))
-    promo_errors = _decode_df(session.get('promo_errors'))
-    rate_plans = _decode_df(session.get('rate_plans'))
-    aal_lines = _decode_df(session.get('aal_lines'))
-    trade_data = _decode_df(session.get('trade_data'))
+    df_main = normalize_datetime_columns(_decode_df(session.get('df_main')))
+    promo_errors = normalize_datetime_columns(_decode_df(session.get('promo_errors')))
+    rate_plans = normalize_datetime_columns(_decode_df(session.get('rate_plans')))
+    aal_lines = normalize_datetime_columns(_decode_df(session.get('aal_lines')))
+    trade_data = normalize_datetime_columns(_decode_df(session.get('trade_data')))
     eip_list = _decode_df(session.get('eip_list'))
     eip_ids: List[str] = []
     if not eip_list.empty and 'EQUIP_ID' in eip_list.columns:

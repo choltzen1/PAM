@@ -1,12 +1,19 @@
 {% extends 'research/research_base.html' %}
 {% block title %}PETE - Promo Escalation Tool{% endblock %}
 {% block content %}
-<div id="research-app" class="pete-form-flow">
+<div id="research-app" class="pete-form-flow pete-theme">
   <style>
-    .neon-banner{display:flex;align-items:center;justify-content:center;background:#000000cc;border:2px solid #E20074;padding:10px 14px;border-radius:12px;margin-bottom:18px;box-shadow:0 0 10px #E20074,0 0 20px #E20074,0 0 30px #E20074;}
-    .neon-banner h1{color:#fff;font-size:1.15rem;margin:0;text-shadow:0 0 5px #E20074,0 0 10px #E20074,0 0 15px #E20074;letter-spacing:.5px;}
+  /* Full width override for PETE page */
+  #research-app { max-width: 100% !important; }
+  .rs-card { width:100%; }
   </style>
-  <div class="neon-banner"><h1>PETE: Promo Escalation Troubleshooting Engine</h1></div>
+  <div class="pete-hero-banner">
+    <img src="/static/img/p2c2-promo-ops-logo.png" alt="P2C2 Promo Ops Logo">
+    <div class="hero-text">
+      <div class="pete-title">PETE: Promo Escalation Troubleshooting Engine</div>
+      <div class="pete-sub">Rapid diagnostic surface for promo eligibility, account context & escalation triage</div>
+    </div>
+  </div>
   <div class="d-flex justify-content-between align-items-center mb-3">
     <h2 style="font-size:1.3rem; margin:0;">PETE Troubleshooting</h2>
   </div>
@@ -15,14 +22,14 @@
   </div>
   <div class="row g-4">
     <div class="col-12">
-      <div class="card rs-card">
-        <div class="card-body">
+      <div class="pete-light-scope">
+        <div class="pete-light-card rs-card">
+        <div class="card-body p-0">
           <h5 class="card-title">📘 Do you have an EIP_ID?</h5>
-          <form method="post" class="row gy-2 gx-2 align-items-end pete-mode-form">
+          <form method="post" class="row gy-2 gx-2 align-items-end pete-mode-form mb-2">
             <input type="hidden" name="form_name" value="data_form" />
             <div class="col-12 col-md-3 d-flex align-items-center gap-2">
               <div>
-                <label class="form-label mb-0" style="font-size:.75rem;letter-spacing:.5px;">MODE</label><br>
                 <div class="form-check form-check-inline">
                   <input class="form-check-input" type="radio" name="has_eip" id="mode_eip" value="Yes">
                   <label class="form-check-label" for="mode_eip">EIP_ID</label>
@@ -70,7 +77,7 @@
             <div class="alert alert-warning small">No EIP accounts found for BAN {{ last_ban }}.</div>
           {% endif %}
           {% if df_html %}
-            <div class="pete-data-section">
+            <div class="pete-data-section pete-light-section">
               <div class="pete-data-header">
                 <h6>✅ Promo Data Pulled</h6>
                 <div class="actions">
@@ -84,7 +91,7 @@
             </div>
           {% endif %}
           {% if order_ids is defined and order_ids|length > 0 %}
-            <div class="pete-data-section">
+            <div class="pete-data-section pete-light-section">
               <div class="pete-data-header">
                 <h6>📦 Order Detail IDs</h6>
                 <div class="actions">
@@ -95,7 +102,7 @@
             </div>
           {% endif %}
           {% if error_df_html %}
-            <div class="pete-data-section">
+            <div class="pete-data-section pete-light-section">
               <div class="pete-data-header">
                 <h6>⚠️ Promo Error Reasons</h6>
                 <div class="actions"><button type="button" class="copy-btn" data-copy-target="#errorReasonsTable">COPY</button></div>
@@ -104,7 +111,7 @@
             </div>
           {% endif %}
           {% if rate_plan_df_html %}
-            <div class="pete-data-section">
+            <div class="pete-data-section pete-light-section">
               <div class="pete-data-header">
                 <h6>📋 Rate Plan Info (BAN {{ used_ban }})</h6>
                 <div class="actions"><button type="button" class="copy-btn" data-copy-target="#ratePlanTable">COPY</button></div>
@@ -113,7 +120,7 @@
             </div>
           {% endif %}
           {% if aal_df_html %}
-            <div class="pete-data-section">
+            <div class="pete-data-section pete-light-section">
               <div class="pete-data-header">
                 <h6>➕ Active Add-a-Line (AAL) Subscribers</h6>
                 <div class="actions"><button type="button" class="copy-btn" data-copy-target="#aalTable">COPY</button></div>
@@ -122,7 +129,7 @@
             </div>
           {% endif %}
           {% if trade_df_html %}
-            <div class="pete-data-section">
+            <div class="pete-data-section pete-light-section">
               <div class="pete-data-header">
                 <h6>📦 Trade Data (QR Replica)</h6>
                 <div class="actions"><button type="button" class="copy-btn" data-copy-target="#tradeTable">COPY</button></div>
@@ -133,11 +140,12 @@
             <div class="alert alert-info mt-3">No Order Detail IDs available for Trade Data pull.</div>
           {% endif %}
         </div>
+        </div>
       </div>
     </div>
   </div>
+  <div class="text-center mt-3 page-footer">Version 2.0.1 · © 2025 Promo Ops · Flask adaptation of PETE Streamlit flow</div>
 </div>
-<div class="text-center mt-3" style="font-size:.55rem;opacity:.7;">Version 2.0.1 · © 2025 Promo Ops · Flask adaptation of PETE Streamlit flow</div>
 {% endblock %}
 {% block extra_js %}
 <script>

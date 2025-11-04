@@ -39,6 +39,9 @@ def pete():
             for k in ["df_main","promo_errors","rate_plans","aal_lines","trade_data","eip_list","used_ban","eip_id","order_ids"]:
                 session.pop(k, None)
             session["trade_query_attempted"] = False
+            # Also clear discovery attempt flags so stale 'No accounts found' does not appear on plain refresh
+            session.pop('eip_list_attempted', None)
+            session.pop('last_ban', None)
     if request.method == 'POST':
         form_name = request.form.get('form_name','')
         if form_name == 'chat_form':

@@ -42,7 +42,7 @@ def landing_page():
         }
     ]
     objective = (
-        "Choose a workspace. Offers & Research are placeholders today; PAM is fully live." )
+        "Choose a workspace. Pam and Research are in an Alpha and active development stage. Offers is a current placeholder." )
     return render_template('landing.html', tiles=tiles, objective=objective, hub_name=hub_name)
 
 @core_bp.route('/offers', endpoint='offers_workspace')

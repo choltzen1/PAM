@@ -1,3 +1,40 @@
+/* Final override: ensure BAN / EIP_ID search inputs render white bg, black text, black border */
+#research-app.pete-theme .pete-light-scope input[name="eip_id"],
+#research-app.pete-theme .pete-light-scope input[name="ban"] {
+  background:#ffffff !important;
+  color:#000 !important;
+  border:1px solid #000 !important;
+}
+#research-app.pete-theme .pete-light-scope input[name="eip_id"]::placeholder,
+#research-app.pete-theme .pete-light-scope input[name="ban"]::placeholder {
+  color:#555 !important;
+}
+/* Force persistence on value change / paste / autofill for BAN & EIP_ID inputs */
+#research-app.pete-theme .pete-light-scope input[name="eip_id"],
+#research-app.pete-theme .pete-light-scope input[name="eip_id"]:focus,
+#research-app.pete-theme .pete-light-scope input[name="eip_id"]:active,
+#research-app.pete-theme .pete-light-scope input[name="eip_id"]:-webkit-autofill,
+#research-app.pete-theme .pete-light-scope input[name="eip_id"]:-webkit-autofill:focus,
+#research-app.pete-theme .pete-light-scope input[name="eip_id"]:-webkit-autofill:hover,
+#research-app.pete-theme .pete-light-scope input[name="eip_id"]:-webkit-autofill:active,
+#research-app.pete-theme .pete-light-scope input[name="ban"],
+#research-app.pete-theme .pete-light-scope input[name="ban"]:focus,
+#research-app.pete-theme .pete-light-scope input[name="ban"]:active,
+#research-app.pete-theme .pete-light-scope input[name="ban"]:-webkit-autofill,
+#research-app.pete-theme .pete-light-scope input[name="ban"]:-webkit-autofill:focus,
+#research-app.pete-theme .pete-light-scope input[name="ban"]:-webkit-autofill:hover,
+#research-app.pete-theme .pete-light-scope input[name="ban"]:-webkit-autofill:active {
+  background:#ffffff !important;
+  -webkit-box-shadow:0 0 0 1000px #ffffff inset !important;
+  box-shadow:0 0 0 1000px #ffffff inset !important;
+  color:#000 !important;
+  -webkit-text-fill-color:#000 !important;
+  border:1px solid #000 !important;
+  caret-color:#000 !important;
+}
+/* Remove dark theme override precedence for these specific inputs */
+#research-app.pete-theme input.form-control[name="ban"],
+#research-app.pete-theme input.form-control[name="eip_id"] { background:#ffffff !important; }
 /* PETE specific table and data section enhancements */
 :root {
   --pete-accent: #E20074;
@@ -5,7 +42,162 @@
   --pete-border: 1px solid #e3e6ea;
   --pete-radius: 12px;
   --pete-font-xs: .62rem;
+  --pete-gradient: linear-gradient(135deg,#E20074 0%, #640056 55%, #2a0130 100%);
+  --pete-topbar-height: 64px; /* approximate header height; adjust if needed */
 }
+
+/* Page Theme Container */
+#research-app.pete-theme { background: var(--pete-gradient); padding:14px 20px 56px; color:#e9e9ec; font-family: system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif; min-height:calc(100dvh - var(--pete-topbar-height)); display:flex; flex-direction:column; box-sizing:border-box; }
+#research-app.pete-theme h2, #research-app.pete-theme h5, #research-app.pete-theme h6 { color:#f5f5f7; }
+#research-app.pete-theme a { color: #ff7fc6; }
+#research-app.pete-theme a:hover { color:#ffc9e7; }
+
+/* (Removed dark theme card & section styling; unified on light variants) */
+/* Light panel variant (requested revert to light theme for content blocks) */
+.pete-light-card { background:#ffffff; border:1px solid #d6d8dc; border-radius:var(--pete-radius); padding:14px 16px 18px; color:#111; box-shadow:0 1px 2px rgba(0,0,0,.08), 0 4px 10px -2px rgba(0,0,0,.06); }
+.pete-light-section { background:#ffffff; border:1px solid #d6d8dc; border-radius:12px; padding:12px 14px 18px; margin-bottom:24px; box-shadow:0 1px 2px rgba(0,0,0,.06); color:#111; }
+.pete-light-section .pete-data-header h6 { background:transparent; color:#222; }
+.pete-light-section .copy-btn { background:var(--pete-accent); border-color:var(--pete-accent); color:#fff; }
+.pete-light-section .copy-btn:hover { filter:brightness(1.07); }
+
+/* Light tables inside light sections */
+.pete-light-section .table-wrap { background:#fff; border:1px solid #d6d8dc; box-shadow:none; }
+.pete-light-section .table-wrap table { color:#222; }
+.pete-light-section .table-wrap table thead th { background:linear-gradient(#fff,#f2f4f6); color:#222; border-color:#d6d8dc; }
+.pete-light-section .table-wrap table tbody td { border-color:#e4e6e8; }
+.pete-light-section .table-wrap table tbody tr:nth-child(odd) { background:#fafbfc; }
+.pete-light-section .table-wrap table tbody tr:nth-child(even) { background:#ffffff; }
+.pete-light-section .table-wrap table tbody tr:hover { background:#fff0fa; }
+
+/* Scope to revert inputs to light within the light card/sections */
+.pete-light-scope input.form-control,
+.pete-light-scope select.form-select { background:#ffffff !important; color:#111 !important; border:1px solid #c3c6ca !important; }
+.pete-light-scope .form-check-label { color:#111 !important; }
+/* Specific styling for EIP_ID and BAN search inputs */
+.pete-light-scope input[name="eip_id"],
+.pete-light-scope input[name="ban"] {
+  background:#ffffff !important;
+  color:#000 !important;
+  border:1px solid #000 !important;
+  font-weight:500;
+}
+.pete-light-scope input[name="eip_id"]::placeholder,
+.pete-light-scope input[name="ban"]::placeholder { color:#555 !important; }
+.pete-light-scope input[name="eip_id"]:focus,
+.pete-light-scope input[name="ban"]:focus {
+  border-color:#000 !important;
+  box-shadow:0 0 0 2px rgba(0,0,0,.25) !important;
+}
+.pete-light-scope input.form-control::placeholder { color:#666 !important; }
+.pete-light-scope input.form-control:focus, .pete-light-scope select.form-select:focus { border-color:var(--pete-accent) !important; box-shadow:0 0 0 2px rgba(226,0,116,.35) !important; }
+
+/* Force black text inside light scope regardless of parent gradient container color */
+.pete-light-scope, 
+.pete-light-scope h2,
+.pete-light-scope h5,
+.pete-light-scope h6,
+.pete-light-section,
+.pete-light-section h6,
+.pete-light-section .pete-data-header h6,
+.pete-light-section td,
+.pete-light-section th,
+.pete-light-section .small-note,
+.pete-light-section p,
+.pete-light-section span,
+.pete-light-section label,
+.pete-light-section .copy-btn { color:#111 !important; }
+
+/* Ensure table header retains dark text */
+.pete-light-section .table-wrap table thead th { color:#111 !important; }
+
+/* Links inside light sections */
+.pete-light-scope a { color:#0d3b66; }
+.pete-light-scope a:hover { color:#E20074; }
+
+/* Override previous dark input autofill inside light scope */
+.pete-light-scope input.form-control:-webkit-autofill,
+.pete-light-scope input.form-control:-webkit-autofill:focus {
+  -webkit-box-shadow:0 0 0px 1000px #ffffff inset !important;
+  box-shadow:0 0 0px 1000px #ffffff inset !important;
+  -webkit-text-fill-color:#111 !important;
+  caret-color:#111 !important;
+}
+.pete-hero-banner { display:flex; align-items:center; gap:22px; background:rgba(27,0,22,0.55); border:1px solid #ff2892; border-radius:20px; padding:20px 34px; box-shadow:0 0 24px -6px #ff2892, 0 0 8px #ff2892 inset, 0 0 2px #ff2892; backdrop-filter:blur(5px); margin:0 auto 26px; max-width:980px; }
+.pete-hero-banner img { max-height:64px; width:auto; display:block; border-radius:6px; }
+.pete-hero-banner .pete-title { font-size:1.6rem; font-weight:700; letter-spacing:.7px; line-height:1.12; color:#fff; text-shadow:0 0 10px rgba(255,40,146,.6),0 0 3px #ff2892; }
+.pete-hero-banner .pete-sub { margin-top:3px; font-size:.68rem; letter-spacing:.4px; color:#ffd9ef; font-weight:500; }
+/* (Removed unused .pete-card rules) */
+
+/* Inline section labels */
+.pete-section-label { display:flex; align-items:center; gap:.5rem; font-size:.7rem; font-weight:600; letter-spacing:.6px; text-transform:uppercase; margin:0 0 .6rem; color:#f0f0f0; }
+.pete-section-label .icon { font-size:.9rem; filter:drop-shadow(0 0 3px rgba(226,0,116,.6)); }
+
+/* Base input styling (light) now that dark theme is removed */
+#research-app.pete-theme input.form-control,
+#research-app.pete-theme select.form-select {
+  background:#ffffff !important;
+  border:1px solid #c3c6ca;
+  color:#111 !important;
+  font-size:.7rem;
+  transition:border-color .15s ease, box-shadow .15s ease;
+}
+#research-app.pete-theme input.form-control::placeholder { color:#666; }
+#research-app.pete-theme input.form-control:focus,
+#research-app.pete-theme input.form-control:active,
+#research-app.pete-theme select.form-select:focus,
+#research-app.pete-theme select.form-select:active {
+  background:#ffffff !important;
+  color:#111 !important;
+  border-color: var(--pete-accent);
+  box-shadow:0 0 0 2px rgba(226,0,116,.35);
+  outline:none;
+}
+#research-app.pete-theme input.form-control:-webkit-autofill,
+#research-app.pete-theme input.form-control:-webkit-autofill:focus {
+  -webkit-box-shadow:0 0 0px 1000px #ffffff inset !important;
+  box-shadow:0 0 0px 1000px #ffffff inset !important;
+  -webkit-text-fill-color:#111 !important;
+  caret-color:#111 !important;
+}
+#research-app.pete-theme .form-check-input { background:#ffffff; border:1px solid #c3c6ca; width:14px; height:14px; margin-top:2px; }
+#research-app.pete-theme .form-check-input:checked { background: var(--pete-accent); border-color: var(--pete-accent); }
+#research-app.pete-theme .form-check-label { font-size:.65rem; letter-spacing:.4px; color:#111; }
+#research-app.pete-theme label.form-label { font-size:.62rem; letter-spacing:.5px; font-weight:600; color:#111; text-transform:uppercase; }
+
+/* Action Buttons */
+#research-app.pete-theme .btn-success, #research-app.pete-theme .btn-primary { font-size:.65rem; letter-spacing:.4px; font-weight:600; border-radius:6px; box-shadow:0 2px 4px rgba(0,0,0,.4); }
+#research-app.pete-theme .btn-success { background:#008f5d; border:1px solid #00aa72; }
+#research-app.pete-theme .btn-success:hover { filter:brightness(1.15); }
+#research-app.pete-theme .btn-primary { background: var(--pete-accent); border:1px solid #ff2892; }
+#research-app.pete-theme .btn-primary:hover { filter:brightness(1.15); }
+#research-app.pete-theme .btn-outline-primary { color:#ff86cc; border-color:#ff86cc; }
+#research-app.pete-theme .btn-outline-primary:hover { background:#ff86cc; color:#2a0130; }
+
+/* Promo banner tweak */
+.pete-theme .neon-banner { background:#1b0016; border-color:#ff2892; box-shadow:0 0 12px #ff2892, 0 0 28px rgba(226,0,116,.6); }
+.pete-theme .neon-banner h1 { font-size:1.05rem; }
+
+/* (Removed dark data section header pills styles) */
+
+/* (Removed dark table adjustment rules) */
+
+/* (Removed dark scrollbar styling) */
+
+/* (Removed dark helper note styling) */
+
+/* Order IDs block */
+.pete-order-block { background:#18181b; border:1px solid #2e2e32; border-radius:8px; padding:8px 10px; font-size:.6rem; }
+.pete-order-block code { background:#222227; padding:2px 4px; border-radius:4px; }
+
+/* Footer */
+.pete-theme .page-footer { font-size:.55rem; letter-spacing:.4px; opacity:.75; margin-top:auto; padding-top:18px; padding-bottom:4px; }
+
+/* Ensure last data section isn't flush with footer when content barely fills screen */
+.pete-data-section:last-of-type { margin-bottom:12px; }
+
+/* Remove unexpected body bottom gap for PETE page */
+body:has(#research-app.pete-theme) { margin:0; background: var(--pete-gradient); }
+html, body { height:100%; }
 
 .pete-data-section { margin-top:1.65rem; margin-bottom:1.5rem; }
 .pete-data-section:first-of-type { margin-top:1rem; }
@@ -32,6 +224,9 @@
 .copy-btn:hover { filter:brightness(1.05); }
 
 .small-note { font-size:.55rem; letter-spacing:.4px; color:#555; margin-top:.4rem; }
+
+/* (Removed entire dark theme variant block) */
+
 
 /* Responsive adjustments */
 @media (max-width: 1000px){
