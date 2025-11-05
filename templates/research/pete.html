@@ -255,29 +255,46 @@ document.addEventListener('DOMContentLoaded', () => {
       const stream = document.getElementById('peteChatStream');
       const prompt = (input.value || '').trim();
       if(!prompt) return;
+      // remove placeholder if present
+      const empty = stream.querySelector('.pmsg.empty');
+      if(empty) empty.remove();
+      // append user message immediately
+      const userDiv = document.createElement('div');
+      userDiv.className = 'pmsg user';
+      userDiv.innerHTML = '<div class="bubble"><span class="role">USER</span><span class="text"></span></div>';
+      userDiv.querySelector('.text').textContent = prompt;
+      stream.appendChild(userDiv);
+      // typing indicator
+      const typingDiv = document.createElement('div');
+      typingDiv.className = 'pmsg assistant typing';
+      typingDiv.innerHTML = '<div class="bubble"><span class="role">ASSISTANT</span><span class="text dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></span></div>';
+      stream.appendChild(typingDiv);
+      stream.scrollTop = stream.scrollHeight;
       sendBtn.disabled = true; sendBtn.innerText='…';
+      const originalPrompt = prompt;
+      input.value='';
       try {
         const resp = await fetch('/research/pete/chat', {
           method:'POST',
           headers:{'Content-Type':'application/json'},
-          body: JSON.stringify({prompt})
+          body: JSON.stringify({prompt: originalPrompt})
         });
         const data = await resp.json();
+        typingDiv.remove();
         if(data.messages){
-          const empty = stream.querySelector('.pmsg.empty');
-          if(empty) empty.remove();
-          data.messages.forEach(m => {
+          data.messages.filter(m => m.role === 'assistant').forEach(m => {
             const div = document.createElement('div');
-            div.className = 'pmsg '+m.role;
-            div.innerHTML = '<div class="bubble"><span class="role">'+m.role.charAt(0).toUpperCase()+m.role.slice(1)+'</span><span class="text"></span></div>';
+            div.className = 'pmsg assistant';
+            div.innerHTML = '<div class="bubble"><span class="role">ASSISTANT</span><span class="text"></span></div>';
             div.querySelector('.text').textContent = m.content;
             stream.appendChild(div);
           });
-          stream.scrollTop = stream.scrollHeight;
         }
-        input.value='';
+        stream.scrollTop = stream.scrollHeight;
       } catch(err){
         console.error('PETE chat error', err);
+        typingDiv.classList.remove('typing');
+        typingDiv.querySelector('.text').textContent = '(error)';
       } finally {
         sendBtn.disabled=false; sendBtn.innerText='Send'; input.focus();
       }

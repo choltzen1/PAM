@@ -297,3 +297,9 @@ html, body { height:100%; }
 .pmsg .text { white-space:pre-wrap; color:#fff; }
 .pmsg.empty .bubble { background:#26272b; border-style:dashed; opacity:.7; }
 @media (max-width: 992px){ .pete-chat-stream { max-height:160px; } }
+.pmsg.assistant.typing .bubble { background:#252d23; }
+.pmsg.assistant.typing .dots { display:flex; gap:6px; }
+.pmsg.assistant.typing .dot { width:6px; height:6px; border-radius:50%; background:#e0e0e0; animation:peteDot 1s infinite ease-in-out; opacity:.3; }
+.pmsg.assistant.typing .dot:nth-child(2){ animation-delay:.2s; }
+.pmsg.assistant.typing .dot:nth-child(3){ animation-delay:.4s; }
+@keyframes peteDot { 0%,80%,100% { opacity:.25; transform:translateY(0); } 40% { opacity:1; transform:translateY(-4px);} }
