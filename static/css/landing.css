@@ -9,7 +9,7 @@
 
 body { background: var(--tmobile-gray); }
 .page-content { background: transparent; }
-.hub-main { display:flex; flex-direction:column; justify-content:flex-start; }
+.hub-main { display:flex; flex-direction:column; justify-content:flex-start; padding-top:calc(var(--header-height) + 0.75rem); }
 
 .landing-wrapper { padding: 1.5rem 2rem 2rem; box-sizing: border-box; }
 .landing-intro { max-width: 1400px; margin: 0 auto 0.75rem auto; padding:0 2.5rem; }
@@ -18,18 +18,19 @@ body { background: var(--tmobile-gray); }
 .landing-objective { background:#fff; border:1px solid var(--landing-objective-border); border-radius:10px; padding:1.1rem 1.25rem 1.2rem; font-size:.9rem; line-height:1.45; color:#333; box-shadow:0 2px 4px #00000010; }
 .landing-objective strong { color: #000; }
 
-.landing-grid { display:grid; gap:2.1rem; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); max-width:96vw; margin:1.2rem auto 0; padding:0 2.5rem 2.8rem; }
+.landing-grid { display:grid; gap:2.1rem; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); max-width:96vw; margin:1.55rem auto 0; padding:0 2.5rem 2.8rem; }
 .landing-tile { position:relative; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:.95rem; background: var(--landing-tile-bg); border:2px solid var(--landing-tile-border); border-radius:26px; padding:3.1rem 1.55rem 3rem; text-decoration:none; color:#111; font-weight:600; letter-spacing:.5px; font-size:1.22rem; box-shadow:0 8px 26px -6px rgba(0,0,0,.18); transition: border-color .18s ease, box-shadow .28s ease, transform .3s ease, background .3s; overflow:hidden; }
-.landing-tile:hover { border-color: var(--landing-tile-border-hover); box-shadow:0 4px 14px -2px rgba(226,0,116,.35); transform: translateY(-4px); background:#fff; }
+.landing-tile:hover { border-color: var(--landing-tile-border-hover); box-shadow:0 6px 18px -2px rgba(226,0,116,.35); transform: translateY(-5px); background:#fff; }
 .landing-tile:active { transform: translateY(-1px); }
+.landing-tile:focus { outline:3px solid rgba(226,0,116,.55); outline-offset:3px; }
 .landing-tile .icon-circle { width:104px; height:104px; border-radius:50%; background:linear-gradient(135deg, var(--tmobile-magenta), #ff35a1); display:flex; align-items:center; justify-content:center; color:#fff; font-size:2.65rem; box-shadow:0 14px 36px -6px rgba(226,0,116,.6); }
 .landing-tile .tile-label { font-size:1.08rem; }
 .landing-tile .tile-label { text-align:center; line-height:1.15; }
 .landing-tile .tile-sub { font-size:.7rem; font-weight:600; letter-spacing:1.1px; text-transform:uppercase; color:#666; position:absolute; top:8px; right:14px; }
 .landing-tile .tile-desc { font-size:.78rem; line-height:1.35; font-weight:500; max-width:380px; color:#222; text-align:center; letter-spacing:.4px; margin-top:.35rem; }
 .landing-tile:hover .tile-desc { color:#000; }
-.landing-tile.disabled { opacity:.5; cursor:not-allowed; position:relative; }
-.landing-tile.disabled:hover { transform:none; box-shadow:0 3px 8px rgba(0,0,0,.08); border-color: var(--landing-tile-border); }
+.landing-tile.disabled { opacity:.55; cursor:not-allowed; position:relative; }
+.landing-tile.disabled:hover { transform:none; box-shadow:0 3px 9px rgba(0,0,0,.1); border-color: var(--landing-tile-border); }
 .landing-tile.disabled::after { content:"Coming Soon"; position:absolute; bottom:6px; font-size:.6rem; letter-spacing:1px; font-weight:500; color:#555; text-transform:uppercase; }
 
 /* Ribbon marker */
@@ -41,13 +42,13 @@ body { background: var(--tmobile-gray); }
 /* Extra large screens - increase grid width slightly */
 @media (min-width:1600px){
   .landing-grid { max-width:94vw; gap:2.6rem; grid-template-columns:repeat(auto-fit,minmax(380px,1fr)); }
-  .landing-tile { padding:3.6rem 2.1rem 3.5rem; font-size:1.3rem; min-height:320px; }
+  .landing-tile { padding:3.6rem 2.1rem 3.5rem; font-size:1.3rem; }
   .landing-tile .icon-circle { width:128px; height:128px; font-size:3rem; }
   .landing-tile .tile-desc { font-size:.9rem; max-width:440px; line-height:1.45; }
 }
 @media (min-width:2000px){
   .landing-grid { max-width:95vw; gap:2.9rem; grid-template-columns:repeat(auto-fit,minmax(400px,1fr)); }
-  .landing-tile { padding:4rem 2.3rem 3.9rem; font-size:1.34rem; min-height:360px; }
+  .landing-tile { padding:4rem 2.3rem 3.9rem; font-size:1.34rem; }
   .landing-tile .icon-circle { width:140px; height:140px; font-size:3.25rem; }
   .landing-tile .tile-desc { font-size:.95rem; max-width:480px; }
 }
