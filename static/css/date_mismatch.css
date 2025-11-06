@@ -29,7 +29,7 @@ html, body {
 .date-mismatch-page {
   min-height: calc(100vh - 120px);
   padding: 1rem;
-  background: #fff;
+  background: transparent; /* expose body background */
   width: 100%;
   max-width: 100vw; /* Never exceed viewport width */
 }

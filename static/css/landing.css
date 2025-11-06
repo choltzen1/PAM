@@ -7,7 +7,8 @@
   --landing-objective-border: #e0e0e0;
 }
 
-body, .page-content { background: var(--tmobile-gray); }
+body { background: var(--tmobile-gray); }
+.page-content { background: transparent; }
 .hub-main { display:flex; flex-direction:column; justify-content:flex-start; }
 
 .landing-wrapper { padding: 1.5rem 2rem 2rem; box-sizing: border-box; }

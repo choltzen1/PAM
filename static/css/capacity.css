@@ -23,7 +23,7 @@ body {
   padding: 1.5rem;
   padding-bottom: 2rem;
   box-sizing: border-box;
-  background: #f8f9fa;
+  background: transparent; /* let body background show */
 }
 
 /* Top Summary Numbers */

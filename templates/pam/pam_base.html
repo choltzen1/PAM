@@ -69,7 +69,7 @@
     }
   </style>
 </head>
-<body>
+<body class="{% if request.path == '/' or request.path == '/PAM_homepage' %}home-page{% endif %}">
   <div class="page-content">
     <!-- Global Header -->
     <header class="global-header">

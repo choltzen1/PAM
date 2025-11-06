@@ -26,8 +26,8 @@
 
 {% block content %}
 <div class="version-history-page">
-  <!-- Controls row: filter, search, actions -->
-  <div class="version-controls">
+  <!-- Controls row converted to standardized global control group -->
+  <div class="controls-container version-controls">
     <div class="filter-group">
       <select id="owner-filter" name="owner">
         <option value="all">All Owners</option>
@@ -66,7 +66,7 @@
   <!-- Table -->
   <div class="table-container">
     {% if promotions %}
-      <table class="version-table sortable">
+  <table class="version-table">
         <thead>
           <tr>
             <th width="40px"></th>

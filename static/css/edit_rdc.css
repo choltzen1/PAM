@@ -136,7 +136,14 @@
 /* === Full-height page fit adjustments === */
 html, body { height:100%; }
 /* Reserve footer space so content doesn't run under it */
-.wide-container, .container { min-height:calc(100vh - 55px - 60px); /* header + footer reserve */ display:flex; flex-direction:column; padding-bottom:2.5rem; }
+.wide-container, .container {
+	min-height:calc(100vh - 55px - 60px); /* header + footer reserve */
+	display:flex;
+	flex-direction:column;
+	/* Equal top & bottom spacing relative to header/footer */
+	padding:2.5rem 0 2.5rem;
+	box-sizing:border-box;
+}
 .layout-flex { flex:1 1 auto; display:flex; }
 .left-panel, .right-panel { height:auto; min-height:100%; }
 /* ensure right panel content stretches while maintaining internal scrolling where needed */

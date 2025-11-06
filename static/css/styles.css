@@ -4,6 +4,8 @@
   --tmobile-magenta-dark: #b8005a;
   --tmobile-gray: #f4f4f4;
   --tmobile-border: #e0e0e0;
+  --header-height: 60px;              /* standardized sticky header height */
+  --page-vertical-pad: 0.5rem;      /* further reduced (was 1rem) */
 }
 
 /* Global reset and base styling */
@@ -40,17 +42,23 @@ html, body {
 .global-header {
   background: var(--tmobile-magenta);
   color: #fff;
-  padding: 1.2rem 2rem;
+  padding: 0 2rem; /* horizontal only; vertical derived from height */
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 1.2rem;
+  font-size: 1.1rem;
   font-weight: 600;
-  margin-bottom: 0; /* Remove gap */
+  margin: 0;
   flex-shrink: 0;
-  position: relative;
-  z-index: 100;
-  min-height: 60px; /* Ensure consistent height */
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  height: var(--header-height);
+  line-height: var(--header-height);
+  width: 100%;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.18);
 }
 
 .global-header-title {
@@ -158,11 +166,202 @@ html, body {
 .mt-4 { margin-top: 1.5rem; }
 .display-1 { font-size: 4rem; }
 
-/* Global Footer */
-.page-content {
-  padding-bottom: 60px; /* Account for footer height */
-  min-height: calc(100vh - 60px);
+/* =============================
+   Standardized Control Groups
+   Applied to: .promotions-controls, .spe-controls, .controls-container,
+               .capacity-summary-numbers (layout variant), .filter-group/.search-group wrappers
+   Goal: Consistent rounded corners, spacing, neutral surface, subtle border.
+   ============================= */
+/* Primary container-level control bars */
+.promotions-controls,
+.spe-controls,
+.controls-container,
+.capacity-summary-numbers {
+  background: #ffffff;
+  border: 1px solid var(--tmobile-border);
+  border-radius: 10px;
+  padding: 0.9rem 1rem;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.06);
 }
+
+/* Ensure flex layout utilities persist */
+.promotions-controls,
+.spe-controls,
+.controls-container { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: flex-end; }
+
+/* Filter/Search subgroup styling */
+.filter-group, .search-group, .spe-filter-group, .spe-search-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.filter-group label, .search-group label,
+.spe-filter-group label, .spe-search-group label { font-weight: 600; font-size: 0.75rem; letter-spacing: .5px; color:#444; text-transform: uppercase; }
+
+.filter-group select, .search-group input,
+.spe-filter-group select, .spe-search-group input {
+  min-width: 180px;
+  padding: 0.5rem .6rem;
+  border: 1px solid var(--tmobile-border);
+  border-radius: 6px;
+  background: #fff;
+  font-size: .8rem;
+  transition: border-color .15s, box-shadow .15s, background .15s;
+}
+.filter-group select:focus, .search-group input:focus,
+.spe-filter-group select:focus, .spe-search-group input:focus {
+  outline: none;
+  border-color: var(--tmobile-magenta);
+  box-shadow: 0 0 0 2px rgba(226,0,116,0.18);
+}
+
+/* =============================
+   Standardized Tables
+   Magenta header, zebra rows, rounded corners, consistent typography.
+   Targets existing table classes to avoid markup changes.
+   ============================= */
+.promo-table,
+.date-mismatch-table,
+.workload-table,
+table.standard-table {
+  width: 100%;
+  border-collapse: separate; /* allow radius */
+  border-spacing: 0; /* visually continuous */
+  background: #fff;
+  border: 1px solid var(--tmobile-border);
+  border-radius: 12px;
+  overflow: hidden; /* clip radius */
+  font-size: 0.85rem;
+}
+
+.promo-table th,
+.date-mismatch-table th,
+.workload-table th,
+table.standard-table th {
+  background: var(--tmobile-magenta);
+  color: #fff;
+  font-weight: 600;
+  padding: .65rem .75rem;
+  text-align: center;
+  font-size: 0.75rem;
+  letter-spacing: .5px;
+  text-transform: uppercase;
+}
+
+/* Zebra striping */
+.promo-table tbody tr:nth-child(even),
+.date-mismatch-table tbody tr:nth-child(even),
+.workload-table tbody tr:nth-child(even),
+table.standard-table tbody tr:nth-child(even) {
+  background: #f8f9fa;
+}
+.promo-table tbody tr:nth-child(odd),
+.date-mismatch-table tbody tr:nth-child(odd),
+.workload-table tbody tr:nth-child(odd),
+table.standard-table tbody tr:nth-child(odd) {
+  background: #ffffff;
+}
+
+.promo-table td,
+.date-mismatch-table td,
+.workload-table td,
+table.standard-table td {
+  padding: .6rem .65rem;
+  text-align: center;
+  border-bottom: 1px solid #e5e5e5;
+}
+
+/* Remove bottom border for last row */
+.promo-table tbody tr:last-child td,
+.date-mismatch-table tbody tr:last-child td,
+.workload-table tbody tr:last-child td,
+table.standard-table tbody tr:last-child td { border-bottom: none; }
+
+/* Action cell neutrality */
+.promo-table td.promo-actions,
+.workload-table td.actions-cell,
+table.standard-table td.actions-cell { background: inherit; }
+
+/* Hover highlight */
+.promo-table tbody tr:hover,
+.date-mismatch-table tbody tr:hover,
+.workload-table tbody tr:hover,
+table.standard-table tbody tr:hover { background: #f3e8f1; }
+
+/* Responsive scroll wrapper optional utility */
+.table-wrap { overflow-x:auto; background:transparent; border-radius:14px; padding:4px; }
+
+/* =============================
+   Background Standardization
+   Only body sets page background; wrappers remain transparent.
+   ============================= */
+body { background: var(--tmobile-gray); }
+.page-content,
+.promotions-page,
+.date-mismatch-page,
+.capacity-page,
+.landing-wrapper { background: transparent; }
+
+/* =============================
+  Global Content Padding
+  Equal vertical breathing room from fixed header and footer.
+  Header/footer are 60px each; add 2.5rem interior padding above first content
+  and before footer across standard page wrappers.
+  ============================= */
+/* Global vertical spacing below sticky header (except homepage) */
+.page-content { padding-top: calc(var(--header-height) + var(--page-vertical-pad)); padding-bottom: calc(var(--header-height) + var(--page-vertical-pad)); min-height: calc(100vh - (var(--header-height) * 2)); box-sizing: border-box; }
+/* Remove duplicate top padding on inner wrappers; rely on page-content only */
+.promotions-page,
+.date-mismatch-page,
+.capacity-page,
+.landing-wrapper { padding-top: 0; padding-bottom: 0; box-sizing: border-box; }
+/* Homepage variant: no extra gap, only offset for header/footer */
+.home-page .page-content { padding-top: var(--header-height); padding-bottom: var(--header-height); }
+/* Ensure first control group doesn't collapse into header while preserving gap background */
+.page-content > .promotions-controls:first-child,
+.page-content > .spe-controls:first-child,
+.page-content > .controls-container:first-child,
+.page-content > .capacity-summary-numbers:first-child { margin-top: 0; }
+
+/* Unified width constraints for control groups & table containers */
+/* Unified responsive content width: 95% of viewport (capped) for most pages.
+   Exclusions (full-bleed): homepage (.home-page body), landing, research landing wrappers. */
+.page-content > .promotions-controls,
+.page-content > .spe-controls,
+.page-content > .controls-container,
+.page-content > .capacity-summary-numbers,
+.page-content > .table-container,
+.page-content > .table-wrap {
+  width: 95%;
+  max-width: 1800px; /* generous cap for ultra-wide monitors */
+  margin-left: auto;
+  margin-right: auto;
+}
+/* Homepage & landing/research keep full width */
+.home-page .page-content > .promotions-controls,
+.home-page .page-content > .spe-controls,
+.home-page .page-content > .controls-container,
+.home-page .page-content > .capacity-summary-numbers,
+.home-page .page-content > .table-container,
+.home-page .page-content > .table-wrap,
+.landing-wrapper .promotions-controls,
+.landing-wrapper .spe-controls,
+.landing-wrapper .controls-container,
+.landing-wrapper .capacity-summary-numbers,
+.landing-wrapper .table-container,
+.landing-wrapper .table-wrap,
+.research-app .promotions-controls,
+.research-app .spe-controls,
+.research-app .controls-container,
+.research-app .capacity-summary-numbers,
+.research-app .table-container,
+.research-app .table-wrap {
+  width: 100%;
+  max-width: none;
+}
+
+/* Global Footer */
+/* Remove duplicate simplified .page-content override; preserve earlier calc-based padding for consistent vertical breathing room. */
 
 .footer-nav {
   position: fixed !important;

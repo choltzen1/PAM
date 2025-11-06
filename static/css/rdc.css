@@ -8,7 +8,7 @@ body {
 	overflow-x: hidden;
 }
 /* (truncated import source for brevity: retain essential selectors actually used by rdc.html) */
-.promotions-page { min-height: calc(100vh - 120px); padding:1rem 2rem 2rem; box-sizing:border-box; background:#fff; }
+.promotions-page { min-height: calc(100vh - 120px); padding:1rem 2rem 2rem; box-sizing:border-box; background: transparent; }
 .promotions-tabs { display:flex; gap:0.5rem; margin-bottom:1rem; }
 .tab { flex:1; min-width:60px; text-align:center; padding:0.5rem; border:1px solid var(--tmobile-border); background: var(--tmobile-gray); border-radius:4px 4px 0 0; font-weight:500; cursor:pointer; transition: all .3s ease; color:inherit; text-decoration:none; display:flex; align-items:center; justify-content:center; position:relative; }
 .tab:hover { background:#e9e9e9; border-color:#ccc; }

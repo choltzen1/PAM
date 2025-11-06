@@ -4,7 +4,16 @@
 .edit-spe-user-label { color: rgba(255,255,255,0.9); font-size:0.9rem; }
 
 /* Reuse structural classes from edit_promo where possible */
-.container.wide-container { width:98vw; box-sizing:border-box; display:flex; flex-direction:column; align-items:center; justify-content:flex-start; padding:2.5rem 1vw 2rem 1vw; }
+.container.wide-container {
+	width:98vw;
+	box-sizing:border-box;
+	display:flex;
+	flex-direction:column;
+	align-items:center;
+	justify-content:flex-start;
+	/* Equal top & bottom padding for visual balance with header/footer */
+	padding:2.5rem 1vw 2.5rem 1vw;
+}
 .layout-flex { width:100%; max-width:1800px; display:flex; align-items:stretch; gap:2rem; }
 .left-panel, .right-panel { box-sizing:border-box; }
 .left-panel { flex:1 1 340px; min-width:340px; max-width:520px; background:#fff; border-radius:10px; box-shadow:0 2px 12px rgba(0,0,0,0.06); padding:2rem 2.2rem; display:flex; flex-direction:column; gap:2rem; overflow-y:auto; }
