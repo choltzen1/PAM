@@ -49,10 +49,12 @@ body {
   margin:0;
   padding:0;
   min-height:100vh;
+  /* Apply theme background (color or gradient). Keep fixed & non-repeating to avoid seams */
   background: var(--bg);
-  background-repeat:no-repeat;
-  background-attachment:fixed;
-  background-size:cover;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  /* Force gradient to stretch full scroll height without scaling artifacts */
+  background-size: 100% 100%;
   color: var(--text);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   transition: background .35s ease, color .35s ease;
@@ -322,11 +324,10 @@ table.standard-table tbody tr:hover { background: #f3e8f1; }
 .table-wrap { overflow-x:auto; background:transparent; border-radius:14px; padding:4px; }
 
 /* =============================
-   Background Standardization
-   Only body sets page background; wrappers remain transparent.
-   ============================= */
-/* Remove legacy body background override so theme variable controls surface */
-body { background: var(--bg); }
+  Background Standardization
+  Body sets page background; wrappers remain transparent.
+  Reinforced non-repeating, fixed gradient already defined above.
+  ============================= */
 .page-content,
 .promotions-page,
 .date-mismatch-page,

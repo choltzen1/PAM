@@ -31,13 +31,14 @@
 .reviewers-search-card {
   display: flex;
   gap: 1rem;
-  align-items: center;
+  align-items: center; /* vertically center contents within fixed height */
   background: #fff;
   padding: 1.25rem 2rem;
   border-radius: 10px;
   box-shadow: 0 2px 12px rgba(0,0,0,0.06);
   max-width: fit-content;
-  min-height: 60px;
+  height: 220px; /* fixed height to match approval card total height */
+  flex:1;
 }
 .reviewers-search-label {
   font-weight: 600;
@@ -82,6 +83,42 @@
 .reviewers-back-btn:hover {
   background: #5a6268;
 }
+
+/* Unified top controls wrapper ensures equal height alignment */
+.top-controls-wrapper { display:flex; gap:1.5rem; align-items:stretch; }
+.top-controls-wrapper > .search-section.reviewers-search-section { display:flex; }
+
+/* Approval card externalized (override inline template styles) */
+.approval-card {
+  flex:1;
+  background:#fff;
+  border:1px solid #e0e0e0;
+  border-radius:10px;
+  box-shadow:0 2px 12px rgba(0,0,0,0.06);
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+  height:220px; /* align exactly with search card */
+}
+.approval-header { background:#28a745; color:#fff; padding:.75rem 1rem; font-weight:600; display:flex; align-items:center; gap:.5rem; }
+.approval-content { padding:1.5rem; flex:1; display:flex; flex-direction:column; gap:1rem; }
+
+/* Enhanced notes presentation */
+.notes-section { display:flex; flex-direction:column; }
+.notes-content {
+  background:#ffffff;
+  border:1px solid #d1d2d3;
+  border-radius:6px;
+  padding:1rem 1.25rem;
+  font-size:.85rem;
+  line-height:1.5;
+  white-space:pre-wrap;
+  max-height:320px;
+  overflow:auto;
+  box-shadow:inset 0 1px 2px rgba(0,0,0,0.06);
+}
+.notes-content:empty::before { content:'No notes available'; color:#666; font-style:italic; }
+html[data-theme='dark'] .notes-content { background:#ffffff; color:#111; border-color:#b5b6b7; }
 
 /* Alerts */
 .reviewers-warning-alert {
@@ -674,3 +711,93 @@
     color: white !important;
   }
 }
+
+/* =============================
+   Dark Mode Overrides (Unified Light Grey Panels + Black Text)
+   Request: All reviewer page "boxes" use light grey surface with black text.
+   ============================= */
+html[data-theme='dark'] .reviewers-search-card,
+html[data-theme='dark'] .combined-details-card,
+html[data-theme='dark'] .dates-times-section,
+html[data-theme='dark'] .segmentation-section,
+html[data-theme='dark'] .devices-section,
+html[data-theme='dark'] .links-section,
+html[data-theme='dark'] .description-section,
+html[data-theme='dark'] .notes-section,
+html[data-theme='dark'] .groupings-section,
+html[data-theme='dark'] .validation-section,
+html[data-theme='dark'] .info-block,
+html[data-theme='dark'] .target-group,
+html[data-theme='dark'] .req-item,
+html[data-theme='dark'] .date-item,
+html[data-theme='dark'] .link-item,
+html[data-theme='dark'] .info-item .value,
+html[data-theme='dark'] .stackability-info,
+html[data-theme='dark'] .description-text,
+html[data-theme='dark'] .notes-text,
+html[data-theme='dark'] .notes-textarea,
+html[data-theme='dark'] .segment-item,
+html[data-theme='dark'] .criteria-item,
+html[data-theme='dark'] .device-item,
+html[data-theme='dark'] .flag-item,
+html[data-theme='dark'] .config-item,
+html[data-theme='dark'] .setting-group,
+html[data-theme='dark'] .reviewers-warning-alert,
+html[data-theme='dark'] .reviewers-info-alert,
+html[data-theme='dark'] .approval-card {
+  background: #d0d2d3 !important; /* neutral light grey container surface */
+  color: #111 !important; /* enforce dark text for readability */
+  border-color: #b9babb !important; /* soften borders against grey */
+  box-shadow: none; /* flatten elevated look in dark mode */
+}
+
+/* Internal field elements: pop with white surface + subtle outline inside grey cards */
+html[data-theme='dark'] .info-item .value,
+html[data-theme='dark'] .req-item,
+html[data-theme='dark'] .date-item,
+html[data-theme='dark'] .link-item,
+html[data-theme='dark'] .stackability-info,
+html[data-theme='dark'] .description-text,
+html[data-theme='dark'] .notes-text,
+html[data-theme='dark'] .segment-item,
+html[data-theme='dark'] .criteria-item,
+html[data-theme='dark'] .device-item,
+html[data-theme='dark'] .flag-item,
+html[data-theme='dark'] .config-item,
+html[data-theme='dark'] .setting-group,
+html[data-theme='dark'] .target-group,
+html[data-theme='dark'] .notes-textarea,
+html[data-theme='dark'] .link-url,
+html[data-theme='dark'] .version-dropdown {
+  background:#ffffff !important;
+  color:#111 !important;
+  border:1px solid #b4b5b6 !important;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.08) inset;
+}
+
+/* Preserve existing accent borders (left magenta stripes) by re-applying where lost */
+html[data-theme='dark'] .info-item .value,
+html[data-theme='dark'] .req-item,
+html[data-theme='dark'] .segment-item,
+html[data-theme='dark'] .criteria-item,
+html[data-theme='dark'] .device-item,
+html[data-theme='dark'] .stackability-info,
+html[data-theme='dark'] .description-text,
+html[data-theme='dark'] .notes-text { border-left:3px solid var(--tmobile-magenta) !important; }
+
+/* Highlight value variant */
+html[data-theme='dark'] .info-item .value.highlight { background:#ffe9f5 !important; color: var(--tmobile-magenta); }
+
+/* Maintain highlight/magenta accents where semantically important */
+html[data-theme='dark'] .info-item .value.highlight { color: var(--tmobile-magenta); background: #e7d9e2; }
+html[data-theme='dark'] .block-title { color: var(--tmobile-magenta); }
+html[data-theme='dark'] .group-title { color: var(--tmobile-magenta); }
+html[data-theme='dark'] .section-title { color: #fff; }
+
+/* Links inside grey panels retain magenta brand color */
+html[data-theme='dark'] a.link-url { background:#ffffff; color: var(--tmobile-magenta); border-color:#c5c6c7; }
+html[data-theme='dark'] a.link-url:hover { background: var(--tmobile-magenta); color:#fff; }
+
+/* Textareas / inputs inside panels: keep white for contrast where applicable */
+html[data-theme='dark'] .notes-textarea { background:#ffffff !important; color:#111 !important; }
+
