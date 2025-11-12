@@ -1,5 +1,5 @@
 import os
-from flask import Flask
+from flask import Flask, request
 from dotenv import load_dotenv
 from datetime import datetime
 import urllib3
@@ -49,6 +49,17 @@ def create_app(config: dict | None = None) -> Flask:
     @app.context_processor
     def inject_current_datetime():  # type: ignore
         return {'current_datetime': datetime.now().strftime("%B %d, %Y at %I:%M:%S %p")}
+
+    @app.context_processor
+    def inject_theme():  # type: ignore
+        cookie_mode = request.cookies.get('theme')
+        # Only allow light/dark/auto, default auto
+        raw = cookie_mode if cookie_mode in ('light','dark','auto') else 'auto'
+        resolved = raw if raw in ('light','dark') else 'auto'
+        return {
+            'server_theme': raw,
+            'server_theme_resolved': resolved
+        }
 
     return app
 

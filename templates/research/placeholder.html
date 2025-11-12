@@ -1,9 +1,15 @@
 {% extends 'landing_base.html' %}
 {% block title %}Research (Coming Soon){% endblock %}
 {% block content %}
-<div style="padding:2rem;max-width:760px;margin:0 auto;">
-  <h1 style="margin-top:0;">Research Workspace</h1>
-  <p>This workspace is currently under development. Check back later.</p>
-  <p><a href="{{ url_for('core.landing') }}" style="color:var(--tmobile-magenta);text-decoration:none;font-weight:600;">Return to Hub</a></p>
+<div class="landing-wrapper">
+  <div class="landing-intro hub-hero-banner">
+    <h1>Research Workspace</h1>
+    <p class="tagline">Analytics & experimentation surface forthcoming</p>
+  </div>
+  <div class="landing-objective">
+    <strong>Incoming Modules:</strong> Performance dashboards, promo experiment lab, trend diffing tools & anomaly detection explorers.
+    <br/><br/>
+    <a href="{{ url_for('core.landing') }}" style="color:var(--tmobile-magenta);text-decoration:none;font-weight:600;">Return to Hub</a>
+  </div>
 </div>
 {% endblock %}

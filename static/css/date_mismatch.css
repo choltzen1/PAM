@@ -14,7 +14,7 @@ html, body {
   height: 100%;
   margin: 0;
   padding: 0;
-  background: #f4f4f4;
+  background: var(--bg);
   box-sizing: border-box;
   font-family: 'Inter', Arial, sans-serif;
   overflow-x: hidden; /* Prevent horizontal scroll */
@@ -41,11 +41,12 @@ html, body {
   align-items: center;
   margin-bottom: 1.5rem;
   padding: 1rem;
-  background: var(--tmobile-gray);
+  background: var(--bg-soft);
   border-radius: 8px;
-  border: 1px solid var(--tmobile-border);
+  border: 1px solid var(--border-color);
   width: 100%;
   max-width: calc(100vw - 2rem); /* Account for page padding */
+  backdrop-filter: blur(4px);
 }
 
 .filters-section {
@@ -70,24 +71,25 @@ html, body {
 
 .filter-group select, .search-group input {
   padding: 0.5rem;
-  border: 1px solid var(--tmobile-border);
+  border: 1px solid var(--border-color);
   border-radius: 4px;
-  background: white;
+  background: var(--bg-alt);
   font-size: 0.875rem;
   width: 150px;
+  color: var(--text);
 }
 
 /* Operator ID input explicit styling for cursor visibility */
 #operatorId {
-  background: #ffffff;
-  color: #111;
-  caret-color: #111; /* ensure caret visible */
+  background: var(--bg-alt);
+  color: var(--text);
+  caret-color: var(--text); /* ensure caret visible */
   transition: background-color 0.15s, border-color 0.15s;
   cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='24' viewBox='0 0 16 24'><rect x='7' y='2' width='2' height='20' fill='black'/></svg>") 8 12, text; /* persistent dark custom caret-like cursor */
 }
 #operatorId:hover:not(:disabled) {
-  background: #fafafa;
-  border-color: #c2c2c2;
+  background: var(--bg-soft);
+  border-color: var(--border-color);
 }
 #operatorId:focus {
   outline: none;
@@ -117,11 +119,12 @@ html, body {
   width: 100%;
   max-width: calc(100vw - 2rem);
   overflow-x: auto;
-  border: 1px solid var(--tmobile-border);
+  border: 1px solid var(--border-color);
   border-radius: 8px;
-  background: white;
+  background: var(--bg-alt);
   margin-bottom: 2rem;
   box-sizing: border-box;
+  backdrop-filter: blur(4px);
 }
 
 /* Table Styling - responsive columns */
@@ -226,7 +229,7 @@ html, body {
 }
 
 .date-mismatch-table tbody tr:hover {
-  background-color: #f8f9fa;
+  background: var(--bg-soft);
 }
 
 .date-mismatch-table tbody tr:last-child td {

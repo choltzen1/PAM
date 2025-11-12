@@ -47,7 +47,8 @@ def landing_page():
 
 @core_bp.route('/offers', endpoint='offers_workspace')
 def offers_workspace():
-    return render_template('pam/offers_placeholder.html')
+    # Updated to new offers workspace hub layout (similar to research workspace)
+    return render_template('offers/placeholder.html')
 
 # Research workspace handled by research blueprint (/research)
 

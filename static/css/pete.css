@@ -56,10 +56,14 @@
 }
 
 /* Page Theme Container */
-#research-app.pete-theme { background: var(--pete-gradient); padding:14px 20px 56px; color:#e9e9ec; font-family: system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif; min-height:calc(100dvh - var(--pete-topbar-height)); display:flex; flex-direction:column; box-sizing:border-box; }
-#research-app.pete-theme h2, #research-app.pete-theme h5, #research-app.pete-theme h6 { color:#f5f5f7; }
-#research-app.pete-theme a { color: #ff7fc6; }
-#research-app.pete-theme a:hover { color:#ffc9e7; }
+#research-app.pete-theme { background: var(--bg); padding:14px 20px 56px; color:#222; font-family: system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif; min-height:calc(100dvh - var(--pete-topbar-height)); display:flex; flex-direction:column; box-sizing:border-box; }
+#research-app.pete-theme h2, #research-app.pete-theme h5, #research-app.pete-theme h6 { color:#222; }
+#research-app.pete-theme a { color: var(--tmobile-magenta); }
+#research-app.pete-theme a:hover { color:#b8005a; }
+html[data-theme='dark'] #research-app.pete-theme { background: var(--pete-gradient); color:#e9e9ec; }
+html[data-theme='dark'] #research-app.pete-theme h2, html[data-theme='dark'] #research-app.pete-theme h5, html[data-theme='dark'] #research-app.pete-theme h6 { color:#f5f5f7; }
+html[data-theme='dark'] #research-app.pete-theme a { color:#ff7fc6; }
+html[data-theme='dark'] #research-app.pete-theme a:hover { color:#ffc9e7; }
 
 /* (Removed dark theme card & section styling; unified on light variants) */
 /* Light panel variant (requested revert to light theme for content blocks) */
@@ -138,10 +142,13 @@
   -webkit-text-fill-color:#111 !important;
   caret-color:#111 !important;
 }
-.pete-hero-banner { display:flex; align-items:center; gap:22px; background:rgba(27,0,22,0.55); border:1px solid #ff2892; border-radius:20px; padding:20px 34px; box-shadow:0 0 24px -6px #ff2892, 0 0 8px #ff2892 inset, 0 0 2px #ff2892; backdrop-filter:blur(5px); margin:0 auto 26px; max-width:980px; }
+.pete-hero-banner { display:flex; align-items:center; gap:22px; background:#ffffff; border:1px solid #e0e0e3; border-radius:20px; padding:20px 34px; box-shadow:0 6px 24px -8px rgba(0,0,0,.18), 0 2px 6px rgba(0,0,0,.08); backdrop-filter:none; margin:0 auto 26px; max-width:980px; }
 .pete-hero-banner img { max-height:64px; width:auto; display:block; border-radius:6px; }
-.pete-hero-banner .pete-title { font-size:1.6rem; font-weight:700; letter-spacing:.7px; line-height:1.12; color:#fff; text-shadow:0 0 10px rgba(255,40,146,.6),0 0 3px #ff2892; }
-.pete-hero-banner .pete-sub { margin-top:3px; font-size:.68rem; letter-spacing:.4px; color:#ffd9ef; font-weight:500; }
+.pete-hero-banner .pete-title { font-size:1.6rem; font-weight:700; letter-spacing:.6px; line-height:1.12; color:#222; text-shadow:none; }
+.pete-hero-banner .pete-sub { margin-top:3px; font-size:.68rem; letter-spacing:.4px; color:#555; font-weight:500; }
+html[data-theme='dark'] .pete-hero-banner { background:rgba(27,0,22,0.55); border:1px solid #ff2892; box-shadow:0 0 24px -6px #ff2892, 0 0 10px #ff2892 inset, 0 0 2px #ff2892; backdrop-filter:blur(5px); }
+html[data-theme='dark'] .pete-hero-banner .pete-title { color:#fff; text-shadow:0 0 10px rgba(255,40,146,.6),0 0 3px #ff2892; }
+html[data-theme='dark'] .pete-hero-banner .pete-sub { color:#ffd9ef; }
 /* (Removed unused .pete-card rules) */
 
 /* Inline section labels */
@@ -212,7 +219,8 @@
 .pete-data-section:last-of-type { margin-bottom:12px; }
 
 /* Remove unexpected body bottom gap for PETE page */
-body:has(#research-app.pete-theme) { margin:0; background: var(--pete-gradient); }
+body:has(#research-app.pete-theme) { margin:0; background: var(--bg); }
+html[data-theme='dark'] body:has(#research-app.pete-theme) { background: var(--pete-gradient); }
 html, body { height:100%; }
 
 .pete-data-section { margin-top:1.65rem; margin-bottom:1.5rem; }

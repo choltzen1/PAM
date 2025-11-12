@@ -25,5 +25,14 @@
     "request_timestamp": "2025-10-23T17:08:16.274194",
     "approval_timestamp": null,
     "approved": false
+  },
+  "R223_v1": {
+    "promo_code": "R223",
+    "version_number": "1",
+    "request_subject": "RDC Approval request - R223 - Mobile Internet ID250396 - Version #1",
+    "request_recipients": "cade.holtzen1@t-mobile.com",
+    "request_timestamp": "2025-11-07T11:14:59.168965",
+    "approval_timestamp": null,
+    "approved": false
   }
 }

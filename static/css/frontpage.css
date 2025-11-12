@@ -4,7 +4,7 @@
 html, body {
   height: 100vh;
   width: 100vw;
-  background: var(--tmobile-gray); /* single global background */
+  background: var(--bg); /* themed background */
   font-family: 'Inter', Arial, sans-serif;
   overflow: hidden; /* Prevent all scrolling on the main page */
 }
@@ -262,13 +262,14 @@ html, body {
   width: 60px;
   height: 60px;
   border-radius: 10px;
-  background: #fff;
+  background: var(--bg-alt);
   border: 2px solid var(--tmobile-magenta);
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all 0.3s ease;
   box-shadow: 0 2px 8px rgba(226, 0, 116, 0.15);
+  backdrop-filter: blur(4px);
 }
 
 .process-icon-container:hover {

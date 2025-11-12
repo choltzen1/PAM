@@ -1,0 +1,72 @@
+{% extends 'landing_base.html' %}
+{% block title %}Theme Preview{% endblock %}
+{% block header_left %}Theme Preview{% endblock %}
+{% block content %}
+<div style="max-width:1200px;margin:0 auto;padding:2rem 2rem 3rem;">
+  <h1 style="margin-top:0;font-size:2rem;letter-spacing:.5px;">Theme Component Gallery</h1>
+  <p style="margin:0 0 1.5rem;color:var(--text-muted);">Current mode: <strong id="modeDisplay">(loading)</strong>. Adjust using the header toggle buttons. This page previews core surfaces.</p>
+
+  <section style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1.5rem;">
+    <div style="background:var(--control-surface);border:1px solid var(--border-color);border-radius:10px;padding:1rem;box-shadow:0 2px 4px var(--shadow-color);">
+      <h3 style="margin:.25rem 0 .75rem;font-size:1rem;letter-spacing:.3px;">Control Group</h3>
+      <div class="controls-container" style="background:var(--control-surface);border:none;box-shadow:none;padding:0;gap:.5rem;">
+        <div class="filter-group">
+          <label>Filter</label>
+          <select><option>Option</option></select>
+        </div>
+        <div class="search-group">
+          <label>Search</label>
+          <input placeholder="Type..." />
+        </div>
+        <button class="btn btn-magenta">Action</button>
+      </div>
+    </div>
+    <div style="background:var(--control-surface);border:1px solid var(--border-color);border-radius:10px;padding:1rem;box-shadow:0 2px 4px var(--shadow-color);">
+      <h3 style="margin:.25rem 0 .75rem;font-size:1rem;letter-spacing:.3px;">Table</h3>
+      <div style="overflow:auto;border:1px solid var(--border-color);border-radius:8px;">
+        <table style="width:100%;border-collapse:collapse;">
+          <thead style="background:var(--tmobile-magenta);color:#fff;">
+            <tr><th style="padding:.5rem .6rem;text-align:left;font-weight:600;font-size:.75rem;">ID</th><th style="padding:.5rem .6rem;text-align:left;font-weight:600;font-size:.75rem;">Name</th><th style="padding:.5rem .6rem;text-align:left;font-weight:600;font-size:.75rem;">Status</th></tr>
+          </thead>
+          <tbody>
+            <tr style="background:var(--bg-alt);"><td style="padding:.45rem .6rem;font-size:.75rem;">1</td><td style="padding:.45rem .6rem;font-size:.75rem;">Alpha</td><td style="padding:.45rem .6rem;font-size:.75rem;">Live</td></tr>
+            <tr style="background:var(--bg-soft);"><td style="padding:.45rem .6rem;font-size:.75rem;">2</td><td style="padding:.45rem .6rem;font-size:.75rem;">Beta</td><td style="padding:.45rem .6rem;font-size:.75rem;">Preview</td></tr>
+            <tr style="background:var(--bg-alt);"><td style="padding:.45rem .6rem;font-size:.75rem;">3</td><td style="padding:.45rem .6rem;font-size:.75rem;">Gamma</td><td style="padding:.45rem .6rem;font-size:.75rem;">Alpha</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div style="background:linear-gradient(135deg,var(--tmobile-magenta),#ff35a1);border-radius:10px;padding:1rem;color:#fff;box-shadow:0 4px 14px -2px rgba(226,0,116,.45);">
+      <h3 style="margin:.25rem 0 .75rem;font-size:1rem;">Brand Panel</h3>
+      <p style="margin:0;font-size:.8rem;line-height:1.35;">Showcases persistent brand gradient unaffected by theme toggling. Use sparingly for emphasis.</p>
+    </div>
+    <div style="background:var(--bg-alt);border:1px dashed var(--border-color);border-radius:10px;padding:1rem;">
+      <h3 style="margin:.25rem 0 .75rem;font-size:1rem;">Text & Muted</h3>
+      <p style="margin:0;font-size:.8rem;">Primary text color uses <code>--text</code>.</p>
+      <p style="margin:.4rem 0 0;font-size:.75rem;color:var(--text-muted);">Muted text uses <code>--text-muted</code>.</p>
+    </div>
+  </section>
+
+  <section style="margin-top:2.5rem;">
+    <h2 style="font-size:1.3rem;margin:0 0 .75rem;">Buttons</h2>
+    <div style="display:flex;flex-wrap:wrap;gap:.75rem;align-items:center;">
+      <button class="btn btn-magenta">Primary</button>
+      <button style="background:var(--control-surface);border:1px solid var(--border-color);padding:.55rem .9rem;border-radius:6px;font-size:.8rem;color:var(--text);">Neutral</button>
+      <button style="background:var(--bg-soft);border:1px solid var(--border-color);padding:.55rem .9rem;border-radius:6px;font-size:.8rem;color:var(--text);">Soft</button>
+    </div>
+  </section>
+
+</div>
+<script>
+  (function(){
+    const display = document.getElementById('modeDisplay');
+    function update(){
+      const attr = document.documentElement.getAttribute('data-theme');
+      const stored = localStorage.getItem('pam_theme') || 'auto';
+      display.textContent = stored + ' (resolved: ' + attr + ')';
+    }
+    update();
+    setInterval(update, 1500);
+  })();
+</script>
+{% endblock %}

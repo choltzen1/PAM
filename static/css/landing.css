@@ -1,26 +1,27 @@
 /* landing.css - Landing hub styles aligned with existing app theme */
 :root {
   --landing-bg-dark: #2f2f2f;
-  --landing-tile-bg: #ffffff;
+  --landing-tile-bg: var(--card-bg);
   --landing-tile-border: #d9d9d9;
   --landing-tile-border-hover: var(--tmobile-magenta);
   --landing-objective-border: #e0e0e0;
 }
 
-body { background: var(--tmobile-gray); }
+/* Use theme background (light: white, dark: gradient) */
+body { background: var(--bg); }
 .page-content { background: transparent; }
 .hub-main { display:flex; flex-direction:column; justify-content:flex-start; padding-top:calc(var(--header-height) + 0.75rem); }
 
 .landing-wrapper { padding: 1.5rem 2rem 2rem; box-sizing: border-box; }
-.landing-intro { max-width: 1400px; margin: 0 auto 0.75rem auto; padding:0 2.5rem; }
-.landing-intro h1 { margin: 0 0 .4rem; font-size: 2rem; font-weight: 700; color: #222; letter-spacing: .5px; }
-.landing-intro p.tagline { margin: 0 0 1.25rem; font-size: 1.05rem; color: var(--tmobile-magenta-dark); font-style: italic; }
-.landing-objective { background:#fff; border:1px solid var(--landing-objective-border); border-radius:10px; padding:1.1rem 1.25rem 1.2rem; font-size:.9rem; line-height:1.45; color:#333; box-shadow:0 2px 4px #00000010; }
+.landing-intro { max-width: 1400px; margin: 0 auto 0.85rem auto; padding:0 2.5rem; }
+.landing-intro h1 { margin: 0 0 .35rem; font-size: 2rem; font-weight: 700; color: #222; letter-spacing: .5px; }
+.landing-intro p.tagline { margin: 0; font-size: 1.02rem; color: var(--tmobile-magenta-dark); font-style: italic; }
+.landing-objective { background:var(--card-bg); border:1px solid var(--landing-objective-border); border-radius:14px; padding:1.15rem 1.3rem 1.25rem; font-size:.9rem; line-height:1.45; color:#333; box-shadow:0 3px 10px -2px #00000018; }
 .landing-objective strong { color: #000; }
 
 .landing-grid { display:grid; gap:2.1rem; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); max-width:96vw; margin:1.55rem auto 0; padding:0 2.5rem 2.8rem; }
 .landing-tile { position:relative; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:.95rem; background: var(--landing-tile-bg); border:2px solid var(--landing-tile-border); border-radius:26px; padding:3.1rem 1.55rem 3rem; text-decoration:none; color:#111; font-weight:600; letter-spacing:.5px; font-size:1.22rem; box-shadow:0 8px 26px -6px rgba(0,0,0,.18); transition: border-color .18s ease, box-shadow .28s ease, transform .3s ease, background .3s; overflow:hidden; }
-.landing-tile:hover { border-color: var(--landing-tile-border-hover); box-shadow:0 6px 18px -2px rgba(226,0,116,.35); transform: translateY(-5px); background:#fff; }
+.landing-tile:hover { border-color: var(--landing-tile-border-hover); box-shadow:0 6px 18px -2px rgba(226,0,116,.35); transform: translateY(-5px); background:var(--card-bg); }
 .landing-tile:active { transform: translateY(-1px); }
 .landing-tile:focus { outline:3px solid rgba(226,0,116,.55); outline-offset:3px; }
 .landing-tile .icon-circle { width:104px; height:104px; border-radius:50%; background:linear-gradient(135deg, var(--tmobile-magenta), #ff35a1); display:flex; align-items:center; justify-content:center; color:#fff; font-size:2.65rem; box-shadow:0 14px 36px -6px rgba(226,0,116,.6); }
@@ -73,3 +74,16 @@ body { background: var(--tmobile-gray); }
 
 /* Footer refinement for landing page */
 /* landing-footer-aux removed per request */
+
+/* Hero banner (light) */
+.hub-hero-banner { background:#ffffff; border:1px solid #e0e0e3; border-radius:22px; padding:22px 34px 24px; box-shadow:0 8px 26px -8px rgba(0,0,0,.18), 0 2px 6px rgba(0,0,0,.08); position:relative; backdrop-filter:none; }
+.hub-hero-banner h1 { color:#222; text-shadow:none; }
+.hub-hero-banner p.tagline { margin-top:2px; }
+
+/* Hero banner (dark PETE style) */
+html[data-theme='dark'] .hub-hero-banner { background:rgba(27,0,22,0.55); border:1px solid #ff2892; box-shadow:0 0 24px -6px #ff2892, 0 0 10px #ff2892 inset, 0 0 2px #ff2892; backdrop-filter:blur(6px); }
+html[data-theme='dark'] .hub-hero-banner h1 { color:#fff; letter-spacing:.65px; text-shadow:0 0 10px rgba(255,40,146,.65),0 0 3px #ff2892; }
+html[data-theme='dark'] .hub-hero-banner p.tagline { color:#ffd9ef; font-style:italic; }
+
+/* Optional subtle glow ring around light hero banner on focus within (keyboard nav) */
+.hub-hero-banner:focus-within { box-shadow:0 0 0 3px rgba(226,0,116,.35), 0 8px 26px -8px rgba(0,0,0,.18); }

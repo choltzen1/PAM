@@ -8,11 +8,11 @@
 {% block header_right %}{% endblock %}
 {% block content %}
 <div class="landing-wrapper">
-  <div class="landing-intro">
+  <div class="landing-intro hub-hero-banner">
     <h1>{{ hub_name or 'Hub' }}</h1>
     <p class="tagline">Select a workspace below to continue</p>
-    <div class="landing-objective">{{ objective|safe }}</div>
   </div>
+  <div class="landing-objective">{{ objective|safe }}</div>
   <div class="landing-grid">
     {% for t in tiles %}
       <a class="landing-tile{% if t.disabled %} disabled{% endif %}" href="{{ t.disabled and '#' or t.url }}" data-key="{{ t.key }}" {% if t.disabled %}aria-disabled="true"{% endif %}>

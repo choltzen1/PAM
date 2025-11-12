@@ -1,15 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>{% block title %}Research Workspace{% endblock %}</title>
+  <meta charset="UTF-8" />
+  <title>{% block title %}Offers Workspace{% endblock %}</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><path fill='%23E20074' d='M326.612 185.391c59.747 59.809 58.927 155.698.36 214.59-.11.12-.24.25-.36.37l-67.2 67.2c-59.27 59.27-155.699 59.262-214.96 0-59.27-59.27-59.262-155.699 0-214.96l37.106-37.106c9.84-9.84 26.786-3.3 27.294 10.606.648 17.722 3.826 35.527 9.69 52.721 1.986 5.822.567 12.262-3.783 16.612l-13.087 13.087c-28.026 28.026-28.905 73.66-1.155 101.96 28.024 28.579 74.086 28.749 102.325.51l67.2-67.19c28.191-28.191 28.073-73.757 0-101.83-3.701-3.694-7.429-6.564-10.341-8.569a16.037 16.037 0 0 1-6.947-12.606c-.396-10.567 3.348-21.456 11.698-29.806l21.054-21.055c5.521-5.521 14.182-6.199 20.584-1.731a152.482 152.482 0 0 1 20.522 17.197zM467.547 44.449c-59.261-59.262-155.69-59.27-214.96 0l-67.2 67.2c-.12.12-.25.25-.36.37-58.566 58.892-59.387 154.781.36 214.59a152.454 152.454 0 0 0 20.521 17.196c6.402 4.468 15.064 3.789 20.584-1.731l21.054-21.055c8.35-8.35 12.094-19.239 11.698-29.806a16.037 16.037 0 0 0-6.947-12.606c-2.912-2.005-6.64-4.875-10.341-8.569-28.073-28.073-28.191-73.639 0-101.83l67.2-67.19c28.239-28.239 74.3-28.069 102.325.51 27.75 28.3 26.872 73.934-1.155 101.96l-13.087 13.087c-4.35 4.35-5.769 10.79-3.783 16.612 5.864 17.194 9.042 34.999 9.69 52.721.509 13.906 17.454 20.446 27.294 10.606l37.106-37.106c59.271-59.259 59.271-155.699.001-214.959z'/></svg>">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/landing.css') }}">
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/research.css') }}">
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/pete.css') }}">
   <style>
-    input, textarea, select, button, [contenteditable="true"], .form-control, .btn, body * { caret-color: var(--text); }
+    input, textarea, select, button, [contenteditable='true'], .form-control, .btn, body * { caret-color: var(--text); }
     .btn.btn-magenta { background-color:#E20074 !important; border-color:#E20074 !important; color:#fff !important; }
     .theme-toggle-group { display:flex; gap:.55rem; align-items:center; }
     .theme-switch { position:relative; width:70px; height:30px; border-radius:24px; background:var(--control-surface); border:1px solid var(--border-color); cursor:pointer; display:flex; align-items:center; justify-content:space-between; padding:0 8px; box-sizing:border-box; transition:background .35s,border-color .35s, box-shadow .35s; }
@@ -20,9 +18,14 @@
     .theme-switch-indicator { position:absolute; top:3px; left:3px; width:28px; height:24px; border-radius:16px; background:var(--tmobile-magenta); box-shadow:0 3px 8px rgba(0,0,0,.35); transition:transform .4s cubic-bezier(.55,.15,.25,1); display:flex; align-items:center; justify-content:center; color:#fff; font-size:.8rem; font-weight:600; letter-spacing:.5px; }
     .theme-switch .icon { font-size:.65rem; font-weight:600; letter-spacing:.5px; color:var(--text-muted); user-select:none; }
     .theme-switch:focus-visible { outline:2px solid var(--tmobile-magenta); outline-offset:2px; }
+    html, body { height:100%; }
+    body { display:flex; flex-direction:column; margin:0; }
+    .hub-main { flex:1 0 auto; width:100%; }
+    .global-header { background:var(--tmobile-magenta); color:#fff; padding:.75rem 1.75rem; display:flex; align-items:center; justify-content:space-between; box-shadow:0 2px 4px rgba(0,0,0,.15); }
+    .global-header-title { font-size:1.25rem; font-weight:600; letter-spacing:.5px; }
+    .global-header-user { font-size:.85rem; opacity:.9; display:flex; align-items:center; gap:1rem; }
+    .footer-bar { flex-shrink:0; background:var(--tmobile-magenta); color:#fff; display:flex; align-items:center; justify-content:space-between; padding:.5em 2em; font-size:1rem; height:60px; box-sizing:border-box; }
   </style>
-  {% block extra_css %}{% endblock %}
-  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
   <script>
     /* Early theme (no-flash) */
     (function(){
@@ -32,28 +35,19 @@
         let apply = 'light';
         if(stored === 'dark' || stored === 'light') apply = stored; else apply = prefersDark ? 'dark' : 'light';
         document.documentElement.setAttribute('data-theme', apply);
-      } catch(e) { /* silent */ }
+      } catch(e) {}
     })();
   </script>
-  {% block head %}{% endblock %}
-  <style>
-    html, body { height:100%; }
-    body { display:flex; flex-direction:column; margin:0; }
-    .hub-main { flex:1 0 auto; width:100%; }
-    .global-header { background:var(--tmobile-magenta); color:#fff; padding:.75rem 1.75rem; display:flex; align-items:center; justify-content:space-between; box-shadow:0 2px 4px rgba(0,0,0,.15); }
-    .global-header-title { font-size:1.25rem; font-weight:600; letter-spacing:.5px; }
-    .global-header-user { font-size:.85rem; opacity:.9; display:flex; align-items:center; gap:1rem; }
-    .footer-bar { flex-shrink:0; background:var(--tmobile-magenta); color:#fff; display:flex; align-items:center; justify-content:space-between; padding:.5em 2em; font-size:1rem; height:60px; box-sizing:border-box; }
-  </style>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+  {% block extra_css %}{% endblock %}
 </head>
 <body>
   <header class="global-header">
-    <div class="global-header-title">{% block header_left %}Research Workspace{% endblock %}</div>
+    <div class="global-header-title">{% block header_left %}Offers Workspace{% endblock %}</div>
     <div class="global-header-user">
       <div class="theme-toggle-group">
         <div class="theme-switch" id="themeSwitch" tabindex="0" role="button" aria-label="Toggle light/dark theme">
-          <span class="icon">L</span>
-          <span class="icon">D</span>
+          <span class="icon">L</span><span class="icon">D</span>
           <div class="theme-switch-indicator" id="themeIndicator">L</div>
         </div>
       </div>
@@ -63,12 +57,12 @@
   <main class="hub-main">
     {% block content %}{% endblock %}
   </main>
- <footer class="footer-nav" style="background:var(--tmobile-magenta);color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0.5em 2em;font-size:1rem;height:60px;box-sizing:border-box;">
+  <footer class="footer-nav" style="background:var(--tmobile-magenta);color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0.5em 2em;font-size:1rem;height:60px;box-sizing:border-box;">
     <div id="footer-time">{{ current_datetime }}</div>
     <nav class="footer-links" style="display:flex;gap:1.5em;align-items:center;">
       <a title="Back" href="javascript:history.back()" style="color:#fff;text-decoration:none;font-size:1.2em;"><i class="fas fa-chevron-left"></i></a>
       <a title="Workspace Hub" href="{{ url_for('core.landing') }}" style="color:#fff;text-decoration:none;font-size:1.2em;"><i class="fas fa-th-large"></i></a>
-  <a title="Research Home" href="{{ url_for('research.index') }}" style="color:#fff;text-decoration:none;font-size:1.2em;"><i class="fas fa-home"></i></a>
+  <a title="Offers Home" href="{{ url_for('core.offers_workspace') }}" style="color:#fff;text-decoration:none;font-size:1.2em;"><i class="fas fa-home"></i></a>
     </nav>
   </footer>
   <script>
@@ -97,6 +91,5 @@
     })();
   </script>
   {% block extra_js %}{% endblock %}
-  {% block scripts %}{% endblock %}
 </body>
 </html>

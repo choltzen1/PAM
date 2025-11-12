@@ -188,7 +188,7 @@ body {
   border-collapse: collapse;
   font-family: 'Inter', Arial, sans-serif;
   margin: 0;
-  background: #fff;
+  background: var(--bg-alt);
 }
 
 .promo-table th {
@@ -205,7 +205,7 @@ body {
 }
 
 .promo-table tbody tr:nth-child(even) {
-  background-color: #f8f9fa;
+  background: var(--bg-soft);
 }
 
 .promo-table td {
