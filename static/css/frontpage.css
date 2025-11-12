@@ -261,8 +261,8 @@ html, body {
 .process-icon-container {
   width: 60px;
   height: 60px;
-  border-radius: 10px;
-  background: var(--bg-alt);
+  border-radius: 14px;
+  background: var(--card-bg); /* white light / grey dark */
   border: 2px solid var(--tmobile-magenta);
   display: flex;
   align-items: center;
@@ -272,10 +272,14 @@ html, body {
   backdrop-filter: blur(4px);
 }
 
+/* Dark mode flatten: remove shadow for cleaner, low-contrast surface */
+html[data-theme='dark'] .process-icon-container { box-shadow:none; }
+html[data-theme='dark'] .process-icon-container:hover { box-shadow:none; }
+
 .process-icon-container:hover {
   background: var(--tmobile-magenta);
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(226, 0, 116, 0.25);
+  box-shadow: 0 4px 16px rgba(226, 0, 116, 0.35);
 }
 
 .process-icon {
@@ -294,6 +298,11 @@ html, body {
   color: #333;
   margin: 0;
   letter-spacing: 0.3px;
+}
+
+/* Dark mode override for process step labels to ensure sufficient contrast */
+html[data-theme='dark'] .process-label {
+  color: #ffffff;
 }
 
 .process-arrow {

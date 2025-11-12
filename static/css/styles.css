@@ -44,12 +44,15 @@ html[data-theme='dark'] {
   box-sizing: border-box;
 }
 
-html, body {
-  min-height: 100vh;
-  height: 100%;
-  margin: 0;
-  padding: 0;
+html { min-height:100%; }
+body {
+  margin:0;
+  padding:0;
+  min-height:100vh;
   background: var(--bg);
+  background-repeat:no-repeat;
+  background-attachment:fixed;
+  background-size:cover;
   color: var(--text);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   transition: background .35s ease, color .35s ease;
@@ -181,17 +184,9 @@ html, body {
 }
 
 @keyframes slideIn {
-  from {
-    transform: translateX(100%);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
+  from { transform: translateX(100%); opacity:0; }
+  to { transform: translateX(0); opacity:1; }
 }
-
-/* Utility classes */
 .text-center { text-align: center; }
 .text-muted { color: #6c757d; }
 .me-2 { margin-right: 0.5rem; }
@@ -444,3 +439,35 @@ body .form-control {
 
 /* Absolute fallback: apply to all elements that can show a caret */
 * { caret-color: #000 !important; }
+
+/* =============================================
+  Global Hero Banner (moved from landing.css)
+  Light + Dark (PETE neon) variants
+  ============================================= */
+.hub-hero-banner { background:#ffffff; border:1px solid #e0e0e3; border-radius:22px; padding:22px 34px 24px; box-shadow:0 8px 26px -8px rgba(0,0,0,.18), 0 2px 6px rgba(0,0,0,.08); position:relative; backdrop-filter:none; }
+.hub-hero-banner h1 { color:#222; margin:0 0 .4rem; font-weight:700; letter-spacing:.55px; }
+.hub-hero-banner .tagline { margin:0; font-size:1.02rem; letter-spacing:.4px; color:var(--tmobile-magenta-dark); font-style:italic; }
+html[data-theme='dark'] .hub-hero-banner { background:rgba(27,0,22,0.55); border:1px solid #ff2892; box-shadow:0 0 24px -6px #ff2892, 0 0 10px #ff2892 inset, 0 0 2px #ff2892; backdrop-filter:blur(6px); }
+html[data-theme='dark'] .hub-hero-banner h1 { color:#fff; letter-spacing:.65px; text-shadow:0 0 10px rgba(255,40,146,.65),0 0 3px #ff2892; }
+html[data-theme='dark'] .hub-hero-banner .tagline { color:#ffd9ef; }
+
+/* Unified Theme Switch (global) */
+.theme-toggle-group { display:flex; gap:.55rem; align-items:center; }
+.theme-switch { position:relative; width:70px; height:30px; border-radius:24px; background:var(--control-surface); border:1px solid var(--border-color); cursor:pointer; display:flex; align-items:center; justify-content:space-between; padding:0 8px; box-sizing:border-box; transition:background .35s,border-color .35s, box-shadow .35s; }
+.theme-switch[data-state='dark'] { background:rgba(34,37,46,0.55); backdrop-filter:blur(4px); }
+.theme-switch[data-state='light'] { background:#fafafa; }
+.theme-switch[data-state='dark'] .theme-switch-indicator { transform:translateX(38px); }
+.theme-switch[data-state='light'] .theme-switch-indicator { transform:translateX(0); }
+.theme-switch-indicator { position:absolute; top:3px; left:3px; width:28px; height:24px; border-radius:16px; background:var(--tmobile-magenta); box-shadow:0 3px 8px rgba(0,0,0,.35); transition:transform .4s cubic-bezier(.55,.15,.25,1); display:flex; align-items:center; justify-content:center; color:#fff; font-size:.8rem; font-weight:600; letter-spacing:.5px; }
+.theme-switch .icon { font-size:.65rem; font-weight:600; letter-spacing:.5px; color:var(--text-muted); user-select:none; }
+.theme-switch:focus-visible { outline:2px solid var(--tmobile-magenta); outline-offset:2px; }
+
+/* Slim hero variant */
+.hub-hero-banner.slim { padding:14px 40px 16px; border-radius:20px; }
+.hub-hero-banner.slim h1 { font-size:1.85rem; }
+.hub-hero-banner.slim .tagline { font-size:.9rem; }
+/* Wider layout modifier */
+.hub-hero-banner.wide { max-width:1180px; }
+/* Hero description color handling */
+.hero-desc { font-style:normal; letter-spacing:.35px; color:#222; }
+html[data-theme='dark'] .hero-desc { color:#ffffff; }

@@ -161,3 +161,189 @@ html, body { height:100%; }
 
 
 
+/* =============================
+   Dark Mode RDC Edit Page Overrides
+   - Light grey panels to match promotions pages
+   - White form inputs with dark text & softened borders
+   ============================= */
+html[data-theme='dark'] .left-panel,
+html[data-theme='dark'] .right-panel {
+	background:#e4e6e8; /* unified light grey surface */
+	box-shadow:none; /* flatten in dark mode */
+}
+/* Ensure internal info boxes inherit flattened surface (avoid stark white strips) */
+html[data-theme='dark'] .left-panel .info-box {
+	background:transparent;
+}
+/* Form elements: force white background for readability & consistent with other pages */
+html[data-theme='dark'] .left-panel .form-control,
+html[data-theme='dark'] .left-panel .form-select,
+html[data-theme='dark'] .right-panel .form-control,
+html[data-theme='dark'] .right-panel .form-select,
+html[data-theme='dark'] .right-panel textarea.form-control,
+html[data-theme='dark'] .trade-box-input .form-control,
+html[data-theme='dark'] .dcd-field-row .form-control,
+html[data-theme='dark'] .dcd-field-row select.form-control,
+html[data-theme='dark'] .dcd-field-row select.form-select,
+html[data-theme='dark'] .dcd-field-row .edit-input,
+html[data-theme='dark'] .dcd-field-row .edit-input.form-control {
+	background:#ffffff;
+	color:#222222;
+	border:1px solid #c5c7c9; /* softened border in dark mode */
+}
+html[data-theme='dark'] .right-panel .form-control::placeholder,
+html[data-theme='dark'] .left-panel .form-control::placeholder {
+	color:#555555;
+}
+/* Active/focus state keep magenta accent but remove dark halo */
+html[data-theme='dark'] .right-panel .form-control:focus,
+html[data-theme='dark'] .right-panel .form-select:focus,
+html[data-theme='dark'] .left-panel .form-control:focus,
+html[data-theme='dark'] .left-panel .form-select:focus {
+	border-color:var(--tmobile-magenta);
+	box-shadow:0 0 0 2px #e2007433;
+}
+
+/* Left panel text color enforcement (keep titles magenta via .info-title rule) */
+.left-panel { color:#000; }
+html[data-theme='dark'] .left-panel { color:#000; }
+
+/* Groupings tab scroll boxes: force black text in all themes */
+.details-box.scrollable { color:#000; }
+html[data-theme='dark'] .details-box.scrollable { color:#000; }
+
+/* DCD JIRA form: enforce black text (leave magenta titles intact) */
+.dcd-jira-form { color:#000; }
+.dcd-jira-form .dcd-form-subtitle { color:#000; }
+.dcd-jira-form .dcd-field-label { color:#000; }
+.dcd-jira-form .auto-text { color:#000; }
+/* Inputs/selects/textareas inside DCD form dark mode override to black (were #222) */
+html[data-theme='dark'] .dcd-jira-form .form-control,
+html[data-theme='dark'] .dcd-jira-form select.form-control,
+html[data-theme='dark'] .dcd-jira-form select.form-select,
+html[data-theme='dark'] .dcd-jira-form .edit-input,
+html[data-theme='dark'] .dcd-jira-form textarea.form-control {
+	color:#000;
+}
+
+/* =============================
+   SQL Generation Tab Overrides
+   - Non-title text forced to black
+   - Upload sections boxed individually
+   ============================= */
+.right-panel .upload-section { 
+	border:1px solid #c5c7c9; 
+	background:#fafafa; 
+	padding:1rem 1.1rem; 
+	border-radius:10px; 
+	display:flex; 
+	flex-direction:column; 
+	gap:.6rem; 
+	box-shadow:0 1px 3px rgba(0,0,0,0.08);
+	color:#000; /* non-title text */
+}
+html[data-theme='dark'] .right-panel .upload-section { 
+	background:#ffffff; 
+	border-color:#c5c7c9; 
+	box-shadow:none; 
+	color:#000; 
+}
+/* Add spacing and style between upload/SQL boxes */
+.sql-gen-row {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 2.2rem;
+	margin-bottom: 2.2rem;
+}
+.sql-gen-row > .upload-section {
+	flex: 1 1 340px;
+	min-width: 280px;
+	max-width: 600px;
+	margin-bottom: 0;
+}
+.sql-generation-box {
+	margin-top: 0.5rem;
+	margin-bottom: 0.5rem;
+	box-shadow: 0 2px 8px rgba(226,0,116,0.08);
+	border: 1.5px solid #c5c7c9;
+	transition: box-shadow 0.18s;
+}
+.sql-generation-box:hover {
+	box-shadow: 0 4px 16px rgba(226,0,116,0.18);
+	border-color: var(--tmobile-magenta);
+}
+@media (max-width: 1100px) {
+	.sql-gen-row {
+		gap: 1.2rem;
+	}
+	.sql-gen-row > .upload-section {
+		min-width: 220px;
+		max-width: 100%;
+	}
+}
+/* Two-row layout specifics */
+.sql-gen-row.top-row { margin-bottom:1.75rem; }
+.sql-gen-row.top-row > .upload-section { flex:1 1 48%; }
+.sql-gen-row.second-row { display:flex; }
+.sql-gen-row.second-row .full-width { flex:1 1 100%; }
+/* Remove max-width constraint for full-width SQL box */
+.sql-gen-row.second-row .full-width { max-width:100%; width:100%; }
+/* Increase spacing between action buttons in upload boxes */
+.upload-section .file-actions { display:flex; gap:0.9rem; }
+.upload-section .file-actions .btn { margin:0; }
+/* Spacing between Save SQL Generation and Generate SQL buttons */
+.save-footer .btn + .btn { margin-left:0.85rem; }
+@media (max-width:900px){
+  .sql-gen-row.top-row > .upload-section { flex:1 1 100%; }
+  .sql-gen-row.second-row { flex-direction:column; }
+}
+/* Ensure small helper text & file meta are black */
+.right-panel .upload-section .form-text,
+.right-panel .upload-section .file-meta,
+.right-panel .upload-section .file-name { color:#000; }
+html[data-theme='dark'] .right-panel .upload-section .form-text,
+html[data-theme='dark'] .right-panel .upload-section .file-meta,
+html[data-theme='dark'] .right-panel .upload-section .file-name { color:#000; }
+/* Existing section labels retain magenta via .section-label rule */
+
+/* SQL card + preview areas: non-title descriptive text black */
+.right-panel .sql-card,
+.right-panel .sql-card .file-meta,
+.right-panel .sql-card .file-name,
+.right-panel .sql-preview-header,
+.right-panel #sqlPreviewArea { color:#000; }
+html[data-theme='dark'] .right-panel .sql-card,
+html[data-theme='dark'] .right-panel .sql-card .file-meta,
+html[data-theme='dark'] .right-panel .sql-card .file-name,
+html[data-theme='dark'] .right-panel .sql-preview-header,
+html[data-theme='dark'] .right-panel #sqlPreviewArea { color:#000; }
+
+/* SQL card adopts upload-section styling when combined */
+.sql-card.upload-section { 
+	border:1px solid #c5c7c9; 
+	background:#fafafa; 
+	padding:1rem 1.1rem; 
+	border-radius:10px; 
+	display:flex; 
+	flex-direction:column; 
+	gap:.9rem; 
+	box-shadow:0 1px 3px rgba(0,0,0,0.08); 
+}
+html[data-theme='dark'] .sql-card.upload-section { 
+	background:#ffffff; 
+	border-color:#c5c7c9; 
+	box-shadow:none; 
+}
+.upload-section-title { 
+	font-weight:700; 
+	font-size:1.05rem; 
+	color:var(--tmobile-magenta); 
+	border-bottom:2px solid var(--tmobile-magenta); 
+	padding-bottom:.35rem; 
+	margin:0 0 .25rem; 
+}
+
+
+
+
+

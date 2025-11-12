@@ -756,29 +756,27 @@
             <div class="grid-form two-col"><div class="col-span-2"><label class="section-label">Notes</label><textarea class="form-control" name="promo_notes" rows="15">{{ promo.promo_notes or '' }}</textarea><small class="form-text text-muted">Add any additional notes, observations, or documentation.</small></div></div>
             <div class="save-footer"><button type="submit" class="btn btn-primary">Save Notes</button></div>
           {% elif active_tab == 'SQL Generation' %}
-            <div class="grid-form two-col">
-              <div class="col-span-1">
-                <div class="upload-section"><label class="section-label">SKU List (Excel)</label>
-                  {% if promo.uploaded_files and promo.uploaded_files.get('sku_excel') %}
-                  <div class="file-info-card"><div class="file-info"><i class="fas fa-file-excel"></i><div class="file-details"><div class="file-name">{{ promo.uploaded_files.sku_excel.original_name }}</div><div class="file-meta">{{ (promo.uploaded_files.sku_excel.file_size / 1024) | round(1) }} KB • {{ promo.uploaded_files.sku_excel.upload_date[:10] }}</div></div></div><div class="file-actions"><a href="{{ url_for('promo.download_file', promo_code=promo.code, file_type='sku_excel') }}" class="btn btn-sm btn-outline">Download</a><button type="button" onclick="deleteUploadedFile('sku_excel', '{{ promo.code }}')" class="btn btn-sm btn-outline btn-danger-outline ml-sm"><i class="fas fa-trash"></i> Delete</button></div></div>
-                  {% else %}
-                  <div class="upload-area"><input class="form-control" type="file" name="sku_excel" accept=".xlsx,.xls"><small class="form-text">Upload Excel file with SKU list</small></div>
-                  {% endif %}
-                </div>
+            <div class="sql-gen-row top-row">
+              <div class="upload-section">
+                <label class="section-label">SKU List (Excel)</label>
+                {% if promo.uploaded_files and promo.uploaded_files.get('sku_excel') %}
+                <div class="file-info-card"><div class="file-info"><i class="fas fa-file-excel"></i><div class="file-details"><div class="file-name">{{ promo.uploaded_files.sku_excel.original_name }}</div><div class="file-meta">{{ (promo.uploaded_files.sku_excel.file_size / 1024) | round(1) }} KB • {{ promo.uploaded_files.sku_excel.upload_date[:10] }}</div></div></div><div class="file-actions"><a href="{{ url_for('promo.download_file', promo_code=promo.code, file_type='sku_excel') }}" class="btn btn-sm btn-outline">Download</a><button type="button" onclick="deleteUploadedFile('sku_excel', '{{ promo.code }}')" class="btn btn-sm btn-outline btn-danger-outline ml-sm"><i class="fas fa-trash"></i> Delete</button></div></div>
+                {% else %}
+                <div class="upload-area"><input class="form-control" type="file" name="sku_excel" accept=".xlsx,.xls"><small class="form-text">Upload Excel file with SKU list</small></div>
+                {% endif %}
               </div>
-              <div class="col-span-1">
-                <div class="upload-section"><label class="section-label">Trade-In List (Excel)</label>
-                  {% if promo.uploaded_files and promo.uploaded_files.get('tradein_excel') %}
-                  <div class="file-info-card"><div class="file-info"><i class="fas fa-file-excel"></i><div class="file-details"><div class="file-name">{{ promo.uploaded_files.tradein_excel.original_name }}</div><div class="file-meta">{{ (promo.uploaded_files.tradein_excel.file_size / 1024) | round(1) }} KB • {{ promo.uploaded_files.tradein_excel.upload_date[:10] }}</div></div></div><div class="file-actions"><a href="{{ url_for('promo.download_file', promo_code=promo.code, file_type='tradein_excel') }}" class="btn btn-sm btn-outline">Download</a><button type="button" onclick="deleteUploadedFile('tradein_excel', '{{ promo.code }}')" class="btn btn-sm btn-outline btn-danger-outline ml-sm"><i class="fas fa-trash"></i> Delete</button></div></div>
-                  {% else %}
-                  <div class="upload-area"><input class="form-control" type="file" name="tradein_excel" accept=".xlsx,.xls"><small class="form-text">Upload Excel file with trade-in list</small></div>
-                  {% endif %}
-                </div>
+              <div class="upload-section">
+                <label class="section-label">Trade-In List (Excel)</label>
+                {% if promo.uploaded_files and promo.uploaded_files.get('tradein_excel') %}
+                <div class="file-info-card"><div class="file-info"><i class="fas fa-file-excel"></i><div class="file-details"><div class="file-name">{{ promo.uploaded_files.tradein_excel.original_name }}</div><div class="file-meta">{{ (promo.uploaded_files.tradein_excel.file_size / 1024) | round(1) }} KB • {{ promo.uploaded_files.tradein_excel.upload_date[:10] }}</div></div></div><div class="file-actions"><a href="{{ url_for('promo.download_file', promo_code=promo.code, file_type='tradein_excel') }}" class="btn btn-sm btn-outline">Download</a><button type="button" onclick="deleteUploadedFile('tradein_excel', '{{ promo.code }}')" class="btn btn-sm btn-outline btn-danger-outline ml-sm"><i class="fas fa-trash"></i> Delete</button></div></div>
+                {% else %}
+                <div class="upload-area"><input class="form-control" type="file" name="tradein_excel" accept=".xlsx,.xls"><small class="form-text">Upload Excel file with trade-in list</small></div>
+                {% endif %}
               </div>
             </div>
-            <div class="grid-form one-col mt-2" id="sqlSection" {% if not has_generated_sql %}style="display:none;"{% endif %}>
-              <label class="section-label">Generated SQL Statement</label>
-              <div class="file-info-card sql-card mb-1">
+            <div class="sql-gen-row second-row">
+              <div class="upload-section sql-card sql-generation-box full-width">
+                <div class="upload-section-title">Generated SQL Statement</div>
                 <div class="file-info"><i class="fas fa-database"></i>
                   <div class="file-details">
                     <div class="file-name">{{ promo.code }}_promo_eligibility_rules.sql</div>
@@ -789,10 +787,10 @@
                   <a href="{{ url_for('promo.download_sql', promo_code=promo.code) }}" class="btn btn-sm btn-outline" id="downloadSqlBtn" {% if not promo.generated_sql %}style="display:none;"{% endif %}><i class="fas fa-download"></i> Download SQL</a>
                   <button type="button" onclick="toggleSqlPreview()" id="sqlPreviewBtn" class="btn btn-sm btn-outline ml-sm" {% if not promo.generated_sql %}style="display:none;"{% endif %}><i class="fas fa-eye"></i> Preview</button>
                 </div>
-              </div>
-              <div id="sqlPreviewContainer" class="hidden" style="display:none;">
-                <div class="sql-preview-header"><span>SQL Preview (first 1000 characters)</span><button type="button" onclick="loadFullSql()" id="loadFullBtn" class="btn btn-sm btn-link">Load Full SQL</button></div>
-                <textarea class="form-control sql-preview-area" id="sqlPreviewArea" rows="15" readonly>{% if promo.generated_sql %}{% if promo.generated_sql|length > 1000 %}{{ promo.generated_sql[:1000] }}...\n\n[SQL truncated for performance - use "Load Full SQL" button or download to see complete statement]{% else %}{{ promo.generated_sql }}{% endif %}{% endif %}</textarea>
+                <div id="sqlPreviewContainer" class="hidden" style="display:none;">
+                  <div class="sql-preview-header"><span>SQL Preview (first 1000 characters)</span><button type="button" onclick="loadFullSql()" id="loadFullBtn" class="btn btn-sm btn-link">Load Full SQL</button></div>
+                  <textarea class="form-control sql-preview-area" id="sqlPreviewArea" rows="15" readonly>{% if promo.generated_sql %}{% if promo.generated_sql|length > 1000 %}{{ promo.generated_sql[:1000] }}...\n\n[SQL truncated for performance - use "Load Full SQL" button or download to see complete statement]{% else %}{{ promo.generated_sql }}{% endif %}{% endif %}</textarea>
+                </div>
               </div>
             </div>
             {% if not has_generated_sql %}<div class="mt-2" id="sqlFirstTimeNotice" style="padding:10px;border:1px dashed #bbb;background:#fafafa;font-size:0.9rem;">No SQL generated yet. Click <strong>Generate SQL</strong>. After the first generation this section will appear automatically.</div>{% endif %}

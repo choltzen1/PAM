@@ -110,6 +110,8 @@ body {
   color: #fff;
   border-color: var(--spe-color);
 }
+/* Dark mode flatten for active tab */
+html[data-theme='dark'] .promotions-page-spe .tab.active { box-shadow:none; }
 
 .promotions-page,
 .promotions-page * {
@@ -190,6 +192,8 @@ body {
   margin: 0;
   background: var(--bg-alt);
 }
+/* Dark mode: remove outer border (if any from UA) */
+html[data-theme='dark'] .promotions-page-spe .promo-table { border:none; }
 
 .promo-table th {
   background: var(--spe-header-bg);
@@ -200,13 +204,20 @@ body {
   font-size: 1.12em;
 }
 
-.promo-table tbody tr {
-  border-bottom: 1px solid #dee2e6;
-}
+/* Unified full-width row separators (override global cell borders) */
+.promotions-page-spe .promo-table td { border-bottom:none !important; }
+.promotions-page-spe .promo-table tbody tr { border-bottom:1px solid #c8c9cb; }
+.promotions-page-spe .promo-table tbody tr:last-child { border-bottom:none; }
+html[data-theme='dark'] .promotions-page-spe .promo-table tbody tr { border-bottom:1px solid #9ea0a2; }
 
 .promo-table tbody tr:nth-child(even) {
   background: var(--bg-soft);
 }
+/* SPE page specific – override to custom grey striping */
+.promotions-page-spe .promo-table tbody tr:nth-child(odd) { background:#eceeef; }
+.promotions-page-spe .promo-table tbody tr:nth-child(even) { background:#d8dadb; }
+html[data-theme='dark'] .promotions-page-spe .promo-table tbody tr:nth-child(odd) { background:#d2d4d5; }
+html[data-theme='dark'] .promotions-page-spe .promo-table tbody tr:nth-child(even) { background:#b9bbbc; }
 
 .promo-table td {
   text-align: center;
@@ -246,6 +257,7 @@ body {
 .promo-table tr:not(:last-child) td {
   border-bottom: 1.5px solid #eee;
 }
+html[data-theme='dark'] .promotions-page-spe .promo-table tr:not(:last-child) td { border-bottom:1.5px solid #b3b5b7; }
 
 @media (max-width: 900px) {
   .promotions-page {
@@ -261,6 +273,38 @@ body {
     gap: 0.3em;
   }
 }
+
+/* =============================
+   SPE PAGE DARK MODE PARITY
+   ============================= */
+/* Light grey surfaces for controls (and future pagination) */
+.promotions-page-spe .promotions-controls,
+.promotions-page-spe .pagination-container {
+  background:#e4e6e8;
+  border:1px solid #c5c7c9;
+  border-radius:10px;
+  padding:1rem 1.25rem;
+}
+.promotions-page-spe .promotions-controls { gap:1.1rem; }
+/* Remove drop shadow from control group */
+.promotions-page-spe .promotions-controls { box-shadow:none; }
+
+/* Dark mode: keep surface flat (remove any inherited shadow if later added) */
+html[data-theme='dark'] .promotions-page-spe .promotions-controls,
+html[data-theme='dark'] .promotions-page-spe .pagination-container { box-shadow:none; }
+
+/* Search input white with dark text in dark mode */
+html[data-theme='dark'] .promotions-page-spe .search-group input {
+  background:#ffffff;
+  color:#222;
+  border:1px solid #c5c7c9; /* match RDC softened border */
+}
+html[data-theme='dark'] .promotions-page-spe .search-group input::placeholder { color:#555; }
+
+/* Placeholder pagination styles (if pagination added later) */
+.promotions-page-spe .pagination-container { display:flex; justify-content:space-between; align-items:center; margin:1.5rem 0; }
+.promotions-page-spe .pagination-btn { padding:.5rem .75rem; border:1px solid var(--tmobile-border); background:#fff; color:var(--tmobile-magenta); text-decoration:none; border-radius:4px; font-size:.9rem; transition:all .2s ease; min-width:40px; text-align:center; }
+.promotions-page-spe .pagination-btn:hover, .promotions-page-spe .pagination-btn.active { background:var(--tmobile-magenta); color:#fff; border-color:var(--tmobile-magenta); }
 
 @media (max-width: 600px) {
   .promotions-page {
