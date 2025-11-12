@@ -17,6 +17,45 @@
   overflow-x: hidden;
 }
 
+/* =============================
+   Dark Mode Gradient Preservation
+   Make page wrapper transparent so global gradient shows through.
+   Light surfaces applied only to inner panels.
+   ============================= */
+html[data-theme='dark'] .date-mismatch-page { background: transparent !important; }
+html[data-theme='dark'] .controls-container,
+html[data-theme='dark'] .table-container,
+html[data-theme='dark'] .no-data-container {
+  background:#d0d2d3 !important;
+  color:#111 !important;
+  border:1px solid #b9babb;
+  box-shadow:none;
+}
+html[data-theme='dark'] .approvers-table th { background: var(--tmobile-magenta); }
+/* Make td transparent so row <tr> stripe backgrounds show exactly like RDC */
+html[data-theme='dark'] .approvers-table td { background: transparent; color:#111; }
+html[data-theme='dark'] .promo-link { color: var(--tmobile-magenta); }
+/* Dark mode promo search input: white with black text */
+html[data-theme='dark'] #promo-search.form-control {
+  background:#ffffff !important;
+  color:#111 !important;
+  border:1px solid #b9babb !important;
+  box-shadow:0 0 0 2px rgba(226,0,116,0.15) inset;
+}
+html[data-theme='dark'] #promo-search.form-control::placeholder { color:#666; }
+
+/* Dark mode alternating row striping */
+/* Refined dark mode zebra striping: use two greys (no pure white) */
+/* Light mode zebra striping to exactly mirror RDC table */
+.approvers-table tbody tr:nth-child(odd) { background:#eceeef; }
+.approvers-table tbody tr:nth-child(even) { background:#d8dadb; }
+
+/* Exact RDC dark mode stripe colors applied at tr level (not td) for consistent hover brightness */
+html[data-theme='dark'] .approvers-table tbody tr:nth-child(odd) { background:#d2d4d5; }
+html[data-theme='dark'] .approvers-table tbody tr:nth-child(even) { background:#b9bbbc; }
+/* Remove any dark mode row hover background */
+/* (Removed dark mode hover background – consolidated single no-hover rule placed at end) */
+
 /* Controls Container */
 .controls-container {
   background: white;
@@ -102,13 +141,13 @@
   text-overflow: ellipsis;
 }
 
-.approvers-table tbody tr {
-  transition: background-color 0.2s ease;
-}
+/* Removed transition to eliminate any perceptible hover effect */
+.approvers-table tbody tr { transition:none; }
 
-.approvers-table tbody tr:hover {
-  background-color: #f8f9fa;
-}
+/* Purged all row hover styling intentionally */
+/* (Intentionally no :hover rule for rows) */
+/* Reintroduce RDC table hover effect exactly (brightness 1.02) */
+.approvers-table tbody tr:hover { filter:brightness(1.02); }
 
 .approvers-table tbody tr:last-child td {
   border-bottom: none;
