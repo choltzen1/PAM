@@ -10,41 +10,12 @@
 </div>
 {% endblock %}
 {% block head %}
-<style>
-  .groupings-layout { max-width:1180px; margin:0 auto; }
-  .panel { border:1px solid #d6d6dc; border-radius:10px; background:#fff; box-shadow:0 2px 4px rgba(0,0,0,0.06); display:flex; flex-direction:column; }
-  .panel-header { padding:12px 16px; border-bottom:1px solid #eee; font-weight:600; display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
-  .panel-header > span { flex:1 1 auto; }
-  .toolbar { display:flex; gap:6px; flex-wrap:wrap; align-items:center; }
-  .panel-body { padding:0; }
-  .panel-section { padding:14px 18px; }
-  .panel-section + .panel-section { border-top:1px solid #f1f1f4; }
-  .sku-pill { display:inline-block; background:#f8f9fb; border:1px solid #e0e2e6; padding:3px 7px; margin:2px; border-radius:14px; font-size:11px; line-height:14px; white-space:nowrap; }
-  .sku-pill:hover { background:#eef1f5; }
-  .reference-row { border:1px solid #ececee; border-radius:8px; padding:10px 12px; font-size:12px; margin-bottom:10px; background:#fafbfc; position:relative; }
-  .reference-row.collapsed .row-items { display:none; }
-  .reference-row-header { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; }
-  .code-badge { display:inline-block; background:#5e0066; color:#fff; padding:2px 8px; font-size:11px; border-radius:12px; font-weight:600; letter-spacing:0.5px; box-shadow:0 1px 2px rgba(0,0,0,0.15); }
-  .count-badge { background:#eef0f4; border:1px solid #d1d5da; padding:4px 10px; border-radius:20px; font-size:11px; font-weight:600; }
-  .actions-inline button, .toolbar button { font-size:0.65rem; padding:4px 7px; }
-  .mini-btn { font-size:0.65rem; padding:4px 7px; }
-  .empty-hint { color:#666; font-size:13px; margin:10px 0; text-align:center; }
-  .search-box { flex:1 1 200px; min-width:180px; }
-  .search-box input { width:100%; padding:6px 9px; border:1px solid #ccc; border-radius:6px; font-size:12px; }
-  .pill-cluster { margin-top:6px; }
-  .row-meta { font-size:11px; color:#444; margin-top:4px; }
-  .toggle-collapse { cursor:pointer; color:#5e0066; font-size:11px; font-weight:600; }
-  .toggle-collapse:hover { text-decoration:underline; }
-  .row-actions { display:flex; gap:4px; }
-  .view-mode-btn.active { background:#5e0066; color:#fff; }
-  .form-inline-grid { display:grid; grid-template-columns: repeat(auto-fit,minmax(210px,1fr)); gap:10px; }
-  .panel-footer { padding:10px 16px; background:#f8f8fa; border-top:1px solid #eee; display:flex; justify-content:flex-end; gap:6px; }
-</style>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">{# shared button styles #}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin_groupings.css') }}">
 {% endblock %}
 {% block content %}
 <div class="groupings-page">
   <div class="page-intro" style="margin-bottom:16px;">
-  <p>This page manages reference groupings sourced from legacy text files (SOC, Account Types, Sales Apps). Edits update the underlying .txt files.</p>
   </div>
   <div class="groupings-layout">
     <!-- Reference Groupings Panel -->

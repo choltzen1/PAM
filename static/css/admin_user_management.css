@@ -104,3 +104,39 @@
 .breadcrumb-link:hover { color: #E20074; text-decoration: none; }
 .breadcrumb-separator { margin: 0 10px; color: #9ca3af; }
 .breadcrumb-current { color: #E20074; font-weight: 500; }
+
+/* =============================
+   Dark Mode Overrides
+   ============================= */
+[data-theme='dark'] .user-management-container .user-table th {
+  background: #e1e3e4;
+  color: #000;
+  border-bottom: 1px solid #c2c4c6;
+}
+[data-theme='dark'] .user-management-container .user-table td {
+  color: #000;
+}
+[data-theme='dark'] .user-management-container .user-table tbody tr:nth-child(odd) { background:#d2d4d5; }
+[data-theme='dark'] .user-management-container .user-table tbody tr:nth-child(even) { background:#b9bbbc; }
+[data-theme='dark'] .user-management-container .user-table tbody tr:hover { filter:brightness(1.02); }
+
+/* Tabs text forced black in dark mode (requested) */
+[data-theme='dark'] .user-management-tabs .tab-btn,
+[data-theme='dark'] .user-management-tabs .tab-btn.active { color:#000 !important; }
+[data-theme='dark'] .user-management-tabs .tab-btn.active { border-bottom-color:#E20074; }
+
+/* Dark mode cards */
+[data-theme='dark'] .groups-grid .group-card { background: var(--card-bg,#d0d2d3); color:#000; box-shadow:0 2px 6px rgba(0,0,0,0.35); }
+[data-theme='dark'] .groups-grid .group-title { color:#000; }
+[data-theme='dark'] .groups-grid .group-description { color:#222; }
+[data-theme='dark'] .permissions-list li { color:#000; border-color:#d0d2d3; }
+
+/* Badges retain original colors; ensure readable text contrast */
+[data-theme='dark'] .badge-success { background:#afe3cc; color:#064c37; }
+[data-theme='dark'] .badge-danger { background:#f8b4b4; color:#7a1212; }
+
+/* Form surfaces for edit/create user */
+[data-theme='dark'] .user-form { background: var(--card-bg,#d0d2d3); }
+[data-theme='dark'] .form-group label { color:#000; }
+[data-theme='dark'] .form-group input,
+[data-theme='dark'] .form-group select { background:#fff; color:#000; border-color:#a8aaab; }
