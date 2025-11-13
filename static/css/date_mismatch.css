@@ -588,3 +588,30 @@ html, body {
   .file-info-card { flex-direction:column; align-items:flex-start; }
   .file-actions { width:100%; }
 }
+
+/* -------------------- Dark Mode Overrides (Light Grey Panel + White Inputs + Striped Table) -------------------- */
+html[data-theme='dark'] .date-mismatch-page { background:transparent; }
+html[data-theme='dark'] .controls-container { background: var(--card-bg); border-color:#b9bbbc; backdrop-filter:none; }
+html[data-theme='dark'] .filters-section label,
+html[data-theme='dark'] .filter-group label,
+html[data-theme='dark'] .search-group label { color:#111 !important; }
+html[data-theme='dark'] .filter-group select,
+html[data-theme='dark'] .search-group input,
+html[data-theme='dark'] #mismatch-filter,
+html[data-theme='dark'] #owner-filter,
+html[data-theme='dark'] #search-input,
+html[data-theme='dark'] #operatorId { background:#ffffff !important; color:#000 !important; border:1px solid #c5c7c9 !important; }
+html[data-theme='dark'] #operatorId:focus { box-shadow:0 0 0 2px rgba(226,0,116,0.35); border-color:#E20074 !important; }
+/* Table striping (light grey / darker grey) */
+html[data-theme='dark'] .date-mismatch-table tbody tr:nth-child(odd) { background:#d2d4d5 !important; }
+html[data-theme='dark'] .date-mismatch-table tbody tr:nth-child(even) { background:#b9bbbc !important; }
+html[data-theme='dark'] .date-mismatch-table tbody tr:hover { filter:brightness(1.02); }
+html[data-theme='dark'] .date-mismatch-table td { color:#111 !important; background:transparent !important; }
+html[data-theme='dark'] .date-mismatch-table th { background:#E20074 !important; color:#fff !important; }
+/* Batch actions & preview panels adopt card surface */
+html[data-theme='dark'] .batch-actions { background:#ffffff; border-color:#c5c7c9; }
+html[data-theme='dark'] .file-info-card { background:#ffffff; border-color:#c5c7c9; }
+html[data-theme='dark'] #sqlPreviewContainer { background:#ffffff; border-color:#c5c7c9; }
+html[data-theme='dark'] .operator-id-section { background:#ffffff; border-color:#c5c7c9; }
+html[data-theme='dark'] .sql-preview-header { background:#e9ecef; color:#111; }
+html[data-theme='dark'] .file-meta { color:#444; }
