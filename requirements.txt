@@ -28,7 +28,7 @@ blinker==1.9.0
 itsdangerous==2.2.0
 
 # Excel file handling (alternative to openpyxl for older formats)
-xlrd==2.0.1
+xlrd==2.0.2
 
 # Date and time utilities (if needed for enhanced datetime handling)
 python-dateutil==2.8.2
