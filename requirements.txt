@@ -34,5 +34,5 @@ xlrd==2.0.1
 python-dateutil==2.8.2
 
 # JSON schema validation (if you want to add data validation)
-jsonschema==4.20.0
+jsonschema==4.25.1
 pytest==8.2.0
