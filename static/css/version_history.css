@@ -18,6 +18,18 @@
   /* rely on parent .page-content for height & background */
 }
 
+/* Localized control group surface (light theme only) */
+html:not([data-theme='dark']) .version-history-page .version-controls {
+  background: #e4e6e8;
+  border: 1px solid #c5c7c9;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.12);
+}
+html[data-theme='dark'] .version-history-page .version-controls {
+  background: var(--control-surface);
+  border: 1px solid var(--border-color);
+  box-shadow: 0 2px 4px var(--shadow-color);
+}
+
 /* Controls section */
 .version-controls {
   /* Inherit standardized .controls-container base styles; version-history specific tweaks */
