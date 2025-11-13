@@ -15,7 +15,7 @@ requests==2.31.0
 urllib3==2.1.0
 
 # Environment and configuration
-python-dotenv==1.0.0
+python-dotenv==1.2.1
 
 # System monitoring and utilities
 psutil==5.9.6
