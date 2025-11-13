@@ -97,23 +97,38 @@ body.updates-page {
 .promo-details {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 20px; /* uniform spacing between each label/value cluster */
     flex: 1;
     flex-wrap: wrap;
 }
 
-.info-label {
-    font-weight: 600;
-    color: #666;
-    font-size: 13px;
-}
-
-.info-value {
-    color: #333;
-    font-weight: 500;
+/* Aligned label/value typography (consistent size & baseline) */
+.info-label, .info-value {
     font-size: 14px;
-    margin-right: 12px;
+    line-height: 1.15;
+    display: inline-flex;
+    align-items: center;
+    margin: 0;
+    padding: 0;
 }
+.info-label { font-weight:600; color:#444; }
+.info-value { font-weight:500; color:#111; }
+
+/* Remove legacy right margin since flex gap handles spacing */
+.info-value { margin-right:0 !important; }
+
+/* Status pill vertical centering with text */
+.status-active { display:inline-flex; align-items:center; line-height:1; }
+
+/* Group each label/value pair into a virtual cluster for alignment without HTML changes */
+.promo-details .info-label + .info-value { position:relative; }
+
+/* Tighten control group vertical rhythm */
+.control-group { line-height:1; }
+
+/* Dark mode color alignment (already forcing black text elsewhere, ensure labels use same) */
+html[data-theme='dark'] .info-label { color:#111 !important; }
+html[data-theme='dark'] .info-value { color:#111 !important; }
 
 .status-active {
     background: #4caf50;
@@ -241,6 +256,59 @@ body.updates-page {
     display: flex;
     flex-direction: column;
 }
+/* =============================
+   Dark Mode Light Grey Surfaces (match reviewers/approvers pattern)
+   Apply to top control group and primary cards/columns
+   ============================= */
+html[data-theme='dark'] .control-group,
+html[data-theme='dark'] .updates-card,
+html[data-theme='dark'] .updates-column,
+html[data-theme='dark'] .column {
+    background:#e4e6e8 !important; /* light neutral grey surface */
+    color:#111 !important;
+    border-color:#c5c7c9 !important;
+    box-shadow:none !important; /* flatten elevation in dark mode */
+}
+
+/* Internal accent elements retain magenta header color; card headers already magenta */
+html[data-theme='dark'] .card-header,
+html[data-theme='dark'] .column-header { filter:none; }
+
+/* Inputs / interactive inner elements: ensure white background + dark text for contrast */
+html[data-theme='dark'] .control-group .search-input,
+html[data-theme='dark'] .control-group .search-bar,
+html[data-theme='dark'] .control-group .promo-owner-dropdown,
+html[data-theme='dark'] .control-group .form-control,
+html[data-theme='dark'] .updates-card input,
+html[data-theme='dark'] .updates-card select,
+html[data-theme='dark'] .updates-card textarea,
+html[data-theme='dark'] .column input,
+html[data-theme='dark'] .column select,
+html[data-theme='dark'] .column textarea {
+    background:#ffffff !important;
+    color:#111 !important;
+    border:1px solid #b9bbbc !important;
+}
+
+/* Subtle panel-internal chips / list items maintain light backgrounds */
+html[data-theme='dark'] .bptcr-item,
+html[data-theme='dark'] .status-button,
+html[data-theme='dark'] .updates-info,
+html[data-theme='dark'] .activity-log,
+html[data-theme='dark'] .version-entry {
+    background:#ffffff !important;
+    color:#222 !important;
+    border-color:#c7c9ca !important;
+}
+
+/* Preserve active/selected state color contrast */
+html[data-theme='dark'] .bptcr-item.selected,
+html[data-theme='dark'] .status-button.active,
+html[data-theme='dark'] .status-button.primary { color:#fff !important; }
+
+/* Info labels/values forced to dark text */
+html[data-theme='dark'] .info-label,
+html[data-theme='dark'] .info-value { color:#111 !important; }
 
 /* Column headers */
 .column-header {
@@ -360,11 +428,13 @@ body.updates-page {
 
 /* Updates info section */
 .updates-info {
-    background: #f8f9fa;
-    border: 1px solid #e9ecef;
-    border-radius: 4px;
-    padding: 15px;
-    margin-bottom: 20px;
+    background: transparent; /* remove inner grey wrapper */
+    border: none;
+    padding: 0; /* let outer card padding handle spacing */
+    margin: 0 0 20px 0;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px; /* retain spacing between individual boxes */
 }
 
 .updates-info h4 {
@@ -392,15 +462,25 @@ body.updates-page {
     color: #495057;
 }
 
-.info-value {
-    color: #6c757d;
-    text-align: right;
+/* Individual field boxes */
+.info-item {
+    position: relative;
+    padding: 10px 12px 10px 14px;
+    background:#ffffff;
+    border:1px solid #dcdedf;
+    border-left:4px solid #e91e63; /* magenta accent */
+    border-radius:6px;
+    font-size:13px;
+    line-height:1.3;
+    display:flex;
+    flex-wrap:wrap;
+    gap:4px;
+    box-shadow:0 1px 2px rgba(0,0,0,0.04);
 }
+.info-item strong { font-weight:600; color:#222; margin-right:4px; }
+.info-item:last-child { margin-bottom:0; }
 
-/* Progress bar */
-.progress-container {
-    margin: 15px 0;
-}
+/* Section dividers now have spacing before next grid row */
 
 .progress-bar {
     width: 100%;
@@ -645,13 +725,19 @@ body.updates-page {
 
 .version-entry {
     padding: 12px;
-    background: #f8f9fa;
+    background: #ffffff;
     border-radius: 8px;
     font-size: 13px;
     color: #495057;
     line-height: 1.4;
+    border:1px solid #e1e2e3;
     border-left: 4px solid #e91e63;
 }
+/* Dark Mode adjustments for segmented info items */
+html[data-theme='dark'] .updates-info { background:transparent !important; border:none !important; box-shadow:none !important; }
+html[data-theme='dark'] .info-item { background:#ffffff !important; border-color:#c5c7c9 !important; box-shadow:0 1px 2px rgba(0,0,0,0.05); }
+html[data-theme='dark'] .info-item strong { color:#111 !important; }
+html[data-theme='dark'] .version-entry { background:#ffffff; border-color:#c5c7c9; }
 
 .form-control {
     width: 100%;
