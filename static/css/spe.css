@@ -70,6 +70,8 @@ body {
   padding: 0.5rem;
   border: 1px solid var(--tmobile-border);
   border-radius: 4px;
+  background:#ffffff;
+  color:#111;
 }
 
 .action-buttons {
@@ -294,11 +296,7 @@ html[data-theme='dark'] .promotions-page-spe .promotions-controls,
 html[data-theme='dark'] .promotions-page-spe .pagination-container { box-shadow:none; }
 
 /* Search input white with dark text in dark mode */
-html[data-theme='dark'] .promotions-page-spe .search-group input {
-  background:#ffffff;
-  color:#222;
-  border:1px solid #c5c7c9; /* match RDC softened border */
-}
+html[data-theme='dark'] .promotions-page-spe .search-group input { background:#ffffff; color:#111; border:1px solid #c5c7c9; }
 html[data-theme='dark'] .promotions-page-spe .search-group input::placeholder { color:#555; }
 
 /* Placeholder pagination styles (if pagination added later) */

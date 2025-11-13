@@ -65,7 +65,10 @@
   border-radius: 4px;
   font-size: 0.9rem;
   height: 38px; /* Consistent height */
+  background:#ffffff; /* always light */
+  color:#111;
 }
+html[data-theme='dark'] .version-history-page .search-group input { background:#ffffff; color:#111; border-color:#c5c7c9; }
 
 /* Remove all the dropdown constraint overrides */
 
@@ -623,3 +626,14 @@
     padding: 1rem;
   }
 }
+
+/* Pagination styles (RDC parity) */
+.pagination-container { display:flex; justify-content:space-between; align-items:center; margin:1.25rem auto; padding:1rem; background:#e4e6e8; border-radius:8px; border:1px solid #c5c7c9; width:95%; max-width:1800px; box-sizing:border-box; }
+.pagination-controls { display:flex; gap:0.4rem; align-items:center; flex-wrap:wrap; }
+.pagination-info { font-size:0.8rem; font-weight:500; color:#333; }
+.pagination-btn { padding:.5rem .75rem; border:1px solid var(--tmobile-border,#E20074); background:#fff; color:var(--tmobile-magenta,#E20074); text-decoration:none; border-radius:4px; font-size:.85rem; transition:all .2s ease; min-width:40px; text-align:center; display:inline-flex; align-items:center; justify-content:center; }
+.pagination-btn:hover, .pagination-btn.active { background:var(--tmobile-magenta,#E20074); color:#fff; border-color:var(--tmobile-magenta,#E20074); }
+html[data-theme='dark'] .version-history-page .pagination-container { background:#d0d2d3; border-color:#b9bbbc; }
+html[data-theme='dark'] .version-history-page .pagination-info { color:#111; }
+.pagination-container .per-page-select select { padding:4px 6px; border:1px solid #c5c7c9; border-radius:4px; background:#fff; font-size:.75rem; }
+html[data-theme='dark'] .pagination-container .per-page-select select { background:#fff; color:#000; border-color:#a8aaab; }

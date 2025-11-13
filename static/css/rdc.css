@@ -31,12 +31,9 @@ html[data-theme='dark'] .promotions-page-rdc .promo-table tbody tr { border-bott
 .promotions-controls { display:flex; flex-wrap:wrap; align-items:flex-end; gap:1rem; margin:1.5rem 0; }
 .filter-group, .search-group { display:flex; flex-direction:column; gap:0.25rem; }
 .filter-group select, .search-group input { min-width:200px; padding:0.5rem; border:1px solid var(--tmobile-border); border-radius:4px; }
+filter-group select, .search-group input { min-width:200px; padding:0.5rem; border:1px solid var(--tmobile-border); border-radius:4px; background:#ffffff; color:#111; }
 /* Dark mode specific override for RDC search input to force white background & dark text */
-html[data-theme='dark'] .promotions-page-rdc .search-group input {
-	background:#ffffff;
-	color:#222222;
-	border:1px solid #c5c7c9; /* soften border in dark mode; remove harsh black */
-}
+html[data-theme='dark'] .promotions-page-rdc .search-group input { background:#ffffff; color:#111; border:1px solid #c5c7c9; }
 html[data-theme='dark'] .promotions-page-rdc .search-group input::placeholder {
 	color:#555555;
 }

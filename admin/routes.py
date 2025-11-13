@@ -16,6 +16,7 @@ if TYPE_CHECKING:
 admin_bp = Blueprint('admin_bp', __name__)
 
 data_manager = None
+_PAM_PROMO_CACHE = {'ts': 0, 'data': None}  # in-process cache for PAM promotions page
 
 def init_data_manager(dm):
     global data_manager
@@ -239,10 +240,7 @@ def admin_pam_promotions():
     # Only caches unfiltered base page (page=1, empty search, owner='all').
     # TTL kept short (45s) to keep data fresh but prevent multi-minute reload delays.
     global _PAM_PROMO_CACHE
-    try:
-        _PAM_PROMO_CACHE
-    except NameError:
-        _PAM_PROMO_CACHE = {'ts': 0, 'data': None}
+    # _PAM_PROMO_CACHE initialized at module load; legacy try/except removed for clarity.
 
     from time import time
     cache_key_applicable = (page == 1 and per_page == 25 and search == '' and owner == 'all')
@@ -301,16 +299,55 @@ def admin_groupings_page():
 def version_history_page():
     dm = _ensure_dm()
     try:
+        page = request.args.get('page', 1, type=int)
+        per_page = request.args.get('per_page', 50, type=int)
+        per_page = max(1, min(per_page, 200))  # sanity bounds
+        search = request.args.get('search', '', type=str).strip().lower()
+        owner = request.args.get('owner', 'all', type=str).strip()
         # Prefer dedicated service if available
         if version_history_service:
-            promotions_with_history = version_history_service.get_all_promotions_with_history(dm.get_all_promos)
+            all_promos = version_history_service.get_all_promotions_with_history(dm.get_all_promos)
         else:
-            # Fallback: empty list (legacy path previously missing)
-            promotions_with_history = []
-        return render_template('pam/version_history.html', promotions=promotions_with_history)
+            all_promos = []
+        # Build distinct owners list from full dataset (before filtering)
+        owners = sorted({p.get('promo_owner','') for p in all_promos if p.get('promo_owner')})
+        # Apply filtering
+        def matches(p):
+            if owner != 'all' and p.get('promo_owner','').lower() != owner.lower():
+                return False
+            if search:
+                hay = ' '.join([
+                    p.get('promo_code',''),
+                    p.get('promo_owner',''),
+                    p.get('bill_facing_name',''),
+                    p.get('orbit_id',''),
+                    p.get('status','')
+                ]).lower()
+                return search in hay
+            return True
+            
+        filtered_promos = [p for p in all_promos if matches(p)]
+        total_items = len(filtered_promos)
+        total_pages = (total_items // per_page) + (1 if total_items % per_page else 0)
+        if page > total_pages and total_pages > 0:
+            page = total_pages
+        start = (page - 1) * per_page
+        end = start + per_page
+        page_promos = filtered_promos[start:end]
+        pagination = {
+            'page': page,
+            'per_page': per_page,
+            'total_items': total_items,
+            'total_pages': total_pages or 1,
+            'has_prev': page > 1,
+            'has_next': page < total_pages,
+            'prev_num': page - 1 if page > 1 else None,
+            'next_num': page + 1 if page < total_pages else None
+        }
+        return render_template('pam/version_history.html', promotions=page_promos, pagination=pagination, owners=owners, search_query=search, selected_owner=owner)
     except Exception as e:
         flash(f'Error loading version history: {e}', 'error')
-        return render_template('pam/version_history.html', promotions=[])
+        return render_template('pam/version_history.html', promotions=[], pagination={'page':1,'per_page':50,'total_items':0,'total_pages':1,'has_prev':False,'has_next':False}, owners=[], search_query='', selected_owner='all')
 
 # --- Admin actions ---
 @admin_bp.route('/admin/backup', methods=['POST'])
