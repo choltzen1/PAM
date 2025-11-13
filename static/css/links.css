@@ -5,8 +5,9 @@
 .links-page {
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 140px);
-  background: #f8f9fa;
+  /* Use min-height so page can grow while still covering full viewport beneath header+footer */
+  min-height: calc(100vh - var(--header-height) - 60px);
+  background: #f8f9fa; /* light mode panel surface */
 }
 
 /* Controls section - copied from version_history.css */
@@ -255,6 +256,22 @@
   border-color: #E20074;
   box-shadow: 0 0 0 0.2rem rgba(226, 0, 116, 0.25);
 }
+
+/* -------------------- Dark Theme Overrides (consistent grey panel surface) -------------------- */
+/* Let the global gradient show through in dark mode; only panels use grey surfaces */
+html[data-theme='dark'] .links-page { background: transparent; }
+html[data-theme='dark'] .version-controls { background: var(--card-bg); border-bottom:1px solid #b9bbbc; }
+html[data-theme='dark'] .search-group input { background:#ffffff; color:#000; border-color:#c5c7c9; }
+html[data-theme='dark'] .card { background:var(--card-bg); border-color:#b9bbbc; box-shadow:0 2px 6px rgba(0,0,0,0.4); }
+html[data-theme='dark'] .card-header { background:var(--card-bg); border-color:#b9bbbc; }
+html[data-theme='dark'] .promotion-header-info p,
+html[data-theme='dark'] .promotion-header-info strong,
+html[data-theme='dark'] .form-label { color:#111 !important; }
+html[data-theme='dark'] .form-control { background:#ffffff; color:#111; border-color:#c5c7c9; }
+html[data-theme='dark'] .form-control:focus { border-color:#E20074; box-shadow:0 0 0 0.2rem rgba(226,0,116,0.35); }
+html[data-theme='dark'] .btn { filter:none; }
+/* Ensure save confirmation message keeps brand color readability */
+html[data-theme='dark'] .links-save-message { color:#E20074; }
 
 .text-end {
   text-align: right;
