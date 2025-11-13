@@ -29,101 +29,26 @@
 
   <!-- Admin Tools Grid -->
   <div class="admin-grid">
-    <!-- Unified Navigation Cards -->
+    <!-- Three-card simplified layout -->
     <div class="admin-card nav-card">
-      <div class="card-header"><div class="card-icon"><i class="fas fa-database"></i></div><div class="card-title">Data</div></div>
-      <div class="card-content">Backups, refresh, diagnostics, PCR history consolidation.</div>
-      <div class="card-actions"><a href="/admin/data" class="btn-admin"><i class="fas fa-arrow-right"></i> Open</a></div>
+      <div class="card-header"><div class="card-icon"><i class="fas fa-users"></i></div><div class="card-title">Users</div></div>
+      <div class="card-content">Manage application users, roles, and access groups.</div>
+      <div class="card-actions"><a href="/admin/user-management" class="btn-admin"><i class="fas fa-arrow-right"></i> Open</a></div>
     </div>
-
-    <!-- Data Management -->
     <div class="admin-card nav-card">
-      <div class="card-header"><div class="card-icon"><i class="fas fa-tachometer-alt"></i></div><div class="card-title">Performance</div></div>
-      <div class="card-content">Cache efficiency, metrics, manual refresh controls.</div>
-      <div class="card-actions"><a class="btn-admin" href="/admin/performance"><i class="fas fa-arrow-right"></i> Open</a></div>
+      <div class="card-header"><div class="card-icon"><i class="fas fa-object-group"></i></div><div class="card-title">Groupings</div></div>
+      <div class="card-content">Configure device, SKU, and promo groupings used throughout PAM.</div>
+      <div class="card-actions"><a href="/admin/groupings" class="btn-admin"><i class="fas fa-arrow-right"></i> Open</a></div>
     </div>
-
-    <!-- System Configuration -->
     <div class="admin-card nav-card">
-      <div class="card-header"><div class="card-icon"><i class="fas fa-link"></i></div><div class="card-title">Integrations</div></div>
-      <div class="card-content">Connectivity checks & external system health snapshots.</div>
-      <div class="card-actions"><a class="btn-admin" href="/admin/integrations"><i class="fas fa-arrow-right"></i> Open</a></div>
-    </div>
-
-    <!-- Security & Audit -->
-    <div class="admin-card nav-card">
-      <div class="card-header"><div class="card-icon"><i class="fas fa-shield-alt"></i></div><div class="card-title">Security</div></div>
-      <div class="card-content">Audit snapshots and integrity indicators.</div>
-      <div class="card-actions"><a class="btn-admin" href="/admin/security"><i class="fas fa-arrow-right"></i> Open</a></div>
-    </div>
-
-    <!-- Integration Management -->
-    <div class="admin-card">
-      <div class="card-header">
-        <div class="card-icon">
-          <i class="fas fa-link"></i>
-        </div>
-        <div class="card-title">Integrations</div>
+      <div class="card-header"><div class="card-icon"><i class="fas fa-database"></i></div><div class="card-title">Source Table Promotions (PAM)</div></div>
+      <div class="card-content">Direct view & management of live PAM promotions with bulk removal tools.
+        <div class="small-hint" style="margin-top:6px;color:#888;font-size:12px;">Use with caution – actions permanently remove rows from the source table.</div>
       </div>
-      <div class="card-content">
-        Manage external system integrations including JIRA, ORBIT, and email notification services.
-      </div>
-      <div class="card-actions">
-        <button class="btn-admin" onclick="openModal('integrationsModal')">
-          <i class="fas fa-external-link-alt"></i> Manage
-        </button>
-        <button class="btn-admin secondary" onclick="testIntegrations()">
-          <i class="fas fa-check-circle"></i> Test All
-        </button>
-      </div>
-    </div>
-
-    <!-- Promo Editing -->
-    <div class="admin-card nav-card large">
-      <div class="card-header"><div class="card-icon"><i class="fas fa-tags"></i></div><div class="card-title">Promotions</div></div>
-      <div class="card-content">Manage promo lifecycle, links, version history, and review state.</div>
-      <div class="card-actions stack">
-  <a href="{{ url_for('promo.rdc_page') }}" class="btn-admin"><i class="fas fa-tags"></i> RDC</a>
-        <a href="{{ url_for('promo.links_main_page') }}" class="btn-admin secondary"><i class="fas fa-link"></i> Links</a>
-        <a href="{{ url_for('admin_bp.version_history_page') }}" class="btn-admin secondary"><i class="fas fa-history"></i> Version History</a>
-        <a href="/admin/user-management" class="btn-admin secondary"><i class="fas fa-users"></i> Users</a>
-        <a href="/admin/groupings" class="btn-admin secondary"><i class="fas fa-object-group"></i> Groupings</a>
-      </div>
-    </div>
-
-    <!-- Performance Monitoring -->
-    <div class="admin-card">
-      <div class="card-header">
-        <div class="card-icon">
-          <i class="fas fa-tachometer-alt"></i>
-        </div>
-        <div class="card-title">Performance Monitoring</div>
-      </div>
-      <div class="card-content">
-        Cache metrics & refresh controls.
-      </div>
-      <div class="card-actions">
-        <a class="btn-admin" href="/admin/performance"><i class="fas fa-arrow-right"></i> Open</a>
-      </div>
+      <div class="card-actions"><a href="/admin/pam-promotions" class="btn-admin"><i class="fas fa-arrow-right"></i> Open Manager</a></div>
     </div>
   </div>
-
-  <!-- Placeholder: could add live recent activity feed in future -->
-
-  <div class="admin-card" style="margin-top:20px;">
-    <div class="card-header">
-      <div class="card-icon"><i class="fas fa-database"></i></div>
-      <div class="card-title">Source Table Promotions (PAM)</div>
-    </div>
-    <div class="card-content">
-      Direct view of live PAM promotions (backed by [PAM].[PAM_Orbit_Data_Updated]) with hard delete & bulk removal tools.
-      <div class="small-hint" style="margin-top:6px;color:#888;font-size:12px;">Actions here permanently remove rows from the source table.</div>
-      <div class="card-actions" style="margin-top:12px;">
-        <a href="/admin/pam-promotions" class="btn-admin"><i class="fas fa-arrow-right"></i> Open Manager</a>
-        <button class="btn-admin secondary" onclick="openModal('deviceGroupingsModal')"><i class="fas fa-object-group"></i> Device Groupings</button>
-      </div>
-    </div>
-  </div>
+  <!-- Placeholder for future recent activity feed -->
 
   <script>
   async function loadDashboardSummary(){
@@ -387,35 +312,29 @@
   <div class="modal-content">
     <div class="modal-header">
       <h2 class="modal-title">Audit Logs</h2>
-      <span class="close" onclick="closeModal('auditModal')">&times;</span>
-    </div>
-    <div class="table-responsive">
-      <table class="admin-table">
-        <thead>
-          <tr>
-            <th>Timestamp</th>
-            <th>User</th>
-            <th>Action</th>
-            <th>Resource</th>
-            <th>IP Address</th>
+      <!-- Three-card simplified admin layout -->
+      <div class="admin-card nav-card">
+        <div class="card-header"><div class="card-icon"><i class="fas fa-users"></i></div><div class="card-title">Users</div></div>
+        <div class="card-content">Manage application users, roles, and access groups.</div>
+        <div class="card-actions"><a href="/admin/user-management" class="btn-admin"><i class="fas fa-arrow-right"></i> Open</a></div>
+      </div>
+      <div class="admin-card nav-card">
+        <div class="card-header"><div class="card-icon"><i class="fas fa-object-group"></i></div><div class="card-title">Groupings</div></div>
+        <div class="card-content">Configure device, SKU, and promo groupings used throughout PAM.</div>
+        <div class="card-actions"><a href="/admin/groupings" class="btn-admin"><i class="fas fa-arrow-right"></i> Open</a></div>
+      </div>
+      <div class="admin-card nav-card">
+        <div class="card-header"><div class="card-icon"><i class="fas fa-database"></i></div><div class="card-title">Source Table Promotions (PAM)</div></div>
+        <div class="card-content">Direct view & management of live PAM promotions with bulk removal tools. Permanent delete operations.
+          <div class="small-hint" style="margin-top:6px;color:#888;font-size:12px;">Use with caution – actions permanently remove rows.</div>
+        </div>
+        <div class="card-actions"><a href="/admin/pam-promotions" class="btn-admin"><i class="fas fa-arrow-right"></i> Open Manager</a></div>
+      </div>
           </tr>
         </thead>
         <tbody>
           <tr>
-            <td>2024-08-12 14:30:15</td>
-            <td>choltzen</td>
-            <td>CREATE</td>
-            <td>Promotion P0482024</td>
-            <td>10.0.1.45</td>
-          </tr>
-          <tr>
-            <td>2024-08-12 14:15:22</td>
-            <td>aferrer</td>
-            <td>UPDATE</td>
-            <td>Promotion R223</td>
-            <td>10.0.1.38</td>
-          </tr>
-          <tr>
+    <!-- Removed standalone Source Table Promotions card (now inside three-card grid) -->
             <td>2024-08-12 13:45:10</td>
             <td>system</td>
             <td>BACKUP</td>

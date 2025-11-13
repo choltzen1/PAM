@@ -232,19 +232,44 @@ def admin_pam_promotions():
     # Pagination + search params
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 25, type=int)
-    search = request.args.get('search', '', type=str)
+    search = request.args.get('search', '', type=str).strip()
     owner = request.args.get('owner', 'all', type=str)
-    # Use PAM-only method if available
-    if hasattr(dm, 'get_pam_only_paginated_promos'):
-        promo_data = dm.get_pam_only_paginated_promos(page=page, per_page=per_page, search=search, owner_filter=owner)
+
+    # Lightweight in-process cache to avoid full dataset rebuilds on repeated navigation.
+    # Only caches unfiltered base page (page=1, empty search, owner='all').
+    # TTL kept short (45s) to keep data fresh but prevent multi-minute reload delays.
+    global _PAM_PROMO_CACHE
+    try:
+        _PAM_PROMO_CACHE
+    except NameError:
+        _PAM_PROMO_CACHE = {'ts': 0, 'data': None}
+
+    from time import time
+    cache_key_applicable = (page == 1 and per_page == 25 and search == '' and owner == 'all')
+    now = time()
+    ttl_seconds = 45
+    promo_data = None
+
+    if cache_key_applicable and _PAM_PROMO_CACHE['data'] and (now - _PAM_PROMO_CACHE['ts'] < ttl_seconds):
+        promo_data = _PAM_PROMO_CACHE['data']
     else:
-        promo_data = dm.get_paginated_promos(page=page, per_page=per_page, search=search, owner_filter=owner)
+        # Prefer optimized path if available to reduce processing.
+        if hasattr(dm, 'get_paginated_promos_optimized'):
+            promo_data = dm.get_paginated_promos_optimized(page=page, per_page=per_page, search=search, owner_filter=owner)
+        elif hasattr(dm, 'get_pam_only_paginated_promos'):
+            promo_data = dm.get_pam_only_paginated_promos(page=page, per_page=per_page, search=search, owner_filter=owner)
+        else:
+            promo_data = dm.get_paginated_promos(page=page, per_page=per_page, search=search, owner_filter=owner)
+        if cache_key_applicable:
+            _PAM_PROMO_CACHE = {'ts': now, 'data': promo_data}
+
     return render_template('pam/admin_pam_promotions.html',
                            promotions=promo_data['promotions'],
                            pagination=promo_data['pagination'],
                            owners=promo_data['owners'],
                            search_query=search,
-                           selected_owner=owner)
+                           selected_owner=owner,
+                           cache_age=(0 if not cache_key_applicable or not _PAM_PROMO_CACHE['data'] else int(now - _PAM_PROMO_CACHE['ts'])))
 
 @admin_bp.route('/admin/user-management', endpoint='user_management')
 def admin_user_management():

@@ -509,3 +509,35 @@ body {
   padding: 20px;
   font-size: 12px;
 }
+/* -------------------- Dark Mode Light Grey Panel Overrides -------------------- */
+html[data-theme='dark'] .capacity-summary-numbers,
+html[data-theme='dark'] .capacity-section,
+html[data-theme='dark'] .schedule-content,
+html[data-theme='dark'] .metric-card,
+html[data-theme='dark'] .promotions-table,
+html[data-theme='dark'] .schedule-promo-table { background: var(--card-bg) !important; backdrop-filter:none; }
+html[data-theme='dark'] .capacity-summary-numbers,
+html[data-theme='dark'] .capacity-section,
+html[data-theme='dark'] .metric-card,
+html[data-theme='dark'] .schedule-item,
+html[data-theme='dark'] .promotions-table,
+html[data-theme='dark'] .schedule-promo-table { border:1px solid #b9bbbc; }
+html[data-theme='dark'] .schedule-item { background: var(--card-bg); }
+html[data-theme='dark'] .schedule-header { background:#E20074 !important; color:#fff !important; }
+html[data-theme='dark'] .week-dropdown { background:#ffffff !important; color:#000 !important; border:1px solid #c5c7c9 !important; }
+html[data-theme='dark'] .week-dropdown:focus { border-color:#E20074 !important; box-shadow:0 0 0 2px rgba(226,0,116,0.35); }
+html[data-theme='dark'] .summary-number .label,
+html[data-theme='dark'] .date-filter label,
+html[data-theme='dark'] .metric-title,
+html[data-theme='dark'] .schedule-promo,
+html[data-theme='dark'] .schedule-time { color:#111 !important; }
+html[data-theme='dark'] .workload-table td,
+html[data-theme='dark'] .workload-table th,
+html[data-theme='dark'] .promotions-table td,
+html[data-theme='dark'] .promotions-table th,
+html[data-theme='dark'] .schedule-promo-table td,
+html[data-theme='dark'] .schedule-promo-table th { color:#111 !important; }
+/* Optional subtle zebra for workload table in dark mode */
+html[data-theme='dark'] .workload-table tbody tr:nth-child(odd) { background:#d2d4d5; }
+html[data-theme='dark'] .workload-table tbody tr:nth-child(even) { background:#b9bbbc; }
+html[data-theme='dark'] .workload-table tbody tr:hover { filter:brightness(1.02); }

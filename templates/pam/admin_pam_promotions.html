@@ -12,10 +12,11 @@
 {% block head %}<link rel="stylesheet" href="/static/css/admin.css">{% endblock %}
 {% block content %}
 <div class="admin-dashboard" style="padding-top:10px;display:flex;flex-direction:column;min-height:0;">
-  <div class="filter-bar" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:14px;">
-    <form method="get" style="display:flex;gap:8px;align-items:center;">
-      <input type="text" name="search" value="{{ search_query }}" placeholder="Search code / owner / name" style="padding:6px 10px;min-width:240px;" />
-      <select name="owner" style="padding:6px 10px;">
+  <!-- Consolidated sticky control group -->
+  <div class="promo-control-group">
+    <form method="get">
+      <input type="text" name="search" value="{{ search_query }}" placeholder="Search code / owner / name" />
+      <select name="owner">
         <option value="all" {% if selected_owner=='all' %}selected{% endif %}>All Owners</option>
         {% for o in owners %}
         <option value="{{ o }}" {% if selected_owner==o %}selected{% endif %}>{{ o }}</option>
@@ -24,12 +25,12 @@
       <button class="btn-admin" type="submit"><i class="fas fa-search"></i> Filter</button>
       <a class="btn-admin secondary" href="?"><i class="fas fa-undo"></i> Reset</a>
     </form>
-    <div style="margin-left:auto;">
+    <div class="bulk-actions">
       <button class="btn-admin danger" id="bulkDeleteBtn" disabled onclick="bulkDelete()"><i class="fas fa-trash"></i> Bulk Delete</button>
     </div>
   </div>
 
-  <div id="tableContainer" class="table-responsive" style="flex:1 1 auto;overflow:auto;min-height:0;max-height:calc(100vh - 265px);">
+  <div id="tableContainer" class="table-responsive" style="flex:0 0 auto;overflow:visible;min-height:0;max-height:none;">
     <table class="admin-table" id="pamPromosTable">
       <thead>
         <tr>
@@ -78,21 +79,7 @@
 
 <script>
 // Dynamically ensure table container never overlaps footer by recalculating available height.
-function resizeTableContainer(){
-  const headerHeight = document.querySelector('.global-header-promotions')?.offsetHeight || 0;
-  const filterHeight = document.querySelector('.filter-bar')?.offsetHeight || 0;
-  const paginationHeight = document.querySelector('.pagination')?.offsetHeight || 50;
-  const footer = document.querySelector('footer');
-  const footerHeight = footer ? footer.offsetHeight : 0;
-  const topOffset = headerHeight + filterHeight + 40; // padding/margins fudge
-  const available = window.innerHeight - footerHeight - topOffset - 20; // extra spacing
-  const container = document.getElementById('tableContainer');
-  if(container && available > 200){
-     container.style.maxHeight = available + 'px';
-  }
-}
-window.addEventListener('resize', resizeTableContainer);
-document.addEventListener('DOMContentLoaded', resizeTableContainer);
+// Removed dynamic height logic to eliminate inner scrollbar; page scrolls normally.
 function toggleAll(cb){
   document.querySelectorAll('.rowChk').forEach(ch=>{ ch.checked = cb.checked; });
   updateBulkState();

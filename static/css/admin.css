@@ -21,6 +21,8 @@
 
 /* ================= Admin Dashboard Extracted Styles ================= */
 .admin-dashboard { padding: 20px; background: #f8f9fa; min-height: calc(100vh - 80px); }
+/* Dark mode: expose global gradient instead of flat light panel */
+[data-theme='dark'] .admin-dashboard { background: transparent; }
 .admin-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px; margin-bottom: 40px; }
 .admin-card { background: white; border-radius: 12px; padding: 24px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); border: 1px solid #e9ecef; }
 
@@ -34,7 +36,9 @@
   border: 1px solid #e2e8f0;
   border-radius: 10px;
   box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+  margin-bottom: 28px; /* new spacing between metrics and cards */
 }
+[data-theme='dark'] .kpi-bar { background: var(--card-bg, #d0d2d3); border-color: #b9bbbc; }
 .kpi {display:flex;flex-direction:column;gap:4px;padding:6px 8px;border-radius:8px;position:relative;}
 .kpi-label {font-size:11px;letter-spacing:.5px;text-transform:uppercase;color:#64748b;font-weight:600;}
 .kpi-value {font-size:20px;font-weight:600;color:#0f172a;}
@@ -154,3 +158,63 @@
 .breadcrumb-link:hover { background:#e2e8f0; color:#334155; }
 .subpage-intro { color:#475569; margin:0 0 18px 0; font-size:0.95rem; }
 .admin-output { margin-top:20px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:16px; font-family:monospace; font-size:0.8rem; line-height:1.4; max-height:420px; overflow:auto; white-space:pre-wrap; }
+
+/* =============================================
+   Source Table Promotions Control Group (sticky)
+   ============================================= */
+.promo-control-group {
+  position: sticky;
+  top: calc(var(--header-height) + 8px); /* sit just below fixed header */
+  z-index: 900; /* below header (1000) but above table */
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 14px 16px;
+  margin: 0 0 18px 0;
+  background: #ffffff; /* light mode */
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+}
+[data-theme='dark'] .promo-control-group {
+  background: var(--card-bg, #d0d2d3); /* light grey panel for dark mode */
+  border-color: #b9bbbc;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.35);
+}
+.promo-control-group form {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  flex: 1 1 auto;
+}
+.promo-control-group input[type='text'],
+.promo-control-group select {
+  padding: 8px 12px;
+  font-size: 0.9rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #000;
+}
+[data-theme='dark'] .promo-control-group input[type='text'],
+[data-theme='dark'] .promo-control-group select {
+  background: #ffffff; /* high contrast inputs on grey panel */
+  color: #000;
+  border-color: #a8aaab;
+}
+.promo-control-group .bulk-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+}
+.promo-control-group .btn-admin.danger[disabled] { opacity: 0.45; cursor: not-allowed; }
+
+/* Reduce vertical jump when sticky intersects footer on short pages */
+@media (max-height: 780px) {
+  .promo-control-group { top: calc(var(--header-height) + 4px); }
+}
+
+/* Table spacing adjustment when control group present */
+#pamPromosTable { margin: 0; }
