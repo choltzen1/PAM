@@ -40,13 +40,9 @@ html, body {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 1.5rem;
-  padding: 1rem;
-  background: var(--bg-soft);
-  border-radius: 8px;
-  border: 1px solid var(--border-color);
+  /* Surface/background/border removed to allow global unified control-bar styling */
   width: 100%;
   max-width: calc(100vw - 2rem); /* Account for page padding */
-  backdrop-filter: blur(4px);
 }
 
 .filters-section {
@@ -99,6 +95,14 @@ html, body {
 }
 #operatorId::placeholder { color: #888; }
 #operatorId:disabled { background: #eee; cursor: not-allowed; }
+
+/* Remove bold weight from filter & search labels specifically in Date Mismatch control group (light mode) */
+.date-mismatch-page .controls-container .filter-group label,
+.date-mismatch-page .controls-container .search-group label { font-weight:500; }
+
+/* Dark mode: ensure labels are white and not bold (override earlier generic dark label color rule) */
+html[data-theme='dark'] .date-mismatch-page .controls-container .filter-group label,
+html[data-theme='dark'] .date-mismatch-page .controls-container .search-group label { color:#ffffff !important; font-weight:500 !important; }
 
 .results-counter {
   font-size: 2rem;
@@ -591,7 +595,11 @@ html, body {
 
 /* -------------------- Dark Mode Overrides (Light Grey Panel + White Inputs + Striped Table) -------------------- */
 html[data-theme='dark'] .date-mismatch-page { background:transparent; }
-html[data-theme='dark'] .controls-container { background: var(--card-bg); border-color:#b9bbbc; backdrop-filter:none; }
+/* Removed local dark mode surface override for controls-container to use global translucent control-surface */
+/* Dark mode: make control group text white (labels) while keeping form field text dark for readability */
+html[data-theme='dark'] .date-mismatch-page .controls-container { color:#ffffff; }
+html[data-theme='dark'] .date-mismatch-page .controls-container label { color:#ffffff !important; }
+html[data-theme='dark'] .date-mismatch-page .controls-container .results-label { color:#ffffff !important; }
 html[data-theme='dark'] .filters-section label,
 html[data-theme='dark'] .filter-group label,
 html[data-theme='dark'] .search-group label { color:#111 !important; }

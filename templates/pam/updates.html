@@ -27,7 +27,7 @@
 {% block content %}
 <div class="updates-page">
   <!-- Control group with search bar and promo details -->
-  <div class="control-group">
+  <div class="control-group control-bar">
     <div class="search-bar">
       <input type="text" class="search-input" id="promoSearchInput" placeholder="Enter Promo Code" value="{{ search_query or (default_promo.code if default_promo else '') }}" onkeyup="debounceSearch()">
     </div>

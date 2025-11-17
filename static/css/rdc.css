@@ -45,18 +45,27 @@ html[data-theme='dark'] .promotions-page-rdc .search-group input::placeholder {
 	 RDC PAGE SPECIFIC OVERRIDES
 	 ============================= */
 /* Light grey panel surfaces for controls & pagination (regardless of theme) */
-.promotions-page-rdc .promotions-controls,
-.promotions-page-rdc .pagination-container {
-	background:#e4e6e8; /* unified light grey surface */
-	border:1px solid #c5c7c9;
-	border-radius:10px;
-	padding:1rem 1.25rem;
-}
-/* Remove drop shadow from control group in all themes */
-.promotions-page-rdc .promotions-controls { box-shadow:none; }
-
-/* Slight internal spacing tweak for control groups */
+/* Removed local surface overrides for .promotions-controls & pagination container.
+   Global .control-bar styling now applies (see styles.css).
+   Retain only gap tweak if needed. */
 .promotions-page-rdc .promotions-controls { gap:1.1rem; }
+/* Full-width override so RDC control group matches pagination & table widths (remove 95% constraint from global) */
+.promotions-page-rdc .promotions-controls {
+	width: 100%;
+	max-width: none;
+	margin-left: 0;
+	margin-right: 0;
+}
+/* Dark mode: make control group text white while keeping inputs readable (inputs stay dark text on white bg) */
+html[data-theme='dark'] .promotions-page-rdc .promotions-controls { color:#ffffff; }
+html[data-theme='dark'] .promotions-page-rdc .promotions-controls label { color:#ffffff !important; }
+html[data-theme='dark'] .promotions-page-rdc .promotions-controls .promotions-user-label { color:#ffffff !important; }
+/* Preserve dark text inside form fields for contrast */
+html[data-theme='dark'] .promotions-page-rdc .promotions-controls input,
+html[data-theme='dark'] .promotions-page-rdc .promotions-controls select { color:#111 !important; }
+/* Dark mode pagination info text to white for contrast on translucent surface */
+html[data-theme='dark'] .promotions-page-rdc .pagination-container { color:#ffffff; }
+html[data-theme='dark'] .promotions-page-rdc .pagination-container .pagination-info { color:#ffffff; }
 
 /* Table row striping: light & darker grey for improved scanability */
 .promotions-page-rdc .promo-table tbody tr:nth-child(odd) { background:#eceeef; }

@@ -202,23 +202,52 @@ body {
                .capacity-summary-numbers (layout variant), .filter-group/.search-group wrappers
    Goal: Consistent rounded corners, spacing, neutral surface, subtle border.
    ============================= */
-/* Primary container-level control bars */
+/* Primary container-level control bars unified via .control-bar.
+   Add .control-bar class to each existing page-specific control group wrapper. */
+.control-bar,
 .promotions-controls,
 .spe-controls,
 .controls-container,
-.capacity-summary-numbers {
+.capacity-summary-numbers,
+.version-controls,
+.control-group,
+.promo-control-group {
+  background: #e4e6e8; /* light theme unified surface */
+  border: 1px solid #c5c7c9;
+  border-radius: 10px;
+  padding: 1rem 1.25rem; /* normalized padding */
+  box-shadow: 0 2px 4px rgba(0,0,0,0.12);
+  transition: background .25s ease, color .25s ease, box-shadow .25s ease;
+  width: 95%;
+  max-width: 1800px;
+  margin: 0 auto 1.25rem auto;
+  color: #000; /* enforce black text for readability (light theme) */
+}
+html[data-theme='dark'] .control-bar,
+html[data-theme='dark'] .promotions-controls,
+html[data-theme='dark'] .spe-controls,
+html[data-theme='dark'] .controls-container,
+html[data-theme='dark'] .capacity-summary-numbers,
+html[data-theme='dark'] .version-controls,
+html[data-theme='dark'] .control-group,
+html[data-theme='dark'] .promo-control-group {
   background: var(--control-surface);
   border: 1px solid var(--border-color);
-  border-radius: 10px;
-  padding: 0.9rem 1rem;
   box-shadow: 0 2px 4px var(--shadow-color);
-  transition: background .25s ease, color .25s ease, box-shadow .25s ease;
+  color: #000; /* dark theme control groups also use black text per spec */
 }
+/* Sticky variant (only admin Source Table Promotions) */
+.promo-control-group { position: sticky; top: calc(var(--header-height) + 8px); z-index: 900; }
+@media (max-height: 780px) { .promo-control-group { top: calc(var(--header-height) + 4px); } }
 
 /* Ensure flex layout utilities persist */
 .promotions-controls,
 .spe-controls,
-.controls-container { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: flex-end; }
+.controls-container,
+.version-controls,
+.control-group,
+.promo-control-group,
+.control-bar { display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-end; }
 
 /* Filter/Search subgroup styling */
 .filter-group, .search-group, .spe-filter-group, .spe-search-group {

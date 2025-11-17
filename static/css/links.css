@@ -10,19 +10,10 @@
   background: #f8f9fa; /* light mode panel surface */
 }
 
-/* Controls section - copied from version_history.css */
+/* Control bar (now standardized via global .control-bar / .version-controls styles).
+   Keep only unique height requirement; remove surface overrides so global takes effect. */
 .version-controls {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 1rem 2rem;
-  background: white;
-  border-bottom: 1px solid #dee2e6;
-  flex-shrink: 0;
-  min-height: 80px; /* Ensure consistent height */
-  position: relative;
-  width: 100%;
-  box-sizing: border-box;
+  min-height: 80px; /* Preserve explicit height while deferring all other styling to global */
 }
 
 .filter-group {
@@ -260,7 +251,7 @@
 /* -------------------- Dark Theme Overrides (consistent grey panel surface) -------------------- */
 /* Let the global gradient show through in dark mode; only panels use grey surfaces */
 html[data-theme='dark'] .links-page { background: transparent; }
-html[data-theme='dark'] .version-controls { background: var(--card-bg); border-bottom:1px solid #b9bbbc; }
+/* Dark mode inherits unified control group styling from global; local overrides removed */
 html[data-theme='dark'] .search-group input { background:#ffffff; color:#000; border-color:#c5c7c9; }
 html[data-theme='dark'] .card { background:var(--card-bg); border-color:#b9bbbc; box-shadow:0 2px 6px rgba(0,0,0,0.4); }
 html[data-theme='dark'] .card-header { background:var(--card-bg); border-color:#b9bbbc; }

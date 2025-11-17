@@ -56,17 +56,9 @@ body.updates-page {
 
 /* Control group with search and promo details */
 .control-group {
-    background: white;
-    color: #333;
-    padding: 15px 20px;
-    display: flex;
-    align-items: center;
-    gap: 30px;
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    border-bottom: 2px solid #e91e63;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    /* Now fully inherits global unified control-bar surface; keep layout-specific gap */
+    gap: 30px; /* retain wider gap unique to updates */
+    position: static; /* only admin promo manager uses sticky */
 }
 
 .search-bar {
@@ -260,7 +252,6 @@ html[data-theme='dark'] .info-value { color:#111 !important; }
    Dark Mode Light Grey Surfaces (match reviewers/approvers pattern)
    Apply to top control group and primary cards/columns
    ============================= */
-html[data-theme='dark'] .control-group,
 html[data-theme='dark'] .updates-card,
 html[data-theme='dark'] .updates-column,
 html[data-theme='dark'] .column {

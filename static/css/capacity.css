@@ -29,15 +29,12 @@ body {
 /* Top Summary Numbers */
 .capacity-summary-numbers {
   display: flex;
-  justify-content: flex-start; /* Changed from space-around to flex-start */
-  gap: 3rem; /* Added gap for spacing between items */
-  margin-bottom: 1.5rem; /* Reduced margin */
-  background: var(--bg-alt);
-  border-radius: 8px;
-  padding: 1rem; /* Reduced padding */
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  flex-shrink: 0; /* Prevent shrinking */
-  backdrop-filter: blur(4px);
+  justify-content: flex-start; /* layout retained */
+  gap: 3rem;
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  flex-shrink: 0;
+  /* Surface/shadow/backdrop removed; global control-bar styling now applies */
 }
 
 .summary-number {
@@ -510,13 +507,11 @@ body {
   font-size: 12px;
 }
 /* -------------------- Dark Mode Light Grey Panel Overrides -------------------- */
-html[data-theme='dark'] .capacity-summary-numbers,
 html[data-theme='dark'] .capacity-section,
 html[data-theme='dark'] .schedule-content,
 html[data-theme='dark'] .metric-card,
 html[data-theme='dark'] .promotions-table,
 html[data-theme='dark'] .schedule-promo-table { background: var(--card-bg) !important; backdrop-filter:none; }
-html[data-theme='dark'] .capacity-summary-numbers,
 html[data-theme='dark'] .capacity-section,
 html[data-theme='dark'] .metric-card,
 html[data-theme='dark'] .schedule-item,

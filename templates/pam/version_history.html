@@ -27,7 +27,7 @@
 {% block content %}
 <div class="version-history-page">
   <!-- Controls row converted to standardized global control group -->
-  <form class="controls-container version-controls" method="get">
+  <form class="controls-container version-controls control-bar" method="get">
     <div class="filter-group">
       <select id="owner-filter" name="owner" onchange="this.form.submit()">
         <option value="all" {% if selected_owner=='all' %}selected{% endif %}>All Owners</option>

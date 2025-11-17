@@ -280,20 +280,21 @@ html[data-theme='dark'] .promotions-page-spe .promo-table tr:not(:last-child) td
    SPE PAGE DARK MODE PARITY
    ============================= */
 /* Light grey surfaces for controls (and future pagination) */
-.promotions-page-spe .promotions-controls,
-.promotions-page-spe .pagination-container {
-  background:#e4e6e8;
-  border:1px solid #c5c7c9;
-  border-radius:10px;
-  padding:1rem 1.25rem;
-}
+/* Removed local surface/shadow overrides for controls & pagination; rely on global .control-bar styling. */
 .promotions-page-spe .promotions-controls { gap:1.1rem; }
-/* Remove drop shadow from control group */
-.promotions-page-spe .promotions-controls { box-shadow:none; }
-
-/* Dark mode: keep surface flat (remove any inherited shadow if later added) */
-html[data-theme='dark'] .promotions-page-spe .promotions-controls,
-html[data-theme='dark'] .promotions-page-spe .pagination-container { box-shadow:none; }
+/* Full-width override so SPE control group matches table width (pagination forthcoming) */
+.promotions-page-spe .promotions-controls {
+  width: 100%;
+  max-width: none;
+  margin-left: 0;
+  margin-right: 0;
+}
+/* Dark mode: white text in SPE control group (labels & user label) while keeping form field text dark for contrast */
+html[data-theme='dark'] .promotions-page-spe .promotions-controls { color:#ffffff; }
+html[data-theme='dark'] .promotions-page-spe .promotions-controls label { color:#ffffff !important; }
+html[data-theme='dark'] .promotions-page-spe .promotions-user-label { color:#ffffff !important; }
+html[data-theme='dark'] .promotions-page-spe .promotions-controls input,
+html[data-theme='dark'] .promotions-page-spe .promotions-controls select { color:#111 !important; }
 
 /* Search input white with dark text in dark mode */
 html[data-theme='dark'] .promotions-page-spe .search-group input { background:#ffffff; color:#111; border:1px solid #c5c7c9; }
