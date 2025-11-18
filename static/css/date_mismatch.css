@@ -47,32 +47,33 @@ html, body {
 
 .filters-section {
   display: flex;
-  gap: 1rem;
-  align-items: flex-end;
-  flex-wrap: nowrap;
+  gap: 2rem;
+  align-items: end;
+  flex-wrap: wrap;
 }
 
 .filter-group, .search-group {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-  min-width: 150px;
+  min-width: 200px;
 }
 
 .filter-group label, .search-group label {
   font-weight: 600;
-  color: var(--tmobile-dark);
-  font-size: 0.875rem;
+  color: var(--tmobile-dark-gray);
+  font-size: 0.9rem;
 }
 
-.filter-group select, .search-group input {
+.form-select, .form-control {
   padding: 0.5rem;
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--tmobile-border);
   border-radius: 4px;
-  background: var(--bg-alt);
-  font-size: 0.875rem;
-  width: 150px;
-  color: var(--text);
+  font-size: 0.9rem;
+}
+
+.form-control {
+  background: white;
 }
 
 /* Operator ID input explicit styling for cursor visibility */
@@ -603,12 +604,12 @@ html[data-theme='dark'] .date-mismatch-page .controls-container .results-label {
 html[data-theme='dark'] .filters-section label,
 html[data-theme='dark'] .filter-group label,
 html[data-theme='dark'] .search-group label { color:#111 !important; }
-html[data-theme='dark'] .filter-group select,
 html[data-theme='dark'] .search-group input,
-html[data-theme='dark'] #mismatch-filter,
-html[data-theme='dark'] #owner-filter,
 html[data-theme='dark'] #search-input,
-html[data-theme='dark'] #operatorId { background:#ffffff !important; color:#000 !important; border:1px solid #c5c7c9 !important; }
+html[data-theme='dark'] #operatorId { background-color:#ffffff !important; color:#000 !important; border:1px solid #c5c7c9 !important; }
+html[data-theme='dark'] .filter-group select,
+html[data-theme='dark'] #mismatch-filter,
+html[data-theme='dark'] #owner-filter { color:#000 !important; border:1px solid #c5c7c9 !important; }
 html[data-theme='dark'] #operatorId:focus { box-shadow:0 0 0 2px rgba(226,0,116,0.35); border-color:#E20074 !important; }
 /* Table striping (light grey / darker grey) */
 html[data-theme='dark'] .date-mismatch-table tbody tr:nth-child(odd) { background:#d2d4d5 !important; }
@@ -623,3 +624,5 @@ html[data-theme='dark'] #sqlPreviewContainer { background:#ffffff; border-color:
 html[data-theme='dark'] .operator-id-section { background:#ffffff; border-color:#c5c7c9; }
 html[data-theme='dark'] .sql-preview-header { background:#e9ecef; color:#111; }
 html[data-theme='dark'] .file-meta { color:#444; }
+
+

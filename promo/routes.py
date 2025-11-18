@@ -68,6 +68,11 @@ def _render_rdc_page():
                 search=search,
                 owner_filter=owner_filter
             )
+    # DEBUG
+    import logging
+    logger = logging.getLogger(__name__)
+    if promo_data.get('promotions'):
+        logger.info(f"RDC DEBUG First promo owner: '{promo_data['promotions'][0].get('owner')}'")
     return render_template(
         'pam/rdc.html',
         promotions=promo_data['promotions'],
@@ -186,10 +191,73 @@ def rebates_page():
 def date_mismatch_page():
     dm = _ensure_data_manager()
     try:
-        mismatch_data = dm.get_date_mismatched_promos()
+        # Use EXACT same optimized method as RDC to get promos with owners
+        promo_data = dm.get_paginated_promos_optimized(
+            page=1,
+            per_page=10000,
+            search="",
+            owner_filter="all",
+            scope="all"
+        )
+        
+        all_promos = promo_data['promotions']
+        
+        # Get orbit dates from orbit table for comparison
+        orbit_ids = [p.get('orbit_id') for p in all_promos if p.get('orbit_id')]
+        orbit_dates_map = dm.db_manager.get_orbit_dates_map(orbit_ids) if orbit_ids else {}
+        
+        # Load PAM JSON for comparison
+        import os, json
+        pam_json = {}
+        try:
+            with open(os.path.join(dm.data_dir, 'promotions.json'),'r') as f:
+                pam_json = json.load(f)
+        except Exception:
+            pass
+        
+        mismatch_promos = []
+        for promo in all_promos:
+            code = promo.get('code', '')
+            orbit_id = promo.get('orbit_id', '')
+            pj = pam_json.get(code, {})
+            
+            # Get orbit dates from orbit table
+            orbit_dates = orbit_dates_map.get(orbit_id, {})
+            orbit_end = orbit_dates.get('orbit_end_date', '')
+            orbit_start = orbit_dates.get('orbit_start_date', '')
+            
+            # Get PAM dates (from JSON or fallback to promo table)
+            pam_end = pj.get('promo_end_date','') or promo.get('promo_end_date', '')
+            pam_start = pj.get('promo_start_date','') or promo.get('promo_start_date', '')
+            
+            mismatch_type = ''
+            mismatch_severity = ''
+            if orbit_end and pam_end and orbit_end != pam_end:
+                mismatch_type = 'End Date'
+                mismatch_severity = 'warning'
+            elif orbit_end and not pam_end:
+                mismatch_type = 'Missing in PAM'
+                mismatch_severity = 'error'
+            elif pam_end and not orbit_end:
+                mismatch_type = 'Missing in ORBIT'
+                mismatch_severity = 'error'
+            
+            mismatch_promos.append({
+                'code': code,
+                'orbit_id': orbit_id,
+                'orbit_start_date': orbit_start,
+                'orbit_end_date': orbit_end,
+                'promo_start_date': pam_start,
+                'promo_end_date': pam_end,
+                'mismatch_type': mismatch_type,
+                'mismatch_severity': mismatch_severity,
+                'bill_facing_name': promo.get('bill_facing_name', ''),
+                'owner': promo.get('owner', '')
+            })
+        
         return render_template('pam/date_mismatch.html',
-                               promos=mismatch_data.get('promos', []),
-                               owners=mismatch_data.get('owners', []),
+                               promos=mismatch_promos,
+                               owners=promo_data['owners'],
                                user_name='Cade Holtzen')
     except Exception as e:
         flash(f'Error loading date mismatch data: {e}', 'error')
@@ -664,48 +732,61 @@ def updates_page():
 @promo_bp.route('/approvers', endpoint='approvers_page')
 def approvers_page():
     dm = _ensure_data_manager()
+    import logging
+    log = logging.getLogger(__name__)
     try:
-        import logging
-        log = logging.getLogger(__name__)
-
+        # Approvers page should mirror RDC data retrieval exactly (PAM data only)
+        page = request.args.get('page', 1, type=int)
+        per_page = request.args.get('per_page', 500, type=int)  # large page to show broad set
+        search = request.args.get('search', '', type=str)
+        owner_filter = request.args.get('owner', 'all', type=str)
         target_promo_code = request.args.get('promo_code', '').strip().upper()
+        scope = request.args.get('scope', 'all', type=str)
 
-        # Use existing data manager (already initialized with DB credentials)
-        rdc_data = dm.get_all_promos() or {}
-        spe_data = {}
-        rebates_data = {}
-        # Guard for presence of methods (older data managers may not expose SPE/Rebate)
-        if hasattr(dm, 'get_all_spe_promos'):
-            spe_data = dm.get_all_spe_promos() or {}
-        if hasattr(dm, 'get_all_rebates'):
-            rebates_data = dm.get_all_rebates() or {}
+        payload = {}
+        if hasattr(dm, 'get_paginated_promos_optimized'):
+            try:
+                payload = dm.get_paginated_promos_optimized(
+                    page=page,
+                    per_page=per_page,
+                    search=search,
+                    owner_filter=owner_filter,
+                    scope=scope
+                )
+            except Exception as e:
+                log.warning(f"Approvers fallback from optimized path: {e}")
+                payload = {}
+        if not payload:
+            if hasattr(dm, 'get_pam_only_paginated_promos'):
+                payload = dm.get_pam_only_paginated_promos(
+                    page=page,
+                    per_page=per_page,
+                    search=search,
+                    owner_filter=owner_filter
+                )
+            else:
+                payload = dm.get_paginated_promos(
+                    page=page,
+                    per_page=per_page,
+                    search=search,
+                    owner_filter=owner_filter
+                )
 
-        all_promos: list[dict[str,str]] = []
-        def _append_all(source: dict[str, Any], ptype: str):
-            for code_key, promo in source.items():
-                # Some converters place code in promo['code']; fall back to key
-                code = str(promo.get('code') or code_key).upper()
-                owner = (promo.get('owner') or promo.get('Owner') or 'Unknown').strip() or 'Unknown'
-                all_promos.append({'code': code, 'owner': owner, 'type': ptype})
-        _append_all(rdc_data, 'RDC')
-        _append_all(spe_data, 'SPE')
-        _append_all(rebates_data, 'REBATE')
+        promos = payload.get('promotions', [])
+        owners_list = [p.get('owner','').strip() for p in promos]
+        owners_list = [o for o in owners_list if o]  # remove blanks
+        unique_owners = sorted({o for o in owners_list if o.lower() != 'unknown'})
 
-        if not all_promos:
-            log.info("Approvers page: no promotions returned from data manager")
+        promo_codes = [p.get('code','') for p in promos]
+        # Prioritize searched promo_code if present
+        if target_promo_code and target_promo_code in promo_codes:
+            idx = promo_codes.index(target_promo_code)
+            if idx != 0:
+                promos = [promos[idx]] + promos[:idx] + promos[idx+1:]
+                promo_codes = [p.get('code','') for p in promos]
+                owners_list = [p.get('owner','') for p in promos]
 
-        # Optionally prioritize a searched promo code at top
-        if target_promo_code:
-            prioritized = [p for p in all_promos if p['code'] == target_promo_code]
-            remainder = [p for p in all_promos if p['code'] != target_promo_code]
-            all_promos = prioritized + remainder
-            log.debug(f"Approvers page: prioritized {target_promo_code}, total promos {len(all_promos)}")
-
-        promo_codes = [p['code'] for p in all_promos]
-        owners = [p['owner'] for p in all_promos]
-        unique_owners = sorted({o for o in owners if o and o.lower() != 'unknown'})
-
-        # Placeholder revenue approvers until integrated with user management
+        # Placeholder revenue approvers until integrated
         revenue_approvers = [
             {'name': 'John Smith', 'email': 'john.smith@company.com'},
             {'name': 'Sarah Davis', 'email': 'sarah.davis@company.com'},
@@ -716,10 +797,13 @@ def approvers_page():
         return render_template(
             'pam/approvers.html',
             promo_codes=promo_codes,
-            owners=owners,
+            owners=owners_list,
             unique_owners=unique_owners,
             revenue_approvers=revenue_approvers,
             target_promo_code=target_promo_code,
+            pagination=payload.get('pagination', {}),
+            search_query=search,
+            selected_owner=owner_filter
         )
     except Exception as e:
         flash(f'Error loading approvers data: {e}', 'error')

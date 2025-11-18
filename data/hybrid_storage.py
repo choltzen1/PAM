@@ -396,30 +396,43 @@ class HybridPromoDataManager:
     def get_date_mismatched_promos(self) -> Dict[str, Any]:
         """Get promotions with date mismatches between ORBIT (authoritative DB) and PAM (local JSON/db overlay).
 
-        ORBIT values come from the primary SQL Server tables via DatabaseManager.
-        PAM values come from JSON (legacy edits) if present, otherwise mirror ORBIT.
+        Uses EXACT same data retrieval as RDC page (get_paginated_execution_type).
         """
         owners: set[str] = set()
         entries: list[Dict[str, Any]] = []
 
-        # 1. Load ORBIT (DB) promotions (RDC execution type assumed authoritative set)
-        try:
-            db_records = self.db_manager.get_promos_by_execution_type("RDC")
-        except Exception:
-            db_records = []
+        # Use EXACT same method as RDC page - get ALL RDC records with owner field populated
+        paginated_data = self.db_manager.get_paginated_execution_type(
+            execution_type="RDC",
+            page=1,
+            per_page=10000,  # Get all records
+            search="",
+            owner_filter="all",
+            upcoming_only_when_no_query=False,
+            force_upcoming=False
+        )
+        
+        db_records = paginated_data['promotions']
+        
+        # DEBUG: Log what we actually got from paginated query
+        import logging
+        logger = logging.getLogger(__name__)
+        if db_records:
+            logger.info(f"PAGINATED returned {len(db_records)} records")
+            first_with_owner = next((r for r in db_records if r.get('owner')), None)
+            if first_with_owner:
+                logger.info(f"PAGINATED first with owner: '{first_with_owner.get('owner')}' code={first_with_owner.get('code')}")
+            else:
+                logger.info("PAGINATED NO RECORDS WITH OWNER FOUND!")
+        
         orbit_by_code: Dict[str, Dict[str, Any]] = {}
-        orbit_ids: list[str] = []
         for rec in db_records:
-            # Ensure string-keyed dict for static type expectations
-            rec_str: Dict[str, Any] = {str(k): v for k,v in rec.items()}
-            code = str(rec_str.get('code','') or '')
+            code = str(rec.get('code','') or '')
             if not code:
                 continue
-            orbit_by_code[code] = rec_str
-            if rec_str.get('orbit_id'):
-                orbit_ids.append(str(rec_str.get('orbit_id')))
+            orbit_by_code[code] = rec
 
-        # 2. Load legacy PAM JSON edits (if file exists)
+        # Load legacy PAM JSON edits (if file exists)
         pam_json: Dict[str, Any] = {}
         try:
             with open(os.path.join(self.data_dir, 'promotions.json'),'r') as f:
@@ -427,18 +440,25 @@ class HybridPromoDataManager:
         except Exception:
             pam_json = {}
 
-        # 3. Combine code universe
+        # Combine code universe
         all_codes = set(orbit_by_code.keys()) | set(pam_json.keys())
 
-        # 4. Iterate and build mismatch records
+        # Build mismatch records
+        import logging
+        logger = logging.getLogger(__name__)
+        first_logged = False
         for code in all_codes:
             ob = orbit_by_code.get(code, {})
             pj = pam_json.get(code, {})
+            if not first_logged and ob:
+                logger.info(f"MISMATCH DEBUG first ob keys: {list(ob.keys())}")
+                logger.info(f"MISMATCH DEBUG first ob owner: '{ob.get('owner')}'")
+                first_logged = True
             orbit_end = ob.get('promo_end_date','')
             orbit_start = ob.get('promo_start_date','')
             pam_end = pj.get('promo_end_date','') or ob.get('promo_end_date','')
             pam_start = pj.get('promo_start_date','') or ob.get('promo_start_date','')
-            owner = ob.get('Owner') or pj.get('owner','')
+            owner = ob.get('owner', '')
             bill_facing_name = ob.get('bill_facing_name') or pj.get('bill_facing_name','')
             orbit_id = ob.get('orbit_id') or pj.get('orbit_id','')
 
@@ -475,7 +495,7 @@ class HybridPromoDataManager:
             return (order.get(e.get('mismatch_severity',''),2), e.get('code',''))
         entries.sort(key=sort_key)
 
-        return {'promos': entries, 'owners': sorted(owners)}
+        return {'promos': entries, 'owners': sorted(paginated_data['owners'])}
     
     def get_paginated_promos(self, page: int = 1, per_page: int = 25, 
                            search: str = "", owner_filter: str = "all") -> Dict[str, Any]:
