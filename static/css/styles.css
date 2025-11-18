@@ -286,9 +286,6 @@ html[data-theme='dark'] .promo-control-group {
   box-shadow: 0 2px 4px var(--shadow-color);
   color: #000; /* dark theme control groups also use black text per spec */
 }
-/* Sticky variant (only admin Source Table Promotions) */
-.promo-control-group { position: sticky; top: calc(var(--header-height) + 8px); z-index: 900; }
-@media (max-height: 780px) { .promo-control-group { top: calc(var(--header-height) + 4px); } }
 
 /* Ensure flex layout utilities persist */
 .promotions-controls,
