@@ -140,8 +140,8 @@ html, body { height:100%; }
 	min-height:calc(100vh - 55px - 60px); /* header + footer reserve */
 	display:flex;
 	flex-direction:column;
-	/* Equal top & bottom spacing relative to header/footer */
-	padding:2.5rem 0 2.5rem;
+	/* Restored horizontal padding to align with SPE edit page */
+	padding:2.5rem 2rem 2.5rem;
 	box-sizing:border-box;
 }
 .layout-flex { flex:1 1 auto; display:flex; }
@@ -168,8 +168,9 @@ html, body { height:100%; }
    ============================= */
 html[data-theme='dark'] .left-panel,
 html[data-theme='dark'] .right-panel {
-	background:#e4e6e8; /* unified light grey surface */
-	box-shadow:none; /* flatten in dark mode */
+	background: var(--control-surface); /* plum translucent surface to match control groups & SPE edit */
+	box-shadow: 0 2px 4px var(--shadow-color);
+	color:#ffffff;
 }
 /* Ensure internal info boxes inherit flattened surface (avoid stark white strips) */
 html[data-theme='dark'] .left-panel .info-box {
@@ -205,8 +206,14 @@ html[data-theme='dark'] .left-panel .form-select:focus {
 }
 
 /* Left panel text color enforcement (keep titles magenta via .info-title rule) */
+/* Base text colors */
 .left-panel { color:#000; }
-html[data-theme='dark'] .left-panel { color:#000; }
+html[data-theme='dark'] .left-panel { color:#ffffff; }
+html[data-theme='dark'] .right-panel { color:#ffffff; }
+/* Make generic non-form text inside plum panels white for contrast */
+html[data-theme='dark'] .left-panel .info-box div,
+html[data-theme='dark'] .right-panel .tabs a,
+html[data-theme='dark'] .right-panel p { color:#ffffff; }
 
 /* Groupings tab scroll boxes: force black text in all themes */
 .details-box.scrollable { color:#000; }

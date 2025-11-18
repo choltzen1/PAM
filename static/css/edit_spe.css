@@ -5,14 +5,15 @@
 
 /* Reuse structural classes from edit_promo where possible */
 .container.wide-container {
-	width:98vw;
+	width:100%;
+	max-width:100%;
 	box-sizing:border-box;
 	display:flex;
 	flex-direction:column;
 	align-items:center;
 	justify-content:flex-start;
-	/* Equal top & bottom padding for visual balance with header/footer */
-	padding:2.5rem 1vw 2.5rem 1vw;
+	/* Restored horizontal page padding to match edit_rdc */
+	padding:2.5rem 2rem 2.5rem;
 }
 .layout-flex { width:100%; max-width:1800px; display:flex; align-items:stretch; gap:2rem; }
 .left-panel, .right-panel { box-sizing:border-box; }
@@ -45,3 +46,54 @@
 .input-group { display:flex; flex-direction:row; flex-wrap:wrap; gap:0.5em; margin-bottom:0.5em; }
 .save-footer { width:100%; margin-top:2rem; text-align:right; }
 .last-changes div { color:#666; font-size:0.9em; }
+
+/* =============================
+   Page Height & Container Fit
+   Match edit_rdc min-height reservations (header + footer) + responsive padding
+   ============================= */
+.wide-container, .container {
+	min-height:calc(100vh - 55px - 60px);
+	display:flex;
+	flex-direction:column;
+	box-sizing:border-box;
+}
+@media (min-width:1200px){
+	.wide-container, .container { min-height:calc(100vh - 60px - 70px); padding-left:2.5rem; padding-right:2.5rem; }
+}
+
+/* =============================
+   Dark Mode SPE Edit Page Overrides
+   - Plum translucent panels matching control group surface
+   - White generic text for contrast
+   - Form inputs remain white with dark text for readability
+   ============================= */
+html[data-theme='dark'] .left-panel,
+html[data-theme='dark'] .right-panel {
+	background: var(--control-surface);
+	box-shadow: 0 2px 4px var(--shadow-color);
+	color:#ffffff;
+}
+html[data-theme='dark'] .left-panel .info-box { background:transparent; }
+html[data-theme='dark'] .left-panel .form-control,
+html[data-theme='dark'] .left-panel .form-select,
+html[data-theme='dark'] .right-panel .form-control,
+html[data-theme='dark'] .right-panel .form-select,
+html[data-theme='dark'] .right-panel textarea.form-control {
+	background:#ffffff;
+	color:#222222;
+	border:1px solid #c5c7c9;
+}
+html[data-theme='dark'] .right-panel .form-control::placeholder,
+html[data-theme='dark'] .left-panel .form-control::placeholder { color:#555555; }
+html[data-theme='dark'] .right-panel .form-control:focus,
+html[data-theme='dark'] .right-panel .form-select:focus,
+html[data-theme='dark'] .left-panel .form-control:focus,
+html[data-theme='dark'] .left-panel .form-select:focus {
+	border-color:var(--tmobile-magenta);
+	box-shadow:0 0 0 2px #e2007433;
+}
+/* Enforce white for generic non-form text elements */
+html[data-theme='dark'] .right-panel .tabs a,
+html[data-theme='dark'] .right-panel p,
+html[data-theme='dark'] .left-panel .info-box div { color:#ffffff; }
+

@@ -1,5 +1,8 @@
 
 {% extends "pam/base_pam.html" %}
+{% block extra_css %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/edit_spe.css') }}">
+{% endblock %}
 {% block title %}Edit SPE Promotion – {{ promo.get('code', spe_key) or 'New SPE' }}{% endblock %}
 
 {% block header_left %}
