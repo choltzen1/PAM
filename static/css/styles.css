@@ -6,6 +6,8 @@
   --tmobile-gray: #f4f4f4;
   --tmobile-border: #e0e0e0;
   --header-height: 60px;              /* standardized sticky header height */
+  --footer-height: 60px;              /* standardized sticky footer height */
+  --header-content-gap: 14px;         /* space between fixed header and first content */
   --page-vertical-pad: 0.5rem;        /* further reduced (was 1rem) */
 
   /* THEME (light default) */
@@ -59,6 +61,54 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   transition: background .35s ease, color .35s ease;
 }
+
+/* ===============================
+   Global Unified Scrollbar System
+   ===============================
+   One canonical set of rules for all scrollable areas.
+   Adjust appearance via CSS variables below.
+   Supported: Firefox (scrollbar-color), WebKit/Blink (::-webkit-scrollbar)
+*/
+
+:root {
+  --scrollbar-size: 10px;
+  --scrollbar-radius: 6px;
+  --scrollbar-thumb-light: rgba(0,0,0,.35);
+  --scrollbar-thumb-light-hover: rgba(0,0,0,.55);
+  --scrollbar-thumb-dark: rgba(255,255,255,.45);
+  --scrollbar-thumb-dark-hover: rgba(255,255,255,.65);
+  --scrollbar-track: transparent;
+}
+
+/* Firefox global (applies to every scrollable element) */
+* { scrollbar-width: thin; scrollbar-color: var(--scrollbar-thumb-light) var(--scrollbar-track); }
+html[data-theme='dark'] * { scrollbar-color: var(--scrollbar-thumb-dark) var(--scrollbar-track); }
+
+/* WebKit/Blink */
+*::-webkit-scrollbar { width: var(--scrollbar-size); height: var(--scrollbar-size); }
+*::-webkit-scrollbar-track { background: var(--scrollbar-track) !important; }
+*::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb-light); border-radius: var(--scrollbar-radius); border:none; }
+*::-webkit-scrollbar-thumb:hover { background: var(--scrollbar-thumb-light-hover); }
+html[data-theme='dark'] *::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb-dark); }
+html[data-theme='dark'] *::-webkit-scrollbar-thumb:hover { background: var(--scrollbar-thumb-dark-hover); }
+
+/* Hide buttons/corners everywhere */
+*::-webkit-scrollbar-button { display:none !important; width:0 !important; height:0 !important; }
+*::-webkit-scrollbar-corner { background: var(--scrollbar-track) !important; display:none !important; }
+
+/* ===============================
+  Fixed Header/Footer Layout Helpers
+  =============================== */
+body.body-fixed-header-footer { height:100vh; display:flex; flex-direction:column; overflow:hidden; }
+body.body-fixed-header-footer > .app-main-scroll { flex:1 1 auto; min-height:0; overflow-y:auto; overflow-x:hidden; position:relative; }
+/* Ensure scroll area accounts for fixed header/footer spacing when inline padding not provided */
+body.body-fixed-header-footer > .app-main-scroll:not([style*='padding-top']) { padding-top: calc(var(--header-height) + var(--header-content-gap)); }
+body.body-fixed-header-footer > .app-main-scroll:not([style*='padding-bottom']) { padding-bottom: var(--footer-height); }
+/* Prevent content behind footer */
+.footer-nav, .footer-bar { width:100%; }
+/* Ensure internal full-height panels can stretch without forcing outer scroll */
+.app-main-scroll .full-height-panel { height:100%; box-sizing:border-box; }
+
 
 /* Magenta button variant for primary actions */
 .btn-magenta {

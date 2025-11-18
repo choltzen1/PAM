@@ -42,6 +42,13 @@ html[data-theme='dark'] #promo-search.form-control {
   box-shadow:0 0 0 2px rgba(226,0,116,0.15) inset;
 }
 html[data-theme='dark'] #promo-search.form-control::placeholder { color:#666; }
+/* Scrollbar buttons/corners now globally hidden; page-specific rules removed */
+
+/* Dark mode filter labels: white text */
+html[data-theme='dark'] .filter-group label,
+html[data-theme='dark'] .search-group label {
+  color: #ffffff !important;
+}
 
 /* Dark mode alternating row striping */
 /* Refined dark mode zebra striping: use two greys (no pure white) */
@@ -132,10 +139,14 @@ html[data-theme='dark'] .approvers-table tbody tr:nth-child(even) { background:#
 
 .approvers-table td {
   padding: 0.75rem;
-  border-bottom: 1px solid var(--tmobile-border);
+  border-bottom: none;
   vertical-align: middle;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.approvers-table tbody tr {
+  border-bottom: 1px solid var(--tmobile-border);
 }
 
 /* Removed transition to eliminate any perceptible hover effect */
@@ -146,7 +157,7 @@ html[data-theme='dark'] .approvers-table tbody tr:nth-child(even) { background:#
 /* Reintroduce RDC table hover effect exactly (brightness 1.02) */
 .approvers-table tbody tr:hover { filter:brightness(1.02); }
 
-.approvers-table tbody tr:last-child td {
+.approvers-table tbody tr:last-child {
   border-bottom: none;
 }
 

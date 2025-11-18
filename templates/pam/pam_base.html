@@ -79,11 +79,10 @@
       color: #fff !important;
     }
   </style>
-</head>
-<body class="{% if request.path == '/' or request.path == '/PAM_homepage' %}home-page{% endif %}">
-  <div class="page-content">
-    <!-- Global Header -->
-    <header class="global-header">
+ </head>
+ <body class="body-fixed-header-footer {% if request.path == '/' or request.path == '/PAM_homepage' %}home-page{% endif %}">
+   <!-- Global Header (fixed) -->
+   <header class="global-header">
       <div class="global-header-title">
         {% block header_left %}PAM{% endblock %}
       </div>
@@ -96,12 +95,12 @@
         </div>
         {% block header_right %}User: Coming Soon{% endblock %}
       </div>
-    </header>
-    
-    {% block content %}{% endblock %}
-  </div>
-  
-  <footer class="footer-nav" style="background:var(--tmobile-magenta);color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0.5em 2em;font-size:1rem;height:60px;box-sizing:border-box;">
+   </header>
+   <!-- Scrollable region between fixed header & footer -->
+  <main class="app-main-scroll" style="padding-top:calc(var(--header-height) + var(--header-content-gap));padding-bottom:var(--footer-height);">
+     {% block content %}{% endblock %}
+   </main>
+   <footer class="footer-nav" style="background:var(--tmobile-magenta);color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0.5em 2em;font-size:1rem;height:var(--footer-height);box-sizing:border-box;position:fixed;bottom:0;left:0;right:0;z-index:1000;">
     <div id="footer-time">{{ current_datetime }}</div>
     <nav class="footer-links" style="display:flex;gap:1.5em;align-items:center;">
       <a title="Back" href="javascript:history.back()" style="color:#fff;text-decoration:none;font-size:1.2em;"><i class="fas fa-chevron-left"></i></a>
@@ -110,7 +109,7 @@
       <a title="RDC" href="{{ url_for('promo.rdc_page') }}" style="color:#fff;text-decoration:none;font-size:1.2em;"><i class="fas fa-tags"></i></a>
       <a title="SPE" href="{{ url_for('promo.spe_page') }}" style="color:#fff;text-decoration:none;font-size:1.2em;"><i class="fas fa-bolt"></i></a>
     </nav>
-  </footer>
+   </footer>
   <script>
     function updateFooterTime() {
       const el = document.getElementById('footer-time');
@@ -218,5 +217,5 @@
     table.sortable thead th[data-sort-dir="desc"]::after { content: " \25BC"; font-size: 0.65em; margin-left: 4px; }
     table.sortable thead th[data-sort-dir="none"]::after { content: ""; }
   </style>
-</body>
-</html>
+ </body>
+ </html>

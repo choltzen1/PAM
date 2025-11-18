@@ -232,18 +232,9 @@ html, body { height:100%; }
 .table-wrap { position:relative; border:1px solid var(--pete-border-grid); border-radius:var(--pete-radius); background:var(--pete-panel-bg-alt); box-shadow:none; overflow-y:auto; overflow-x:hidden; max-height:360px; padding:0; }
 /* Inner horizontal scroller to preserve outer rounded corners without square scrollbar strip */
 .table-wrap .pete-scroll { overflow-x:auto; overflow-y:visible; padding-bottom:4px; /* space below content so scrollbar floats inside radius */ }
-.table-wrap .pete-scroll::-webkit-scrollbar { height:8px; }
-.table-wrap .pete-scroll::-webkit-scrollbar-track { background:var(--pete-panel-bg-alt); border-radius:12px; }
-.table-wrap .pete-scroll::-webkit-scrollbar-thumb { background:#b8bcc0; border-radius:12px; }
-.table-wrap .pete-scroll::-webkit-scrollbar-thumb:hover { background:#a9aeb2; }
 .table-wrap.scroll-shadow::after { content:""; position:absolute; top:0; right:0; width:35px; height:100%; pointer-events:none; background:linear-gradient(270deg,#fff,rgba(255,255,255,0)); }
 /* Light scrollbar styling (WebKit) */
-#research-app.pete-theme .table-wrap::-webkit-scrollbar { height:10px; width:10px; }
-#research-app.pete-theme .table-wrap::-webkit-scrollbar-track { background:var(--pete-panel-bg-alt); border-radius:20px; }
-#research-app.pete-theme .table-wrap::-webkit-scrollbar-thumb { background:#c4c9cf; border-radius:20px; border:2px solid var(--pete-panel-bg-alt); }
-#research-app.pete-theme .table-wrap::-webkit-scrollbar-thumb:hover { background:#b6bcc2; }
-/* Firefox */
-#research-app.pete-theme .table-wrap { scrollbar-color: #c4c9cf var(--pete-panel-bg-alt); scrollbar-width: thin; }
+/* Firefox - removed custom scrollbar-color to use global styles */
 /* FLAT SINGLE-LINE GRID (collapsed) */
 /* Natural-width table: allow columns to size to full content and rely on horizontal scroll in .table-wrap */
 .pete-table { width:max-content; min-width:100%; border-collapse:collapse; table-layout:auto; font-size:calc(.67rem * var(--pete-font-scale)); border:none; border-radius:0; background:var(--pete-panel-bg-alt); }
@@ -294,10 +285,7 @@ html, body { height:100%; }
 .pete-chat-send { background:#E20074; color:#fff; border:none; font-size:.72rem; letter-spacing:.5px; padding:10px 18px; border-radius:24px; cursor:pointer; font-weight:600; }
 .pete-chat-send:hover { filter:brightness(1.1); }
 .pete-chat-stream { max-height:200px; overflow-y:auto; padding-right:4px; display:flex; flex-direction:column; gap:6px; }
-.pete-chat-stream::-webkit-scrollbar { width:8px; }
-.pete-chat-stream::-webkit-scrollbar-track { background:#1f1f22; border-radius:8px; }
-.pete-chat-stream::-webkit-scrollbar-thumb { background:#4b4d52; border-radius:8px; }
-.pete-chat-stream::-webkit-scrollbar-thumb:hover { background:#5b5d62; }
+/* Removed custom scrollbar styling to honor global invisible scrollbar */
 .pmsg .bubble { display:flex; flex-direction:column; gap:2px; background:#26272b; border:1px solid #383a3f; padding:6px 10px 7px; border-radius:10px; font-size:.65rem; width:100%; line-height:1.25; box-sizing:border-box; color:#fff; }
 .pmsg.user .bubble { background:#243447; border-color:#35536b; color:#fff; }
 .pmsg.assistant .bubble { background:#252d23; border-color:#395b33; color:#fff; }

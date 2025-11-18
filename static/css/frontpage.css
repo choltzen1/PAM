@@ -24,22 +24,7 @@ html, body {
   box-shadow: 2px 0 8px #e2007420;
 }
 
-.sidebar::-webkit-scrollbar {
-  width: 8px;
-}
-
-.sidebar::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.1);
-}
-
-.sidebar::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.5);
-  border-radius: 4px;
-}
-
-.sidebar::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.7);
-}
+/* Removed custom sidebar scrollbar styling to respect global invisible scrollbar */
 
 .sidebar a {
   color: #fff;
