@@ -409,43 +409,58 @@ def download_batch_sql_bp(operator_id, date):
 # --- SPE edit page migration ---
 @promo_bp.route('/edit-spe/<promo_code>', methods=['GET','POST'], endpoint='edit_spe_page')
 def edit_spe_page(promo_code):
+    """Optimized SPE editor.
+
+    Performance improvements:
+      - Reuse global data manager (_ensure_data_manager) instead of constructing a new PromoDataManager per request.
+      - Use optimized get_spe_promo (single-row lookup) vs full list scan.
+      - Avoid duplicate SPE fetch (once for POST processing, once for render).
+    """
     tab = request.args.get('tab','Details')
-    from data.storage import PromoDataManager as JSONManager
-    json_manager = JSONManager()
+    dm = _ensure_data_manager()
+
+    # Fetch current SPE data once (before POST modifications if any)
+    spe_data = dm.get_spe_promo(promo_code) or {
+        'code': promo_code,
+        'owner': 'Unknown',
+        'description': '',
+        'promo_start_date': '',
+        'promo_end_date': '',
+        'status': 'Draft'
+    }
+    # Guarantee code key populated (SPE records may have missing/blank code in DB or use alternate field names)
+    if not spe_data.get('code'):
+        spe_data['code'] = promo_code
+
     if request.method == 'POST':
         tab = request.form.get('active_tab', tab)
-        spe_data = json_manager.get_spe_promo(promo_code) or {
-            'code': promo_code,
-            'owner': 'Unknown',
-            'description': '',
-            'start_date': '',
-            'end_date': '',
-            'status': 'Draft'
-        }
         updated = {k:v for k,v in request.form.items() if k != 'active_tab'}
         spe_data.update(updated)
+        if not spe_data.get('code'):
+            spe_data['code'] = promo_code
         try:
-            json_manager.save_spe_promo(promo_code, spe_data, user_name='Cade Holtzen')
+            # Persist using existing JSON compatibility path (SPE still legacy)
+            dm.save_spe_promo(promo_code, spe_data, user_name='Cade Holtzen')
             flash(f'SPE {promo_code} saved successfully!', 'success')
             return redirect(url_for('promo.edit_spe_page', promo_code=promo_code, tab=tab))
         except Exception as e:
             flash(f'Error saving SPE: {e}', 'error')
-    spe_data = json_manager.get_spe_promo(promo_code) or {
-        'code': promo_code,
-        'owner': 'Unknown',
-        'description': '',
-        'start_date': '',
-        'end_date': '',
-        'status': 'Draft'
-    }
-    return render_template('pam/edit_spe.html', promo=spe_data, spe_data=spe_data, spe_key=promo_code, active_tab=tab,
-                           soc_groupings=json_manager.get_soc_groupings(),
-                           soc_grouping_details=json_manager.get_soc_grouping_details(),
-                           account_types=json_manager.get_account_types(),
-                           account_type_details=json_manager.get_account_type_details(),
-                           sales_applications=json_manager.get_sales_applications(),
-                           sales_application_details=json_manager.get_sales_application_details(),
-                           user_name='Cade Holtzen')
+            # Continue to render with updated spe_data to avoid data loss in UI
+
+    return render_template(
+        'pam/edit_spe.html',
+    promo=spe_data,
+        spe_data=spe_data,
+        spe_key=promo_code,
+        active_tab=tab,
+        soc_groupings=dm.get_soc_groupings(),
+        soc_grouping_details=dm.get_soc_grouping_details(),
+        account_types=dm.get_account_types(),
+        account_type_details=dm.get_account_type_details(),
+        sales_applications=dm.get_sales_applications(),
+        sales_application_details=dm.get_sales_application_details(),
+        user_name='Cade Holtzen'
+    )
 
 @promo_bp.route('/test-page', endpoint='test_page')
 def test_page():

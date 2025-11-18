@@ -195,14 +195,26 @@ class PromoDataManager:
             return {}
     
     def get_spe_promo(self, promo_code: str) -> Dict[str, Any]:
-        """Get a specific SPE promotion by code (DB)."""
+        """Fast lookup of a single SPE promo by code.
+
+        Previous implementation fetched ALL SPE promos then iterated to find a match,
+        incurring an unnecessary full table scan + conversion cost on every request.
+        This optimized path issues a single parameterized query via get_promo_by_code
+        and validates Desired_Execution == 'SPE'. Falls back to empty dict if not found
+        or if the promo is of a different execution type.
+        """
         try:
-            for r in self.db_manager.get_promos_by_execution_type("SPE"):
-                if str(r.get('code','')).upper() == promo_code.upper():
-                    return self.db_manager.convert_db_record_to_json_format({str(k): v for k,v in r.items()})
-        except Exception:
-            pass
-        return {}
+            rec = self.db_manager.get_promo_by_code(promo_code)
+            if not rec:
+                return {}
+            # Normalize execution type key across potential case/alias differences
+            exec_type = rec.get('Desired_Execution') or rec.get('desired_execution') or rec.get('execution_type')
+            if str(exec_type).upper() != 'SPE':
+                return {}
+            return self.db_manager.convert_db_record_to_json_format({str(k): v for k,v in rec.items()})
+        except Exception as e:
+            print(f"Fast SPE lookup failed for {promo_code}: {e}")
+            return {}
     
     def get_all_promos(self) -> Dict[str, Any]:
         """Get all promotions (RDC) from database (no JSON overlay)."""
