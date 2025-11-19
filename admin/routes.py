@@ -4,9 +4,9 @@ import os, json
 from typing import Optional, TYPE_CHECKING
 import sqlite3
 
-# Optional import of new version history service
+# Unified version history service import (merged module)
 try:
-    from data.version_history_service import version_history_service
+    from data.version_history import version_history_service  # type: ignore
 except Exception:  # pragma: no cover
     version_history_service = None  # type: ignore
 

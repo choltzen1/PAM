@@ -50,15 +50,23 @@ Thumbs.db
 
 # Logs
 *.log
+logs/
 
 # Temporary files
 *.tmp
 *.temp
 *.bak
+*.prof
 
 # Environment variables
 .env
 .flaskenv
+
+# Test artifacts
+.pytest_cache/
+coverage.xml
+.coverage
+
 
 # User data (keep structure but ignore actual data)
 data/uploads/promotions/*/

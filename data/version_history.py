@@ -429,3 +429,151 @@ class VersionHistoryManager:
                 "change_types": [dict(row) for row in change_types],
                 "top_contributors": [dict(row) for row in contributors]
             }
+
+# --- Minimal unified service layer (merged from version_history_service.py) ---
+from typing import Callable
+import json as _json
+
+class VersionHistoryService:
+    """Unified Promotion History service.
+
+    Provides read APIs for promo history in the simplified `promo_history` table while
+    co‑existing with legacy `version_history` change tracking. Creation/update events
+    recorded by DatabaseManager are exposed in a template‑friendly structure.
+    """
+    def __init__(self, db_path: str | None = None):
+        self.db_path = db_path or self.db_path  # reuse manager path when available
+        self._ensure_table()
+
+    def _ensure_table(self):  # idempotent
+        try:
+            os.makedirs(os.path.dirname(self.db_path), exist_ok=True)
+            with sqlite3.connect(self.db_path) as conn:
+                conn.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS promo_history (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        promo_code TEXT NOT NULL,
+                        timestamp TEXT NOT NULL,
+                        event_type TEXT NOT NULL,
+                        user_name TEXT,
+                        diff_json TEXT
+                    )
+                    """
+                )
+                conn.execute("CREATE INDEX IF NOT EXISTS idx_ph_code_ts ON promo_history(promo_code, timestamp)")
+        except Exception:
+            pass
+
+    def _normalize_event(self, evt: str) -> str:
+        if evt == 'Created':
+            return 'Created Promo'
+        if evt == 'Updated':
+            return 'Updated Promo'
+        if evt in ('SKU List Uploaded','Trade-In List Uploaded'):
+            return evt
+        if evt.startswith('PCR Version #') or evt.startswith('System Updates End Date -'):
+            return evt
+        return evt
+
+    def get_promo_history(self, promo_code: str) -> list[dict[str, Any]]:
+        rows: list[dict[str, Any]] = []
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                conn.row_factory = sqlite3.Row
+                cur = conn.execute(
+                    "SELECT promo_code, timestamp, event_type, user_name, diff_json FROM promo_history WHERE promo_code=? ORDER BY timestamp DESC, id DESC",
+                    (promo_code,)
+                )
+                for r in cur.fetchall():
+                    try:
+                        diff = _json.loads(r['diff_json']) if r['diff_json'] else None
+                    except Exception:
+                        diff = None
+                    evt = r['event_type']
+                    desc = self._normalize_event(evt)
+                    rows.append({
+                        'change_type': 'Created' if evt == 'Created' else evt,
+                        'timestamp': r['timestamp'],
+                        'changed_by': r['user_name'] or 'Unknown',
+                        'description': desc,
+                        'field_changes': diff
+                    })
+            self._inject_version_history_field(rows)
+        except Exception:
+            return []
+        return rows
+
+    def get_all_promotions_with_history(self, fetch_promos: Callable[[], dict[str, Any]]) -> list[dict[str, Any]]:
+        try:
+            all_promos = fetch_promos() or {}
+        except Exception:
+            all_promos = {}
+        grouped: dict[str, list[dict[str, Any]]] = {}
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                conn.row_factory = sqlite3.Row
+                cur = conn.execute("SELECT promo_code, timestamp, event_type, user_name, diff_json FROM promo_history ORDER BY timestamp DESC, id DESC")
+                for r in cur.fetchall():
+                    try:
+                        diff = _json.loads(r['diff_json']) if r['diff_json'] else None
+                    except Exception:
+                        diff = None
+                    evt = r['event_type']
+                    desc = self._normalize_event(evt)
+                    grouped.setdefault(r['promo_code'], []).append({
+                        'change_type': 'Created' if evt == 'Created' else evt,
+                        'timestamp': r['timestamp'],
+                        'changed_by': r['user_name'] or 'Unknown',
+                        'description': desc,
+                        'field_changes': diff
+                    })
+        except Exception:
+            pass
+        result: list[dict[str, Any]] = []
+        for code, changes in grouped.items():
+            self._inject_version_history_field(changes)
+            base = all_promos.get(code, {})
+            owner_val = base.get('owner') or base.get('Owner') or ''
+            if not owner_val:
+                for ch in changes:
+                    fc = ch.get('field_changes') or {}
+                    diff_owner = fc.get('owner') or fc.get('Owner')
+                    if isinstance(diff_owner, dict):
+                        owner_val = diff_owner.get('new')
+                    elif diff_owner:
+                        owner_val = diff_owner
+                    if owner_val:
+                        break
+            if isinstance(owner_val, str):
+                owner_val = owner_val.strip().strip('"\'`')
+            result.append({
+                'promo_code': code,
+                'orbit_id': base.get('orbit_id', ''),
+                'status': base.get('Status', '') or base.get('status', ''),
+                'bill_facing_name': base.get('bill_facing_name', ''),
+                'start_date': base.get('promo_start_date', ''),
+                'end_date': base.get('promo_end_date', ''),
+                'promo_owner': owner_val,
+                'changes': changes
+            })
+        result.sort(key=lambda p: (p['changes'][0]['timestamp'] if p['changes'] else ''), reverse=True)
+        return result
+
+    # Inject synthetic version_history entries (reuse manager helper)
+    def _inject_version_history_field(self, changes: list[dict[str, Any]]):
+        for ch in changes:
+            fc = ch.get('field_changes') or {}
+            if 'version_history' not in fc:
+                summary = f"{ch.get('timestamp','')} - {ch.get('changed_by','Unknown')} - {ch.get('description','')}".strip()
+                fc['version_history'] = {'old': None, 'new': [summary]}
+            ch['field_changes'] = fc
+
+# Singleton instance (matches legacy import path expectations)
+version_history_service = VersionHistoryService()
+
+__all__ = [
+    'VersionHistoryManager',
+    'VersionHistoryService',
+    'version_history_service'
+]
