@@ -533,7 +533,9 @@ h5 {
 /* Compact variant (Trade tab mock style) */
 .compact-trade-grid { gap:0.4rem; }
 .compact-trade-grid .tier-title { background:#111; color:#fff; border:1px solid #bbb; padding:6px 12px; font-size:0.85rem; text-align:center; margin-top:0.9rem; margin-bottom:0.25rem; border-radius:4px; font-weight:600; }
-.compact-trade-grid .form-control, .compact-trade-grid .form-select { background:#111; color:#fff; border:1px solid #bbb; padding:6px 10px; font-size:0.75rem; line-height:1rem; border-radius:4px; }
+.compact-trade-grid .form-control, .compact-trade-grid .form-select { border:1px solid #bbb; padding:6px 10px; font-size:0.75rem; line-height:1rem; border-radius:4px; }
+html[data-theme='dark'] .compact-trade-grid .form-control,
+html[data-theme='dark'] .compact-trade-grid .form-select { background-color: var(--input-light-gray) !important; color:#000 !important; border:1px solid var(--tmobile-border-dark) !important; }
 .compact-trade-grid .form-control::placeholder { color:#ccc; text-transform:lowercase; }
 .compact-trade-grid .col-span-4 { grid-column:1 / span 4; }
 .compact-trade-grid .col-span-3 { grid-column:1 / span 3; }

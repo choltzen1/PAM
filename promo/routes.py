@@ -92,9 +92,10 @@ def spe_page():
     search = request.args.get('search', '', type=str)
     owner_filter = request.args.get('owner', 'all', type=str)
     scope = request.args.get('scope', 'all', type=str)
-    spe_payload = {}
-    if hasattr(dm, 'get_paginated_spe_promos_optimized'):
-        try:
+    
+    try:
+        # Use same optimized pagination as RDC - pulls directly from PAM_Orbit_Data_Updated table
+        if hasattr(dm, 'get_paginated_spe_promos_optimized'):
             spe_payload = dm.get_paginated_spe_promos_optimized(
                 page=page,
                 per_page=per_page,
@@ -102,57 +103,18 @@ def spe_page():
                 owner_filter=owner_filter,
                 scope=scope
             )
-        except Exception:
-            spe_payload = {}
-    if not spe_payload:
-        # Fallback to legacy all-fetch (filtered in Python) if optimized fails
-        try:
-            raw = dm.get_all_spe_promos()
-            rows = []
-            for key in sorted(raw.keys()):
-                item = raw[key]
-                item['code'] = key
-                rows.append(item)
-            # Apply minimal upcoming-only filter when no search/owner
-            from datetime import datetime as _dt
-            today = _dt.utcnow().date()
-            def parse_date(v):
-                if not v: return None
-                try: return _dt.strptime(v[:10], '%Y-%m-%d').date()
-                except Exception: return None
-            if not search and owner_filter == 'all':
-                filtered = []
-                for r in rows:
-                    sd = parse_date(r.get('promo_start_date'))
-                    # Include if no start date OR start date strictly in future
-                    if sd is None or sd > today:
-                        filtered.append(r)
-                rows = filtered
-            else:
-                # Apply simple filters
-                s_lower = search.lower()
-                if search:
-                    rows = [r for r in rows if s_lower in (r.get('code','').lower()+r.get('Owner','').lower()+str(r.get('bill_facing_name','')).lower())]
-                if owner_filter != 'all':
-                    rows = [r for r in rows if (r.get('Owner') or r.get('owner')) == owner_filter]
-            owners = sorted(set(r.get('Owner') or r.get('owner') for r in rows if (r.get('Owner') or r.get('owner'))))
-            spe_payload = {
-                'promotions': rows,
-                'owners': owners,
-                'pagination': {
-                    'page': 1,
-                    'per_page': len(rows),
-                    'total_items': len(rows),
-                    'total_pages': 1,
-                    'has_prev': False,
-                    'has_next': False,
-                    'prev_num': None,
-                    'next_num': None
-                }
-            }
-        except Exception as e:
-            flash(f'Error loading SPE data: {e}', 'error')
-            return render_template('pam/spe.html', spe_data=[], owners=[], search_query=search, selected_owner=owner_filter, active_tab='SPE')
+        else:
+            # Fallback - shouldn't happen but kept for safety
+            spe_payload = dm.get_paginated_promos(
+                page=page,
+                per_page=per_page,
+                search=search,
+                owner_filter=owner_filter
+            )
+    except Exception as e:
+        flash(f'Error loading SPE data: {e}', 'error')
+        return render_template('pam/spe.html', spe_data=[], owners=[], search_query=search, selected_owner=owner_filter, active_tab='SPE')
+    
     return render_template(
         'pam/spe.html',
         spe_data=spe_payload['promotions'],
@@ -162,7 +124,6 @@ def spe_page():
         scope=scope,
         active_tab='SPE'
     )
-                    # (Error fallback logic moved to generation block below)
 
 @promo_bp.route('/rebates', endpoint='rebates_page')
 def rebates_page():
@@ -487,15 +448,37 @@ def edit_spe_page(promo_code):
     tab = request.args.get('tab','Details')
     dm = _ensure_data_manager()
 
-    # Fetch current SPE data once (before POST modifications if any)
-    spe_data = dm.get_spe_promo(promo_code) or {
-        'code': promo_code,
-        'owner': 'Unknown',
-        'description': '',
-        'promo_start_date': '',
-        'promo_end_date': '',
-        'status': 'Draft'
-    }
+    # Get full SPE data with all fields
+    spe_data = dm.get_spe_promo(promo_code)
+    
+    if spe_data:
+        # Overlay owner from paginated method (which works correctly in table view)
+        try:
+            result = dm.get_paginated_spe_promos_optimized(
+                page=1,
+                per_page=1,
+                search=promo_code,
+                owner_filter='all',
+                scope='all'
+            )
+            if result and result.get('promotions'):
+                for p in result['promotions']:
+                    if p.get('code', '').upper() == promo_code.upper():
+                        spe_data['owner'] = p.get('owner', '')
+                        break
+        except Exception:
+            pass
+    
+    if not spe_data:
+        spe_data = {
+            'code': promo_code,
+            'owner': 'Unknown',
+            'description': '',
+            'promo_start_date': '',
+            'promo_end_date': '',
+            'status': 'Draft'
+        }
+    
     # Guarantee code key populated (SPE records may have missing/blank code in DB or use alternate field names)
     if not spe_data.get('code'):
         spe_data['code'] = promo_code
@@ -1283,7 +1266,28 @@ def _edit_rdc(promo_code):
     tab = request.args.get('tab', 'Details')
     gen_flag = request.args.get('gen')
     inline_sql_snip = request.args.get('sql_snip')
+    
+    # Get full promo data with all fields
     promo_data = dm.get_promo(promo_code)
+    
+    if promo_data:
+        # Overlay owner from paginated method (which works correctly in table view)
+        try:
+            result = dm.get_paginated_promos_optimized(
+                page=1,
+                per_page=1,
+                search=promo_code,
+                owner_filter='all',
+                scope='all'
+            )
+            if result and result.get('promotions'):
+                for p in result['promotions']:
+                    if p.get('code', '').upper() == promo_code.upper():
+                        promo_data['owner'] = p.get('owner', '')
+                        break
+        except Exception:
+            pass
+    
     if not promo_data:
         # Create new promo data if it doesn't exist
         promo_data = {

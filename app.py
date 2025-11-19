@@ -46,6 +46,7 @@ app.before_request(_perf_begin)
 app.after_request(_perf_end)
 app.add_url_rule('/__perf_metrics', 'perf_metrics', perf_metrics)
 
+
 if data_manager is None:  # defensive assertion during test/dev
     try:
         from data.storage import PromoDataManager

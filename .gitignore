@@ -80,3 +80,6 @@ version_history.db
 *_clean.py
 data/__pycache__/storage.cpython-313.pyc
 data/version_history.db-wal
+
+# Refactor audit documentation (local-only)
+REFACTOR_AUDIT.md

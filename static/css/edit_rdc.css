@@ -17,8 +17,7 @@
 .col-span-3 { grid-column:span 3; }
 .col-span-4 { grid-column:span 4; }
 .section-label { font-weight:bold; color:var(--tmobile-magenta); border-bottom:2px solid var(--tmobile-magenta); margin-bottom:.5rem; padding-bottom:.2rem; }
-.form-control, .form-select { border:1px solid var(--tmobile-border); border-radius:5px; padding:.5em .9em; font-size:1rem; margin-bottom:.7em; background:#fafafa; color:#222; width:100%; box-sizing:border-box; }
-.form-control:focus, .form-select:focus { outline:none; border-color:var(--tmobile-magenta); box-shadow:0 0 0 2px #e2007433; }
+/* Form control base styling moved to global.css */
 .input-group { display:flex; flex-direction:row; flex-wrap:wrap; gap:.5em; }
 .radio-vertical { display:flex; flex-direction:row; align-items:center; gap:.3em; font-size:.85rem; }
 .save-footer { position:static !important; width:100%; margin-top:2rem; text-align:right; }
@@ -55,7 +54,7 @@
 	text-overflow:ellipsis;
 }
 .trade-box-input { display:flex; justify-content:flex-start; align-items:center; }
-.trade-box-input .form-control { margin:0; background:#fafafa; border:1px solid var(--tmobile-border); }
+.trade-box-input .form-control { margin:0; border:1px solid var(--tmobile-border); }
 .trade-box-input .form-control:focus { border-color:var(--tmobile-magenta); box-shadow:0 0 0 2px #e2007433; }
 .trade-tier-block { display:flex; flex-direction:column; gap:1rem; }
 .trade-tier-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:1rem; }

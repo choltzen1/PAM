@@ -186,12 +186,7 @@ html[data-theme='dark'] .notes-content { background:#ffffff; color:#111; border-
   gap: 0.5rem;
 }
 
-.search-group label {
-  font-weight: 600;
-  color: #333;
-  font-size: 0.9rem;
-}
-
+  /* Search-group label styling moved to global.css */
 #promo-search {
   width: 300px;
   padding: 0.5rem;

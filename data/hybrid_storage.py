@@ -163,7 +163,8 @@ class HybridPromoDataManager:
                     
                     merged_data[code] = promo_data
 
-            # Overlay any JSON-only promos (e.g., newly ingested before DB replication)
+            # Overlay JSON promos (overrides + optionally JSON-only) controlled by env flag
+            include_json_only = os.getenv('PAM_INCLUDE_JSON_ONLY_PROMOS', '').lower() in ('1','true','yes','on')
             try:
                 json_promos = self._original_manager._load_json(self._original_manager.promo_file)  # type: ignore[attr-defined]
                 for jcode, jdata in json_promos.items():
@@ -173,18 +174,18 @@ class HybridPromoDataManager:
                         # Update DB record with any JSON overrides (recent edits)
                         merged = merged_data[jcode]
                         merged.update(jdata)
-                        # Also merge workflow fields if present
                         if jcode in workflow_data:
                             merged.update(workflow_data[jcode])
                     else:
-                        # Pure JSON-only promo (add and merge workflow if exists)
-                        new_entry = dict(jdata)
-                        if jcode in workflow_data:
-                            new_entry.update(workflow_data[jcode])
-                        merged_data[jcode] = new_entry
+                        # Pure JSON-only promo: only include when flag enabled
+                        if include_json_only:
+                            new_entry = dict(jdata)
+                            if jcode in workflow_data:
+                                new_entry.update(workflow_data[jcode])
+                            merged_data[jcode] = new_entry
             except Exception as e:
                 print(f"Warning: failed overlaying JSON promos into hybrid cache: {e}")
-            
+
             # Update cache
             self._cache = merged_data
             self._cache_timestamp = datetime.now()

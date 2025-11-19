@@ -59,22 +59,25 @@ html, body {
   min-width: 200px;
 }
 
-.filter-group label, .search-group label {
-  font-weight: 600;
-  color: var(--tmobile-dark-gray);
-  font-size: 0.9rem;
+/* Form control styling moved to global.css */
+
+/* Ensure selects and search input inherit global dark mode unified surface */
+html[data-theme='dark'] .date-mismatch-page .form-control {
+  background-color: var(--input-light-gray) !important;
+  color:#000 !important;
+  border:1px solid var(--tmobile-border-dark) !important;
+}
+html[data-theme='dark'] .date-mismatch-page .form-select {
+  background-color: var(--input-light-gray) !important; /* do not reset background-image */
+  color:#000 !important;
+  border:1px solid var(--tmobile-border-dark) !important;
+  background-image: var(--bs-form-select-bg-img), var(--bs-form-select-bg-icon, none);
+  background-repeat: no-repeat;
+  background-position: right .75rem center;
+  background-size: 16px 12px;
 }
 
-.form-select, .form-control {
-  padding: 0.5rem;
-  border: 1px solid var(--tmobile-border);
-  border-radius: 4px;
-  font-size: 0.9rem;
-}
-
-.form-control {
-  background: white;
-}
+html[data-theme='dark'] .date-mismatch-page .form-control::placeholder { color:#555 !important; }
 
 /* Operator ID input explicit styling for cursor visibility */
 #operatorId {

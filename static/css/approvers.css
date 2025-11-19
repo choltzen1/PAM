@@ -35,13 +35,7 @@ html[data-theme='dark'] .approvers-table th { background: var(--tmobile-magenta)
 html[data-theme='dark'] .approvers-table td { background: transparent; color:#111; }
 html[data-theme='dark'] .promo-link { color: var(--tmobile-magenta); }
 /* Dark mode promo search input: white with black text */
-html[data-theme='dark'] #promo-search.form-control {
-  background:#ffffff !important;
-  color:#111 !important;
-  border:1px solid #b9babb !important;
-  box-shadow:0 0 0 2px rgba(226,0,116,0.15) inset;
-}
-html[data-theme='dark'] #promo-search.form-control::placeholder { color:#666; }
+/* Removed page-specific dark mode promo search override; now uses global unified input styling */
 /* Scrollbar buttons/corners now globally hidden; page-specific rules removed */
 
 /* Dark mode filter labels: white text */
@@ -85,31 +79,7 @@ html[data-theme='dark'] .approvers-table tbody tr:nth-child(even) { background:#
   min-width: 200px;
 }
 
-.filter-group label, .search-group label {
-  font-weight: 600;
-  color: var(--tmobile-dark-gray);
-  font-size: 0.9rem;
-}
-
-.form-select, .form-control {
-  padding: 0.5rem;
-  border: 1px solid var(--tmobile-border);
-  border-radius: 4px;
-  font-size: 0.9rem;
-  background: white;
-}
-
-/* Table Container - responsive, no horizontal scroll */
-.table-container {
-  width: 100%;
-  max-width: calc(100vw - 2rem);
-  overflow-x: auto;
-  border: 1px solid var(--tmobile-border);
-  border-radius: 8px;
-  background: white;
-  margin-bottom: 2rem;
-  box-sizing: border-box;
-}
+/* Form controls and table container styling moved to global.css */
 
 /* Table Styling - responsive columns */
 .approvers-table {
@@ -156,6 +126,10 @@ html[data-theme='dark'] .approvers-table tbody tr:nth-child(even) { background:#
 /* (Intentionally no :hover rule for rows) */
 /* Reintroduce RDC table hover effect exactly (brightness 1.02) */
 .approvers-table tbody tr:hover { filter:brightness(1.02); }
+
+/* Ensure table in approvers page inherits unified container styling */
+/* Hook class reserved for future approvers-specific container tweaks */
+/* (Removed empty ruleset per lint warning) */
 
 .approvers-table tbody tr:last-child {
   border-bottom: none;

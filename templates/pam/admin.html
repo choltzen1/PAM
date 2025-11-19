@@ -43,7 +43,7 @@
     <div class="admin-card nav-card">
       <div class="card-header"><div class="card-icon"><i class="fas fa-database"></i></div><div class="card-title">Source Table Promotions (PAM)</div></div>
       <div class="card-content">Direct view & management of live PAM promotions with bulk removal tools.
-        <div class="small-hint" style="margin-top:6px;color:#888;font-size:12px;">Use with caution – actions permanently remove rows from the source table.</div>
+        <div class="small-hint">Use with caution – actions permanently remove rows from the source table.</div>
       </div>
       <div class="card-actions"><a href="/admin/pam-promotions" class="btn-admin"><i class="fas fa-arrow-right"></i> Open Manager</a></div>
     </div>
@@ -113,7 +113,7 @@
     const resultEl = document.getElementById('deletePromoResult');
     const promoCode = (codeInput.value || '').trim();
     if(!promoCode){
-      resultEl.innerHTML = '<span style="color:#d33;">Enter a promo code.</span>';
+      resultEl.innerHTML = '<span class="text-error">Enter a promo code.</span>';
       return;
     }
     resultEl.innerHTML = 'Deleting '+promoCode+'...';
@@ -125,12 +125,12 @@
       });
       const js = await res.json();
       if(res.ok && js.success){
-        resultEl.innerHTML = '<span style="color:green;">'+js.message+'</span>';
+        resultEl.innerHTML = '<span class="text-success">'+js.message+'</span>';
       } else {
-        resultEl.innerHTML = '<span style="color:#d33;">'+(js.message || 'Delete failed')+'</span>';
+        resultEl.innerHTML = '<span class="text-error">'+(js.message || 'Delete failed')+'</span>';
       }
     } catch(e){
-      resultEl.innerHTML = '<span style="color:#d33;">Error: '+e+'</span>';
+      resultEl.innerHTML = '<span class="text-error">Error: '+e+'</span>';
     }
   }
   </script>
@@ -139,7 +139,7 @@
 <!-- Modals -->
 <!-- Users Modal -->
 <div id="usersModal" class="modal">
-  <div class="modal-content" style="max-width: 900px; max-height: 85vh; overflow-y: auto;">
+  <div class="modal-content large-scroll">
     <div class="modal-header">
       <h2 class="modal-title">User Management</h2>
       <span class="close" onclick="closeModal('usersModal')">&times;</span>
@@ -160,7 +160,7 @@
       </div>
       
       <!-- Create/Edit User Form -->
-      <div id="userForm" class="user-form" style="display: none;">
+      <div id="userForm" class="user-form hidden">
         <h4 id="userFormTitle">Add New User</h4>
         <div class="form-grid">
           <div class="form-group">
@@ -232,16 +232,16 @@
 
 <!-- Device Groupings Modal -->
 <div id="deviceGroupingsModal" class="modal">
-  <div class="modal-content" style="max-width: 900px; max-height:85vh; overflow-y:auto;">
+  <div class="modal-content large-scroll">
     <div class="modal-header">
       <h2 class="modal-title">Device Groupings</h2>
       <span class="close" onclick="closeModal('deviceGroupingsModal')">&times;</span>
     </div>
-    <div class="groupings-toolbar" style="display:flex; gap:8px; margin-bottom:12px;">
+    <div class="groupings-toolbar">
       <button class="btn-admin" onclick="showCreateGroupingForm()"><i class="fas fa-plus"></i> New Grouping</button>
       <button class="btn-admin secondary" onclick="reloadGroupings()"><i class="fas fa-sync"></i> Refresh</button>
     </div>
-    <div id="groupingForm" style="display:none; border:1px solid #ddd; padding:12px; border-radius:6px; margin-bottom:14px;">
+    <div id="groupingForm" class="grouping-form hidden">
       <h4 id="groupingFormTitle">Create Device Grouping</h4>
       <div class="form-group">
         <label>Description</label>
@@ -255,12 +255,12 @@
         <label>Optional Existing SKU Group ID (3 chars)</label>
         <input type="text" id="groupingSkuGroupId" maxlength="3" class="form-control" placeholder="Leave blank to auto allocate">
       </div>
-      <div class="form-actions" style="margin-top:8px; display:flex; gap:8px;">
+      <div class="form-actions tight">
         <button class="btn-admin" onclick="saveGrouping()"><i class="fas fa-save"></i> Save</button>
         <button class="btn-admin secondary" onclick="cancelGroupingForm()">Cancel</button>
       </div>
     </div>
-    <div id="deviceGroupingsContainer" class="groupings-container" style="display:grid; gap:10px; grid-template-columns:repeat(auto-fill,minmax(260px,1fr));"></div>
+    <div id="deviceGroupingsContainer" class="groupings-container"></div>
   </div>
 </div>
 
@@ -371,21 +371,21 @@
             <td><span class="badge badge-success">Connected</span></td>
             <td>2 minutes ago</td>
             <td>245ms</td>
-            <td><button class="btn-admin" style="font-size: 0.8rem; padding: 4px 8px;">Test</button></td>
+            <td><button class="btn-admin xs">Test</button></td>
           </tr>
           <tr>
             <td>ORBIT</td>
             <td><span class="badge badge-success">Connected</span></td>
             <td>5 minutes ago</td>
             <td>180ms</td>
-            <td><button class="btn-admin" style="font-size: 0.8rem; padding: 4px 8px;">Test</button></td>
+            <td><button class="btn-admin xs">Test</button></td>
           </tr>
           <tr>
             <td>Email Service</td>
             <td><span class="badge badge-warning">Degraded</span></td>
             <td>1 hour ago</td>
             <td>1.2s</td>
-            <td><button class="btn-admin" style="font-size: 0.8rem; padding: 4px 8px;">Test</button></td>
+            <td><button class="btn-admin xs">Test</button></td>
           </tr>
         </tbody>
       </table>
@@ -912,7 +912,7 @@ function renderGroupings(){
   container.innerHTML='';
   const entries = Object.entries(currentGroupings);
   if(!entries.length){
-    container.innerHTML = '<div style="color:#666;">No groupings created yet.</div>';
+    container.innerHTML = '<div class="text-muted">No groupings created yet.</div>';
     return;
   }
   entries.forEach(([gid, g])=>{
@@ -922,16 +922,16 @@ function renderGroupings(){
     card.style.padding='10px';
     card.style.borderRadius='6px';
     card.innerHTML = `
-      <div style="display:flex; justify-content:space-between; align-items:center;">
+      <div class="flex-between-center">
         <strong>${g.sku_group_id}</strong>
-        <div style="display:flex; gap:4px;">
-          <button class="btn-admin" style="font-size:0.7rem;" onclick="editGrouping('${gid}')"><i class="fas fa-edit"></i></button>
-          <button class="btn-admin secondary" style="font-size:0.7rem;" onclick="deleteGrouping('${gid}')"><i class="fas fa-trash"></i></button>
+        <div class="flex-gap-4">
+          <button class="btn-admin xxs" onclick="editGrouping('${gid}')"><i class="fas fa-edit"></i></button>
+          <button class="btn-admin secondary xxs" onclick="deleteGrouping('${gid}')"><i class="fas fa-trash"></i></button>
         </div>
       </div>
-      <div style="font-size:12px; color:#555; margin-top:4px;">${(g.description||'').replace(/</g,'&lt;')}</div>
-      <div style="margin-top:6px; font-size:11px; max-height:90px; overflow:auto;">${(g.skus||[]).map(s=>`<span style='display:inline-block; background:#f4f4f4; padding:2px 4px; margin:2px; border-radius:4px;'>${s}</span>`).join('')}</div>
-      <div style="font-size:10px; margin-top:6px; color:#888;">Created: ${g.created_date? new Date(g.created_date).toLocaleString():''}</div>
+      <div class="grouping-description-meta">${(g.description||'').replace(/</g,'&lt;')}</div>
+      <div class="sku-tags">${(g.skus||[]).map(s=>`<span class='sku-tag'>${s}</span>`).join('')}</div>
+      <div class="grouping-created-meta">Created: ${g.created_date? new Date(g.created_date).toLocaleString():''}</div>
     `;
     container.appendChild(card);
   });

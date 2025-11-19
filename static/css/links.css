@@ -252,14 +252,12 @@
 /* Let the global gradient show through in dark mode; only panels use grey surfaces */
 html[data-theme='dark'] .links-page { background: transparent; }
 /* Dark mode inherits unified control group styling from global; local overrides removed */
-html[data-theme='dark'] .search-group input { background:#ffffff; color:#000; border-color:#c5c7c9; }
 html[data-theme='dark'] .card { background:var(--card-bg); border-color:#b9bbbc; box-shadow:0 2px 6px rgba(0,0,0,0.4); }
 html[data-theme='dark'] .card-header { background:var(--card-bg); border-color:#b9bbbc; }
 html[data-theme='dark'] .promotion-header-info p,
 html[data-theme='dark'] .promotion-header-info strong,
 html[data-theme='dark'] .form-label { color:#111 !important; }
-html[data-theme='dark'] .form-control { background:#ffffff; color:#111; border-color:#c5c7c9; }
-html[data-theme='dark'] .form-control:focus { border-color:#E20074; box-shadow:0 0 0 0.2rem rgba(226,0,116,0.35); }
+/* Removed page-specific dark mode input overrides; global unified styling applies */
 html[data-theme='dark'] .btn { filter:none; }
 /* Ensure save confirmation message keeps brand color readability */
 html[data-theme='dark'] .links-save-message { color:#E20074; }

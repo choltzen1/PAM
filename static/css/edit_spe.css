@@ -41,8 +41,7 @@
 .col-span-2 { grid-column:span 2; }
 .col-span-4 { grid-column:span 4; }
 .section-label { font-weight:bold; color:var(--tmobile-magenta); border-bottom:2px solid var(--tmobile-magenta); margin-bottom:0.5rem; padding-bottom:0.2rem; }
-.form-control, .form-select { border:1px solid var(--tmobile-border); border-radius:5px; padding:0.5em 0.9em; font-size:1rem; background:#fafafa; color:#222; width:100%; box-sizing:border-box; }
-.form-control:focus, .form-select:focus { outline:none; border-color:var(--tmobile-magenta); box-shadow:0 0 0 2px #e2007433; }
+/* Form control base styling moved to global.css */
 .input-group { display:flex; flex-direction:row; flex-wrap:wrap; gap:0.5em; margin-bottom:0.5em; }
 .save-footer { width:100%; margin-top:2rem; text-align:right; }
 .last-changes div { color:#666; font-size:0.9em; }
