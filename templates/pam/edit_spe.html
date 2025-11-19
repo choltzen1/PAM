@@ -92,14 +92,14 @@
                 {% endfor %}
               </select>
 
-              <label class="section-label col-span-4">Account Type</label>
+              <label class="section-label col-span-4">Magenta Pulse Link</label>
               <div class="input-group col-span-4">
-                <input type="text" name="account_type" value="{{ promo.account_type or '' }}" class="form-control" placeholder="Enter account type (e.g., A01, A02, A03, etc.)">
+                <input type="text" name="c2_content" value="{{ promo.c2_content or '' }}" class="form-control" placeholder="Enter full Magenta Pulse link">
               </div>
 
               <label class="section-label">Sales Application</label>
               <label class="section-label">DCD Web Cart</label>
-              <label class="section-label">On Menu</label>
+              <label class="section-label">Off Menu</label>
               <label class="section-label">Service Priority</label>
               <select class="form-select" name="sales_application">
                 {% for val in ['*','NULL'] %}
@@ -121,10 +121,11 @@
               <label class="section-label">Max Discount</label>
               <label class="section-label">Market Group</label>
               <label class="section-label">Store Group</label>
-              <label class="section-label">C2 Content</label>
+              <label class="section-label">Account Type</label>
               <input class="form-control" name="max_discount" value="{{ promo.max_discount if promo.max_discount is not none else '' }}">
               <input class="form-control" name="market_group" value="{{ promo.market_group if promo.market_group is not none else '' }}">
-              <input class="form-control" name="store_group" value="{{ promo.store_group if promo.store_group is not none else '' }}">              <input class="form-control" name="c2_content" value="{{ promo.c2_content }}">
+              <input class="form-control" name="store_group" value="{{ promo.store_group if promo.store_group is not none else '' }}">
+              <input class="form-control" name="account_type" value="{{ promo.account_type or '' }}" placeholder="e.g., A01, A02">
             </div>
             <div class="save-footer">
               <button type="submit" class="btn btn-primary">Save Details</button>
@@ -212,7 +213,27 @@
               <label class="section-label col-span-2">Adjustment Code</label>
               <label class="section-label col-span-2">Discount Codes</label>              <input class="form-control col-span-2" name="adjustment_code" value="{{ promo.adjustment_code if promo.adjustment_code is not none else '' }}">
               <input class="form-control col-span-2" name="discount_codes" value="{{ promo.discount_codes if promo.discount_codes is not none else '' }}">
+
+              <label class="section-label col-span-4">SMS Indicator</label>
+              <select class="form-select col-span-4" name="sms_indicator" id="sms_indicator">
+                {% for val in ['Y','N'] %}
+                <option value="{{ val }}" {% if promo.sms_indicator == val %}selected{% endif %}>{{ val }}</option>
+                {% endfor %}
+              </select>
+
+              <div id="sms_fields" style="display: {{ 'contents' if promo.sms_indicator == 'Y' else 'none' }}; grid-column: 1 / -1; display: grid; grid-template-columns: subgrid;">
+                <label class="section-label col-span-2">SMS English</label>
+                <label class="section-label col-span-2">SMS Spanish</label>
+                <input class="form-control col-span-2" name="sms_english" value="{{ promo.sms_english or '' }}" placeholder="Enter SMS English text">
+                <input class="form-control col-span-2" name="sms_spanish" value="{{ promo.sms_spanish or '' }}" placeholder="Enter SMS Spanish text">
+              </div>
             </div>
+            <script>
+              document.getElementById('sms_indicator').addEventListener('change', function() {
+                const smsFields = document.getElementById('sms_fields');
+                smsFields.style.display = this.value === 'Y' ? 'contents' : 'none';
+              });
+            </script>
             <div class="save-footer">
               <button type="submit" class="btn btn-primary">Save Requirements</button>
             </div>
@@ -289,61 +310,37 @@
               <label class="section-label">GO Soc Group ID</label>
               <label class="section-label">BO Soc Group ID</label>
               <label class="section-label">Paid Soc Group ID</label>
-              <label class="section-label">Min Paid Line MI Count</label>
-              <select class="form-select" name="go_soc_group_id">
-                <option value="A56" {% if promo.go_soc_group_id == 'A56' %}selected{% endif %}>A56</option>
-                <option value="A55">A55</option>
-                <option value="A54">A54</option>
-              </select>
-              <select class="form-select" name="bo_soc_group_id">
-                <option value="A55" {% if promo.bo_soc_group_id == 'A55' %}selected{% endif %}>A55</option>
-                <option value="A56">A56</option>
-                <option value="A54">A54</option>
-              </select>
-              <select class="form-select" name="paid_soc_group_id">
-                <option value="A55" {% if promo.paid_soc_group_id == 'A55' %}selected{% endif %}>A55</option>
-                <option value="A56">A56</option>
-                <option value="A54">A54</option>
-              </select>
-              <input class="form-control" name="min_paid_line_mi_count" placeholder="Minimum Paid Line MI Count" value="{{ promo.min_paid_line_mi_count }}">
+              <label class="section-label">REQ Group ID</label>
+              <input class="form-control" name="go_soc_group_id" value="{{ promo.go_soc_group_id or 'NULL' }}">
+              <input class="form-control" name="bo_soc_group_id" value="{{ promo.bo_soc_group_id or 'NULL' }}">
+              <input class="form-control" name="paid_soc_group_id" value="{{ promo.paid_soc_group_id or 'NULL' }}">
+              <input class="form-control" name="req_group_id" value="{{ promo.req_group_id or 'NULL' }}">
 
               <label class="section-label">GO Line Maintenance</label>
               <label class="section-label">BO Line Maintenance</label>
               <label class="section-label">Paid Line Maintenance</label>
-              <label class="section-label">Min Paid Line GSM Cnt</label>
-              <select class="form-select" name="go_line_maintenance">
-                <option value="A57" {% if promo.go_line_maintenance == 'A57' %}selected{% endif %}>A57</option>
-                <option value="A56">A56</option>
-                <option value="A55">A55</option>
-              </select>
-              <select class="form-select" name="bo_line_maintenance">
-                <option value="A57" {% if promo.bo_line_maintenance == 'A57' %}selected{% endif %}>A57</option>
-                <option value="A56">A56</option>
-                <option value="A55">A55</option>
-              </select>
-              <select class="form-select" name="paid_line_maintenance">
-                <option value="A57" {% if promo.paid_line_maintenance == 'A57' %}selected{% endif %}>A57</option>
-                <option value="A56">A56</option>
-                <option value="A55">A55</option>
-              </select>
-              <input class="form-control" name="min_paid_line_gsm_count" value="{{ promo.min_paid_line_gsm_count if promo.min_paid_line_gsm_count is not none else '' }}">
+              <label class="section-label">REQ Group Maintenance</label>
+              <input class="form-control" name="go_line_maintenance" value="{{ promo.go_line_maintenance or 'NULL' }}">
+              <input class="form-control" name="bo_line_maintenance" value="{{ promo.bo_line_maintenance or 'NULL' }}">
+              <input class="form-control" name="paid_line_maintenance" value="{{ promo.paid_line_maintenance or 'NULL' }}">
+              <input class="form-control" name="req_group_maintenance" value="{{ promo.req_group_maintenance or 'NULL' }}">
 
               <label class="section-label">GO Line Count</label>
               <label class="section-label">BO Line Count</label>
               <label class="section-label">Borrow BO Lines</label>
               <label class="section-label">Lend BO Lines</label>
-              <input class="form-control" name="go_line_count" value="{{ promo.go_line_count if promo.go_line_count is not none else '' }}">
-              <input class="form-control" name="bo_line_count" value="{{ promo.bo_line_count if promo.bo_line_count is not none else '' }}">              <select class="form-select" name="borrow_bo_lines">
-                {% for val in ['Y','N'] %}
-                <option value="{{ val }}" {% if promo.borrow_bo_lines == val %}selected{% endif %}>{{ val }}</option>
-                {% endfor %}
-              </select>
-              <select class="form-select" name="lend_bo_lines">
-                {% for val in ['Y','N'] %}
-                <option value="{{ val }}" {% if promo.lend_bo_lines == val %}selected{% endif %}>{{ val }}</option>
-                {% endfor %}
-              </select>              <label class="section-label grid-full">Soc Discount Mapping</label>
-              <input class="form-control grid-full" name="soc_discount_mapping" value="{{ promo.soc_discount_mapping if promo.soc_discount_mapping is not none else '' }}">
+              <input class="form-control" name="go_line_count" value="{{ promo.go_line_count if promo.go_line_count is not none else '' }}" placeholder="Enter count">
+              <input class="form-control" name="bo_line_count" value="{{ promo.bo_line_count if promo.bo_line_count is not none else '' }}" placeholder="Enter count">
+              <input class="form-control" name="borrow_bo_lines" value="{{ promo.borrow_bo_lines or '' }}" placeholder="Y or N">
+              <input class="form-control" name="lend_bo_lines" value="{{ promo.lend_bo_lines or '' }}" placeholder="Y or N">
+
+              <label class="section-label col-span-2">Min Paid Line MI Count</label>
+              <label class="section-label col-span-2">Min Paid Line GSM Cnt</label>
+              <input class="form-control col-span-2" name="min_paid_line_mi_count" placeholder="Enter count" value="{{ promo.min_paid_line_mi_count or '' }}">
+              <input class="form-control col-span-2" name="min_paid_line_gsm_count" value="{{ promo.min_paid_line_gsm_count if promo.min_paid_line_gsm_count is not none else '' }}" placeholder="Enter count">
+
+              <label class="section-label grid-full">Soc Discount Mapping</label>
+              <input class="form-control grid-full" name="soc_discount_mapping" value="{{ promo.soc_discount_mapping if promo.soc_discount_mapping is not none else '' }}" placeholder="Enter mapping">
             </div>
             <div class="save-footer">
               <button type="submit" class="btn btn-primary">Save SOC Groupings</button>
