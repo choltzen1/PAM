@@ -24,7 +24,7 @@ PAM (Promotion Automation Manager) is a comprehensive web-based application desi
 
 #### 📈 **Data Management & Validation**
 - **File Upload Support**: SKU lists, trade-in files, and promotional documents (checksums logged)
-- **Structured Version History**: Field‑level diffs captured in SQLite with user + change type
+- **Structured Version History**: Field‑level diffs and metadata are persisted in SQL Server with user + change type
 - **Date Mismatch Detection**: Identify and resolve promotional date conflicts with diagnostics history
 - **Export Capabilities**: Generate reports and export promotional data
 
@@ -44,7 +44,7 @@ PAM (Promotion Automation Manager) is a comprehensive web-based application desi
 ### Backend
 - **Flask Framework**: Modular blueprint architecture
 - **Primary Data Store (SQL Server)**: `[PAM].[PAM_Orbit_Data_Updated]` is the single source of truth for ALL promotions (RDC/SPE/Rebate distinguished by `Desired_Execution`)
-- **Metadata Store (SQLite)**: `data/version_history.db` holds version history, extended promo extras, uploaded file metadata, and diagnostics snapshots
+-- **Metadata Store**: version history and metadata are persisted in SQL Server (`PAM.promo_history`, `PAM.generated_sql_store`).
 - **File Handling**: Secure file upload (saved under `data/uploads/promotions/<code>/`) with checksum + metadata persisted
 - **Date Processing**: Advanced date calculations + invalid date diagnostics history
 
@@ -53,15 +53,10 @@ PAM (Promotion Automation Manager) is a comprehensive web-based application desi
 SQL Server (authoritative)
 └── [PAM].[PAM_Orbit_Data_Updated]  (all core promo columns, incl. Desired_Execution)
 
-SQLite (supporting)
-└── version_history.db
-   ├── version_history   (promo_code, change_type, diff_json, user_name, timestamp)
-   ├── promo_extras      (promo_code PRIMARY KEY, extended editable fields)
-   ├── promo_files       (id, promo_code, filename, file_type, checksum_md5, uploaded_at, uploaded_by, size_bytes)
-   └── date_diagnostics_history (invalid_ratio, sample_size, window_start, window_end, created_at)
-
 Filesystem
 └── data/uploads/promotions/<PROMO_CODE>/  (uploaded artifacts)
+
+All metadata and version-history are now persisted in SQL Server (`PAM.promo_history`, `PAM.generated_sql_store`).
 ```
 
 Legacy JSON files (`promotions.json`, `spe_promotions.json`, `rebates.json`) were retired September 2025. On startup any remnants are auto‑archived to `.bak` and never read.
@@ -103,7 +98,7 @@ Legacy JSON files (`promotions.json`, `spe_promotions.json`, `rebates.json`) wer
    ```
 
 2. **Data Initialization**:
-   First run creates the supporting SQLite database (`data/version_history.db`). Core promotion data is fetched live from SQL Server; ensure connectivity/env credentials.
+   Ensure SQL Server connectivity and required schema (see `sql/create_promo_history_denormalized.sql`). Core promotion data is fetched live from SQL Server; ensure connectivity/env credentials.
 
 ### Running the Application
 
@@ -190,6 +185,13 @@ Benefits realized:
 - Real-time validation and error highlighting
 - Auto-save functionality with session persistence
 
+## Version History & Migration
+
+- **Authoritative Store:** All version history and related metadata are persisted in SQL Server (`PAM.promo_history` and `PAM.generated_sql_store`).
+- **Schema DDL:** Idempotent DDL for the denormalized version-history table is in `sql/create_promo_history_denormalized.sql` — apply this to your SQL Server instance when provisioning the schema.
+- **Migration Tools:** Historical migration helpers under `tools/` are deprecated and kept only for reference; they are intentionally disabled to avoid accidental local SQLite access.
+- **If you need to migrate legacy SQLite data:** restore an archival copy of `data/version_history.db` from backups and run a migration script from a prior commit, or contact the repo maintainer for a one-off migration run.
+
 #### Capacity Planning
 - Current active promotions dashboard
 - Weekly launch calendar view
@@ -208,9 +210,9 @@ PAM/
 ├── factory.py              # create_app()
 ├── data/
 │   ├── storage.py          # PromoDataManager (DB-only)
-│   ├── database.py         # SQL Server + SQLite helpers
+│   ├── database.py         # SQL Server helpers (SQLite deprecated)
 │   ├── version_history.py  # Version event semantics
-│   └── version_history.db  # (created at runtime)
+│   └── uploads/  # uploaded files stored on disk; version history stored in SQL Server
 ├── promo/ (routes/builders/parsers)
 ├── admin/ (admin + stats + history)
 ├── api/   (lookup + integration endpoints)
@@ -261,7 +263,7 @@ The application provides RESTful endpoints for:
 ### Production Considerations
 - Run behind a production WSGI server (e.g., Gunicorn / IIS w/ wfastcgi)
 - Provide SQL Server connectivity (ODBC driver / connection string env var)
-- Back up only: SQL Server data + `data/version_history.db` + uploaded files
+-- Back up only: SQL Server data + uploaded files
 - Monitor version history growth (diff JSON compact by design)
 - Instrument logs / metrics (add structured logging if scaling)
 

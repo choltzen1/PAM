@@ -3,7 +3,8 @@
   display: flex;
   flex-direction: column;
   min-height: calc(100vh - 140px);
-  background: #f8f9fa;
+  background: transparent; /* allow global --bg gradient from styles.css to show */
+  color: var(--text, #212529);
 }
 
 /* Main content area */
@@ -18,8 +19,8 @@
   display: flex;
   align-items: center;
   padding: 1rem 2rem;
-  background: white;
-  border-bottom: 1px solid #dee2e6;
+  background: var(--control-surface, #fff);
+  border-bottom: 1px solid var(--border-color, #dee2e6);
   flex-shrink: 0;
   min-height: 80px;
   position: relative;
@@ -48,9 +49,10 @@
 
 .version-controls .search-input {
   padding: 0.5rem !important;
-  border: 1px solid #ced4da !important;
+  border: 1px solid var(--input-border, #ced4da) !important;
   border-radius: 4px !important;
-  background: white !important;
+  background: var(--input-bg, white) !important;
+  color: var(--input-color, #212529) !important;
   font-size: 0.9rem !important;
   height: 38px !important;
   min-width: 150px !important;
@@ -71,7 +73,7 @@
 .version-controls .promo-title {
   font-size: 1rem !important;
   font-weight: 600 !important;
-  color: #495057 !important;
+  color: var(--title-color, #495057) !important;
   height: 38px !important;
   line-height: 38px !important;
   display: flex !important;
@@ -88,9 +90,9 @@
 
 .version-controls .apple-dropdown {
   padding: 0.5rem !important;
-  border: none !important;
+  border: 1px solid var(--input-border, #ced4da) !important;
   border-radius: 4px !important;
-  background: #E20074 !important;
+  background: var(--select-bg, #E20074) !important;
   color: white !important;
   font-size: 0.9rem !important;
   height: 38px !important;
@@ -108,14 +110,14 @@
   justify-content: center !important;
   gap: 0.5rem !important;
   padding: 0.5rem 1rem !important;
-  background: #E20074 !important;
-  color: white !important;
+  background: var(--button-bg, #E20074) !important;
+  color: var(--button-color, white) !important;
   border: none !important;
   border-radius: 4px !important;
   font-size: 0.9rem !important;
   cursor: pointer !important;
   text-decoration: none !important;
-  transition: background-color 0.2s !important;
+  transition: filter 0.12s !important;
   height: 38px !important;
   box-sizing: border-box !important;
   line-height: 1 !important;
@@ -123,9 +125,23 @@
 }
 
 .btn:hover {
-  background: #c1006a;
+  filter: brightness(0.95);
   color: white;
   text-decoration: none;
+}
+
+/* Make certain selects and inputs inside the control group readable on dark background */
+.version-controls select.form-select,
+.version-controls .form-control,
+.version-controls input[type="text"] {
+  background: var(--input-bg, #fff) !important;
+  color: var(--input-color, #212529) !important;
+  border: 1px solid var(--input-border, #ced4da) !important;
+}
+
+/* subtle divider to lift the content area from the dark header */
+.main-content { 
+  background: transparent;
 }
 
 .search-section {

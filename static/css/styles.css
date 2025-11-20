@@ -480,6 +480,38 @@ table.standard-table tbody tr:hover { background: #f3e8f1; }
   height: 60px;
   box-sizing: border-box;
 }
+/* Unified fixed footer bar (landing workspace) */
+.footer-bar {
+  flex-shrink: 0;
+  background: var(--tmobile-magenta);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: .5em 2em;
+  font-size: 1rem;
+  height: 60px;
+  box-sizing: border-box;
+}
+
+/* Research footer nav (remove inline styles) */
+.footer-nav {
+  background: var(--tmobile-magenta);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: .5em 2em;
+  font-size: 1rem;
+  height: var(--footer-height);
+  box-sizing: border-box;
+}
+
+/* Shared hub main wrapper used in landing_base */
+.hub-main {
+  flex: 1 0 auto;
+  width: 100%;
+}
 
 /* Bootstrap-like container and grid */
 .container-fluid {

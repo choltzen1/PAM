@@ -71,15 +71,12 @@ coverage.xml
 # User data (keep structure but ignore actual data)
 data/uploads/promotions/*/
 data/uploads/promotions/.gitkeep
-version_history.db-wal
-version_history.db
-
 # Backup files
 *_backup.py
 *_old.py
 *_clean.py
 data/__pycache__/storage.cpython-313.pyc
-data/version_history.db-wal
+
 
 # Refactor audit documentation (local-only)
 REFACTOR_AUDIT.md

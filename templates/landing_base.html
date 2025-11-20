@@ -10,18 +10,7 @@
   {% if request.path.startswith('/research') %}
     <link rel="stylesheet" href="{{ url_for('static', filename='css/research.css') }}">
   {% endif %}
-  <style>
-     /* Theme switcher styles (unique to landing workspace) */
-  .theme-toggle-group { display:flex; gap:.55rem; align-items:center; }
-  .theme-switch { position:relative; width:70px; height:30px; border-radius:24px; background:var(--control-surface); border:1px solid var(--border-color); cursor:pointer; display:flex; align-items:center; justify-content:space-between; padding:0 8px; box-sizing:border-box; transition:background .35s,border-color .35s, box-shadow .35s; }
-  .theme-switch[data-state='dark'] { background:rgba(34,37,46,0.55); backdrop-filter:blur(4px); }
-  .theme-switch[data-state='light'] { background:#fafafa; }
-  .theme-switch[data-state='dark'] .theme-switch-indicator { transform:translateX(38px); }
-  .theme-switch[data-state='light'] .theme-switch-indicator { transform:translateX(0); }
-  .theme-switch-indicator { position:absolute; top:3px; left:3px; width:28px; height:24px; border-radius:16px; background:var(--tmobile-magenta); box-shadow:0 3px 8px rgba(0,0,0,.35); transition:transform .4s cubic-bezier(.55,.15,.25,1); display:flex; align-items:center; justify-content:center; color:#fff; font-size:.8rem; font-weight:600; letter-spacing:.5px; }
-  .theme-switch .icon { font-size:.65rem; font-weight:600; letter-spacing:.5px; color:var(--text-muted); user-select:none; }
-  .theme-switch:focus-visible { outline:2px solid var(--tmobile-magenta); outline-offset:2px; }
-  </style>
+    <!-- Theme switcher styles moved to styles.css -->
   {% block extra_css %}{% endblock %}
   <script defer src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
   <script>
@@ -38,15 +27,7 @@
     })();
   </script>
   {% block head %}{% endblock %}
-  <style>
-    html, body { height:100%; }
-    body { display:flex; flex-direction:column; margin:0; }
-    .hub-main { flex:1 0 auto; width:100%; }
-    .global-header { background:var(--tmobile-magenta); color:#fff; padding:.75rem 1.75rem; display:flex; align-items:center; justify-content:space-between; box-shadow:0 2px 4px rgba(0,0,0,.15); }
-    .global-header-title { font-size:1.25rem; font-weight:600; letter-spacing:.5px; }
-    .global-header-user { font-size:.85rem; opacity:.9; }
-    .footer-bar { flex-shrink:0; background:var(--tmobile-magenta); color:#fff; display:flex; align-items:center; justify-content:space-between; padding:.5em 2em; font-size:1rem; height:60px; box-sizing:border-box; }
-  </style>
+  <!-- Layout styles (header/footer/hub-main) consolidated into styles.css -->
 </head>
 <body class="body-fixed-header-footer">
   <header class="global-header">
