@@ -45,9 +45,9 @@
     .global-header-user { font-size:.85rem; opacity:.9; display:flex; align-items:center; gap:1rem; }
     .footer-bar { flex-shrink:0; background:var(--tmobile-magenta); color:#fff; display:flex; align-items:center; justify-content:space-between; padding:.5em 2em; font-size:1rem; height:60px; box-sizing:border-box; }
   </style>
-</head>
-<body>
-  <header class="global-header">
+ </head>
+ <body class="body-fixed-header-footer">
+   <header class="global-header">
     <div class="global-header-title">{% block header_left %}Research Workspace{% endblock %}</div>
     <div class="global-header-user">
       <div class="theme-toggle-group">
@@ -59,18 +59,18 @@
       </div>
       {% block header_right %}{% endblock %}
     </div>
-  </header>
-  <main class="hub-main">
-    {% block content %}{% endblock %}
-  </main>
- <footer class="footer-nav" style="background:var(--tmobile-magenta);color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0.5em 2em;font-size:1rem;height:60px;box-sizing:border-box;">
+   </header>
+  <main class="app-main-scroll" style="padding-top:calc(var(--header-height) + var(--header-content-gap));padding-bottom:var(--footer-height);">
+     {% block content %}{% endblock %}
+   </main>
+  <footer class="footer-nav" style="background:var(--tmobile-magenta);color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0.5em 2em;font-size:1rem;height:var(--footer-height);box-sizing:border-box;position:fixed;bottom:0;left:0;right:0;z-index:1000;">
     <div id="footer-time">{{ current_datetime }}</div>
     <nav class="footer-links" style="display:flex;gap:1.5em;align-items:center;">
       <a title="Back" href="javascript:history.back()" style="color:#fff;text-decoration:none;font-size:1.2em;"><i class="fas fa-chevron-left"></i></a>
       <a title="Workspace Hub" href="{{ url_for('core.landing') }}" style="color:#fff;text-decoration:none;font-size:1.2em;"><i class="fas fa-th-large"></i></a>
   <a title="Research Home" href="{{ url_for('research.index') }}" style="color:#fff;text-decoration:none;font-size:1.2em;"><i class="fas fa-home"></i></a>
     </nav>
-  </footer>
+   </footer>
   <script>
     function updateFooterTime(){const el=document.getElementById('footer-time');if(!el)return;const now=new Date();const opts={weekday:'long',year:'numeric',month:'long',day:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit'};el.textContent=now.toLocaleString('en-US',opts);}setInterval(updateFooterTime,1000);updateFooterTime();
     (function(){
@@ -98,5 +98,5 @@
   </script>
   {% block extra_js %}{% endblock %}
   {% block scripts %}{% endblock %}
-</body>
-</html>
+ </body>
+ </html>

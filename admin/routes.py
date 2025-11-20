@@ -304,14 +304,36 @@ def version_history_page():
         per_page = max(1, min(per_page, 200))  # sanity bounds
         search = request.args.get('search', '', type=str).strip().lower()
         owner = request.args.get('owner', 'all', type=str).strip()
-        # Prefer dedicated service if available
+        # Build base promo mapping using same method as RDC (optimized paginated retrieval) for consistent owner/date fields
+        base_map = {}
+        if hasattr(dm, 'get_paginated_promos_optimized'):
+            try:
+                # Large page to approximate full set; if more than limit, consider enhancing to full-fetch API later
+                base_payload = dm.get_paginated_promos_optimized(page=1, per_page=1000, search='', owner_filter='all', scope='all')
+                for r in base_payload.get('promotions', []):
+                    code = r.get('code')
+                    if code:
+                        base_map[code] = r
+            except Exception:
+                base_map = {}
+        if not base_map:
+            # Fallback to legacy full fetch then convert list->map
+            try:
+                raw_list = dm.get_all_promos() or []
+                for r in raw_list:
+                    code = r.get('code') or r.get('Code')
+                    if code:
+                        base_map[str(code)] = r
+            except Exception:
+                base_map = {}
+
+        # Merge with history via service (service expects callable returning mapping)
+        all_promos = []
         if version_history_service:
-            all_promos = version_history_service.get_all_promotions_with_history(dm.get_all_promos)
-        else:
-            all_promos = []
-        # Build distinct owners list from full dataset (before filtering)
+            all_promos = version_history_service.get_all_promotions_with_history(lambda: base_map)
+
         owners = sorted({p.get('promo_owner','') for p in all_promos if p.get('promo_owner')})
-        # Apply filtering
+
         def matches(p):
             if owner != 'all' and p.get('promo_owner','').lower() != owner.lower():
                 return False
@@ -325,7 +347,7 @@ def version_history_page():
                 ]).lower()
                 return search in hay
             return True
-            
+
         filtered_promos = [p for p in all_promos if matches(p)]
         total_items = len(filtered_promos)
         total_pages = (total_items // per_page) + (1 if total_items % per_page else 0)

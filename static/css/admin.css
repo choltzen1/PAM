@@ -160,12 +160,9 @@
 .admin-output { margin-top:20px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:16px; font-family:monospace; font-size:0.8rem; line-height:1.4; max-height:420px; overflow:auto; white-space:pre-wrap; }
 
 /* =============================================
-   Source Table Promotions Control Group (sticky)
+   Source Table Promotions Control Group
    ============================================= */
 .promo-control-group {
-  position: sticky;
-  top: calc(var(--header-height) + 8px); /* sit just below fixed header */
-  z-index: 900; /* below header (1000) but above table */
   display: flex;
   flex-wrap: wrap;
   align-items: flex-start;
@@ -210,11 +207,6 @@
   align-items: center;
 }
 .promo-control-group .btn-admin.danger[disabled] { opacity: 0.45; cursor: not-allowed; }
-
-/* Reduce vertical jump when sticky intersects footer on short pages */
-@media (max-height: 780px) {
-  .promo-control-group { top: calc(var(--header-height) + 4px); }
-}
 
 /* Table spacing adjustment when control group present */
 #pamPromosTable { margin: 0; }

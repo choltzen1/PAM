@@ -135,6 +135,24 @@ class VersionHistoryService:
         for code, changes in grouped.items():
             self._inject_version_history_field(changes)
             base = all_promos.get(code, {})
+            # Owner fallback: prefer sanitized base owner; if absent attempt to pull from earliest change diff
+            owner_val = base.get('owner') or base.get('Owner')
+            if not owner_val:
+                for ch in changes:
+                    fc = ch.get('field_changes') or {}
+                    # Diff may store either canonical 'owner' or physical 'Owner'
+                    diff_owner = fc.get('owner') or fc.get('Owner')
+                    if isinstance(diff_owner, dict):
+                        owner_val = diff_owner.get('new')
+                    elif diff_owner:
+                        owner_val = diff_owner
+                    if owner_val:
+                        break
+            if isinstance(owner_val, str):
+                strip_chars = '"\'""`'
+                owner_val = owner_val.translate(str.maketrans('', '', strip_chars)).strip()
+            else:
+                owner_val = ''
             result.append({
                 'promo_code': code,
                 'orbit_id': base.get('orbit_id', ''),
@@ -142,7 +160,7 @@ class VersionHistoryService:
                 'bill_facing_name': base.get('bill_facing_name', ''),
                 'start_date': base.get('promo_start_date', ''),
                 'end_date': base.get('promo_end_date', ''),
-                'promo_owner': base.get('owner', ''),
+                'promo_owner': owner_val,
                 'changes': changes
             })
         result.sort(key=lambda p: (p['changes'][0]['timestamp'] if p['changes'] else ''), reverse=True)

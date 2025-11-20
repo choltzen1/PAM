@@ -397,7 +397,10 @@ class DatabaseManager:
                 owner_where += " AND (promo_start_date IS NULL OR promo_start_date > CAST(GETUTCDATE() AS DATE))"
             owner_sql = f"SELECT DISTINCT Owner FROM {self.source_table} WHERE {owner_where} AND Owner IS NOT NULL ORDER BY Owner"
             owner_df = self.get_dataframe(owner_sql, owner_params)
-            owners = [o for o in owner_df['Owner'].dropna().tolist() if str(o).strip()]
+            # Strip all quote types from owner values using sanitization
+            strip_chars = '"\'"`'
+            trans_table = str.maketrans('', '', strip_chars)
+            owners = [str(o).translate(trans_table).strip() for o in owner_df['Owner'].dropna().tolist() if str(o).strip()]
         except Exception:
             pass
 
@@ -615,33 +618,19 @@ class DatabaseManager:
     def _sanitize_record(rec: Dict[Any, Any]) -> Dict[str, Any]:
         if not rec:
             return rec
-        strip_chars = '"\'“”‘’`'
+        strip_chars = '"\'"`'
         trans = str.maketrans('', '', strip_chars)
         cleaned = {}
         for k, v in rec.items():
+            # Normalize Owner to lowercase owner for template consistency
+            key = 'owner' if k == 'Owner' else k
             if isinstance(v, str):
-                cleaned[k] = v.translate(trans)
+                # Strip quotes and then strip whitespace
+                sanitized = v.translate(trans).strip()
+                cleaned[key] = sanitized
             else:
-                cleaned[k] = v
+                cleaned[key] = v
         return cleaned
-
-        # ---------------- Sanitization -----------------
-        @staticmethod
-        def _sanitize_record(rec: Dict[str, Any]) -> Dict[str, Any]:
-            if not rec:
-                return rec
-            cleaned = {}
-            # Characters to strip entirely from text fields (quotes/backticks/curly quotes)
-            strip_chars = '"\'“”‘’`'
-            trans_table = str.maketrans('', '', strip_chars)
-            for k, v in rec.items():
-                if isinstance(v, str):
-                    # Normalize whitespace and remove undesirable quote characters
-                    nv = v.translate(trans_table)
-                    cleaned[k] = nv
-                else:
-                    cleaned[k] = v
-            return cleaned
     
     def search_promos(self, search_term: str) -> List[Dict[str, Any]]:
         """Search promotions by code, description, or bill facing name (case-insensitive)."""
@@ -741,8 +730,7 @@ class DatabaseManager:
     def get_orbit_dates_map(self, orbit_ids: List[str]) -> Dict[str, Dict[str, Any]]:
         """Return mapping of orbit_id -> { 'orbit_start_date': ..., 'orbit_end_date': ... }
 
-        Performs a single set-based query against the orbit source table. Falls back
-        to the primary source table if the orbit table is empty/unavailable.
+        ALWAYS queries the orbit source table (no fallback to PAM table).
         """
         out: Dict[str, Dict[str, Any]] = {}
         if not orbit_ids:
@@ -750,37 +738,32 @@ class DatabaseManager:
         # Deduplicate & chunk to avoid parameter explosion
         unique_ids = list({oid for oid in orbit_ids if oid})
         CHUNK = 200
-        tables_to_try = [self.orbit_source_table]
-        if self.orbit_source_table != self.source_table:
-            tables_to_try.append(self.source_table)
-        for table in tables_to_try:
-            remaining = [oid for oid in unique_ids if oid not in out]
-            if not remaining:
+        
+        # Query ONLY the orbit source table
+        for i in range(0, len(unique_ids), CHUNK):
+            chunk = unique_ids[i:i+CHUNK]
+            # Build parameter list safely
+            param_names = [f"p{j}" for j in range(len(chunk))]
+            in_clause = ",".join(f":{n}" for n in param_names)
+            sql = f"""
+                SELECT orbit_id, promo_srart_date AS orbit_start_date, promo_end_date AS orbit_end_date
+                FROM {self.orbit_source_table}
+                WHERE orbit_id IN ({in_clause})
+            """
+            params = {n: v for n,v in zip(param_names, chunk)}
+            try:
+                df = self.get_dataframe(sql, params)
+                if not df.empty:
+                    for rec in df.to_dict('records'):
+                        oid = str(rec.get('orbit_id') or '')
+                        if oid and oid not in out:
+                            out[oid] = {
+                                'orbit_start_date': rec.get('orbit_start_date',''),
+                                'orbit_end_date': rec.get('orbit_end_date','')
+                            }
+            except Exception as e:
+                logger.warning(f"Orbit batch date fetch failed: {e}")
                 break
-            for i in range(0, len(remaining), CHUNK):
-                chunk = remaining[i:i+CHUNK]
-                # Build parameter list safely
-                param_names = [f"p{j}" for j in range(len(chunk))]
-                in_clause = ",".join(f":{n}" for n in param_names)
-                sql = f"""
-                    SELECT orbit_id, promo_srart_date AS orbit_start_date, promo_end_date AS orbit_end_date
-                    FROM {table}
-                    WHERE orbit_id IN ({in_clause})
-                """
-                params = {n: v for n,v in zip(param_names, chunk)}
-                try:
-                    df = self.get_dataframe(sql, params)
-                    if not df.empty:
-                        for rec in df.to_dict('records'):
-                            oid = str(rec.get('orbit_id') or '')
-                            if oid and oid not in out:
-                                out[oid] = {
-                                    'orbit_start_date': rec.get('orbit_start_date',''),
-                                    'orbit_end_date': rec.get('orbit_end_date','')
-                                }
-                except Exception as e:
-                    logger.warning(f"Orbit batch date fetch failed on {table}: {e}")
-                    break  # try next table
         return out
 
     def get_full_orbit_record_by_orbit_id(self, orbit_id: str) -> Optional[Dict[str, Any]]:
@@ -925,11 +908,17 @@ class DatabaseManager:
                 return date_str
         
         # Map database columns to JSON format
+        # Sanitize owner field to strip all quote types
+        owner_raw = db_record.get("Owner", "")
+        strip_chars = '"\'"`'
+        trans_table = str.maketrans('', '', strip_chars)
+        owner_clean = str(owner_raw).translate(trans_table).strip() if owner_raw else ""
+        
         json_record = {
             "code": db_record.get("code", ""),
             "description": db_record.get("description", ""),
             "bill_facing_name": db_record.get("bill_facing_name", ""),  # Use actual bill_facing_name field
-            "owner": str(db_record.get("Owner", "Unknown")).strip('"'),  # Remove quotes from owner field
+            "owner": owner_clean,
             "orbit_id": db_record.get("orbit_id", ""),
             "promo_notes": db_record.get("promo_notes", ""),  # Add promo_notes field
             "promo_start_date": format_date_for_html(db_record.get("promo_start_date")),
@@ -1071,6 +1060,12 @@ class DatabaseManager:
         remapped: Dict[str, str] = {}
         for idx, (canonical, value) in enumerate(field_map.items()):
             physical = canonical_to_physical(canonical)
+            # Strip quotes from Owner field before writing to database
+            if canonical == 'owner' or physical == 'Owner':
+                if isinstance(value, str):
+                    strip_chars = '"\'"`'
+                    trans = str.maketrans('', '', strip_chars)
+                    value = value.translate(trans).strip()
             # 'bill facing name' came from mapping; ensure not overwritten by canonical key itself
             if existing_cols and physical not in existing_cols:
                 # Allow fallback: if canonical itself (without mapping) exists physically

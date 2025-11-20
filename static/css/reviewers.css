@@ -11,13 +11,12 @@
   font-size: 0.9rem;
 }
 
-/* Scroll container (replaces inline height/padding styles) */
-.reviewers-scroll-container {
-  height: calc(100vh - 160px);
-  overflow-y: auto;
-  overflow-x: hidden;
+/* Page wrapper - no custom scroll, uses base template .app-main-scroll */
+/* Uses global unified scrollbar system from styles.css - scrollbar extends behind header/footer */
+.reviewers-page-wrapper {
   padding: 1.5rem 1vw;
   box-sizing: border-box;
+  min-height: 100%;
 }
 
 /* Search section */
