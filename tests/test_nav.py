@@ -44,8 +44,7 @@ PAGE_MARKERS = {
     '/updates': 'Updates',
     '/capacity': 'Capacity',
     '/test-page': 'Test',
-    '/admin': 'Admin',
-    '/version-history': 'Version History'
+    '/admin': 'Admin'
 }
 
 @pytest.fixture(scope='module')

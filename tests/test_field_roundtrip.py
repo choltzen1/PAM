@@ -14,6 +14,10 @@ class StubConn:
         if 'select *' in sql_text.lower() and 'where code' in sql_text.lower():
             return StubResult([self._row_source])
         return StubResult([])
+    def __enter__(self):
+        return self
+    def __exit__(self, exc_type, exc, tb):
+        return False
     def fetchall(self):
         return []
 
@@ -22,6 +26,14 @@ class StubResult:
         self._rows = rows
     def fetchall(self):
         return self._rows
+    def fetchone(self):
+        return self._rows[0] if self._rows else None
+    def mappings(self):
+        return self
+    def all(self):
+        return self._rows
+    def first(self):
+        return self._rows[0] if self._rows else None
 
 class StubBeginCtx:
     def __init__(self, recorder, row_source):
@@ -39,6 +51,7 @@ class StubEngine:
     def begin(self):
         return StubBeginCtx(self._recorder, self._row_source)
     def connect(self):
+        # Return a context manager (StubConn already has __enter__ and __exit__)
         return StubConn(self._recorder, self._row_source)
 
 
@@ -56,9 +69,20 @@ def build_row(code: str, field_values: dict):
 
 
 def make_db_manager(row_source):
+    import pandas as pd
     dbm = DatabaseManager()
     dbm.get_existing_columns = types.MethodType(lambda self: set(row_source.keys()), dbm)
     recorder = {'sql_calls': []}
+    
+    # Mock get_dataframe to return a DataFrame from row_source
+    def mock_get_dataframe(self, sql: str, params=None):
+        recorder['sql_calls'].append({'sql': sql, 'params': params or {}})
+        # Return DataFrame with the row if it's a SELECT for this code
+        if 'select *' in sql.lower() and 'where code' in sql.lower():
+            return pd.DataFrame([row_source])
+        return pd.DataFrame()
+    
+    dbm.get_dataframe = types.MethodType(mock_get_dataframe, dbm)
     dbm.get_engine = types.MethodType(lambda self: StubEngine(recorder, row_source), dbm)
     return dbm, recorder
 

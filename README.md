@@ -44,7 +44,7 @@ PAM (Promotion Automation Manager) is a comprehensive web-based application desi
 ### Backend
 - **Flask Framework**: Modular blueprint architecture
 - **Primary Data Store (SQL Server)**: `[PAM].[PAM_Orbit_Data_Updated]` is the single source of truth for ALL promotions (RDC/SPE/Rebate distinguished by `Desired_Execution`)
--- **Metadata Store**: version history and metadata are persisted in SQL Server (`PAM.promo_history`, `PAM.generated_sql_store`).
+-- **Metadata Store**: metadata are persisted in SQL Server (`PAM.generated_sql_store`).
 - **File Handling**: Secure file upload (saved under `data/uploads/promotions/<code>/`) with checksum + metadata persisted
 - **Date Processing**: Advanced date calculations + invalid date diagnostics history
 
@@ -56,7 +56,7 @@ SQL Server (authoritative)
 Filesystem
 └── data/uploads/promotions/<PROMO_CODE>/  (uploaded artifacts)
 
-All metadata and version-history are now persisted in SQL Server (`PAM.promo_history`, `PAM.generated_sql_store`).
+All metadata are now persisted in SQL Server (`PAM.generated_sql_store`).
 ```
 
 Legacy JSON files (`promotions.json`, `spe_promotions.json`, `rebates.json`) were retired September 2025. On startup any remnants are auto‑archived to `.bak` and never read.
@@ -98,7 +98,7 @@ Legacy JSON files (`promotions.json`, `spe_promotions.json`, `rebates.json`) wer
    ```
 
 2. **Data Initialization**:
-   Ensure SQL Server connectivity and required schema (see `sql/create_promo_history_denormalized.sql`). Core promotion data is fetched live from SQL Server; ensure connectivity/env credentials.
+   Ensure SQL Server connectivity. Core promotion data is fetched live from SQL Server; ensure connectivity/env credentials.
 
 ### Running the Application
 
@@ -185,12 +185,9 @@ Benefits realized:
 - Real-time validation and error highlighting
 - Auto-save functionality with session persistence
 
-## Version History & Migration
+#### Migration
 
-- **Authoritative Store:** All version history and related metadata are persisted in SQL Server (`PAM.promo_history` and `PAM.generated_sql_store`).
-- **Schema DDL:** Idempotent DDL for the denormalized version-history table is in `sql/create_promo_history_denormalized.sql` — apply this to your SQL Server instance when provisioning the schema.
-- **Migration Tools:** Historical migration helpers under `tools/` are deprecated and kept only for reference; they are intentionally disabled to avoid accidental local SQLite access.
-- **If you need to migrate legacy SQLite data:** restore an archival copy of `data/version_history.db` from backups and run a migration script from a prior commit, or contact the repo maintainer for a one-off migration run.
+Metadata migration helpers under `tools/` are deprecated and kept only for reference; they are disabled to avoid accidental local SQLite access.
 
 #### Capacity Planning
 - Current active promotions dashboard

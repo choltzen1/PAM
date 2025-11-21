@@ -1,53 +1,89 @@
 /* JIRA Modal Styles */
-.modal {
+/* Provide styling for both generic .modal and the template-specific .jira-modal */
+.modal,
+.jira-modal {
   display: none;
   position: fixed;
-  z-index: 1000;
+  z-index: 99999;
   left: 0;
   top: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: rgba(0, 0, 0, 0.45);
   overflow-y: auto;
+  /* center content */
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.modal-content {
-  background-color: #fefefe;
-  margin: 2% auto;
-  padding: 20px;
-  border: 1px solid #888;
+.modal-content,
+.jira-modal-content {
+  background-color: var(--card-bg, #ffffff);
+  color: var(--text, #111);
+  padding: 24px 28px;
+  border: 1px solid #dcdcdc;
   width: 90%;
-  max-width: 600px;
+  max-width: 760px;
   border-radius: 8px;
   max-height: 90vh;
   overflow-y: auto;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.45);
 }
 
-.modal-header {
+.modal-header,
+.jira-modal .modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
-  position: sticky;
-  top: 0;
-  background-color: #fefefe;
-  z-index: 1001;
-  padding-bottom: 10px;
+  margin-bottom: 16px;
+  position: relative;
+  background-color: transparent;
+  padding-bottom: 6px;
   border-bottom: 1px solid #eee;
 }
 
 .modal-header h3 {
   margin: 0;
+  color: #222;
+  font-size: 1.15rem;
+  font-weight: 700;
 }
 
-.modal-header .close {
-  font-size: 28px;
-  font-weight: bold;
+.modal-header .close,
+.jira-modal .modal-header .close-modal {
+  font-size: 22px;
+  font-weight: 700;
   cursor: pointer;
-  color: #aaa;
+  color: #666;
+  background: transparent;
+  border: none;
 }
 
-.modal-header .close:hover {
+.jira-modal .modal-header {
+  background-color: #fafafa;
+  padding: 12px 0 10px 0;
+  margin: -24px -28px 12px -28px;
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
+}
+
+/* Prominent close button in top-right of modal */
+.jira-modal .modal-header .close-modal {
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  font-size: 20px;
+  line-height: 1;
+  padding: 6px 8px;
+  border-radius: 6px;
+  color: var(--text, #111);
+  opacity: 0.8;
+}
+.jira-modal .modal-header .close-modal:hover { opacity: 1; }
+
+.modal-header .close:hover,
+.jira-modal .modal-header .close-modal:hover {
   color: #000;
 }
 
@@ -62,18 +98,22 @@
 .form-group label {
   display: block;
   margin-bottom: 5px;
-  font-weight: bold;
+  font-weight: 600;
+  color: var(--text, #111);
+  font-size: 0.95rem;
 }
 
 .form-group input,
 .form-group select,
 .form-group textarea {
   width: 100%;
-  padding: 8px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+  padding: 10px 12px;
+  border: 1px solid var(--border-color, #ddd);
+  border-radius: 6px;
   box-sizing: border-box;
 }
+
+.form-group input, .form-group select, .form-group textarea { background: var(--control-surface, #fff); color: var(--text, #111); }
 
 .form-group textarea {
   resize: vertical;
@@ -93,16 +133,14 @@
   text-decoration: underline;
 }
 
-.modal-footer {
+.modal-footer,
+.jira-modal .modal-footer {
   text-align: right;
-  padding-top: 10px;
+  padding-top: 12px;
   border-top: 1px solid #eee;
-  position: sticky;
-  bottom: 0;
-  background-color: #fefefe;
-  margin: 0 -20px;
-  padding-left: 20px;
-  padding-right: 20px;
+  position: relative;
+  background-color: transparent;
+  margin: 0;
 }
 
 .modal-footer .btn {
@@ -112,6 +150,8 @@
   border: 1px solid;
   font-weight: 500;
 }
+
+.modal-footer .btn-primary { background: var(--tmobile-magenta, #E20074); border-color: var(--tmobile-magenta, #E20074); color: white; }
 
 .modal-footer .btn-secondary {
   margin-right: 10px;

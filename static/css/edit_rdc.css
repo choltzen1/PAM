@@ -85,6 +85,25 @@
 .sql-preview-header { display:flex; justify-content:space-between; align-items:center; padding:.45rem .7rem; background:#fafafa; border:1px solid #ddd; border-radius:6px 6px 0 0; font-size:.8rem; font-weight:600; }
 .sql-preview-area { border:1px solid #ddd; border-top:none; border-radius:0 0 6px 6px; background:#fdfdfd; }
 
+/* Ensure preview textarea matches the full width of the generated SQL statement box */
+.sql-card.upload-section, .upload-section.sql-card, .upload-section.sql-generation-box {
+	align-items: stretch;
+}
+.sql-preview-area {
+	width: 100%;
+	max-width: 100%;
+	box-sizing: border-box;
+	font-family: monospace;
+	white-space: pre-wrap; /* wrap long SQL lines for preview */
+	overflow: auto;
+}
+
+/* ensure preview wrapper matches the sql-generation-box padding and full width */
+.sql-preview-wrapper {
+	width: 100%;
+	padding: 0.5rem 0; /* vertical spacing to match surrounding card */
+}
+
 /* === Wide Screen Expansion === */
 @media (min-width:1600px){
 	.layout-flex { max-width:100%; width:100%; }
@@ -343,6 +362,18 @@ html[data-theme='dark'] .sql-card.upload-section {
 	border-bottom:2px solid var(--tmobile-magenta); 
 	padding-bottom:.35rem; 
 	margin:0 0 .25rem; 
+}
+
+/* Make Download SQL and Preview buttons magenta to match brand */
+#downloadSqlBtn, #sqlPreviewBtn {
+	background: var(--tmobile-magenta);
+	color: #fff !important;
+	border: 1px solid var(--tmobile-magenta);
+}
+#downloadSqlBtn:hover, #sqlPreviewBtn:hover {
+	background: #c3005f; /* slightly darker magenta */
+	border-color: #c3005f;
+	color: #fff !important;
 }
 
 

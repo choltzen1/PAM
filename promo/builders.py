@@ -1,4 +1,6 @@
 # promo/builders.py
+from services.jira_utils import create_jira_summary
+
 def generate_promo_eligibility_sql(promo_data):
     """Generate PROMO_ELIGIBILITY_RULES INSERT statement from promo data with template header"""
     from datetime import datetime, timedelta
@@ -337,25 +339,9 @@ def generate_promo_eligibility_sql(promo_data):
         except ValueError:
             pass
     
-    # Build JIRA ticket summary format: EFPE Promo Device - New Promo - Promo {code} - {orbit_id} - {initiative_name} - Launch Date {launch_date_formatted}
-    promo_code = promo_data.get('code', '')
-    orbit_id = promo_data.get('orbit_id', '')
-    initiative_name = promo_data.get('initiative_name', 'TBD')
-    
-    # Format launch date for JIRA title (M/D/YYYY format with time)
-    launch_date_formatted = "TBD"
-    if promo_data.get('promo_start_date'):
-        try:
-            start_date = datetime.strptime(promo_data.get('promo_start_date') or '', '%Y-%m-%d')
-            # Format without leading zeros (Windows compatible)
-            month = str(start_date.month)
-            day = str(start_date.day)
-            year = start_date.year
-            launch_date_formatted = f"{month}/{day}/{year} 12:00 AM"
-        except ValueError:
-            pass
-    
-    jira_summary = f"EFPE Promo Device - New Promo - Promo {promo_code} - {orbit_id} - {initiative_name} - Launch Date {launch_date_formatted}"
+    # JIRA Summary (shared utility) and local promo_code reference needed later
+    jira_summary = create_jira_summary(promo_data)
+    promo_code = promo_data.get('code') or ''
     
     # Generate PROMO_TRADEIN_GROUPS INSERT statements
     def generate_tradein_groups_sql():
@@ -575,10 +561,11 @@ def generate_promo_eligibility_sql(promo_data):
         efpe_update_sql = f"\n\nupdate efpe_generic_params set GEN_K3 = concat(GEN_K3,',{promo_code}'), SYS_UPDATE_DATE = sysdate where gen_k1 = 'BROKEN_TRD_PROMO_IND';"
     
     # Build the complete SQL with template
-    template_sql = f"""-- User Story No. 			= CPO-{operator_id}
--- Requested By 			= {current_user}
--- Request Date(DD/MM/YYYY) = {launch_date}
--- Project 					= {jira_summary}
+    template_sql = f"""
+-- User Story No. = CPO-{operator_id}
+-- Requested By   = {current_user}
+-- Request Date   = {launch_date}
+-- Project 		  ={jira_summary}
 -------------------------------------------------------------------------
 
 --PROD / ZLAB

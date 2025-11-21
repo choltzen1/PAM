@@ -43,7 +43,11 @@ function openJiraModal(ticketType = 'bptcr') {
     
     // Set parent to DCD by default
     const parentSelect = document.getElementById('jiraParent');
-    const dcdOption = Array.from(parentSelect.options).find(option => option.textContent.includes('DCD'));
+    const dcdOption = Array.from(parentSelect.options).find(option => {
+      const txt = (option.textContent||'').toUpperCase();
+      const val = (option.value||'').toUpperCase();
+      return txt.includes('DCD') || txt.includes('DCOMM') || val.startsWith('DCOMM-') || val === 'DCOMM';
+    });
     if (dcdOption) {
       parentSelect.value = dcdOption.value;
     }
@@ -70,7 +74,8 @@ function openJiraModal(ticketType = 'bptcr') {
     const safePromo = promoCode || (window.promoData?.code || '');
     const safeOrbit = orbitId || (window.promoData?.orbit_id || '');
   const safeInitiative = (initiativeName || '').replace(/["'“”‘’`]/g,'');
-    summary = `EFPE Promo Device - New Promo - Promo ${safePromo} - ${safeOrbit} - ${safeInitiative} - Launch Date ${displayLaunch}`.trim();
+    // Defer final summary to server for consistency; temporary placeholder while fetching
+    summary = `EFPE Promo Device - New Promo - Promo ${safePromo}` + (safeOrbit?` - Orbit ${safeOrbit}`:'') + (safeInitiative?` - ${safeInitiative}`:'') + ` - Launch Date ${displayLaunch}`;
     description = `BPTCR ticket for promotion ${safePromo || '(unspecified code)'} created via PAM.`;
     
     // Update modal title
@@ -81,14 +86,26 @@ function openJiraModal(ticketType = 'bptcr') {
   }
   
   document.getElementById('jiraSummary').value = summary;
+
+  // Attempt server-side canonical summary fetch
+  if (promoCode) {
+    fetch(`/api/jira_summary/${encodeURIComponent(promoCode)}`)
+      .then(r => r.ok ? r.json() : Promise.reject(new Error('HTTP '+r.status)))
+      .then(js => {
+        if (js && js.success && js.summary) {
+          document.getElementById('jiraSummary').value = js.summary;
+        }
+      })
+      .catch(() => {/* silent fallback */});
+  }
   document.getElementById('jiraDescription').value = description;
   
-  document.getElementById('jiraModal').style.display = 'block';
+  document.getElementById('jiraModal').style.display = 'flex';
 
   // If core fields were blank, attempt a deferred fill once after a short timeout (for any late-populated window.promoData)
   if(!promoCode || !orbitId || !initiativeName){
     setTimeout(()=>{
-      if(!document.getElementById('jiraModal') || document.getElementById('jiraModal').style.display !== 'block') return;
+      if(!document.getElementById('jiraModal') || document.getElementById('jiraModal').style.display !== 'flex') return;
       const pd = window.promoData || {};
       const p2 = pd.code || promoCode;
       const o2 = pd.orbit_id || orbitId;
@@ -152,7 +169,8 @@ function openJiraModal(ticketType = 'bptcr') {
 }
 
 function closeJiraModal() {
-  document.getElementById('jiraModal').style.display = 'none';
+  const m = document.getElementById('jiraModal');
+  if (m) m.style.display = 'none';
 }
 
 function createJiraTicket() {
@@ -172,7 +190,7 @@ function createJiraTicket() {
   }
   
   // Show loading state
-  const createBtn = event.target;
+  const createBtn = (typeof event !== 'undefined' && event && event.target) ? event.target : (document.activeElement && document.activeElement.tagName === 'BUTTON' ? document.activeElement : null);
   const originalText = createBtn.innerHTML;
   createBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating...';
   createBtn.disabled = true;

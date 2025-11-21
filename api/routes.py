@@ -1,4 +1,5 @@
 from flask import Blueprint, jsonify, request
+from services.jira_utils import create_jira_summary
 
 api_bp = Blueprint('api', __name__, url_prefix='/api')
 
@@ -49,7 +50,7 @@ def get_promo_details(promo_code):
                 'broken_trade': promo_data.get('Broken_Trade', ''),
                 'on_menu': promo_data.get('on_menu', ''),
                 'mpss_lookback': promo_data.get('mpss_lookback', ''),
-                'version_history': promo_data.get('version_history', []),
+                # Version history removed
                 'promo_notes': promo_data.get('promo_notes', ''),
                 'status': 'Launched' if promo_data.get('promo_end_date') else 'In Progress'
             })
@@ -89,6 +90,32 @@ def get_promo_details(promo_code):
         return jsonify({'found': False, 'message': f'Promo code {promo_code} not found'})
     except Exception as e:
         return jsonify({'found': False, 'error': str(e)})
+
+@api_bp.route('/jira_summary/<promo_code>', methods=['GET'])
+def jira_summary(promo_code):
+    """Return standardized JIRA summary for a promo code (or orbit-only record fallback)."""
+    try:
+        promo_data = data_manager.get_promo(promo_code) if data_manager else {}
+        if promo_data:
+            return jsonify({'success': True, 'promo_code': promo_code, 'summary': create_jira_summary(promo_data)})
+        # Fallback: attempt orbit-only lookup for summary components if promo not yet created
+        orbit_id = (promo_code or '').strip() if (promo_code or '').upper().startswith('ORB') else ''
+        if orbit_id and data_manager:
+            # If promo_code itself looks like an orbit id, attempt to find record in orbit table
+            from data.database import DatabaseManager
+            dbm = DatabaseManager()
+            orbit_record = dbm.get_orbit_record_by_orbit_id(orbit_id) or {}
+            if orbit_record:
+                pseudo = {
+                    'code': '',
+                    'orbit_id': orbit_record.get('orbit_id'),
+                    'initiative_name': orbit_record.get('initiative_name') or orbit_record.get('bill_facing_name') or orbit_record.get('description'),
+                    'promo_start_date': orbit_record.get('start_date')
+                }
+                return jsonify({'success': True, 'promo_code': '', 'summary': create_jira_summary(pseudo)})
+        return jsonify({'success': False, 'error': 'Promotion not found'}), 404
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 
 @api_bp.route('/search_orbit/<orbit_id>', methods=['GET'])

@@ -122,18 +122,12 @@ class PromoCodeWorkflow:
         except Exception as alloc_err:
             return {'success': False, 'error': f'SKU group ID allocation failed: {alloc_err}'}
         # Core insertion column mapping (expand to reduce null columns). Only include keys with non-None values.
-        # Defaults pulled from orbit row; override based on config before insertion dict assembly
-        device_sales_type = full_row.get('device_sales_type')
-        activation_type = full_row.get('activation_type')
-        product_type = full_row.get('product_type')
-        if cfg == 'standard gsm' or cfg == 'standard_gsm' or cfg == 'standard-gsm':
-            product_type = 'G'
-            device_sales_type = 'S01'
-            activation_type = 'NA1'
-        elif cfg == 'standard mi' or cfg == 'standard_mi' or cfg == 'standard-mi':
-            product_type = 'B'
-            device_sales_type = 'S01'
-            activation_type = 'NA1'
+        # Defaults pulled from orbit row; will be overridden by config preset
+        from promo.config_presets import get_config_preset
+        
+        # Get preset overrides for the selected configuration
+        preset_overrides = get_config_preset(cfg) if cfg else {}
+        print(f"[WORKFLOW] Config: '{cfg}', Preset overrides: {preset_overrides}")
 
         candidate_fields = {
             'code': new_code,
@@ -149,8 +143,8 @@ class PromoCodeWorkflow:
             'promo_end_date': full_row.get('promo_end_date'),
             'comm_end_date': full_row.get('comm_end_date'),
             'application_grace_period': full_row.get('application_grace_period'),
-            'device_sales_type': device_sales_type,
-            'activation_type': activation_type,
+            'device_sales_type': full_row.get('device_sales_type'),
+            'activation_type': full_row.get('activation_type'),
             'active_line_required': full_row.get('active_line_required'),
             'maintain_soc': full_row.get('maintain_soc'),
             'limit_per_ban': full_row.get('limit_per_ban'),
@@ -165,13 +159,23 @@ class PromoCodeWorkflow:
             'amount': full_row.get('amount'),
             'nseip_drop': full_row.get('nseip_drop'),
             'dcd_web_cart': full_row.get('dcd_web_cart'),
-            'product_type': product_type,
+            'product_type': full_row.get('product_type'),
             'bogo': full_row.get('bogo'),
             'fpd_display_promo': full_row.get('fpd_display_promo'),
             'on_menu': full_row.get('on_menu'),
-            'Desired_Execution': execution_type
+            'Desired_Execution': execution_type,
+            'trade_in_grace': full_row.get('trade_in_grace'),
         }
+        
+        # Apply preset overrides AFTER building candidate_fields (preset values take precedence)
+        if preset_overrides:
+            print(f"[WORKFLOW] Applying preset overrides to candidate_fields")
+            for key, value in preset_overrides.items():
+                candidate_fields[key] = value
+                print(f"[WORKFLOW] Override: {key} = {value}")
+        
         insertion = {k:v for k,v in candidate_fields.items() if v is not None}
+        print(f"[WORKFLOW] Final insertion fields: {list(insertion.keys())}")
         ok = self.db.insert_promo_record(insertion)
         if not ok:
             return {'success': False, 'error': 'Insert failed', 'attempted_fields': list(insertion.keys())}
@@ -180,11 +184,7 @@ class PromoCodeWorkflow:
             record_issued_sku_group_id(allocated_sku_group_id)
         except Exception:
             pass
-        # New minimal history creation event
-        try:
-            self.db.record_creation_event(new_code, insertion, user)
-        except Exception:
-            pass
+        # Version history removed: no creation event recorded
         db_record = self.db.get_promo_by_code(new_code) or {}
         payload = self.db.convert_db_record_to_json_format(db_record)
         payload['success'] = True

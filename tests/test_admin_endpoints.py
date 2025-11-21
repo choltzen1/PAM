@@ -16,9 +16,4 @@ def test_admin_stats_endpoint(client):
     assert data.get('success') is True
     assert 'stats' in data
 
-
-def test_version_history_page(client):
-    resp = client.get('/version-history')
-    assert resp.status_code == 200
-    body = resp.get_data(as_text=True)
-    assert 'Version History'.lower() in body.lower()
+# Version history page removed; corresponding UI test deleted

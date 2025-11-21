@@ -1,14 +1,8 @@
 from flask import Blueprint, render_template, jsonify, request, redirect, url_for, flash
 from datetime import datetime
+from sqlalchemy import text
 import os, json
 from typing import Optional, TYPE_CHECKING
-import sqlite3
-
-# Unified version history service import (merged module)
-try:
-    from data.version_history import version_history_service  # type: ignore
-except Exception:  # pragma: no cover
-    version_history_service = None  # type: ignore
 
 if TYPE_CHECKING:
     from data.storage import PromoDataManager
@@ -295,81 +289,7 @@ def admin_groupings_page():
     """Dedicated management page for device & reference groupings."""
     return render_template('pam/admin_groupings.html')
 
-@admin_bp.route('/version-history', endpoint='version_history_page')
-def version_history_page():
-    dm = _ensure_dm()
-    try:
-        page = request.args.get('page', 1, type=int)
-        per_page = request.args.get('per_page', 50, type=int)
-        per_page = max(1, min(per_page, 200))  # sanity bounds
-        search = request.args.get('search', '', type=str).strip().lower()
-        owner = request.args.get('owner', 'all', type=str).strip()
-        # Build base promo mapping using same method as RDC (optimized paginated retrieval) for consistent owner/date fields
-        base_map = {}
-        if hasattr(dm, 'get_paginated_promos_optimized'):
-            try:
-                # Large page to approximate full set; if more than limit, consider enhancing to full-fetch API later
-                base_payload = dm.get_paginated_promos_optimized(page=1, per_page=1000, search='', owner_filter='all', scope='all')
-                for r in base_payload.get('promotions', []):
-                    code = r.get('code')
-                    if code:
-                        base_map[code] = r
-            except Exception:
-                base_map = {}
-        if not base_map:
-            # Fallback to legacy full fetch then convert list->map
-            try:
-                raw_list = dm.get_all_promos() or []
-                for r in raw_list:
-                    code = r.get('code') or r.get('Code')
-                    if code:
-                        base_map[str(code)] = r
-            except Exception:
-                base_map = {}
-
-        # Merge with history via service (service expects callable returning mapping)
-        all_promos = []
-        if version_history_service:
-            all_promos = version_history_service.get_all_promotions_with_history(lambda: base_map)
-
-        owners = sorted({p.get('promo_owner','') for p in all_promos if p.get('promo_owner')})
-
-        def matches(p):
-            if owner != 'all' and p.get('promo_owner','').lower() != owner.lower():
-                return False
-            if search:
-                hay = ' '.join([
-                    p.get('promo_code',''),
-                    p.get('promo_owner',''),
-                    p.get('bill_facing_name',''),
-                    p.get('orbit_id',''),
-                    p.get('status','')
-                ]).lower()
-                return search in hay
-            return True
-
-        filtered_promos = [p for p in all_promos if matches(p)]
-        total_items = len(filtered_promos)
-        total_pages = (total_items // per_page) + (1 if total_items % per_page else 0)
-        if page > total_pages and total_pages > 0:
-            page = total_pages
-        start = (page - 1) * per_page
-        end = start + per_page
-        page_promos = filtered_promos[start:end]
-        pagination = {
-            'page': page,
-            'per_page': per_page,
-            'total_items': total_items,
-            'total_pages': total_pages or 1,
-            'has_prev': page > 1,
-            'has_next': page < total_pages,
-            'prev_num': page - 1 if page > 1 else None,
-            'next_num': page + 1 if page < total_pages else None
-        }
-        return render_template('pam/version_history.html', promotions=page_promos, pagination=pagination, owners=owners, search_query=search, selected_owner=owner)
-    except Exception as e:
-        flash(f'Error loading version history: {e}', 'error')
-        return render_template('pam/version_history.html', promotions=[], pagination={'page':1,'per_page':50,'total_items':0,'total_pages':1,'has_prev':False,'has_next':False}, owners=[], search_query='', selected_owner='all')
+# Version history page removed
 
 # --- Admin actions ---
 @admin_bp.route('/admin/backup', methods=['POST'])
@@ -378,10 +298,10 @@ def admin_backup():
         import shutil
         backup_dir = f"backups/backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
         os.makedirs(backup_dir, exist_ok=True)
-        # Copy metadata/database artifacts (legacy JSON promo files removed; copy any lingering .bak for safety)
-        for fname in ['data/version_history.db']:
-            if os.path.exists(fname):
-                shutil.copy2(fname, backup_dir)
+        # Copy uploads and other artifacts (version history now in SQL Server)
+        # legacy SQLite DB intentionally not preserved here
+        if os.path.exists('data/uploads'):
+            shutil.copytree('data/uploads', os.path.join(backup_dir,'uploads'))
         if os.path.exists('data/uploads'):
             shutil.copytree('data/uploads', os.path.join(backup_dir,'uploads'))
         return jsonify({'success': True, 'message': f'Backup created in {backup_dir} (Promotions reside in SQL Server)'})
@@ -404,7 +324,7 @@ def admin_stats():
             'promotions_count': len(promotions_data),
             'spe_count': len(spe_data),
             'total_records': len(promotions_data)+len(spe_data),
-            'data_source': 'Database (SQL Server + SQLite metadata)',
+            'data_source': 'Database (SQL Server)',
             'cache_status': cache_status,
             'spe_file_size': None,
             'workflow_file_size': None,
@@ -454,24 +374,24 @@ def admin_dashboard_summary():
         # PCR stats (lightweight count)
         pcr_events = 0
         pcr_promos = 0
-        try:
-            import sqlite3, os
-            with sqlite3.connect(os.path.join('data','version_history.db')) as conn:
-                row = conn.execute("SELECT COUNT(*) FROM version_history WHERE change_type='PCR Version'").fetchone()
-                pcr_events = row[0] if row else 0
-                row2 = conn.execute("SELECT COUNT(DISTINCT promo_code) FROM version_history WHERE change_type='PCR Version'").fetchone()
-                pcr_promos = row2[0] if row2 else 0
-        except Exception:
-            pass
-        # Date diagnostics latest snapshot
+        # Version history removed: PCR stats unavailable
+        pcr_events = 0
+        pcr_promos = 0
+        # Date diagnostics latest snapshot (stored in SQL Server)
         invalid_ratio = None
         try:
-            import sqlite3, os
-            with sqlite3.connect(os.path.join('data','version_history.db')) as conn:
-                snap = conn.execute("SELECT invalid_ratio FROM date_diagnostics_history ORDER BY id DESC LIMIT 1").fetchone()
-                if snap: invalid_ratio = snap[0]
+            dm = _ensure_dm()
+            engine = dm.get_engine()
+            with engine.connect() as conn:
+                # If the table exists this will succeed; otherwise it will return no rows
+                try:
+                    row = conn.execute(text("SELECT TOP 1 invalid_ratio FROM PAM.date_diagnostics_history ORDER BY id DESC")).fetchone()
+                    if row:
+                        invalid_ratio = row[0]
+                except Exception:
+                    invalid_ratio = None
         except Exception:
-            pass
+            invalid_ratio = None
         summary = {
             'total_promos': total_promos,
             'active_promos': active_promos,
@@ -594,24 +514,8 @@ def admin_data_refresh():
 @admin_bp.route('/admin/pcr-stats')
 def admin_pcr_stats():
     # Provide counts of PCR Version events per promo
-    try:
-        db_path = os.path.join('data', 'version_history.db')
-        stats = []
-        with sqlite3.connect(db_path) as conn:
-            conn.row_factory = sqlite3.Row
-            rows = conn.execute("""
-                SELECT promo_code, COUNT(*) AS pcr_versions,
-                       MIN(timestamp) AS first_pcr, MAX(timestamp) AS last_pcr
-                FROM version_history
-                WHERE change_type='PCR Version'
-                GROUP BY promo_code
-                ORDER BY pcr_versions DESC, last_pcr DESC
-                LIMIT 100
-            """).fetchall()
-            stats = [dict(r) for r in rows]
-        return jsonify({'success': True, 'pcr_stats': stats})
-    except Exception as e:
-        return jsonify({'success': False, 'message': f'Failed to load PCR stats: {e}'})
+    # Version history removed: return empty PCR stats
+    return jsonify({'success': True, 'pcr_stats': []})
 
 @admin_bp.route('/admin/date-diagnostics')
 def admin_date_diagnostics():
@@ -656,34 +560,23 @@ def admin_date_diagnostics():
 def admin_data_health():
     # Aggregate latest diagnostics snapshot & PCR counts summary
     try:
-        db_path = os.path.join('data', 'version_history.db')
         result = {}
-        with sqlite3.connect(db_path) as conn:
-            conn.row_factory = sqlite3.Row
-            snap = conn.execute("""
-                SELECT * FROM date_diagnostics_history
-                ORDER BY id DESC LIMIT 1
-            """).fetchone()
-            if snap:
-                result['latest_snapshot'] = dict(snap)
-            else:
-                result['latest_snapshot'] = None
-            pcr_summary = conn.execute("""
-                SELECT COUNT(*) as total_pcr_events, COUNT(DISTINCT promo_code) as promos_with_pcr
-                FROM version_history WHERE change_type='PCR Version'
-            """).fetchone()
-            result['pcr_summary'] = dict(pcr_summary) if pcr_summary else {}
+        # Version history removed: no latest snapshot or PCR summary available
+        result['latest_snapshot'] = None
+        result['pcr_summary'] = {}
         # Derive status
         status = 'unknown'
         ratio = None
-        if result['latest_snapshot'] and result['latest_snapshot'].get('invalid_ratio') is not None:
-            ratio = result['latest_snapshot']['invalid_ratio']
-            if ratio < 0.05:
-                status = 'healthy'
-            elif ratio < 0.15:
-                status = 'warning'
-            else:
-                status = 'critical'
+        snapshot = result.get('latest_snapshot')
+        if snapshot and isinstance(snapshot, dict) and snapshot.get('invalid_ratio') is not None:
+            ratio = snapshot.get('invalid_ratio')
+            if ratio is not None:
+                if ratio < 0.05:
+                    status = 'healthy'
+                elif ratio < 0.15:
+                    status = 'warning'
+                else:
+                    status = 'critical'
         result['status'] = status
         result['invalid_ratio'] = ratio
         return jsonify({'success': True, 'data_health': result})

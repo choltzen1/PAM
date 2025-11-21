@@ -18,10 +18,11 @@ import threading
 import time
 from typing import Dict, Any, List, Optional
 from datetime import datetime, timedelta
+from sqlalchemy import text
 from threading import Lock, Timer
 from data.database import DatabaseManager
 from data.storage import PromoDataManager  # Import original for file management and utilities
-from data.version_history import VersionHistoryManager
+# Version history removed per request; no runtime dependency
 
 class HybridPromoDataManager:
     """
@@ -37,9 +38,6 @@ class HybridPromoDataManager:
         
         # Initialize original data manager for file management and utility functions
         self._original_manager = PromoDataManager(data_dir)
-        
-        # Initialize version history manager
-        self.version_history = VersionHistoryManager(data_dir)
         
         # Cache configuration - Optimized for promotion data patterns
         self._cache = {}
@@ -58,22 +56,14 @@ class HybridPromoDataManager:
         self._cache_misses = 0
         self._total_db_loads = 0
         
-        # Local storage for PAM-only fields
-        self.workflow_file = os.path.join(data_dir, "workflow_data.json")
+        # Local storage for file uploads only
         self.uploads_dir = os.path.join(data_dir, "uploads")
         
         # Ensure directories exist
         os.makedirs(data_dir, exist_ok=True)
         os.makedirs(self.uploads_dir, exist_ok=True)
         
-        self._initialize_workflow_storage()
         self._start_background_refresh()
-    
-    def _initialize_workflow_storage(self):
-        """Initialize local storage for PAM-only workflow fields"""
-        if not os.path.exists(self.workflow_file):
-            with open(self.workflow_file, 'w') as f:
-                json.dump({}, f)
     
     def _is_cache_valid(self) -> bool:
         """Check if cache is still valid using smart invalidation"""
@@ -142,13 +132,10 @@ class HybridPromoDataManager:
             print(f"Refreshing promotion cache... (Load #{self._total_db_loads})")
             start_time = time.time()
             
-            # Get fresh data from database
+            # Get fresh data from database - DB is authoritative source
             db_records = self.db_manager.get_all_promos()
             
-            # Load local workflow data
-            workflow_data = self._load_workflow_data()
-            
-            # Merge database and workflow data
+            # Convert to PAM format with source tracking
             merged_data = {}
             for record in db_records:
                 code = str(record.get('code', ''))
@@ -156,35 +143,8 @@ class HybridPromoDataManager:
                     # Convert DB record to PAM format (handle type conversion)
                     record_dict = {str(k): v for k, v in record.items()}  # Ensure string keys
                     promo_data = self.db_manager.convert_db_record_to_json_format(record_dict)
-                    
-                    # Merge with local workflow data if exists
-                    if code in workflow_data:
-                        promo_data.update(workflow_data[code])
-                    
+                    promo_data['_source'] = 'db'  # Mark source for integrity tracking
                     merged_data[code] = promo_data
-
-            # Overlay JSON promos (overrides + optionally JSON-only) controlled by env flag
-            include_json_only = os.getenv('PAM_INCLUDE_JSON_ONLY_PROMOS', '').lower() in ('1','true','yes','on')
-            try:
-                json_promos = self._original_manager._load_json(self._original_manager.promo_file)  # type: ignore[attr-defined]
-                for jcode, jdata in json_promos.items():
-                    if not jcode:
-                        continue
-                    if jcode in merged_data:
-                        # Update DB record with any JSON overrides (recent edits)
-                        merged = merged_data[jcode]
-                        merged.update(jdata)
-                        if jcode in workflow_data:
-                            merged.update(workflow_data[jcode])
-                    else:
-                        # Pure JSON-only promo: only include when flag enabled
-                        if include_json_only:
-                            new_entry = dict(jdata)
-                            if jcode in workflow_data:
-                                new_entry.update(workflow_data[jcode])
-                            merged_data[jcode] = new_entry
-            except Exception as e:
-                print(f"Warning: failed overlaying JSON promos into hybrid cache: {e}")
 
             # Update cache
             self._cache = merged_data
@@ -201,14 +161,11 @@ class HybridPromoDataManager:
             if self._spe_cache_timestamp and datetime.now() - self._spe_cache_timestamp < self._cache_ttl:
                 return self._spe_cache
             
-            # Get fresh SPE data from database
+            # Get fresh SPE data from database - DB is authoritative source
             start_time = time.time()
             db_records = self.db_manager.get_all_spe_promos()
             
-            # Load local workflow data
-            workflow_data = self._load_workflow_data()
-            
-            # Merge database and workflow data
+            # Convert to PAM format with source tracking
             merged_data = {}
             for record in db_records:
                 code = str(record.get('code', ''))
@@ -216,11 +173,7 @@ class HybridPromoDataManager:
                     # Convert DB record to PAM format
                     record_dict = {str(k): v for k, v in record.items()}
                     promo_data = self.db_manager.convert_db_record_to_json_format(record_dict)
-                    
-                    # Merge with local workflow data if exists
-                    if code in workflow_data:
-                        promo_data.update(workflow_data[code])
-                    
+                    promo_data['_source'] = 'db'  # Mark source for integrity tracking
                     merged_data[code] = promo_data
             
             # Update SPE cache
@@ -238,14 +191,11 @@ class HybridPromoDataManager:
             if self._rebates_cache_timestamp and datetime.now() - self._rebates_cache_timestamp < self._cache_ttl:
                 return self._rebates_cache
             
-            # Get fresh Rebates data from database
+            # Get fresh Rebates data from database - DB is authoritative source
             start_time = time.time()
             db_records = self.db_manager.get_all_rebates()
             
-            # Load local workflow data
-            workflow_data = self._load_workflow_data()
-            
-            # Merge database and workflow data
+            # Convert to PAM format with source tracking
             merged_data = {}
             for i, record in enumerate(db_records):
                 # Use simple index-based key - no filtering, no code generation
@@ -257,10 +207,7 @@ class HybridPromoDataManager:
                 
                 # Store the index key for template access
                 promo_data['key'] = key
-                
-                # Merge with local workflow data if exists
-                if key in workflow_data:
-                    promo_data.update(workflow_data[key])
+                promo_data['_source'] = 'db'  # Mark source for integrity tracking
                 
                 merged_data[key] = promo_data
             
@@ -272,47 +219,6 @@ class HybridPromoDataManager:
             print(f"Rebates cache refreshed: {len(merged_data)} rebates loaded in {load_time:.2f}s")
             
             return self._rebates_cache
-    
-    def _load_workflow_data(self) -> Dict[str, Any]:
-        """Load PAM-only workflow data from local storage and promotions.json"""
-        workflow_data = {}
-        
-        # Load from workflow_data.json
-        try:
-            with open(self.workflow_file, 'r') as f:
-                workflow_data = json.load(f)
-        except (FileNotFoundError, json.JSONDecodeError):
-            workflow_data = {}
-        
-        # Also load from promotions.json for promo_notes and other fields
-        try:
-            promo_file = os.path.join(self.data_dir, "promotions.json")
-            with open(promo_file, 'r') as f:
-                promo_json_data = json.load(f)
-                
-                # Merge promo_notes and other PAM-specific fields
-                for code, promo_data in promo_json_data.items():
-                    if code not in workflow_data:
-                        workflow_data[code] = {}
-                    
-                    # Copy PAM-specific fields from promotions.json
-                    pam_fields = ['promo_notes', 'spe_notes', 'notes', 'generated_sql', 'sql_generated_at', 
-                                 'sql_generation_time', 'sql_length', 'uploaded_files', 'version_history',
-                                 'last_changes', 'created_at', 'updated_at', 'test_status', 'zlab_status']
-                    
-                    for field in pam_fields:
-                        if field in promo_data:
-                            workflow_data[code][field] = promo_data[field]
-                            
-        except (FileNotFoundError, json.JSONDecodeError):
-            pass
-            
-        return workflow_data
-    
-    def _save_workflow_data(self, workflow_data: Dict[str, Any]):
-        """Save PAM-only workflow data to local storage"""
-        with open(self.workflow_file, 'w') as f:
-            json.dump(workflow_data, f, indent=2)
     
     # OPTIMIZATION METHODS
     
@@ -610,95 +516,47 @@ class HybridPromoDataManager:
         # Use the original manager's save method to maintain current workflow
         self._original_manager.save_promo(promo_code, promo_data, user_name)
         
-        # Track version history
-        if is_new_promo:
-            # Record creation
-            self.version_history.record_promo_creation(promo_code, user_name, promo_data)
-        else:
-            # Compare data and record changes
-            changed_fields = {}
-            for key, new_value in promo_data.items():
-                # Skip non-meaningful timestamp/system-only fields from version history diffs
-                if key in {"updated_at", "created_at", "last_sync"}:
-                    continue
-                old_value = existing_data.get(key)
-                if old_value != new_value:
-                    changed_fields[key] = {
-                        'old': old_value,
-                        'new': new_value
-                    }
-            
-            if changed_fields:
-                self.version_history.record_promo_modification(promo_code, user_name, changed_fields)
+        # Version history removed: do not record creation/modification events
         
         # Invalidate cache to force refresh
         self._cache_timestamp = None
         
-        # Also update our workflow data cache
-        workflow_data = self._load_workflow_data()
-        if promo_code not in workflow_data:
-            workflow_data[promo_code] = {}
-        
-        # Extract workflow-specific fields for our cache
-        workflow_fields = self._extract_workflow_fields(promo_data)
-        workflow_data[promo_code].update(workflow_fields)
-        workflow_data[promo_code]['updated_at'] = datetime.now().isoformat()
-        workflow_data[promo_code]['updated_by'] = user_name
-        
-        self._save_workflow_data(workflow_data)
+        # Note: Workflow metadata (jira_ticket, initiative_name, uploaded_files, etc.)
+        # is now persisted in SQLite (promo_extras, promo_files) via DatabaseManager methods
     
     def record_sql_generation(self, promo_code: str, user_name: str, generation_time: float, sql_length: int):
         """Record SQL generation in version history"""
-        self.version_history.record_sql_generation(promo_code, user_name, generation_time, sql_length)
+        # No-op: version history removed
+        return None
 
     def record_date_mismatch_sql(self, promo_code: str, user_name: str, generation_time: float, sql_length: int):
         """Record date mismatch SQL generation in version history"""
-        if hasattr(self.version_history, 'record_date_mismatch_sql'):
-            self.version_history.record_date_mismatch_sql(promo_code, user_name, generation_time, sql_length)
+        # No-op: version history removed
+        return None
     
     def record_file_upload(self, promo_code: str, user_name: str, file_type: str, filename: str):
         """Record file upload in version history"""
-        self.version_history.record_file_upload(promo_code, user_name, file_type, filename)
+        # No-op: version history removed
+        return None
     
-    def get_promo_version_history(self, promo_code: str) -> List[Dict[str, Any]]:
-        """Get version history for a specific promotion"""
-        return self.version_history.get_promo_history(promo_code)
+
     
     def get_all_promotions_with_history(self) -> List[Dict[str, Any]]:
         """Get all promotions with version history for the version history page"""
-        # Get promotions with history from version history DB
-        history_data = self.version_history.get_all_promotions_with_history()
-        
-        # Get current promotion data
+        # Version history removed: return current promotions without history changes
         current_promos = self.get_all_promos()
-        
-        # Combine the data
         promotions_with_history = []
-        for history_item in history_data:
-            promo_code = history_item['promo_code']
-            
-            # Find current promo data
-            current_promo = current_promos.get(promo_code)
-            if current_promo:
-                # Get detailed change history
-                # Use curated changes if available
-                if hasattr(self.version_history, 'get_curated_promo_changes'):
-                    changes = self.version_history.get_curated_promo_changes(promo_code)
-                else:
-                    changes = self.get_promo_version_history(promo_code)
-                
-                promo_with_history = {
-                    'promo_code': promo_code,
-                    'orbit_id': current_promo.get('orbit_id', ''),
-                    'status': current_promo.get('status', 'Active'),
-                    'bill_facing_name': current_promo.get('bill_facing_name', ''),
-                    'start_date': current_promo.get('promo_start_date', current_promo.get('promo_start_date', '')),
-                    'end_date': current_promo.get('promo_end_date', ''),
-                    'promo_owner': current_promo.get('owner', current_promo.get('Owner', '')),
-                    'changes': changes
-                }
-                promotions_with_history.append(promo_with_history)
-        
+        for code, current_promo in current_promos.items():
+            promotions_with_history.append({
+                'promo_code': code,
+                'orbit_id': current_promo.get('orbit_id', ''),
+                'status': current_promo.get('status', 'Active'),
+                'bill_facing_name': current_promo.get('bill_facing_name', ''),
+                'start_date': current_promo.get('promo_start_date', current_promo.get('promo_start_date', '')),
+                'end_date': current_promo.get('promo_end_date', ''),
+                'promo_owner': current_promo.get('owner', current_promo.get('Owner', '')),
+                'changes': []
+            })
         return promotions_with_history
     
     def _extract_db_fields(self, promo_data: Dict[str, Any]) -> Dict[str, Any]:
@@ -719,14 +577,14 @@ class HybridPromoDataManager:
         return {key: promo_data.get(key) for key in db_field_names if key in promo_data}
     
     def _extract_workflow_fields(self, promo_data: Dict[str, Any]) -> Dict[str, Any]:
-        """Extract fields that are PAM workflow-only"""
+        """Extract PAM-only metadata fields (now tracked in SQLite promo_extras table)"""
+        # These fields are stored in SQLite promo_extras/promo_files tables
         workflow_field_names = [
-            'sku_link', 'tradein_link', 'version_history', 'uploaded_files',
-            'generated_sql', 'sql_file', 'last_changes', 'jira_ticket',
-            'initiative_name', 'segment_name', 'sub_segment', 'segment_group_id',
-            'segment_level'
+            'jira_ticket', 'initiative_name', 'sku_link', 'tradein_link',
+            'segment_name', 'sub_segment', 'segment_group_id', 'segment_level',
+            'promo_grace', 'trade_in_grace'
         ]
-        
+        # Note: uploaded_files → promo_files table, version_history → promo_history table
         return {key: promo_data.get(key) for key in workflow_field_names if key in promo_data}
     
     def force_refresh(self) -> Dict[str, Any]:
@@ -828,34 +686,32 @@ class HybridPromoDataManager:
         return self._original_manager.add_pcr_version(promo_code, version_number, user_name, is_spe)
     
     def delete_promo(self, promo_code: str):
-        """Delete promotion from DB + local artifacts and invalidate cache.
-
-        Invokes underlying DatabaseManager.delete_promo (hard delete) if available.
-        Falls back to original manager (no-op) otherwise.
-        """
+        """Delete promotion from JSON storage, DB, and cache."""
+        deleted = False
+        
+        # Remove from JSON storage first (since get_promo checks JSON first)
+        try:
+            if self._original_manager.get_promo(promo_code):
+                self._original_manager.delete_promo(promo_code)
+                deleted = True
+        except Exception as e:
+            print(f"[DELETE] JSON deletion failed for {promo_code}: {e}")
+        
         # Remove from cache memory
         if promo_code in self._cache:
             del self._cache[promo_code]
+            deleted = True
 
-        # Remove from workflow auxiliary file
-        workflow_data = self._load_workflow_data()
-        if promo_code in workflow_data:
-            del workflow_data[promo_code]
-            self._save_workflow_data(workflow_data)
-
-        # Attempt DB hard delete
-        deleted = False
-        if hasattr(self.db_manager, 'delete_promo'):
-            try:
-                deleted = self.db_manager.delete_promo(promo_code)
-            except Exception:
-                deleted = False
-        else:
-            # Fallback to original manager if it implemented something
-            try:
-                self._original_manager.delete_promo(promo_code)
-            except Exception:
-                pass
+        # Delete from database if exists
+        try:
+            sql = f"DELETE FROM {self.db.source_table} WHERE code = :promo_code"
+            engine = self.db.get_engine()
+            with engine.begin() as conn:
+                result = conn.execute(text(sql), {'promo_code': promo_code})
+                if result.rowcount > 0:
+                    deleted = True
+        except Exception as e:
+            print(f"[DELETE] Database deletion failed for {promo_code}: {e}")
 
         # Invalidate cache timestamp so next access reloads
         self._cache_timestamp = None

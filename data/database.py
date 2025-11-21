@@ -5,10 +5,6 @@ from typing import Dict, Any, List, Optional, Tuple
 from datetime import datetime
 import logging
 import os
-import sqlite3
-import json
-import os
-import sqlite3
 import json
 
 # Configure logging
@@ -47,99 +43,25 @@ class DatabaseManager:
         self.orbit_source_table = os.getenv('PAM_ORBIT_SOURCE_TABLE', '[RDC].[PAM_Orbit_Data]')
         self._engine = None
         # (Duplicate _ensure_diag_tables block removed)
-        # Diagnostics persistence (SQLite co-located with version history)
-        self._diag_db_path = os.path.join('data', 'version_history.db')
-        self._ensure_diag_tables()
+        # Diagnostics persistence moved to SQL Server `PAM.date_diagnostics_history`.
+        # Local SQLite has been deprecated and removed.
+        self._diag_db_path = None
+        # Do not create local SQLite tables.
         # Threshold from environment
         self.invalid_ratio_threshold = float(os.environ.get('INVALID_DATE_RATIO_WARN_THRESHOLD', '0.10'))
 
     def _ensure_diag_tables(self):
-        try:
-            os.makedirs('data', exist_ok=True)
-            with sqlite3.connect(self._diag_db_path) as conn:
-                conn.execute("""
-                    CREATE TABLE IF NOT EXISTS date_diagnostics_history (
-                        id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        captured_at TEXT NOT NULL,
-                        window_days INTEGER NOT NULL,
-                        total_with_value INTEGER,
-                        valid_dates INTEGER,
-                        invalid_dates INTEGER,
-                        invalid_ratio REAL
-                    )
-                """)
-                # Version history augment (diff_json,user_name) + promo_extras + promo_files
-                # (Version history table intentionally removed - reset state)
-                conn.execute("""
-                    CREATE TABLE IF NOT EXISTS promo_extras (
-                        promo_code TEXT PRIMARY KEY,
-                        jira_ticket TEXT,
-                        initiative_name TEXT,
-                        sku_link TEXT,
-                        tradein_link TEXT,
-                        promo_grace TEXT,
-                        trade_in_grace TEXT,
-                        segment_name TEXT,
-                        sub_segment TEXT,
-                        segment_group_id TEXT,
-                        segment_level TEXT,
-                        flow_indicator TEXT,
-                        created_at TEXT,
-                        updated_at TEXT,
-                        updated_by TEXT
-                    )
-                """)
-                conn.execute("""
-                    CREATE TABLE IF NOT EXISTS promo_files (
-                        id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        promo_code TEXT NOT NULL,
-                        original_filename TEXT NOT NULL,
-                        stored_filename TEXT NOT NULL,
-                        file_type TEXT,
-                        size_bytes INTEGER,
-                        checksum TEXT,
-                        uploaded_by TEXT NOT NULL,
-                        uploaded_at TEXT NOT NULL
-                    )
-                """)
-                conn.execute("CREATE INDEX IF NOT EXISTS idx_promo_files_code ON promo_files(promo_code)")
-                # Lightweight schema migration: ensure user_name column exists (older DBs lacked it)
-                try:
-                    cur = conn.execute("PRAGMA table_info(version_history)")
-                    cols = [r[1] for r in cur.fetchall()]
-                    # version_history migration skipped (table deprecated/reset)
-                    # New minimal history table (start-over implementation)
-                    conn.execute("""
-                        CREATE TABLE IF NOT EXISTS promo_history (
-                            id INTEGER PRIMARY KEY AUTOINCREMENT,
-                            promo_code TEXT NOT NULL,
-                            timestamp TEXT NOT NULL,
-                            event_type TEXT NOT NULL,
-                            user_name TEXT,
-                            diff_json TEXT
-                        )
-                    """)
-                    try:
-                        conn.execute("CREATE INDEX IF NOT EXISTS idx_promo_history_code_ts ON promo_history(promo_code, timestamp)")
-                    except Exception:
-                        pass
-                except Exception as mig_e:
-                    logger.warning(f"Version history migration check failed: {mig_e}")
-        except Exception as e:
-            logger.warning(f"Failed to ensure diagnostics tables: {e}")
-        # Post-creation column augmentation for promo_extras (add test_status, zlab_status if missing)
-        try:
-            with sqlite3.connect(self._diag_db_path) as conn:
-                cur = conn.execute("PRAGMA table_info(promo_extras)")
-                existing_cols = {r[1] for r in cur.fetchall()}
-                for col in ('test_status','zlab_status'):
-                    if col not in existing_cols:
-                        try:
-                            conn.execute(f"ALTER TABLE promo_extras ADD COLUMN {col} TEXT")
-                        except Exception as ce:
-                            logger.warning(f"Failed adding column {col} to promo_extras: {ce}")
-        except Exception as e:
-            logger.warning(f"Promo extras column migration failed: {e}")
+        """
+        Previously diagnostics were persisted locally during early development.
+        Diagnostics persistence is now hosted in SQL Server and should be
+        created by applying the appropriate DDL to your SQL Server instance.
+
+        This method intentionally does not perform any local SQLite writes and
+        only logs guidance. If SQL Server is available and the `get_engine`
+        connection succeeds, the caller may run the relevant DDL from `sql/`.
+        """
+        # No-op: SQL Server should host diagnostic tables. See sql/create_promo_history_denormalized.sql
+        logger.debug("_ensure_diag_tables: local SQLite deprecated; ensure SQL Server tables exist instead")
     
     def get_engine(self):
         """Create and return SQLAlchemy engine"""
@@ -533,20 +455,18 @@ class DatabaseManager:
                     logger.warning(f"High invalid promo_start_date ratio: {invalid_count}/{total_with_value} (>{self.invalid_ratio_threshold*100:.0f}%)")
                 # Persist snapshot
                 try:
-                    with sqlite3.connect(self._diag_db_path) as c2:
-                        c2.execute(
-                            "INSERT INTO date_diagnostics_history (captured_at, window_days, total_with_value, valid_dates, invalid_dates, invalid_ratio) VALUES (?,?,?,?,?,?)",
-                            (
-                                datetime.utcnow().isoformat(),
-                                days,
-                                total_with_value,
-                                valid_count,
-                                invalid_count,
-                                ratio
-                            )
-                        )
+                    engine = self.get_engine()
+                    with engine.begin() as conn:
+                        conn.execute(text("INSERT INTO PAM.date_diagnostics_history (captured_at, window_days, total_with_value, valid_dates, invalid_dates, invalid_ratio) VALUES (:captured_at, :window_days, :total_with_value, :valid_dates, :invalid_dates, :invalid_ratio)"), {
+                            'captured_at': datetime.utcnow().isoformat(),
+                            'window_days': days,
+                            'total_with_value': total_with_value,
+                            'valid_dates': valid_count,
+                            'invalid_dates': invalid_count,
+                            'invalid_ratio': ratio
+                        })
                 except Exception as pe:
-                    logger.warning(f"Failed to persist diagnostics snapshot: {pe}")
+                    logger.warning(f"Failed to persist diagnostics snapshot to SQL Server: {pe}")
                 # Attach diagnostics to first record if any; or create synthetic diagnostic record
                 if records:
                     records[0]['_date_diagnostics'] = {
@@ -587,6 +507,29 @@ class DatabaseManager:
             except Exception:
                 continue
         return False
+
+    def get_latest_date_diagnostics(self) -> Optional[Dict[str, Any]]:
+        """Return the most recent date diagnostics snapshot if available in SQL Server.
+
+        This is a best-effort method: it will attempt to read from [PAM].[date_diagnostics_history]
+        if present; otherwise returns None.
+        """
+        try:
+            engine = self.get_engine()
+            with engine.connect() as conn:
+                res = conn.execute(text("SELECT TOP 1 captured_at, window_days, total_with_value, valid_dates, invalid_dates, invalid_ratio FROM PAM.date_diagnostics_history ORDER BY id DESC")).fetchone()
+                if not res:
+                    return None
+                return {
+                    'captured_at': str(res[0]),
+                    'window_days': int(res[1]) if res[1] is not None else None,
+                    'total_with_value': int(res[2]) if res[2] is not None else None,
+                    'valid_dates': int(res[3]) if res[3] is not None else None,
+                    'invalid_dates': int(res[4]) if res[4] is not None else None,
+                    'invalid_ratio': float(res[5]) if res[5] is not None else None
+                }
+        except Exception:
+            return None
     
     def get_active_promos(self) -> List[Dict[str, Any]]:
         """Fetch currently active promotions (today between start and end dates)."""
@@ -981,7 +924,6 @@ class DatabaseManager:
             "segment_group_id": "",
             "segment_level": "",
             "flow_indicator": "NULL",
-            "version_history": [],
             "uploaded_files": {},
             "generated_sql": "",
             "sql_file": {},
@@ -1122,10 +1064,10 @@ class DatabaseManager:
 
     def get_promo_extras(self, code: str) -> Dict[str, Any]:
         try:
-            with sqlite3.connect(self._diag_db_path) as conn:
-                conn.row_factory = sqlite3.Row
-                row = conn.execute("SELECT * FROM promo_extras WHERE promo_code=?", (code,)).fetchone()
-                return dict(row) if row else {}
+            engine = self.get_engine()
+            with engine.connect() as conn:
+                row = conn.execute(text("SELECT * FROM PAM.promo_extras WHERE promo_code = :code"), {'code': code}).fetchone()
+                return dict(row) if row is not None else {}
         except Exception:
             return {}
 
@@ -1139,15 +1081,21 @@ class DatabaseManager:
             vals.append(extras.get(c))
         now = datetime.utcnow().isoformat()
         try:
-            with sqlite3.connect(self._diag_db_path) as conn:
-                conn.execute(f"""
-                    INSERT INTO promo_extras (promo_code, {', '.join(fields)}, created_at, updated_at, updated_by)
-                    VALUES ({', '.join(['?']*(len(fields)+4))})
-                    ON CONFLICT(promo_code) DO UPDATE SET
-                        {', '.join([f"{f}=excluded.{f}" for f in fields])},
-                        updated_at=excluded.updated_at,
-                        updated_by=excluded.updated_by
-                """, [code, *vals, now, now, user])
+            engine = self.get_engine()
+            # Use MERGE for upsert semantics in SQL Server
+            cols = ', '.join(fields)
+            params = {f: extras.get(f) for f in fields}
+            params.update({'promo_code': code, 'created_at': now, 'updated_at': now, 'updated_by': user})
+            merge_sql = f"""
+            MERGE INTO PAM.promo_extras AS target
+            USING (VALUES (:promo_code, {', '.join([f':{f}' for f in fields])}, :created_at, :updated_at, :updated_by))
+            AS src(promo_code, {cols}, created_at, updated_at, updated_by)
+            ON target.promo_code = src.promo_code
+            WHEN MATCHED THEN UPDATE SET {', '.join([f'target.{f} = src.{f}' for f in fields])}, target.updated_at = src.updated_at, target.updated_by = src.updated_by
+            WHEN NOT MATCHED THEN INSERT (promo_code, {cols}, created_at, updated_at, updated_by) VALUES (src.promo_code, {', '.join([f'src.{f}' for f in fields])}, src.created_at, src.updated_at, src.updated_by);
+            """
+            with engine.begin() as conn:
+                conn.execute(text(merge_sql), params)
         except Exception as e:
             logger.error(f"Failed upsert extras for {code}: {e}")
 
@@ -1183,11 +1131,7 @@ class DatabaseManager:
             engine = self.get_engine()
             with engine.begin() as conn:
                 conn.execute(text(sql), params)
-            # Record creation history event with diff (fields old None -> new value)
-            try:
-                self.record_creation_event(code, {k: field_map.get(k) for k in insert_cols}, user=user)
-            except Exception:
-                pass
+            # Version history removed: no creation event recorded
             return True
         except Exception as e:
             logger.error(f"Failed minimal insert for {code}: {e}")
@@ -1211,351 +1155,9 @@ class DatabaseManager:
             logger.error(f"Failed to fetch sku_group_ids: {e}")
             return []
 
-    def record_version_entry(self, code: str, change_type: str, description: str, user: str, diff: Optional[Dict[str, Any]] = None):
-        """Version history disabled/reset; no-op placeholder."""
-        return
-
-    # ===== New Minimal History API =====
-    def record_creation_event(self, code: str, inserted_fields: Dict[str, Any], user: str = 'System') -> bool:
-        """Record a single creation event with all inserted fields as NULL -> value diffs.
-
-        inserted_fields: mapping of column->value used in initial insert.
-        """
-        try:
-            diff = {}
-            for k, v in (inserted_fields or {}).items():
-                diff[k] = {'old': None, 'new': v}
-            payload = (code, datetime.utcnow().isoformat(), 'Created', user, json.dumps(diff))
-            with sqlite3.connect(self._diag_db_path) as conn:
-                conn.execute(
-                    "INSERT INTO promo_history (promo_code, timestamp, event_type, user_name, diff_json) VALUES (?,?,?,?,?)",
-                    payload
-                )
-            return True
-        except Exception as e:
-            logger.error(f"Failed to record creation event for {code}: {e}")
-            return False
-
-    def record_update_event(self, code: str, diff: Dict[str, Dict[str, Any]], user: str = 'System', window_seconds: int = 60) -> bool:
-        """Record an update (edit) event with 1-minute consolidation window.
-
-        If the most recent promo_history row for this promo is an 'Updated' event by the
-        same user and its timestamp is within window_seconds of now, we MERGE the new diff
-        into that existing row (keeping the original timestamp so the window does not slide).
-
-        Merge semantics for each field:
-          * If field not present yet -> add entire {old,new} pair.
-          * If field present -> keep original 'old', overwrite 'new' with newest value.
-        """
-        if not diff:
-            return False
-        try:
-            now = datetime.utcnow()
-            with sqlite3.connect(self._diag_db_path) as conn:
-                conn.row_factory = sqlite3.Row
-                cur = conn.execute(
-                    "SELECT id, timestamp, user_name, diff_json FROM promo_history WHERE promo_code=? AND event_type='Updated' ORDER BY timestamp DESC, id DESC LIMIT 1",
-                    (code,)
-                )
-                row = cur.fetchone()
-                if row is not None:
-                    try:
-                        ts = datetime.fromisoformat(row['timestamp'])
-                    except Exception:
-                        ts = None
-                    within_window = False
-                    if ts is not None:
-                        delta = (now - ts).total_seconds()
-                        within_window = delta <= window_seconds
-                    same_user = (row['user_name'] or 'System') == user
-                    if within_window and same_user:
-                        # Merge
-                        existing = {}
-                        try:
-                            existing = json.loads(row['diff_json']) if row['diff_json'] else {}
-                        except Exception:
-                            existing = {}
-                        for field, change in diff.items():
-                            if field in existing and isinstance(existing[field], dict):
-                                # Preserve original old; update new value
-                                if isinstance(change, dict) and 'new' in change:
-                                    existing[field]['new'] = change.get('new')
-                            else:
-                                existing[field] = change
-                        conn.execute(
-                            "UPDATE promo_history SET diff_json=? WHERE id=?",
-                            (json.dumps(existing), row['id'])
-                        )
-                        return True
-                # Otherwise insert new row
-                payload = (code, now.isoformat(), 'Updated', user, json.dumps(diff))
-                conn.execute(
-                    "INSERT INTO promo_history (promo_code, timestamp, event_type, user_name, diff_json) VALUES (?,?,?,?,?)",
-                    payload
-                )
-                return True
-        except Exception as e:
-            logger.error(f"Failed to record update event for {code}: {e}")
-            return False
-
-    def record_file_event(self, code: str, file_type: str, original_filename: str, stored_filename: str, size_bytes: int, checksum: Optional[str], user: str = 'System') -> bool:
-        """Record a discrete file upload event (no consolidation) into promo_history.
-
-        file_type expected values for history purposes:
-          - sku_excel -> 'SKU List Uploaded'
-          - tradein_excel -> 'Trade-In List Uploaded'
-          - other types map to generic 'File Uploaded'
-        Diff schema stored under keys representing metadata (original_filename, stored_filename, size_bytes, checksum, file_type).
-        """
-        try:
-            mapping = {
-                'sku_excel': 'SKU List Uploaded',
-                'tradein_excel': 'Trade-In List Uploaded'
-            }
-            event_type = mapping.get(file_type, 'File Uploaded')
-            diff = {
-                'file_type': {'old': None, 'new': file_type},
-                'original_filename': {'old': None, 'new': original_filename},
-                'stored_filename': {'old': None, 'new': stored_filename},
-                'size_bytes': {'old': None, 'new': size_bytes},
-                'checksum': {'old': None, 'new': checksum}
-            }
-            with sqlite3.connect(self._diag_db_path) as conn:
-                conn.execute(
-                    "INSERT INTO promo_history (promo_code, timestamp, event_type, user_name, diff_json) VALUES (?,?,?,?,?)",
-                    (code, datetime.utcnow().isoformat(), event_type, user, json.dumps(diff))
-                )
-            return True
-        except Exception as e:
-            logger.error(f"Failed to record file event for {code}: {e}")
-            return False
-
-    def record_pcr_version_event(self, code: str, generation_time: float, sql_length: int, user: str = 'System') -> bool:
-        """Record a PCR Version event with incrementing version number.
-
-        Fields captured in diff: version (new only), generation_time_seconds, sql_length_chars, generated_at.
-        Event label: PCR Version #N
-        """
-        try:
-            # Count existing PCR Version events to determine next version number
-            version = 1
-            with sqlite3.connect(self._diag_db_path) as conn:
-                cur = conn.execute(
-                    "SELECT COUNT(*) FROM promo_history WHERE promo_code=? AND event_type LIKE 'PCR Version %'",
-                    (code,)
-                )
-                row = cur.fetchone()
-                if row and row[0]:
-                    try:
-                        version = int(row[0]) + 1
-                    except Exception:
-                        version = 1
-                event_type = f"PCR Version #{version}"
-                diff = {
-                    'version': {'old': None, 'new': version},
-                    'generation_time_seconds': {'old': None, 'new': round(generation_time, 4)},
-                    'sql_length_chars': {'old': None, 'new': sql_length},
-                    'generated_at': {'old': None, 'new': datetime.utcnow().isoformat()}
-                }
-                conn.execute(
-                    "INSERT INTO promo_history (promo_code, timestamp, event_type, user_name, diff_json) VALUES (?,?,?,?,?)",
-                    (code, datetime.utcnow().isoformat(), event_type, user, json.dumps(diff))
-                )
-            return True
-        except Exception as e:
-            logger.error(f"Failed to record PCR version event for {code}: {e}")
-            return False
-
-    def record_phase_change_event(self, code: str, old_phase: Optional[str], new_phase: str, user: str = 'System') -> bool:
-        """Record a phase transition (Build -> Launched -> Expired, etc.).
-
-        Stored as event_type 'Phase Change' with diff {'phase': {'old': old_phase, 'new': new_phase}}
-        (old_phase may be None for initial materialization)
-        """
-        try:
-            diff = {
-                'phase': {'old': old_phase, 'new': new_phase}
-            }
-            with sqlite3.connect(self._diag_db_path) as conn:
-                conn.execute(
-                    "INSERT INTO promo_history (promo_code, timestamp, event_type, user_name, diff_json) VALUES (?,?,?,?,?)",
-                    (code, datetime.utcnow().isoformat(), 'Phase Change', user, json.dumps(diff))
-                )
-            return True
-        except Exception as e:
-            logger.error(f"Failed to record phase change for {code}: {e}")
-            return False
-
-    def record_end_date_system_update(self, code: str, old_end: str, new_end: str, user: str = 'System') -> bool:
-        """Record a system-driven end date update event.
-
-        Event label pattern: System Updates End Date - MM/DD/YYYY (new_end formatted)
-        Diff contains only promo_end_date old -> new.
-        """
-        try:
-            # Format target date for label; fall back to raw string if parsing fails
-            label_date = new_end
-            try:
-                from datetime import datetime as _dt
-                # Accept common date formats
-                for fmt in ("%Y-%m-%d", "%m/%d/%Y", "%Y/%m/%d"):
-                    try:
-                        parsed = _dt.strptime(new_end, fmt)
-                        label_date = parsed.strftime("%m/%d/%Y")
-                        break
-                    except Exception:
-                        continue
-            except Exception:
-                pass
-            event_type = f"System Updates End Date - {label_date}"
-            diff = {
-                'promo_end_date': {'old': old_end, 'new': new_end}
-            }
-            with sqlite3.connect(self._diag_db_path) as conn:
-                conn.execute(
-                    "INSERT INTO promo_history (promo_code, timestamp, event_type, user_name, diff_json) VALUES (?,?,?,?,?)",
-                    (code, datetime.utcnow().isoformat(), event_type, user, json.dumps(diff))
-                )
-            return True
-        except Exception as e:
-            logger.error(f"Failed to record end date system update for {code}: {e}")
-            return False
-
-    def get_creation_events(self, code: str) -> List[Dict[str, Any]]:
-        rows: List[Dict[str, Any]] = []
-        try:
-            with sqlite3.connect(self._diag_db_path) as conn:
-                conn.row_factory = sqlite3.Row
-                cur = conn.execute("SELECT promo_code, timestamp, event_type, user_name, diff_json FROM promo_history WHERE promo_code=? ORDER BY timestamp ASC", (code,))
-                for r in cur.fetchall():
-                    diff = None
-                    try:
-                        diff = json.loads(r['diff_json']) if r['diff_json'] else None
-                    except Exception:
-                        diff = None
-                    rows.append({
-                        'promo_code': r['promo_code'],
-                        'timestamp': r['timestamp'],
-                        'change_type': r['event_type'],
-                        'changed_by': r['user_name'] or 'Unknown',
-                        'description': 'Created Promo' if r['event_type'] == 'Created' else r['event_type'],
-                        'field_changes': diff
-                    })
-        except Exception:
-            return []
-        return rows
-
-    def count_version_events(self, code: str, change_type: str) -> int:
-        """Return count of existing events for promo_code + change_type (SQLite)."""
-        try:
-            with sqlite3.connect(self._diag_db_path) as conn:
-                cur = conn.execute(
-                    "SELECT COUNT(*) FROM version_history WHERE promo_code=? AND change_type=?",
-                    (code, change_type)
-                )
-                row = cur.fetchone()
-                return int(row[0]) if row else 0
-        except Exception:
-            return 0
-
-    def record_promo_file(self, code: str, original_filename: str, stored_filename: str, file_type: Optional[str], size_bytes: int, checksum: Optional[str], uploaded_by: str):
-        """Persist a file upload record in promo_files."""
-        try:
-            with sqlite3.connect(self._diag_db_path) as conn:
-                conn.execute(
-                    """INSERT INTO promo_files (promo_code, original_filename, stored_filename, file_type, size_bytes, checksum, uploaded_by, uploaded_at)
-                        VALUES (?,?,?,?,?,?,?,?)""",
-                    (code, original_filename, stored_filename, file_type, size_bytes, checksum, uploaded_by, datetime.utcnow().isoformat())
-                )
-        except Exception as e:
-            logger.error(f"Failed to record promo file for {code}: {e}")
-
-    def get_promo_files(self, code: str) -> List[Dict[str, Any]]:
-        """Fetch uploaded file metadata records for a promo from SQLite.
-
-        Returns list of rows with keys: original_filename, stored_filename, file_type, size_bytes, checksum, uploaded_at, uploaded_by
-        """
-        out: List[Dict[str, Any]] = []
-        try:
-            with sqlite3.connect(self._diag_db_path) as conn:
-                cur = conn.execute(
-                    "SELECT original_filename, stored_filename, file_type, size_bytes, checksum, uploaded_at, uploaded_by FROM promo_files WHERE promo_code=? ORDER BY uploaded_at DESC",
-                    (code,)
-                )
-                for row in cur.fetchall():
-                    try:
-                        original_filename, stored_filename, file_type, size_bytes, checksum, uploaded_at, uploaded_by = row
-                        out.append({
-                            'original_filename': original_filename,
-                            'stored_filename': stored_filename,
-                            'file_type': file_type,
-                            'size_bytes': size_bytes,
-                            'checksum': checksum,
-                            'uploaded_at': uploaded_at,
-                            'uploaded_by': uploaded_by
-                        })
-                    except Exception:
-                        continue
-        except Exception as e:
-            logger.error(f"Failed to fetch promo files for {code}: {e}")
-        return out
-
-    def delete_promo_file(self, code: str, file_type: str):
-        """Delete promo file metadata rows for a given promo + type."""
-        try:
-            with sqlite3.connect(self._diag_db_path) as conn:
-                conn.execute("DELETE FROM promo_files WHERE promo_code=? AND file_type=?", (code, file_type))
-        except Exception as e:
-            logger.error(f"Failed to delete promo file metadata for {code}/{file_type}: {e}")
-
-    def delete_promo(self, promo_code: str, user_name: str = 'System') -> bool:
-        """Delete a promotion row from the PAM source table and related metadata.
-
-        This performs a HARD delete (no soft flag). Also removes any promo_extras and promo_files
-        rows plus uploaded files directory if present. Records a version_history audit entry.
-        Returns True on success (even if row absent), False on error.
-        """
-        code = (promo_code or '').strip()
-        if not code:
-            return False
-        try:
-            # 1. Delete from SQL Server source table
-            engine = self.get_engine()
-            del_sql = text(f"DELETE FROM {self.source_table} WHERE code = :code")
-            with engine.begin() as conn:
-                conn.execute(del_sql, { 'code': code })
-
-            # 2. Clean SQLite metadata + version history audit
-            with sqlite3.connect(self._diag_db_path) as conn:
-                try:
-                    conn.execute("DELETE FROM promo_extras WHERE promo_code=?", (code,))
-                    conn.execute("DELETE FROM promo_files WHERE promo_code=?", (code,))
-                    # NEW: remove history events for this promo
-                    try:
-                        conn.execute("DELETE FROM promo_history WHERE promo_code=?", (code,))
-                    except Exception:
-                        pass
-                    conn.execute(
-                        "INSERT INTO version_history (promo_code, timestamp, change_type, description, user_name, diff_json) VALUES (?,?,?,?,?,?)",
-                        (code, datetime.utcnow().isoformat(), 'Deleted', f'Promo {code} deleted', user_name, None)
-                    )
-                    conn.commit()
-                except Exception as ie:
-                    logger.warning(f"Partial metadata cleanup failure for {code}: {ie}")
-
-            # 3. Remove uploads folder (best-effort)
-            uploads_dir = os.path.join('data','uploads', code)
-            if os.path.isdir(uploads_dir):
-                try:
-                    import shutil
-                    shutil.rmtree(uploads_dir, ignore_errors=True)
-                except Exception:
-                    pass
-            logger.info(f"Deleted promo {code} from source + metadata")
-            return True
-        except Exception as e:
-            logger.error(f"Failed to delete promo {code}: {e}")
-            return False
+    # Version-history and promo_history persistence removed per project reset.
+    # All functions that previously wrote to or read from `PAM.promo_history` have been deleted.
+    # If you need to reintroduce history, implement a new module under `data/` and wire callers explicitly.
 
     def insert_promo_record(self, field_map: Dict[str, Any]) -> bool:
         """Insert a brand new promotion row into the PAM source table.

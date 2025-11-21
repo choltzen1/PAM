@@ -261,12 +261,7 @@ def generate_date_sql_bp():
                 sql_statements.append(sql)
             except ValueError:
                 return jsonify({'success': False,'message': f'Invalid date format: {new_end_date}. Use MM/DD/YYYY format.'}), 400
-        # Record a single compact version history event per promo
-        dm = _ensure_data_manager()
-        for promo_code in promo_codes:
-            if hasattr(dm, 'record_date_mismatch_sql'):
-                # Provide minimal metrics (no huge SQL blob)
-                dm.record_date_mismatch_sql(promo_code, 'System', generation_time=0.0, sql_length=sum(len(s) for s in sql_statements))
+        # Date mismatch event recording removed per version history deletion
         return jsonify({'success': True,'sql_statements': sql_statements})
     except Exception as e:
         return jsonify({'success': False,'message': f'Error generating SQL: {str(e)}'}), 500
@@ -392,18 +387,7 @@ def generate_batch_sql_bp():
         if not sql_statements:
             return jsonify({'success': False,'error':'No valid SQL statements could be generated','failed_promos': failed_promos}), 400
         # Record version history events for successful promos (one per promo)
-        try:
-            dm = _ensure_data_manager()
-            for code in successful_promos:
-                if hasattr(dm, 'record_date_mismatch_sql'):
-                    # Use individual statement length for each promo for better granularity
-                    try:
-                        stmt = next((s for s in sql_statements if f"promo_code = '{code}'" in s), '')
-                        dm.record_date_mismatch_sql(code, 'System', generation_time=0.0, sql_length=len(stmt))
-                    except Exception:
-                        pass
-        except Exception:
-            pass
+        # Date mismatch event recording removed per version history deletion
         from datetime import datetime
         today = datetime.now().strftime('%Y-%m-%d')
         filename = f"End_date_updates_{today}.sql"
@@ -1221,13 +1205,7 @@ def _edit_rdc(promo_code):
                 except Exception as save_err:
                     print(f"[SQL GEN][WRITE][ERROR] File save failed for {promo_code}: {save_err}")
                     flash(f"SQL file save failed: {save_err}", 'warning')
-                # Record PCR version event
-                try:
-                    pcr_version = dm.record_sql_generation(promo_code, "Cade Holtzen", generation_time, len(sql_content))
-                    if pcr_version:
-                        flash(f"PCR Version #{pcr_version} recorded", 'info')
-                except Exception as vh_err:
-                    print(f"[SQL GEN] Version history record failed: {vh_err}")
+                # Version history removed: no PCR version recorded
                 # Performance + summary flash
                 flash(f"SQL generated in {generation_time:.2f}s | {len(sql_content):,} chars", 'success')
                 # Force tab to SQL Generation

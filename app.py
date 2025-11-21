@@ -28,19 +28,6 @@ def perf_metrics():
     from flask import jsonify
     return jsonify(collector.snapshot())
 
-@app.route('/theme', methods=['GET','POST'])
-def set_theme():
-    """Persist user theme choice (light/dark/auto) in a cookie.
-    Returns JSON describing the saved mode. LocalStorage will also be used client-side for first-paint override.
-    """
-    mode = request.values.get('mode','auto')
-    if mode not in ('light','dark','auto'):
-        mode = 'auto'
-    resp = make_response(jsonify(success=True, mode=mode))
-    # 1 year persistence
-    resp.set_cookie('theme', mode, max_age=60*60*24*365, samesite='Lax')
-    return resp
-
 # Register hooks and metrics endpoint without @app.route to satisfy blueprint-only policy
 app.before_request(_perf_begin)
 app.after_request(_perf_end)

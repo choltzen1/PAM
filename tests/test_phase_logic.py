@@ -10,15 +10,12 @@ class PhaseTestHarness:
         cur = self.extras_store.get(code, {})
         cur.update(extras)
         self.extras_store[code] = cur
-    def record_phase_change_event(self, *args, **kwargs):
-        return True
 
 def build_manager(monkeypatch):
     mgr = PromoDataManager()
     harness = PhaseTestHarness()
     monkeypatch.setattr(mgr.db_manager, 'get_promo_extras', harness.get_promo_extras)
     monkeypatch.setattr(mgr.db_manager, 'upsert_promo_extras', harness.upsert_promo_extras)
-    monkeypatch.setattr(mgr.db_manager, 'record_phase_change_event', harness.record_phase_change_event)
     return mgr
 
 def test_phase_build_before_start(monkeypatch):

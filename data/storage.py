@@ -132,60 +132,17 @@ class PromoDataManager:
                     self._maybe_log_phase_transition(promo_code, phase)
                 except Exception:
                     converted['phase'] = 'Build'
-                # Attach uploaded file metadata (Excel + generated SQL) if present
+                # Uploaded file metadata is now only read from disk; promo_history queries removed.
                 try:
-                    file_rows = self.db_manager.get_promo_files(promo_code)
-                    if file_rows:
-                        uploaded_files: Dict[str, Any] = {}
-                        for r in file_rows:
-                            ftype = r.get('file_type') or ''
-                            # Map specific known types for template consumption
-                            if ftype in ('sku_excel','tradein_excel'):
-                                inferred_name = 'sku_list.xlsx' if ftype=='sku_excel' else 'tradein_list.xlsx'
-                                fpath = os.path.join(self.promo_uploads_dir, promo_code, inferred_name)
-                                # Skip stale metadata (file deleted) and clean DB
-                                if not os.path.exists(fpath):
-                                    try:
-                                        self.db_manager.delete_promo_file(promo_code, ftype)
-                                    except Exception:
-                                        pass
-                                    continue
-                                uploaded_files[ftype] = {
-                                    'original_name': r.get('original_filename'),
-                                    'uploaded_at': r.get('uploaded_at'),
-                                    'upload_date': r.get('uploaded_at'),
-                                    'file_size': r.get('size_bytes'),
-                                    'file_path': fpath,
-                                    'checksum': r.get('checksum')
-                                }
-                            elif ftype == 'generated_sql':
-                                # Provide a lightweight flag for UI (actual SQL content already in promo_data if generated)
-                                uploaded_files[ftype] = {
-                                    'original_name': r.get('original_filename') or f"{promo_code}_promo_eligibility_rules.sql",
-                                    'uploaded_at': r.get('uploaded_at'),
-                                    'upload_date': r.get('uploaded_at'),
-                                    'file_size': r.get('size_bytes'),
-                                    'file_path': os.path.join(self.promo_uploads_dir, promo_code, r.get('stored_filename') or f"{promo_code}_promo_eligibility_rules.sql"),
-                                    'checksum': r.get('checksum')
-                                }
-                        if uploaded_files:
-                            converted['uploaded_files'] = uploaded_files
-                    # If generated SQL file exists, load its content (cap length for performance)
-                    try:
-                        sql_file_path = os.path.join(self.promo_uploads_dir, promo_code, f"{promo_code}_promo_eligibility_rules.sql")
-                        if os.path.exists(sql_file_path):
+                    sql_file_path = os.path.join(self.promo_uploads_dir, promo_code, f"{promo_code}_promo_eligibility_rules.sql")
+                    if os.path.exists(sql_file_path):
+                        try:
                             with open(sql_file_path, 'r', encoding='utf-8', errors='replace') as sf:
                                 sql_content = sf.read()
                             converted['generated_sql'] = sql_content
                             converted['sql_length'] = len(sql_content)
-                            # If file metadata recorded, use its uploaded_at as generated timestamp
-                            gen_meta = None
-                            for _k,_v in converted.get('uploaded_files', {}).items():
-                                if _k == 'generated_sql':
-                                    gen_meta = _v; break
-                            converted['sql_generated_at'] = (gen_meta or {}).get('uploaded_at')
-                    except Exception as read_sql_err:
-                        print(f"Read generated SQL failed for {promo_code}: {read_sql_err}")
+                        except Exception as read_sql_err:
+                            print(f"Read generated SQL failed for {promo_code}: {read_sql_err}")
                 except Exception as attach_err:
                     print(f"Attach uploaded_files failed for {promo_code}: {attach_err}")
                 return converted
@@ -193,6 +150,39 @@ class PromoDataManager:
         except Exception as e:
             print(f"Database lookup failed for {promo_code}: {e}")
             return {}
+    
+    def delete_promo(self, promo_code: str) -> bool:
+        """Delete promotion from database and cleanup extras/files."""
+        deleted = False
+        
+        # Delete from main promo table
+        try:
+            from sqlalchemy import text
+            engine = self.db_manager.get_engine()
+            sql = f"DELETE FROM {self.db_manager.source_table} WHERE code = :promo_code"
+            with engine.begin() as conn:
+                result = conn.execute(text(sql), {'promo_code': promo_code})
+                if result.rowcount > 0:
+                    deleted = True
+        except Exception as e:
+            print(f"[DELETE] Database deletion failed for {promo_code}: {e}")
+        
+        # Delete extras record if exists
+        try:
+            self.db_manager.delete_promo_extras(promo_code)
+        except Exception as e:
+            print(f"[DELETE] Extras deletion failed for {promo_code}: {e}")
+        
+        # Delete uploaded files
+        try:
+            promo_dir = os.path.join(self.promo_uploads_dir, promo_code)
+            if os.path.exists(promo_dir):
+                import shutil
+                shutil.rmtree(promo_dir)
+        except Exception as e:
+            print(f"[DELETE] File cleanup failed for {promo_code}: {e}")
+        
+        return deleted
     
     def get_spe_promo(self, promo_code: str) -> Dict[str, Any]:
         """Fast lookup of a single SPE promo by code.
@@ -556,14 +546,10 @@ class PromoDataManager:
                 diff[k] = {'old': before_val, 'new': after_val}
                 changed_fields.append(k)
 
-        if changed_fields:
-            human_list = ', '.join(changed_fields[:10]) + ('...' if len(changed_fields) > 10 else '')
-            description = f"Edited fields: {human_list}"
-            # Record consolidated update event (1-minute window handled in DB layer)
-            try:
-                self.db_manager.record_update_event(promo_code, diff, user_name)
-            except Exception:
-                pass
+                if changed_fields:
+                    human_list = ', '.join(changed_fields[:10]) + ('...' if len(changed_fields) > 10 else '')
+                    description = f"Edited fields: {human_list}"
+                    # Version history storage removed; no history event will be recorded here.
 
         return {
             'success': True,
@@ -573,58 +559,7 @@ class PromoDataManager:
             'applied_extras_fields': list(extras_updates.keys()),
         }
 
-    # --- SQL generation/version events (wrappers for previous VersionHistory integration) ---
-    def record_sql_generation(self, promo_code: str, user_name: str, generation_time: float, sql_length: int):
-        """Record PCR SQL generation as a discrete PCR Version #N history event.
-
-        Returns the version number recorded (int) or None on failure.
-        """
-        try:
-            ok = self.db_manager.record_pcr_version_event(promo_code, generation_time, sql_length, user=user_name)
-            if not ok:
-                return None
-            # Recompute count after insert to know version number (simple COUNT of PCR Version events)
-            # Using direct SQLite query via db_manager to avoid duplicating logic
-            import sqlite3, os
-            vh_path = os.path.join('data','version_history.db')
-            version = None
-            try:
-                with sqlite3.connect(vh_path) as conn:
-                    cur = conn.execute("SELECT COUNT(*) FROM promo_history WHERE promo_code=? AND event_type LIKE 'PCR Version %'", (promo_code,))
-                    row = cur.fetchone()
-                    if row and row[0]:
-                        version = int(row[0])
-            except Exception:
-                pass
-            return version
-        except Exception:
-            return None
-
-    def record_date_mismatch_sql(self, promo_code: str, user_name: str, generation_time: float, sql_length: int):
-        """Record Date Mismatch SQL generation (compact metadata only)."""
-        current = self.db_manager.count_version_events(promo_code, 'Date Mismatch SQL')
-        version_number = current + 1
-        meta = {
-            'context': 'date_mismatch',
-            'sql_generation_time': generation_time,
-            'sql_length': sql_length,
-            'version': version_number
-        }
-        description = f'Date Mismatch SQL #{version_number} generated'
-    # Version history disabled
-
-    def record_uploaded_file(self, promo_code: str, original_filename: str, stored_filename: str,
-                              file_type: Optional[str], size_bytes: int, checksum: Optional[str], user_name: str):
-        """Store metadata for an uploaded promo-related file."""
-        self.db_manager.record_promo_file(
-            code=promo_code,
-            original_filename=original_filename,
-            stored_filename=stored_filename,
-            file_type=file_type,
-            size_bytes=size_bytes,
-            checksum=checksum,
-            uploaded_by=user_name
-        )
+    # Version history functionality removed from this manager entirely.
     
     def save_spe_promo(self, promo_code: str, promo_data: Dict[str, Any], user_name: str = "System"):
         """Save or update an SPE promotion with change tracking"""
@@ -637,19 +572,14 @@ class PromoDataManager:
         # If it's a new promo, add creation timestamp
         if promo_code not in data:
             promo_data['created_at'] = datetime.now().isoformat()
-            promo_data['version_history'] = [
-                f"{datetime.now().strftime('%m/%d/%Y %I:%M %p')} - {user_name} - Created SPE promo."
-            ]
+            # Version history removed: do not persist version history entries
             promo_data['last_changes'] = None
         else:
             # Preserve creation timestamp and existing permanent version history
             old_data = data[promo_code]
             promo_data['created_at'] = old_data.get('created_at', datetime.now().isoformat())
             
-            # Keep permanent version history (anything that doesn't start with "Last save:")
-            permanent_history = [entry for entry in old_data.get('version_history', []) 
-                               if not entry.startswith('Last save:')]
-            promo_data['version_history'] = permanent_history
+            # Version history removed: do not copy over old version_history
             
             # Track field changes
             changes = self._get_field_changes(old_data, promo_data)
@@ -780,38 +710,7 @@ class PromoDataManager:
             return value.strip()
         return str(value)
     
-    def add_permanent_version_entry(self, promo_code: str, entry: str, is_spe: bool = False):
-        """Add a permanent entry to version history (for approvals, PCR versions, etc.)"""
-        file_path = self.spe_file if is_spe else self.promo_file
-        data = self._load_json(file_path)
-        
-        if promo_code in data:
-            if 'version_history' not in data[promo_code]:
-                data[promo_code]['version_history'] = []
-            data[promo_code]['version_history'].append(entry)
-            data[promo_code]['updated_at'] = datetime.now().isoformat()
-            self._save_json(file_path, data)
-    
-    def add_approval_version(self, promo_code: str, version_number: int, approver: str, is_spe: bool = False):
-        """Add an approval version entry"""
-        timestamp = datetime.now().strftime('%m/%d/%Y %I:%M %p')
-        entry = f"{timestamp} - {approver} - Approval sent out (version #{version_number})"
-        self.add_permanent_version_entry(promo_code, entry, is_spe)
-    
-    def add_pcr_version(self, promo_code: str, version_number: int, user_name: str, is_spe: bool = False):
-        """Add a PCR version entry"""
-        timestamp = datetime.now().strftime('%m/%d/%Y %I:%M %p')
-        entry = f"{timestamp} - {user_name} - PCR version #{version_number}"
-        self.add_permanent_version_entry(promo_code, entry, is_spe)
-    
-    def delete_promo(self, promo_code: str):
-        """Delete a promotion via DatabaseManager hard delete (if available)."""
-        if hasattr(self.db_manager, 'delete_promo'):
-            try:
-                return self.db_manager.delete_promo(promo_code)
-            except Exception:
-                return False
-        return False
+    # Version history methods removed
 
     # --- Creation / Orbit ingestion helpers ---
     def _generate_next_sequential_code(self) -> str:
@@ -886,11 +785,7 @@ class PromoDataManager:
         ok = self.db_manager.insert_promo_record(insertion_fields)
         if not ok:
             return {'success': False, 'error': 'Insert failed'}
-        # New minimal history: record creation event
-        try:
-            self.db_manager.record_creation_event(new_code, insertion_fields, user_name)
-        except Exception:
-            pass
+        # Version history storage removed; creation events are not recorded.
         # Return unified converted record
         db_record = self.db_manager.get_promo_by_code(new_code) or {}
         payload = self.db_manager.convert_db_record_to_json_format(db_record)
@@ -938,8 +833,7 @@ class PromoDataManager:
             if old != phase:
                 # Upsert extras with new phase value
                 self.db_manager.upsert_promo_extras(code, {'current_phase': phase}, user)
-                # Record phase change event
-                self.db_manager.record_phase_change_event(code, old, phase, user)
+                # Version history removed; no phase change event recorded.
         except Exception:
             pass
 
@@ -998,7 +892,7 @@ class PromoDataManager:
                 existing = self.db_manager.get_promo_extras(code) or {}
                 if existing.get('current_phase') != phase:
                     self.db_manager.upsert_promo_extras(code, {'current_phase': phase}, user)
-                    self.db_manager.record_phase_change_event(code, existing.get('current_phase'), phase, user)
+                    # Version history removed; no phase change event recorded.
                     updated += 1
             except Exception:
                 continue
@@ -1293,35 +1187,7 @@ class PromoDataManager:
                 "file_path": file_path,
                 "checksum": checksum
             }
-            # Persist metadata in SQLite
-            try:
-                self.record_uploaded_file(
-                    promo_code=promo_code,
-                    original_filename=original_filename,
-                    stored_filename=filename,
-                    file_type=file_type,
-                    size_bytes=file_size,
-                    checksum=checksum,
-                    user_name="System"
-                )
-                # Record discrete history event only if checksum differs from prior upload of same type
-                try:
-                    prior_files = self.db_manager.get_promo_files(promo_code)
-                    prior_checksum = next((r.get('checksum') for r in prior_files if r.get('file_type') == file_type), None)
-                    if not (prior_checksum and prior_checksum == checksum):
-                        self.db_manager.record_file_event(
-                            code=promo_code,
-                            file_type=file_type,
-                            original_filename=original_filename,
-                            stored_filename=filename,
-                            size_bytes=file_size,
-                            checksum=checksum,
-                            user='System'
-                        )
-                except Exception:
-                    pass
-            except Exception:
-                pass
+            # File metadata tracking removed per version history deletion
             return file_metadata
             
         except Exception as e:
@@ -1360,34 +1226,7 @@ class PromoDataManager:
             import hashlib
             h = hashlib.md5(sql_content.encode('utf-8'))
             checksum = h.hexdigest()
-            try:
-                self.record_uploaded_file(
-                    promo_code=promo_code,
-                    original_filename=filename,
-                    stored_filename=secure_name,
-                    file_type="generated_sql",
-                    size_bytes=size_bytes,
-                    checksum=checksum,
-                    user_name="System"
-                )
-                # Record event only if checksum differs from previous generated_sql upload
-                try:
-                    prior_files = self.db_manager.get_promo_files(promo_code)
-                    prior_checksum = next((r.get('checksum') for r in prior_files if r.get('file_type') == 'generated_sql'), None)
-                    if not (prior_checksum and prior_checksum == checksum):
-                        self.db_manager.record_file_event(
-                            code=promo_code,
-                            file_type="generated_sql",
-                            original_filename=filename,
-                            stored_filename=secure_name,
-                            size_bytes=size_bytes,
-                            checksum=checksum,
-                            user='System'
-                        )
-                except Exception:
-                    pass
-            except Exception:
-                pass
+            # upload metadata recording removed per repo-wide history removal
             return file_path
             
         except Exception as e:
@@ -1424,11 +1263,8 @@ class PromoDataManager:
                 file_path = file_info['file_path']
                 if os.path.exists(file_path):
                     os.remove(file_path)
-                # Remove metadata row from SQLite
-                try:
-                    self.db_manager.delete_promo_file(promo_code, file_type)
-                except Exception:
-                    pass
+                # Remove metadata row from SQL Server via DatabaseManager
+                # Version history/file events removed: only delete local file
                 # No need to call save_promo; uploaded_files rebuilt dynamically
             return True
         except Exception:
@@ -1622,11 +1458,7 @@ class PromoDataManager:
             # Record version history diff under dedicated change_type 'Date Mismatch'
             diff = {'promo_end_date': {'old': old_end, 'new': orbit_end}}
             desc = f'Date mismatch sync: promo_end_date {old_end} -> {orbit_end}'
-            try:
-                # Record new system end date update event in promo_history
-                self.db_manager.record_end_date_system_update(promo_code, old_end, orbit_end, user=user_name)
-            except Exception:
-                pass
+            # Recording system end date updates removed per history deletion
             return {'success': True, 'message': f'{promo_code} updated to ORBIT end date {orbit_end}', 'old_date': old_end, 'new_date': orbit_end}
         except Exception as e:
             return {'success': False, 'message': f'Unexpected error syncing {promo_code}: {e}', 'old_date': None, 'new_date': None}
