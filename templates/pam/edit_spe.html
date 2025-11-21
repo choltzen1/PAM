@@ -79,27 +79,29 @@
         <form method="post" enctype="multipart/form-data">
           <input type="hidden" name="active_tab" value="{{ active_tab }}">          {% if active_tab == 'Details' %}
             <div class="grid-form four-col">
-              <label class="section-label col-span-2">Promo Identifier</label>
-              <label class="section-label col-span-2">PT Priority Indicator</label>
-              <select class="form-select col-span-2" name="promo_identifier">
+              <label class="section-label col-span-2">Bill Facing Name</label>
+              <label class="section-label">Promo Identifier</label>
+              <label class="section-label">PT Priority Indicator</label>
+              <input class="form-control col-span-2" name="bill_facing_name" value="{{ promo.bill_facing_name or '' }}" placeholder="Enter bill facing name">
+              <select class="form-select" name="promo_identifier">
                 {% for val in ['B','F','I','U','Z','NULL'] %}
                 <option value="{{ val }}" {% if promo.get('promo_identifier') == val %}selected{% endif %}>{{ val }}</option>
                 {% endfor %}
               </select>
-              <select class="form-select col-span-2" name="pt_priority_indicator">
+              <select class="form-select" name="pt_priority_indicator">
                 {% for val in ['B','G','NULL'] %}
                 <option value="{{ val }}" {% if promo.get('pt_priority_indicator') == val %}selected{% endif %}>{{ val }}</option>
                 {% endfor %}
               </select>
 
-              <label class="section-label col-span-4">Account Type</label>
+              <label class="section-label col-span-4">Magenta Pulse Link</label>
               <div class="input-group col-span-4">
-                <input type="text" name="account_type" value="{{ promo.account_type or '' }}" class="form-control" placeholder="Enter account type (e.g., A01, A02, A03, etc.)">
+                <input type="text" name="c2_content" value="{{ promo.c2_content or '' }}" class="form-control" placeholder="Enter full Magenta Pulse link">
               </div>
 
               <label class="section-label">Sales Application</label>
               <label class="section-label">DCD Web Cart</label>
-              <label class="section-label">On Menu</label>
+              <label class="section-label">Off Menu</label>
               <label class="section-label">Service Priority</label>
               <select class="form-select" name="sales_application">
                 {% for val in ['*','NULL'] %}
@@ -121,10 +123,11 @@
               <label class="section-label">Max Discount</label>
               <label class="section-label">Market Group</label>
               <label class="section-label">Store Group</label>
-              <label class="section-label">C2 Content</label>
+              <label class="section-label">ATST Group</label>
               <input class="form-control" name="max_discount" value="{{ promo.max_discount if promo.max_discount is not none else '' }}">
               <input class="form-control" name="market_group" value="{{ promo.market_group if promo.market_group is not none else '' }}">
-              <input class="form-control" name="store_group" value="{{ promo.store_group if promo.store_group is not none else '' }}">              <input class="form-control" name="c2_content" value="{{ promo.c2_content }}">
+              <input class="form-control" name="store_group" value="{{ promo.store_group if promo.store_group is not none else '' }}">
+              <input class="form-control" name="account_type" value="{{ promo.account_type or '' }}" placeholder="e.g., A01, A02">
             </div>
             <div class="save-footer">
               <button type="submit" class="btn btn-primary">Save Details</button>
@@ -135,31 +138,31 @@
               <!-- Row 1: Labels -->
               <label class="section-label">Promo Start Date</label>
               <label class="section-label">Promo End Date</label>
-              <label class="section-label">PR Date</label>
               <label class="section-label">BAN Tenure Start</label>
+              <label class="section-label">BAN Tenure End</label>
               
               <!-- Row 2: Inputs -->
               <input class="form-control" name="promo_start_date" type="date" value="{{ promo.promo_start_date }}">
               <input class="form-control" name="promo_end_date" type="date" value="{{ promo.promo_end_date }}">
-              <input class="form-control" name="pr_date" type="date" value="{{ promo.pr_date }}">
               <input class="form-control" name="ban_tenure_start" type="date" value="{{ promo.ban_tenure_start }}">
+              <input class="form-control" name="ban_tenure_end" type="date" value="{{ promo.ban_tenure_end }}">
 
               <!-- Row 3: Labels -->
-              <label class="section-label">BAN Tenure End</label>
-              <label class="section-label">MLC Days</label>
+              <label class="section-label">Port Duration</label>
+              <label class="section-label">Main. Line Count Days</label>
               <label class="section-label">Re-enroll Period</label>
               <label class="section-label">Promo Duration</label>
               
               <!-- Row 4: Inputs -->
-              <input class="form-control" name="ban_tenure_end" type="date" value="{{ promo.ban_tenure_end }}">
+              <input class="form-control" name="port_duration" placeholder="Port Duration" value="{{ promo.port_duration }}">
               <input class="form-control" name="maintain_line_count_days" value="{{ promo.maintain_line_count_days if promo.maintain_line_count_days is not none else '' }}">
               <input class="form-control" name="re_enroll_period" placeholder="Re-enroll Period" value="{{ promo.re_enroll_period }}">
               <input class="form-control" name="promo_duration" placeholder="Promo Duration" value="{{ promo.promo_duration }}">
 
-              <!-- Row 5: Port Duration and Channel Grace Period -->
-              <label class="section-label">Port Duration</label>
+              <!-- Row 5: PR Date and Channel Grace Period -->
+              <label class="section-label">PR Date</label>
               <label class="section-label col-span-3">Channel Grace Period</label>
-              <input class="form-control" name="port_duration" placeholder="Port Duration" value="{{ promo.port_duration }}">
+              <input class="form-control" name="pr_date" type="date" value="{{ promo.pr_date }}">
               <select class="form-select col-span-3" name="channel_grace_period">
                 {% for grace in ['G01','G02','G03','G04','G05','NULL'] %}
                 <option value="{{ grace }}" {% if promo.channel_grace_period == grace %}selected{% endif %}>{{ grace }}</option>
@@ -171,7 +174,27 @@
             </div>
 
           {% elif active_tab == 'Requirements' %}
-            <div class="grid-form four-col">              <label class="section-label col-span-4">TFB Channel Group ID</label>
+            <div class="grid-form four-col">              
+              <label class="section-label col-span-2">Adjustment Code</label>
+              <label class="section-label col-span-2">Discount Codes</label>              
+              <input class="form-control col-span-2" name="adjustment_code" value="{{ promo.adjustment_code if promo.adjustment_code is not none else '' }}">
+              <input class="form-control col-span-2" name="discount_codes" value="{{ promo.discount_codes if promo.discount_codes is not none else '' }}">
+
+              <label class="section-label col-span-4">SMS Indicator</label>
+              <select class="form-select col-span-4" name="sms_indicator" id="sms_indicator">
+                {% for val in ['Y','N'] %}
+                <option value="{{ val }}" {% if promo.sms_indicator == val %}selected{% endif %}>{{ val }}</option>
+                {% endfor %}
+              </select>
+
+              <div id="sms_fields" style="display: {{ 'contents' if promo.sms_indicator == 'Y' else 'none' }}; grid-column: 1 / -1; display: grid; grid-template-columns: subgrid;">
+                <label class="section-label col-span-2">SMS English</label>
+                <label class="section-label col-span-2">SMS Spanish</label>
+                <input class="form-control col-span-2" name="sms_english" value="{{ promo.sms_english or '' }}" placeholder="Enter SMS English text">
+                <input class="form-control col-span-2" name="sms_spanish" value="{{ promo.sms_spanish or '' }}" placeholder="Enter SMS Spanish text">
+              </div>
+
+              <label class="section-label col-span-4">TFB Channel Group ID</label>
               <select class="form-select col-span-4 mb-1" name="tfb_channel_group_id">
                 {% for group in ['NULL','A01','A02','A03','A04','A05'] %}
                 <option value="{{ group }}" {% if promo.tfb_channel_group_id == group %}selected{% endif %}>{{ group }}</option>
@@ -180,13 +203,9 @@
 
               <label class="section-label col-span-2">Dealer Group ID</label>
               <label class="section-label col-span-2">Updated MRC Ranking</label>
-              <select class="form-select col-span-2" name="dealer_group_id">
-                {% for group in ['G01','G02','G03','NULL'] %}
-                <option value="{{ group }}" {% if promo.dealer_group_id == group %}selected{% endif %}>{{ group }}</option>
-                {% endfor %}
-              </select>
+              <input class="form-control col-span-2" name="dealer_group_id" value="{{ promo.dealer_group_id or 'NULL' }}" placeholder="Enter Dealer Group ID">
               <select class="form-select col-span-2" name="updated_mrc_ranking">
-                {% for ranking in ['GSM','MI','NULL'] %}
+                {% for ranking in ['NULL','GSM','MI'] %}
                 <option value="{{ ranking }}" {% if promo.updated_mrc_ranking == ranking %}selected{% endif %}>{{ ranking }}</option>
                 {% endfor %}
               </select>              <label class="section-label col-span-2">Suppress Discount Reorder</label>
@@ -197,88 +216,113 @@
                 {% endfor %}
               </select>
               <select class="form-select col-span-2" name="retro_ban_evaluation">
-                {% for val in ['Yes','No'] %}
+                {% for val in ['NULL','Yes','No'] %}
                 <option value="{{ val }}" {% if promo.retro_ban_evaluation == val %}selected{% endif %}>{{ val }}</option>
                 {% endfor %}
               </select>
 
               <label class="section-label col-span-4">Port-In Group ID</label>
               <select class="form-select col-span-4" name="port_in_group_id">
-                {% for group in ['G02','G03','G04','G05','G06','G07','NULL'] %}
+                {% for group in ['NULL','G02','G03','G04','G05','G06','G07'] %}
                 <option value="{{ group }}" {% if promo.port_in_group_id == group %}selected{% endif %}>{{ group }}</option>
                 {% endfor %}
               </select>
-
-              <label class="section-label col-span-2">Adjustment Code</label>
-              <label class="section-label col-span-2">Discount Codes</label>              <input class="form-control col-span-2" name="adjustment_code" value="{{ promo.adjustment_code if promo.adjustment_code is not none else '' }}">
-              <input class="form-control col-span-2" name="discount_codes" value="{{ promo.discount_codes if promo.discount_codes is not none else '' }}">
             </div>
+            <script>
+              document.getElementById('sms_indicator').addEventListener('change', function() {
+                const smsFields = document.getElementById('sms_fields');
+                smsFields.style.display = this.value === 'Y' ? 'contents' : 'none';
+              });
+            </script>
             <div class="save-footer">
               <button type="submit" class="btn btn-primary">Save Requirements</button>
             </div>
 
           {% elif active_tab == 'Line Indicators' %}
-            <div class="grid-form four-col">
-              <label class="section-label">Total</label>
-              <label class="section-label">GSM</label>
-              <label class="section-label">MI</label>
-              <label class="section-label">Pure MI</label>
-              <select class="form-select" name="total_indicator">
-                {% for val in ['Y','N'] %}
-                <option value="{{ val }}" {% if promo.total_indicator == val %}selected{% endif %}>{{ val }}</option>
-                {% endfor %}
-              </select>
-              <select class="form-select" name="gsm_indicator">
-                {% for val in ['Y','N'] %}
-                <option value="{{ val }}" {% if promo.gsm_indicator == val %}selected{% endif %}>{{ val }}</option>
-                {% endfor %}
-              </select>
-              <select class="form-select" name="mi_indicator">
-                {% for val in ['Y','N'] %}
-                <option value="{{ val }}" {% if promo.mi_indicator == val %}selected{% endif %}>{{ val }}</option>
-                {% endfor %}
-              </select>
-              <select class="form-select" name="pure_mi_indicator">
-                {% for val in ['Y','N'] %}
-                <option value="{{ val }}" {% if promo.pure_mi_indicator == val %}selected{% endif %}>{{ val }}</option>
-                {% endfor %}
-              </select>
+            <div class="grid-form" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem;">
+              <div>
+                <label class="section-label">Total</label>
+                <select class="form-select" name="total_indicator">
+                  {% for val in ['Y','N'] %}
+                  <option value="{{ val }}" {% if promo.total_indicator == val %}selected{% endif %}>{{ val }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div>
+                <label class="section-label">GSM</label>
+                <select class="form-select" name="gsm_indicator">
+                  {% for val in ['Y','N'] %}
+                  <option value="{{ val }}" {% if promo.gsm_indicator == val %}selected{% endif %}>{{ val }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div>
+                <label class="section-label">MI</label>
+                <select class="form-select" name="mi_indicator">
+                  {% for val in ['Y','N'] %}
+                  <option value="{{ val }}" {% if promo.mi_indicator == val %}selected{% endif %}>{{ val }}</option>
+                  {% endfor %}
+                </select>
+              </div>
 
-              <label class="section-label">Virtual MI</label>
-              <label class="section-label">Duplicate</label>
-              <label class="section-label">Auto Att</label>
-              <label class="section-label">Fax Line</label>
-              <select class="form-select" name="virtual_mi_indicator">
-                {% for val in ['Y','N'] %}
-                <option value="{{ val }}" {% if promo.virtual_mi_indicator == val %}selected{% endif %}>{{ val }}</option>
-                {% endfor %}
-              </select>
-              <select class="form-select" name="duplicate_indicator">
-                {% for val in ['Y','N'] %}
-                <option value="{{ val }}" {% if promo.duplicate_indicator == val %}selected{% endif %}>{{ val }}</option>
-                {% endfor %}
-              </select>
-              <select class="form-select" name="auto_att_indicator">
-                {% for val in ['Y','N'] %}
-                <option value="{{ val }}" {% if promo.auto_att_indicator == val %}selected{% endif %}>{{ val }}</option>
-                {% endfor %}
-              </select>
-              <select class="form-select" name="fax_line_indicator">
-                {% for val in ['Y','N'] %}
-                <option value="{{ val }}" {% if promo.fax_line_indicator == val %}selected{% endif %}>{{ val }}</option>
-                {% endfor %}
-              </select><label class="section-label col-span-2">Conference</label>
-              <label class="section-label col-span-2">IOT</label>
-              <select class="form-select col-span-2" name="conference_indicator">
-                {% for val in ['Y','N'] %}
-                <option value="{{ val }}" {% if promo.conference_indicator == val %}selected{% endif %}>{{ val }}</option>
-                {% endfor %}
-              </select>
-              <select class="form-select col-span-2" name="iot_indicator">
-                {% for val in ['Y','N'] %}
-                <option value="{{ val }}" {% if promo.iot_indicator == val %}selected{% endif %}>{{ val }}</option>
-                {% endfor %}
-              </select>
+              <div>
+                <label class="section-label">Pure MI</label>
+                <select class="form-select" name="pure_mi_indicator">
+                  {% for val in ['Y','N'] %}
+                  <option value="{{ val }}" {% if promo.pure_mi_indicator == val %}selected{% endif %}>{{ val }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div>
+                <label class="section-label">Virtual MI</label>
+                <select class="form-select" name="virtual_mi_indicator">
+                  {% for val in ['Y','N'] %}
+                  <option value="{{ val }}" {% if promo.virtual_mi_indicator == val %}selected{% endif %}>{{ val }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div>
+                <label class="section-label">Duplicate</label>
+                <select class="form-select" name="duplicate_indicator">
+                  {% for val in ['Y','N'] %}
+                  <option value="{{ val }}" {% if promo.duplicate_indicator == val %}selected{% endif %}>{{ val }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+
+              <div>
+                <label class="section-label">Auto Att</label>
+                <select class="form-select" name="auto_att_indicator">
+                  {% for val in ['Y','N'] %}
+                  <option value="{{ val }}" {% if promo.auto_att_indicator == val %}selected{% endif %}>{{ val }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div>
+                <label class="section-label">Fax Line</label>
+                <select class="form-select" name="fax_line_indicator">
+                  {% for val in ['Y','N'] %}
+                  <option value="{{ val }}" {% if promo.fax_line_indicator == val %}selected{% endif %}>{{ val }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div>
+                <label class="section-label">Conference</label>
+                <select class="form-select" name="conference_indicator">
+                  {% for val in ['Y','N'] %}
+                  <option value="{{ val }}" {% if promo.conference_indicator == val %}selected{% endif %}>{{ val }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+
+              <div>
+                <label class="section-label">IOT</label>
+                <select class="form-select" name="iot_indicator">
+                  {% for val in ['Y','N'] %}
+                  <option value="{{ val }}" {% if promo.iot_indicator == val %}selected{% endif %}>{{ val }}</option>
+                  {% endfor %}
+                </select>
+              </div>
             </div>
             <div class="save-footer">
               <button type="submit" class="btn btn-primary">Save Line Indicators</button>
@@ -289,61 +333,37 @@
               <label class="section-label">GO Soc Group ID</label>
               <label class="section-label">BO Soc Group ID</label>
               <label class="section-label">Paid Soc Group ID</label>
-              <label class="section-label">Min Paid Line MI Count</label>
-              <select class="form-select" name="go_soc_group_id">
-                <option value="A56" {% if promo.go_soc_group_id == 'A56' %}selected{% endif %}>A56</option>
-                <option value="A55">A55</option>
-                <option value="A54">A54</option>
-              </select>
-              <select class="form-select" name="bo_soc_group_id">
-                <option value="A55" {% if promo.bo_soc_group_id == 'A55' %}selected{% endif %}>A55</option>
-                <option value="A56">A56</option>
-                <option value="A54">A54</option>
-              </select>
-              <select class="form-select" name="paid_soc_group_id">
-                <option value="A55" {% if promo.paid_soc_group_id == 'A55' %}selected{% endif %}>A55</option>
-                <option value="A56">A56</option>
-                <option value="A54">A54</option>
-              </select>
-              <input class="form-control" name="min_paid_line_mi_count" placeholder="Minimum Paid Line MI Count" value="{{ promo.min_paid_line_mi_count }}">
+              <label class="section-label">REQ Group ID</label>
+              <input class="form-control" name="go_soc_group_id" value="{{ promo.go_soc_group_id or 'NULL' }}">
+              <input class="form-control" name="bo_soc_group_id" value="{{ promo.bo_soc_group_id or 'NULL' }}">
+              <input class="form-control" name="paid_soc_group_id" value="{{ promo.paid_soc_group_id or 'NULL' }}">
+              <input class="form-control" name="req_group_id" value="{{ promo.req_group_id or 'NULL' }}">
 
               <label class="section-label">GO Line Maintenance</label>
               <label class="section-label">BO Line Maintenance</label>
               <label class="section-label">Paid Line Maintenance</label>
-              <label class="section-label">Min Paid Line GSM Cnt</label>
-              <select class="form-select" name="go_line_maintenance">
-                <option value="A57" {% if promo.go_line_maintenance == 'A57' %}selected{% endif %}>A57</option>
-                <option value="A56">A56</option>
-                <option value="A55">A55</option>
-              </select>
-              <select class="form-select" name="bo_line_maintenance">
-                <option value="A57" {% if promo.bo_line_maintenance == 'A57' %}selected{% endif %}>A57</option>
-                <option value="A56">A56</option>
-                <option value="A55">A55</option>
-              </select>
-              <select class="form-select" name="paid_line_maintenance">
-                <option value="A57" {% if promo.paid_line_maintenance == 'A57' %}selected{% endif %}>A57</option>
-                <option value="A56">A56</option>
-                <option value="A55">A55</option>
-              </select>
-              <input class="form-control" name="min_paid_line_gsm_count" value="{{ promo.min_paid_line_gsm_count if promo.min_paid_line_gsm_count is not none else '' }}">
+              <label class="section-label">REQ Group Maintenance</label>
+              <input class="form-control" name="go_line_maintenance" value="{{ promo.go_line_maintenance or 'NULL' }}">
+              <input class="form-control" name="bo_line_maintenance" value="{{ promo.bo_line_maintenance or 'NULL' }}">
+              <input class="form-control" name="paid_line_maintenance" value="{{ promo.paid_line_maintenance or 'NULL' }}">
+              <input class="form-control" name="req_group_maintenance" value="{{ promo.req_group_maintenance or 'NULL' }}">
 
               <label class="section-label">GO Line Count</label>
               <label class="section-label">BO Line Count</label>
               <label class="section-label">Borrow BO Lines</label>
               <label class="section-label">Lend BO Lines</label>
-              <input class="form-control" name="go_line_count" value="{{ promo.go_line_count if promo.go_line_count is not none else '' }}">
-              <input class="form-control" name="bo_line_count" value="{{ promo.bo_line_count if promo.bo_line_count is not none else '' }}">              <select class="form-select" name="borrow_bo_lines">
-                {% for val in ['Y','N'] %}
-                <option value="{{ val }}" {% if promo.borrow_bo_lines == val %}selected{% endif %}>{{ val }}</option>
-                {% endfor %}
-              </select>
-              <select class="form-select" name="lend_bo_lines">
-                {% for val in ['Y','N'] %}
-                <option value="{{ val }}" {% if promo.lend_bo_lines == val %}selected{% endif %}>{{ val }}</option>
-                {% endfor %}
-              </select>              <label class="section-label grid-full">Soc Discount Mapping</label>
-              <input class="form-control grid-full" name="soc_discount_mapping" value="{{ promo.soc_discount_mapping if promo.soc_discount_mapping is not none else '' }}">
+              <input class="form-control" name="go_line_count" value="{{ promo.go_line_count if promo.go_line_count is not none else '' }}" placeholder="Enter count">
+              <input class="form-control" name="bo_line_count" value="{{ promo.bo_line_count if promo.bo_line_count is not none else '' }}" placeholder="Enter count">
+              <input class="form-control" name="borrow_bo_lines" value="{{ promo.borrow_bo_lines or '' }}" placeholder="Y or N">
+              <input class="form-control" name="lend_bo_lines" value="{{ promo.lend_bo_lines or '' }}" placeholder="Y or N">
+
+              <label class="section-label col-span-2">Min Paid Line MI Count</label>
+              <label class="section-label col-span-2">Min Paid Line GSM Cnt</label>
+              <input class="form-control col-span-2" name="min_paid_line_mi_count" placeholder="Enter count" value="{{ promo.min_paid_line_mi_count or '' }}">
+              <input class="form-control col-span-2" name="min_paid_line_gsm_count" value="{{ promo.min_paid_line_gsm_count if promo.min_paid_line_gsm_count is not none else '' }}" placeholder="Enter count">
+
+              <label class="section-label grid-full">Soc Discount Mapping</label>
+              <input class="form-control grid-full" name="soc_discount_mapping" value="{{ promo.soc_discount_mapping if promo.soc_discount_mapping is not none else '' }}" placeholder="Enter mapping">
             </div>
             <div class="save-footer">
               <button type="submit" class="btn btn-primary">Save SOC Groupings</button>
