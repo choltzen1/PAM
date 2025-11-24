@@ -26,47 +26,52 @@ def get_config_preset(config_name: str) -> dict:
         'apple': {
             'product_type': 'G',
             'sales_application': 'S15',  # Apple channel
+            'mpss_lookback': '14',
         },
         'samsung': {
             'product_type': 'G',
             'sales_application': 'S17',  # Samsung channel
+            'mpss_lookback': '14',
         },
         'standard-gsm': {
             'product_type': 'G',
+            'mpss_lookback': '14',
             
         },
         'standard-mi': {
             'product_type': 'B',
+            'mpss_lookback': '14',
             
         },
         'bogo-gsm': {
             'product_type': 'G',
             'bogo': 'Y',
+            'mpss_lookback': '14',
             
         },
         'bogo-mi': {
             'product_type': 'B',
             'bogo': 'Y',
+            'mpss_lookback': '14',
             
         },
         'bvt-gsm': {
             'product_type': 'G',
-            
-            # BVT-specific fields - customize as needed
+            'mpss_lookback': '14',
         },
         'bvt-mi': {
             'product_type': 'B',
+            'mpss_lookback': '14',
             
             # BVT-specific fields - customize as needed
         },
         'non-0-trade-in': {
             'trade_in_grace': '32',
-            
+            'mpss_lookback': '14',
             # Trade-in specific fields - customize as needed
         },
         'rebate': {
             'product_type': 'G',
-            
             # Rebate-specific fields - customize as needed
         },
         'spe': {
