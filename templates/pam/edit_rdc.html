@@ -821,7 +821,11 @@
               {% endif %}
             </div>
           {% elif active_tab == 'Notes' %}
-            <div class="grid-form two-col"><div class="col-span-2"><label class="section-label">Notes</label><textarea class="form-control" name="promo_notes" rows="15">{{ promo.promo_notes or '' }}</textarea><small class="form-text text-muted">Add any additional notes, observations, or documentation.</small></div></div>
+            <div style="width: 90%; margin: 0 auto; padding: 2rem;">
+              <label class="section-label">Notes</label>
+              <textarea class="form-control" name="promo_notes" rows="12" style="resize: none; width: 100%; min-height: 300px; cursor: text; caret-color: #000 !important;">{{ promo.promo_notes or '' }}</textarea>
+              <small class="form-text text-muted">Add any additional notes, observations, or documentation.</small>
+            </div>
             <div class="save-footer"><button type="submit" class="btn btn-primary">Save Notes</button></div>
           {% elif active_tab == 'SQL Generation' %}
             <div class="sql-gen-row top-row">

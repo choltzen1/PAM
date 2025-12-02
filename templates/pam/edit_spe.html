@@ -370,12 +370,10 @@
             </div>
           
           {% elif active_tab == 'Notes' %}
-            <div class="grid-form two-col">
-              <div class="col-span-2">
-                <label class="section-label">SPE Notes</label>
-                <textarea class="form-control" name="spe_notes" rows="15" placeholder="Enter your SPE notes here...">{{ promo.spe_notes or '' }}</textarea>
-                <small class="form-text text-muted">Use this area to add any additional notes, observations, or documentation about this SPE promotion.</small>
-              </div>
+            <div style="width: 90%; margin: 0 auto; padding: 2rem;">
+              <label class="section-label">SPE Notes</label>
+              <textarea class="form-control" name="spe_notes" rows="12" placeholder="Enter your SPE notes here..." style="resize: none; width: 100%; min-height: 300px; cursor: text; caret-color: #000 !important;">{{ promo.spe_notes or '' }}</textarea>
+              <small class="form-text text-muted">Use this area to add any additional notes, observations, or documentation about this SPE promotion.</small>
             </div>
             
             <div class="save-footer">
