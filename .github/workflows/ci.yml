@@ -12,7 +12,7 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Install ODBC Driver 17 for SQL Server
+      - name: Install ODBC Driver 17/18 for SQL Server
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends gnupg curl ca-certificates apt-transport-https lsb-release
