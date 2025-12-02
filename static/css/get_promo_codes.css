@@ -28,6 +28,15 @@
   box-sizing: border-box;
 }
 
+/* All plain text in control groups adapts to theme */
+.version-controls,
+.version-controls label,
+.version-controls span,
+.version-controls .control-label,
+.version-controls .control-hint {
+  color: var(--text, #212529) !important;
+}
+
 .left-side-controls {
   display: flex;
   align-items: center;
@@ -42,7 +51,6 @@
 
 .search-section label {
   font-size: 0.8rem;
-  color: #6c757d;
   font-weight: 500;
   margin-bottom: 0.25rem;
 }

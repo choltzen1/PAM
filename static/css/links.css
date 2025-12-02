@@ -16,6 +16,14 @@
   min-height: 80px; /* Preserve explicit height while deferring all other styling to global */
 }
 
+/* All plain text in control groups adapts to theme */
+.version-controls,
+.version-controls label,
+.version-controls span,
+.version-controls p {
+  color: var(--text, #212529) !important;
+}
+
 .filter-group {
   display: flex;
   flex-direction: column;
@@ -27,7 +35,6 @@
 
 .filter-group label {
   font-size: 0.8rem;
-  color: #6c757d;
   font-weight: 500;
   margin-bottom: 0.25rem;
 }

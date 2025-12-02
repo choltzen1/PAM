@@ -1062,43 +1062,6 @@ class DatabaseManager:
         except Exception:
             return set()
 
-    def get_promo_extras(self, code: str) -> Dict[str, Any]:
-        try:
-            engine = self.get_engine()
-            with engine.connect() as conn:
-                row = conn.execute(text("SELECT * FROM PAM.promo_extras WHERE promo_code = :code"), {'code': code}).fetchone()
-                return dict(row) if row is not None else {}
-        except Exception:
-            return {}
-
-    def upsert_promo_extras(self, code: str, extras: Dict[str, Any], user: str):
-        # Extended field list to include testing status fields persisted with extras
-        fields = ['jira_ticket','initiative_name','sku_link','tradein_link','promo_grace','trade_in_grace','segment_name','sub_segment','segment_group_id','segment_level','flow_indicator','test_status','zlab_status']
-        cols = []
-        vals = []
-        for c in fields:
-            cols.append(c)
-            vals.append(extras.get(c))
-        now = datetime.utcnow().isoformat()
-        try:
-            engine = self.get_engine()
-            # Use MERGE for upsert semantics in SQL Server
-            cols = ', '.join(fields)
-            params = {f: extras.get(f) for f in fields}
-            params.update({'promo_code': code, 'created_at': now, 'updated_at': now, 'updated_by': user})
-            merge_sql = f"""
-            MERGE INTO PAM.promo_extras AS target
-            USING (VALUES (:promo_code, {', '.join([f':{f}' for f in fields])}, :created_at, :updated_at, :updated_by))
-            AS src(promo_code, {cols}, created_at, updated_at, updated_by)
-            ON target.promo_code = src.promo_code
-            WHEN MATCHED THEN UPDATE SET {', '.join([f'target.{f} = src.{f}' for f in fields])}, target.updated_at = src.updated_at, target.updated_by = src.updated_by
-            WHEN NOT MATCHED THEN INSERT (promo_code, {cols}, created_at, updated_at, updated_by) VALUES (src.promo_code, {', '.join([f'src.{f}' for f in fields])}, src.created_at, src.updated_at, src.updated_by);
-            """
-            with engine.begin() as conn:
-                conn.execute(text(merge_sql), params)
-        except Exception as e:
-            logger.error(f"Failed upsert extras for {code}: {e}")
-
     # --- Minimal creation helper (test/admin use) ---
     def insert_minimal_promo(self, field_map: Dict[str, Any], user: str = 'System') -> bool:
         """Insert a minimal promo row if code not present.

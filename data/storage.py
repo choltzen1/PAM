@@ -99,32 +99,6 @@ class PromoDataManager:
             db_record = self.db_manager.get_promo_by_code(promo_code)
             if db_record:
                 converted = self.db_manager.convert_db_record_to_json_format(db_record)
-                # Overlay promo_extras (extended metadata & testing status fields)
-                try:
-                    extras = self.db_manager.get_promo_extras(promo_code) or {}
-                    if extras:
-                        # Columns present in promo_extras that should project onto API JSON
-                        extras_overlay_fields = {
-                            'jira_ticket','initiative_name','sku_link','tradein_link','promo_grace','trade_in_grace',
-                            'segment_name','sub_segment','segment_group_id','segment_level','flow_indicator',
-                            'test_status','zlab_status'
-                        }
-                        for k, v in extras.items():
-                            if k in ('promo_code','created_at','updated_at','updated_by'):
-                                continue
-                            # Only overlay the defined extra fields set; ignore any accidental columns
-                            if k in extras_overlay_fields:
-                                # Do not overwrite non-empty base values with empty/None extras
-                                if k == 'initiative_name' and converted.get('initiative_name') and not v:
-                                    continue
-                                if v is None:
-                                    continue
-                                if isinstance(v, str) and v.strip() == "" and converted.get(k):
-                                    continue
-                                converted[k] = v
-                except Exception as extras_err:
-                    # Non-fatal; log to stdout for now (could be improved with structured logging)
-                    print(f"Attach promo_extras failed for {promo_code}: {extras_err}")
                 # Compute current phase and log transition (detail view)
                 try:
                     phase = self._compute_phase(converted.get('promo_start_date'), converted.get('promo_end_date'))
@@ -166,12 +140,6 @@ class PromoDataManager:
                     deleted = True
         except Exception as e:
             print(f"[DELETE] Database deletion failed for {promo_code}: {e}")
-        
-        # Delete extras record if exists
-        try:
-            self.db_manager.delete_promo_extras(promo_code)
-        except Exception as e:
-            print(f"[DELETE] Extras deletion failed for {promo_code}: {e}")
         
         # Delete uploaded files
         try:
@@ -412,7 +380,6 @@ class PromoDataManager:
             base_record = self.db_manager.get_promo_by_code(promo_code) or {}
         except Exception:
             base_record = {}
-        extras_record = self.db_manager.get_promo_extras(promo_code) or {}
 
         if not base_record:
             # Attempt minimal creation (Orbit-less) for test harness / admin utilities.
@@ -429,16 +396,6 @@ class PromoDataManager:
                 if inserted:
                     base_record = self.db_manager.get_promo_by_code(promo_code) or {}
                 else:
-                    # Fall back to previous graceful behavior
-                    extras_candidate = {k: v for k, v in promo_data.items() if k in {
-                        'jira_ticket','initiative_name','sku_link','tradein_link','promo_grace','trade_in_grace',
-                        'segment_name','sub_segment','segment_group_id','segment_level','flow_indicator','test_status','zlab_status'
-                    }}
-                    if extras_candidate:
-                        try:
-                            self.db_manager.upsert_promo_extras(promo_code, extras_candidate, user_name)
-                        except Exception:
-                            pass
                     return {'success': False, 'changed': [], 'diff': {}, 'error': 'Base promo not found (creation failed)'}
             except Exception:
                 return {'success': False, 'changed': [], 'diff': {}, 'error': 'Base promo not found (creation error)'}
@@ -484,8 +441,6 @@ class PromoDataManager:
             'trade_tier_4_min_fmv': 'mk_mdl_grp_tier_4_min_fmv',
             'trade_tier_4_max_fmv': 'mk_mdl_grp_tier_4_max_fmv',
         }
-        # Fields that remain only in SQLite extras (testing / status flags)
-        extras_fields = {'test_status','zlab_status'}
 
         # Normalize incoming promo_data keys based on synonym_map
         normalized_promo_data = {}
@@ -504,37 +459,27 @@ class PromoDataManager:
             return value
 
         base_updates = {}
-        extras_updates = {}
         for k,v in promo_data.items():
             if k in base_editable_fields:
                 base_updates[k] = _sanitize(k, v)
-            elif k in extras_fields:
-                extras_updates[k] = v
 
         # 3. Compute old unified snapshot for diff
         unified_before = {}
         for k in base_editable_fields:
             unified_before[k] = base_record.get(k)
-        for k in extras_fields:
-            unified_before[k] = extras_record.get(k)
 
         # 4. Apply updates
         if base_updates:
             self.db_manager.update_promo_fields(promo_code, base_updates)
-        if extras_updates:
-            self.db_manager.upsert_promo_extras(promo_code, extras_updates, user_name)
 
         # 5. Fetch after state for diff
         try:
             new_base = self.db_manager.get_promo_by_code(promo_code) or {}
         except Exception:
             new_base = {}
-        new_extras = self.db_manager.get_promo_extras(promo_code) or {}
         unified_after = {}
         for k in base_editable_fields:
             unified_after[k] = new_base.get(k)
-        for k in extras_fields:
-            unified_after[k] = new_extras.get(k)
 
         # 6. Diff
         diff = {}
@@ -556,7 +501,6 @@ class PromoDataManager:
             'changed': changed_fields,
             'diff': diff,
             'applied_base_fields': list(base_updates.keys()),
-            'applied_extras_fields': list(extras_updates.keys()),
         }
 
     # Version history functionality removed from this manager entirely.
@@ -825,18 +769,6 @@ class PromoDataManager:
         # Launched: started and not expired (end missing or today <= end)
         return 'Launched'
 
-    def _maybe_log_phase_transition(self, code: str, phase: str, user: str = 'System'):
-        """Persist phase in promo_extras and log transition if changed."""
-        try:
-            existing = self.db_manager.get_promo_extras(code) or {}
-            old = existing.get('current_phase') if existing else None
-            if old != phase:
-                # Upsert extras with new phase value
-                self.db_manager.upsert_promo_extras(code, {'current_phase': phase}, user)
-                # Version history removed; no phase change event recorded.
-        except Exception:
-            pass
-
     def delete_spe_promo(self, promo_code: str):
         """Delete an SPE promotion"""
         data = self._load_json(self.spe_file)
@@ -847,22 +779,12 @@ class PromoDataManager:
     def get_promo_list(self) -> List[Dict[str, Any]]:
         """Get a list of all promotions (DB only)."""
         all_promos = self.get_all_promos()
-        # Daily sweep (once per UTC date) before listing
-        try:
-            today = datetime.utcnow().strftime('%Y-%m-%d')
-            if self._last_phase_sweep_date != today:
-                self.sweep_phases()
-                self._last_phase_sweep_date = today
-        except Exception:
-            pass
         now = datetime.utcnow()
         rows: List[Dict[str, Any]] = []
         for code, promo in all_promos.items():
             start_date = promo.get('promo_start_date') or ''
             end_date = promo.get('promo_end_date') or ''
             phase = self._compute_phase(start_date, end_date, now)
-            # Log transition if changed
-            self._maybe_log_phase_transition(code, phase)
             rows.append({
                 'code': code,
                 'orbit_id': promo.get('orbit_id', ''),
@@ -874,29 +796,6 @@ class PromoDataManager:
                 'type': 'RDC'
             })
         return rows
-
-    # --- Phase sweep ---
-    def sweep_phases(self, user: str = 'System') -> Dict[str, int]:
-        """Recompute phases for all promos, logging transitions where phase changed.
-
-        Returns dict with counts: {'processed':N,'updated':M}
-        """
-        promos = self.get_all_promos()
-        processed = 0
-        updated = 0
-        now = datetime.utcnow()
-        for code, promo in promos.items():
-            processed += 1
-            phase = self._compute_phase(promo.get('promo_start_date'), promo.get('promo_end_date'), now)
-            try:
-                existing = self.db_manager.get_promo_extras(code) or {}
-                if existing.get('current_phase') != phase:
-                    self.db_manager.upsert_promo_extras(code, {'current_phase': phase}, user)
-                    # Version history removed; no phase change event recorded.
-                    updated += 1
-            except Exception:
-                continue
-        return {'processed': processed, 'updated': updated}
     
     def get_spe_promo_list(self) -> List[Dict[str, Any]]:
         """DB list of all SPE promotions for display."""
