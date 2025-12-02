@@ -29,7 +29,7 @@ jobs:
           fi
           
           sudo apt-get update
-          sudo ACCEPT_EULA=Y apt-get install -y msodbcsql17 unixodbc-dev
+          sudo ACCEPT_EULA=Y apt-get install -y msodbcsql18 unixodbc-dev
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -42,6 +42,8 @@ jobs:
       - name: Run tests
         env:
           PAM_VALIDATION_MODE: '1'
+          PAM_DB_DRIVER: 'ODBC Driver 18 for SQL Server'
+          ORBIT_DB_DRIVER: 'ODBC Driver 18 for SQL Server'
         run: pytest -q
       - name: Endpoint validator (enforce blueprint-only)
         env:
