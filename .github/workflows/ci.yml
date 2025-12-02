@@ -20,7 +20,8 @@ jobs:
           UBUNTU_VER="$(lsb_release -rs)"
           echo "Ubuntu version: $UBUNTU_VER"
           
-          curl -fsSL https://packages.microsoft.com/keys/microsoft.asc | sudo gpg --dearmor -o /usr/share/keyrings/microsoft-prod.gpg
+          curl -fsSL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > microsoft-prod.gpg
+          sudo mv microsoft-prod.gpg /usr/share/keyrings/microsoft-prod.gpg
           curl -fsSL "https://packages.microsoft.com/config/ubuntu/${UBUNTU_VER}/prod.list" | sudo tee /etc/apt/sources.list.d/microsoft-prod.list > /dev/null
           
           if ! grep -q "signed-by=/usr/share/keyrings/microsoft-prod.gpg" /etc/apt/sources.list.d/microsoft-prod.list; then
