@@ -276,21 +276,19 @@
   display: flex;
   gap: 1rem;
   padding: 0 2rem 1rem 2rem;
+  align-items: stretch;
 }
 
-.pdt-section {
+.panel {
   flex: 1;
   display: flex;
   flex-direction: column;
   background: white;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  border: 1px solid #dee2e6;
-  overflow: hidden;
-  min-height: 400px;
 }
 
-.pdt-header {
+.panel-header {
   background: #E20074;
   color: white;
   text-align: center;
@@ -298,12 +296,15 @@
   font-weight: bold;
   font-size: 16px;
   margin: 0;
+  border-radius: 8px 8px 0 0;
+  flex-shrink: 0;
 }
 
-.table-container {
-  flex: 1;
-  overflow-y: auto;
+.panel-content {
+  padding: 1rem;
   background: white;
+  border-radius: 0 0 8px 8px;
+  flex-grow: 1;
 }
 
 .data-table {
@@ -321,8 +322,6 @@
   font-weight: 600;
   font-size: 11px;
   border: none;
-  position: sticky;
-  top: 0;
 }
 
 .data-table tbody td {
@@ -330,6 +329,7 @@
   border-bottom: 1px solid #eee;
   font-size: 11px;
   vertical-align: top;
+  color: #000;
 }
 
 .data-table tbody tr {
@@ -342,36 +342,6 @@
 
 .data-table tbody tr.selected {
   background-color: #e3f2fd;
-}
-
-/* Details section with card styling - matches PDT width */
-.details-section {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  border: 1px solid #dee2e6;
-  overflow: hidden;
-  min-height: 400px;
-}
-
-.details-header {
-  background: #E20074;
-  color: white;
-  text-align: center;
-  padding: 1rem;
-  font-weight: bold;
-  font-size: 16px;
-  margin: 0;
-}
-
-.details-content {
-  flex: 1;
-  padding: 1rem;
-  overflow-y: auto;
-  background: white;
 }
 
 .detail-line {

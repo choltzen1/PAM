@@ -41,9 +41,9 @@
     <!-- Bottom table section with cards -->
     <div class="table-section">
     <!-- PDT header and table -->
-    <div class="pdt-section">
-      <div class="pdt-header">PDT</div>
-      <div class="table-container">
+    <div class="panel">
+      <div class="panel-header">PDT</div>
+      <div class="panel-content">
         <table class="data-table">
           <thead>
             <tr>
@@ -61,9 +61,9 @@
     </div>
 
     <!-- Details section -->
-    <div class="details-section">
-      <div class="details-header">Details</div>
-      <div class="details-content" id="promoDetails">
+    <div class="panel">
+      <div class="panel-header">Details</div>
+      <div class="panel-content" id="promoDetails">
         <div class="detail-line"><strong>Promo Owner:</strong> Rich Brakenhoff</div>
         <div class="detail-line"><strong>Promo Code:</strong> SP148</div>
         <div class="detail-line"><strong>Start Date:</strong> 09/04/2025</div>
@@ -333,55 +333,97 @@ function selectPromo(row, orbitId, promoCode, initiativeName, promoConfig) {
     // Update details panel with selected promo information
     const detailsContent = document.getElementById('promoDetails');
     
-    // Show basic information immediately
-    detailsContent.innerHTML = `
-        <div class="detail-line"><strong>Orbit ID:</strong> ${orbitId}</div>
-        <div class="detail-line"><strong>Promo Code:</strong> ${promoCode}</div>
-        <div class="detail-line"><strong>Initiative Name:</strong> ${initiativeName}</div>
-        <div class="detail-line"><strong>Promo Configuration:</strong> ${promoConfig}</div>
-        <div class="detail-line"><strong>Loading additional details...</strong></div>
+    // Build full details structure immediately with placeholders
+    const buildDetailsHTML = (dataObj) => `
+        <div class="detail-line"><strong>Orbit ID:</strong> <span class="detail-value">${dataObj.orbit_id || orbitId}</span></div>
+        <div class="detail-line"><strong>Promo Code:</strong> <span class="detail-value">${dataObj.promo_code || promoCode}</span></div>
+        <div class="detail-line"><strong>Initiative Name:</strong> <span class="detail-value">${dataObj.initiative_name || initiativeName}</span></div>
+        <div class="detail-line"><strong>Promo Configuration:</strong> <span class="detail-value">${dataObj.promo_config || promoConfig}</span></div>
+        <div class="detail-line"><strong>Promo Owner:</strong> <span class="detail-value">${dataObj.owner || '...'}</span></div>
+        <div class="detail-line"><strong>Start Date:</strong> <span class="detail-value">${dataObj.promo_start_date || '...'}</span></div>
+        <div class="detail-line"><strong>End Date:</strong> <span class="detail-value">${dataObj.promo_end_date || '...'}</span></div>
+        <div class="detail-line"><strong>Account Type:</strong> <span class="detail-value">${dataObj.account_type || '...'}</span></div>
+        <div class="detail-line"><strong>Activation Type:</strong> <span class="detail-value">${dataObj.activation_type || '...'}</span></div>
+        <div class="detail-line"><strong>Active Line Required:</strong> <span class="detail-value">${dataObj.active_line_required || '...'}</span></div>
+        <div class="detail-line"><strong>DCD Web Cart:</strong> <span class="detail-value">${dataObj.dcd_web_cart || '...'}</span></div>
+        <div class="detail-line"><strong>Device Sales Type:</strong> <span class="detail-value">${dataObj.device_sales_type || '...'}</span></div>
+        <div class="detail-line"><strong>Finance Type:</strong> <span class="detail-value">${dataObj.finance_type || '...'}</span></div>
+        <div class="detail-line"><strong>FPD Display:</strong> <span class="detail-value">${dataObj.fpd_display || '...'}</span></div>
+        <div class="detail-line"><strong>Maintain Active Line:</strong> <span class="detail-value">${dataObj.maintain_active_line || '...'}</span></div>
+        <div class="detail-line"><strong>Maintain SOC:</strong> <span class="detail-value">${dataObj.maintain_soc || '...'}</span></div>
+        <div class="detail-line"><strong>Market Group:</strong> <span class="detail-value">${dataObj.market_group || '...'}</span></div>
+        <div class="detail-line"><strong>Product Type:</strong> <span class="detail-value">${dataObj.product_type || '...'}</span></div>
+        <div class="detail-line"><strong>Sales Application:</strong> <span class="detail-value">${dataObj.sales_application || '...'}</span></div>
+        <div class="detail-line"><strong>SOC Group:</strong> <span class="detail-value">${dataObj.soc_grouping || '...'}</span></div>
+        <div class="detail-line"><strong>Store Group:</strong> <span class="detail-value">${dataObj.store_group || '...'}</span></div>
+        <div class="detail-line"><strong>Trade-In:</strong> <span class="detail-value">${dataObj.trade_in || '...'}</span></div>
+        <div class="detail-line"><strong>Broken Trade:</strong> <span class="detail-value">${dataObj.broken_trade || '...'}</span></div>
+        <div class="detail-line"><strong>MPSS Lookback:</strong> <span class="detail-value">${dataObj.mpss_lookback || '...'}</span></div>
     `;
+    
+    // Show structure immediately with placeholders
+    detailsContent.innerHTML = buildDetailsHTML({});
     
     // Make API call to get detailed promo information from PAM data
     fetch('/api/get_promo_details/' + promoCode)
         .then(response => response.json())
         .then(data => {
             if (data.found) {
-                // Update details with actual PAM data
-                detailsContent.innerHTML = `
-                    <div class="detail-line"><strong>Orbit ID:</strong> ${orbitId}</div>
-                    <div class="detail-line"><strong>Promo Code:</strong> ${promoCode}</div>
-                    <div class="detail-line"><strong>Initiative Name:</strong> ${initiativeName}</div>
-                    <div class="detail-line"><strong>Promo Configuration:</strong> ${promoConfig}</div>
-                    <div class="detail-line"><strong>Promo Owner:</strong> ${data.owner || 'N/A'}</div>
-                    <div class="detail-line"><strong>Start Date:</strong> ${data.promo_start_date || 'N/A'}</div>
-                    <div class="detail-line"><strong>End Date:</strong> ${data.promo_end_date || 'N/A'}</div>
-                    <div class="detail-line"><strong>Account Type:</strong> ${data.account_type || 'N/A'}</div>
-                    <div class="detail-line"><strong>Activation Type:</strong> ${data.activation_type || 'N/A'}</div>
-                    <div class="detail-line"><strong>Active Line Required:</strong> ${data.active_line_required || 'N/A'}</div>
-                    <div class="detail-line"><strong>DCD Web Cart:</strong> ${data.dcd_web_cart || 'N/A'}</div>
-                    <div class="detail-line"><strong>Device Sales Type:</strong> ${data.device_sales_type || 'N/A'}</div>
-                    <div class="detail-line"><strong>Finance Type:</strong> ${data.finance_type || 'N/A'}</div>
-                    <div class="detail-line"><strong>FPD Display:</strong> ${data.fpd_display || 'N/A'}</div>
-                    <div class="detail-line"><strong>Maintain Active Line:</strong> ${data.maintain_active_line || 'N/A'}</div>
-                    <div class="detail-line"><strong>Maintain SOC:</strong> ${data.maintain_soc || 'N/A'}</div>
-                    <div class="detail-line"><strong>Market Group:</strong> ${data.market_group || 'N/A'}</div>
-                    <div class="detail-line"><strong>Product Type:</strong> ${data.product_type || 'N/A'}</div>
-                    <div class="detail-line"><strong>Sales Application:</strong> ${data.sales_application || 'N/A'}</div>
-                    <div class="detail-line"><strong>SOC Group:</strong> ${data.soc_grouping || 'N/A'}</div>
-                    <div class="detail-line"><strong>Store Group:</strong> ${data.store_group || 'N/A'}</div>
-                    <div class="detail-line"><strong>Trade-In:</strong> ${data.trade_in || 'N/A'}</div>
-                    <div class="detail-line"><strong>Broken Trade:</strong> ${data.broken_trade || 'N/A'}</div>
-                `;
+                // Update with actual data
+                detailsContent.innerHTML = buildDetailsHTML({
+                    orbit_id: orbitId,
+                    promo_code: promoCode,
+                    initiative_name: initiativeName,
+                    promo_config: promoConfig,
+                    owner: data.owner || 'N/A',
+                    promo_start_date: data.promo_start_date || 'N/A',
+                    promo_end_date: data.promo_end_date || 'N/A',
+                    account_type: data.account_type || 'N/A',
+                    activation_type: data.activation_type || 'N/A',
+                    active_line_required: data.active_line_required || 'N/A',
+                    dcd_web_cart: data.dcd_web_cart || 'N/A',
+                    device_sales_type: data.device_sales_type || 'N/A',
+                    finance_type: data.finance_type || 'N/A',
+                    fpd_display: data.fpd_display || 'N/A',
+                    maintain_active_line: data.maintain_active_line || 'N/A',
+                    maintain_soc: data.maintain_soc || 'N/A',
+                    market_group: data.market_group || 'N/A',
+                    product_type: data.product_type || 'N/A',
+                    sales_application: data.sales_application || 'N/A',
+                    soc_grouping: data.soc_grouping || 'N/A',
+                    store_group: data.store_group || 'N/A',
+                    trade_in: data.trade_in || 'N/A',
+                    broken_trade: data.broken_trade || 'N/A',
+                    mpss_lookback: data.mpss_lookback || 'N/A'
+                });
             } else {
-                // If promo not found in PAM, show basic info only
-                detailsContent.innerHTML = `
-                    <div class="detail-line"><strong>Orbit ID:</strong> ${orbitId}</div>
-                    <div class="detail-line"><strong>Promo Code:</strong> ${promoCode}</div>
-                    <div class="detail-line"><strong>Initiative Name:</strong> ${initiativeName}</div>
-                    <div class="detail-line"><strong>Promo Configuration:</strong> ${promoConfig}</div>
-                    <div class="detail-line"><em>Detailed information not available in PAM system</em></div>
-                `;
+                // If promo not found in PAM, keep structure with N/A values
+                detailsContent.innerHTML = buildDetailsHTML({
+                    orbit_id: orbitId,
+                    promo_code: promoCode,
+                    initiative_name: initiativeName,
+                    promo_config: promoConfig,
+                    owner: 'N/A',
+                    promo_start_date: 'N/A',
+                    promo_end_date: 'N/A',
+                    account_type: 'N/A',
+                    activation_type: 'N/A',
+                    active_line_required: 'N/A',
+                    dcd_web_cart: 'N/A',
+                    device_sales_type: 'N/A',
+                    finance_type: 'N/A',
+                    fpd_display: 'N/A',
+                    maintain_active_line: 'N/A',
+                    maintain_soc: 'N/A',
+                    market_group: 'N/A',
+                    product_type: 'N/A',
+                    sales_application: 'N/A',
+                    soc_grouping: 'N/A',
+                    store_group: 'N/A',
+                    trade_in: 'N/A',
+                    broken_trade: 'N/A',
+                    mpss_lookback: 'N/A'
+                });
             }
         })
         .catch(error => {

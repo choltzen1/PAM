@@ -423,55 +423,48 @@ def create_from_orbit():
 
 @api_bp.route('/recent_generated_promos', methods=['GET'])
 def recent_generated_promos():
-    """Return last 10 generated promos (RDC + SPE) using created_at descending.
+    """Return last 20 generated promos using database created_at timestamp.
 
-    Data source: merged hybrid manager promos & SPE promos. Falls back to JSON timestamps.
+    Queries PAM_Orbit_Data_Updated directly for most recent promos.
     """
     try:
         if not data_manager:
             return jsonify({'success': False, 'promos': []})
-        import datetime
-        promos = data_manager.get_all_promos() or {}
-        # promos returns dict (code->data) or list depending on manager; normalize
-        if isinstance(promos, list):
-            # convert list of dicts with 'code'
-            norm = {}
-            for rec in promos:
-                c = str(rec.get('code','')).strip()
-                if c:
-                    norm[c] = rec
-            promos = norm
-        spe = {}
-        try:
-            spe = data_manager.get_all_spe_promos() or {}
-            if isinstance(spe, list):
-                conv = {}
-                for rec in spe:
-                    c = str(rec.get('code','')).strip()
-                    if c:
-                        conv[c] = rec
-                spe = conv
-        except Exception:
-            spe = {}
-        combined = {}
-        combined.update(promos)
-        combined.update(spe)
+        
+        # Query database directly for last 20 promos ordered by created_at
+        from data.database import DatabaseManager
+        db = DatabaseManager()
+        
         rows = []
-        for code, pdata in combined.items():
-            created_raw = pdata.get('created_at') or pdata.get('updated_at') or ''
-            try:
-                created_dt = datetime.datetime.fromisoformat(created_raw.replace('Z','+00:00')) if created_raw else datetime.datetime.min
-            except Exception:
-                created_dt = datetime.datetime.min
-            rows.append({
-                'code': code,
-                'orbit_id': pdata.get('orbit_id',''),
-                'description': pdata.get('bill_facing_name') or pdata.get('description',''),
-                'created_at': created_dt.isoformat(),
-                'type': pdata.get('Desired_Execution') or ('SPE' if code.startswith('SP') else 'RDC')
-            })
-        rows.sort(key=lambda r: r['created_at'], reverse=True)
-        latest = rows[:10]
-        return jsonify({'success': True, 'promos': latest, 'count': len(latest)})
+        try:
+            from sqlalchemy import text
+            engine = db.get_engine()
+            sql = f"""
+                SELECT TOP 20 
+                    code, 
+                    orbit_id, 
+                    [bill facing name] as bill_facing_name, 
+                    description,
+                    Desired_Execution,
+                    created_at
+                FROM {db.source_table}
+                WHERE code IS NOT NULL
+                ORDER BY created_at DESC
+            """
+            with engine.connect() as conn:
+                result = conn.execute(text(sql))
+                for row in result:
+                    rows.append({
+                        'code': row.code or '',
+                        'orbit_id': row.orbit_id or '',
+                        'description': row.bill_facing_name or row.description or '',
+                        'created_at': row.created_at.isoformat() if row.created_at else '',
+                        'type': row.Desired_Execution or 'RDC'
+                    })
+        except Exception as e:
+            print(f"[recent_generated_promos] Database query failed: {e}")
+            return jsonify({'success': False, 'error': str(e), 'promos': []}), 500
+        
+        return jsonify({'success': True, 'promos': rows, 'count': len(rows)})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e), 'promos': []}), 500
