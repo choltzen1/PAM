@@ -1,7 +1,8 @@
 """Lightweight Orbit DB manager.
 
 Provides minimal read-only access to the orbit table using ORBIT_* env vars or
-ORBIT_CONNECTION_STRING. Avoids coupling with primary Promo DatabaseManager.
+ORBIT_CONNECTION_STRING. Supports both local SQL Server and Microsoft Fabric 
+Data Warehouse based on USE_FABRIC_ORBIT environment variable.
 """
 from __future__ import annotations
 from typing import Any, Dict, List, Optional
@@ -17,6 +18,19 @@ class OrbitDatabaseManager:
                 load_dotenv(env_path)
         except Exception:
             pass
+        
+        # Check if we should use Fabric instead of local SQL Server
+        self.use_fabric = os.getenv('USE_FABRIC_ORBIT', 'false').lower() == 'true'
+        
+        if self.use_fabric:
+            # Delegate to Fabric manager
+            from .fabric_database import FabricDatabaseManager
+            self._fabric_manager = FabricDatabaseManager()
+            self._last_error = None
+            self.table = 'dbo.ORBIT_Reporting_Table'  # Fabric table name
+            return
+        
+        # Original SQL Server configuration
         raw_conn = os.getenv('ORBIT_CONNECTION_STRING')
         # Treat placeholder as absent
         if raw_conn and 'Server=server;' in raw_conn:
@@ -68,6 +82,23 @@ class OrbitDatabaseManager:
         raise Exception(self._last_error or 'connection attempts failed')
 
     def get_orbit_record(self, orbit_id: str) -> Optional[Dict[str, Any]]:
+        # Route to Fabric if enabled
+        if self.use_fabric:
+            result = self._fabric_manager.search_by_gtm_id(orbit_id)
+            if result:
+                # Map Fabric fields to expected format
+                return {
+                    'Owner': result.get('cat_businessowner'),
+                    'bill_facing_name': result.get('cat_initiativename'),  # Initiative name for bill-facing
+                    'orbit_id': result.get('cat_gtmentryid'),
+                    'description': result.get('cat_description'),  # Full description
+                    'promo_start_date': result.get('cat_startdate'),
+                    'promo_end_date': result.get('cat_enddate'),
+                    **result  # Include all other fields
+                }
+            return {'_error': 'not found'}
+        
+        # Original SQL Server logic
         oid = (orbit_id or '').strip()
         if not oid:
             return {'_error': 'orbit_id required'}
@@ -97,6 +128,12 @@ class OrbitDatabaseManager:
             except Exception: pass
 
     def list_orbit_ids(self, limit: int = 10) -> List[str]:
+        # Route to Fabric if enabled
+        if self.use_fabric:
+            promotions = self._fabric_manager.get_all_promotions(limit=limit)
+            return [p.get('cat_gtmentryid', '') for p in promotions if p.get('cat_gtmentryid')]
+        
+        # Original SQL Server logic
         sql = f"SELECT TOP {limit} orbit_id FROM {self.table} WHERE orbit_id IS NOT NULL"
         out: List[str] = []
         try:
@@ -116,6 +153,13 @@ class OrbitDatabaseManager:
         return out
 
     def get_columns(self) -> List[str]:
+        # Route to Fabric if enabled
+        if self.use_fabric:
+            # Return common Fabric column names
+            return ['cat_initiativename', 'crffc_promocodeid', 'cat_gtmentryid', 'cat_startdate', 
+                    'cat_enddate', 'cat_billname', 'cat_description', 'modifiedon']
+        
+        # Original SQL Server logic
         sql = f"SELECT TOP 1 * FROM {self.table}"
         try:
             conn = self._connect()
