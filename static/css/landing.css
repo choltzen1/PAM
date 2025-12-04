@@ -1,4 +1,8 @@
 /* landing.css - Landing hub styles aligned with existing app theme */
+/* Scoped 75% visual size by reducing base font-size to 12px (from 16px).
+  This affects only the landing page because this stylesheet is included
+  exclusively by `landing_base.html`. No transform/scale wrappers used. */
+html { font-size: 12px; }
 :root {
   --landing-bg-dark: #2f2f2f;
   --landing-tile-bg: var(--card-bg);
@@ -13,57 +17,57 @@ body { background: var(--bg); }
 .hub-main { display:flex; flex-direction:column; justify-content:flex-start; padding-top:calc(var(--header-height) + 0.75rem); }
 
 .landing-wrapper { padding: 1.5rem 2rem 2rem; box-sizing: border-box; }
-.landing-intro { max-width: 1400px; margin: 0 auto 0.85rem auto; padding:0 2.5rem; }
+.landing-intro { max-width: 1050px; margin: 0 auto 0.85rem auto; padding:0 1.9rem; }
 .landing-intro h1 { margin: 0 0 .35rem; font-size: 2rem; font-weight: 700; color: #222; letter-spacing: .5px; }
 .landing-intro p.tagline { margin: 0; font-size: 1.02rem; color: var(--tmobile-magenta-dark); font-style: italic; }
-.landing-objective { background:var(--card-bg); border:1px solid var(--landing-objective-border); border-radius:14px; padding:1.15rem 1.3rem 1.25rem; font-size:.9rem; line-height:1.45; color:#333; box-shadow:0 3px 10px -2px #00000018; }
+.landing-objective { background:var(--card-bg); border:1px solid var(--landing-objective-border); border-radius:11px; padding:.86rem 1rem .94rem; font-size:.9rem; line-height:1.45; color:#333; box-shadow:0 2px 8px -2px #00000018; }
 .landing-objective strong { color: #000; }
 
-.landing-grid { display:grid; gap:2.1rem; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); max-width:96vw; margin:1.55rem auto 0; padding:0 2.5rem 2.8rem; }
-.landing-tile { position:relative; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:.95rem; background: var(--landing-tile-bg); border:2px solid var(--landing-tile-border); border-radius:26px; padding:3.1rem 1.55rem 3rem; text-decoration:none; color:#111; font-weight:600; letter-spacing:.5px; font-size:1.22rem; box-shadow:0 8px 26px -6px rgba(0,0,0,.18); transition: border-color .18s ease, box-shadow .28s ease, transform .3s ease, background .3s; overflow:hidden; }
+.landing-grid { display:grid; gap:1.6rem; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); max-width:96vw; margin:1.55rem auto 0; padding:0 1.9rem 2.1rem; }
+.landing-tile { position:relative; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:.95rem; background: var(--landing-tile-bg); border:2px solid var(--landing-tile-border); border-radius:20px; padding:3.1rem 1.55rem 3rem; text-decoration:none; color:#111; font-weight:600; letter-spacing:.5px; font-size:1.22rem; box-shadow:0 6px 20px -6px rgba(0,0,0,.18); transition: border-color .18s ease, box-shadow .28s ease, transform .3s ease, background .3s; overflow:hidden; }
 .landing-tile:hover { border-color: var(--landing-tile-border-hover); box-shadow:0 6px 18px -2px rgba(226,0,116,.35); transform: translateY(-5px); background:var(--card-bg); }
 .landing-tile:active { transform: translateY(-1px); }
 .landing-tile:focus { outline:3px solid rgba(226,0,116,.55); outline-offset:3px; }
-.landing-tile .icon-circle { width:104px; height:104px; border-radius:50%; background:linear-gradient(135deg, var(--tmobile-magenta), #ff35a1); display:flex; align-items:center; justify-content:center; color:#fff; font-size:2.65rem; box-shadow:0 14px 36px -6px rgba(226,0,116,.6); }
+.landing-tile .icon-circle { width:78px; height:78px; border-radius:50%; background:linear-gradient(135deg, var(--tmobile-magenta), #ff35a1); display:flex; align-items:center; justify-content:center; color:#fff; font-size:1.99rem; box-shadow:0 10px 27px -6px rgba(226,0,116,.6); }
 .landing-tile .tile-label { font-size:1.08rem; }
 .landing-tile .tile-label { text-align:center; line-height:1.15; }
-.landing-tile .tile-sub { font-size:.7rem; font-weight:600; letter-spacing:1.1px; text-transform:uppercase; color:#666; position:absolute; top:8px; right:14px; }
-.landing-tile .tile-desc { font-size:.78rem; line-height:1.35; font-weight:500; max-width:380px; color:#222; text-align:center; letter-spacing:.4px; margin-top:.35rem; }
+.landing-tile .tile-sub { font-size:.7rem; font-weight:600; letter-spacing:1.1px; text-transform:uppercase; color:#666; position:absolute; top:6px; right:11px; }
+.landing-tile .tile-desc { font-size:.78rem; line-height:1.35; font-weight:500; max-width:285px; color:#222; text-align:center; letter-spacing:.4px; margin-top:.35rem; }
 .landing-tile:hover .tile-desc { color:#000; }
 .landing-tile.disabled { opacity:.55; cursor:not-allowed; position:relative; }
 .landing-tile.disabled:hover { transform:none; box-shadow:0 3px 9px rgba(0,0,0,.1); border-color: var(--landing-tile-border); }
 .landing-tile.disabled::after { content:"Coming Soon"; position:absolute; bottom:6px; font-size:.6rem; letter-spacing:1px; font-weight:500; color:#555; text-transform:uppercase; }
 
 /* Ribbon marker */
-.landing-tile .ribbon { position:absolute; left:-50px; top:18px; background: var(--tmobile-magenta); color:#fff; font-size:.65rem; padding:5px 54px; transform:rotate(-45deg); box-shadow:0 3px 10px rgba(0,0,0,.35); letter-spacing:1.1px; font-weight:600; text-transform:uppercase; }
+.landing-tile .ribbon { position:absolute; left:-38px; top:14px; background: var(--tmobile-magenta); color:#fff; font-size:.65rem; padding:4px 40px; transform:rotate(-45deg); box-shadow:0 3px 10px rgba(0,0,0,.35); letter-spacing:1.1px; font-weight:600; text-transform:uppercase; }
 
 /* Hover scaling refinement */
 .landing-tile:hover { box-shadow:0 10px 34px -6px rgba(226,0,116,.45); transform:translateY(-6px); }
 
 /* Extra large screens - increase grid width slightly */
 @media (min-width:1600px){
-  .landing-grid { max-width:94vw; gap:2.6rem; grid-template-columns:repeat(auto-fit,minmax(380px,1fr)); }
-  .landing-tile { padding:3.6rem 2.1rem 3.5rem; font-size:1.3rem; }
-  .landing-tile .icon-circle { width:128px; height:128px; font-size:3rem; }
-  .landing-tile .tile-desc { font-size:.9rem; max-width:440px; line-height:1.45; }
+  .landing-grid { max-width:94vw; gap:1.95rem; grid-template-columns:repeat(auto-fit,minmax(285px,1fr)); }
+  .landing-tile { padding:2.7rem 1.6rem 2.6rem; font-size:1.3rem; }
+  .landing-tile .icon-circle { width:96px; height:96px; font-size:2.25rem; }
+  .landing-tile .tile-desc { font-size:.9rem; max-width:330px; line-height:1.45; }
 }
 @media (min-width:2000px){
-  .landing-grid { max-width:95vw; gap:2.9rem; grid-template-columns:repeat(auto-fit,minmax(400px,1fr)); }
-  .landing-tile { padding:4rem 2.3rem 3.9rem; font-size:1.34rem; }
-  .landing-tile .icon-circle { width:140px; height:140px; font-size:3.25rem; }
-  .landing-tile .tile-desc { font-size:.95rem; max-width:480px; }
+  .landing-grid { max-width:95vw; gap:2.175rem; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); }
+  .landing-tile { padding:3rem 1.7rem 2.9rem; font-size:1.34rem; }
+  .landing-tile .icon-circle { width:105px; height:105px; font-size:2.44rem; }
+  .landing-tile .tile-desc { font-size:.95rem; max-width:360px; }
 }
 
 /* Medium breakpoints keep usability */
 @media (max-width:1100px){
-  .landing-grid { gap:1.4rem; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); }
-  .landing-tile { padding:2.3rem 1rem 2.1rem; font-size:1.1rem; }
-  .landing-tile .icon-circle { width:84px; height:84px; font-size:2.2rem; }
+  .landing-grid { gap:1.05rem; grid-template-columns:repeat(auto-fit,minmax(195px,1fr)); }
+  .landing-tile { padding:1.725rem .75rem 1.575rem; font-size:1.1rem; }
+  .landing-tile .icon-circle { width:63px; height:63px; font-size:1.65rem; }
 }
 @media (max-width:800px){
-  .landing-grid { gap:1.1rem; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); padding:0 1rem; }
-  .landing-tile { padding:2rem .9rem 1.9rem; font-size:1rem; }
-  .landing-tile .icon-circle { width:74px; height:74px; font-size:2rem; }
+  .landing-grid { gap:.825rem; grid-template-columns:repeat(auto-fit,minmax(165px,1fr)); padding:0 .75rem; }
+  .landing-tile { padding:1.5rem .675rem 1.425rem; font-size:1rem; }
+  .landing-tile .icon-circle { width:55.5px; height:55.5px; font-size:1.5rem; }
 }
 
 /* Responsive adjustments */

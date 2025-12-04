@@ -100,12 +100,12 @@ html[data-theme='dark'] *::-webkit-scrollbar-thumb:hover { background: var(--scr
   Fixed Header/Footer Layout Helpers
   =============================== */
 body.body-fixed-header-footer { height:100vh; display:flex; flex-direction:column; overflow:hidden; }
-body.body-fixed-header-footer > .app-main-scroll { flex:1 1 auto; min-height:0; overflow-y:auto; overflow-x:hidden; position:relative; }
+body.body-fixed-header-footer > .app-main-scroll { flex:1 1 auto; min-height:0; overflow-y:auto; overflow-x:hidden; position:relative; background: transparent; }
 /* Ensure scroll area accounts for fixed header/footer spacing when inline padding not provided */
 body.body-fixed-header-footer > .app-main-scroll:not([style*='padding-top']) { padding-top: calc(var(--header-height) + var(--header-content-gap)); }
 body.body-fixed-header-footer > .app-main-scroll:not([style*='padding-bottom']) { padding-bottom: var(--footer-height); }
 /* Prevent content behind footer */
-.footer-nav, .footer-bar { width:100%; }
+.footer-nav, .footer-bar { width:100%; box-shadow:none; border-top:none; }
 /* Ensure internal full-height panels can stretch without forcing outer scroll */
 .app-main-scroll .full-height-panel { height:100%; box-sizing:border-box; }
 
@@ -146,7 +146,8 @@ body.body-fixed-header-footer > .app-main-scroll:not([style*='padding-bottom']) 
   height: var(--header-height);
   line-height: var(--header-height);
   width: 100%;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.18);
+  /* Remove shadow to avoid a dark seam below header over gradient */
+  box-shadow: none;
 }
 
 .global-header-title {
