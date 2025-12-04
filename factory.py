@@ -11,6 +11,8 @@ from api.routes import api_bp, init_data_manager as init_api_data_manager
 from jira.routes import jira_bp
 from data.storage import PromoDataManager
 from research import research_bp
+import threading
+import time
 
 _loaded_env = load_dotenv()
 print(f"[startup] .env loaded={_loaded_env} ORBIT_DB_SERVER={os.getenv('ORBIT_DB_SERVER')} ORBIT_DB_DATABASE={os.getenv('ORBIT_DB_DATABASE')} PAM_DB_SERVER={os.getenv('PAM_DB_SERVER')} PAM_DB_DATABASE={os.getenv('PAM_DB_DATABASE')}")
@@ -46,6 +48,13 @@ def create_app(config: dict | None = None) -> Flask:
 
     # Legacy alias tracking removed after full blueprint migration.
 
+    # Kick off background warm-up to reduce first-request latency
+    try:
+        t = threading.Thread(target=_warm_app_cache, args=(data_manager,), daemon=True)
+        t.start()
+    except Exception:
+        pass
+
     @app.context_processor
     def inject_current_datetime():  # type: ignore
         return {'current_datetime': datetime.now().strftime("%B %d, %Y at %I:%M:%S %p")}
@@ -62,5 +71,39 @@ def create_app(config: dict | None = None) -> Flask:
         }
 
     return app
+
+def _warm_app_cache(dm: PromoDataManager):
+    """Background warm-up: establish DB connection and prefetch homepage payload."""
+    try:
+        # Ensure connection is established early (reduces first-request latency)
+        dm.db_manager.test_connection()
+        # Preload base homepage data (page 1, no filters) into admin cache
+        try:
+            from admin import routes as admin_routes
+            payload = dm.get_paginated_execution_type(
+                execution_type='RDC', page=1, per_page=25, search='', owner_filter='all'
+            )
+            admin_routes._PAM_PROMO_CACHE = {'ts': time.time(), 'data': payload}
+            # Warm owners cache from payload if available
+            if payload and payload.get('owners'):
+                admin_routes._OWNERS_CACHE = {'ts': time.time(), 'data': payload.get('owners')}
+        except Exception:
+            pass
+        # Periodic refresher loop (every 5 minutes)
+        while True:
+            try:
+                from admin import routes as admin_routes
+                payload = dm.get_paginated_execution_type(
+                    execution_type='RDC', page=1, per_page=25, search='', owner_filter='all'
+                )
+                admin_routes._PAM_PROMO_CACHE = {'ts': time.time(), 'data': payload}
+                if payload and payload.get('owners'):
+                    admin_routes._OWNERS_CACHE = {'ts': time.time(), 'data': payload.get('owners')}
+            except Exception:
+                pass
+            time.sleep(300)
+    except Exception:
+        # Non-fatal warm-up failures shouldn't block app startup
+        pass
 
 __all__ = ['create_app','data_manager']

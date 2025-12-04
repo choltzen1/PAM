@@ -1,4 +1,5 @@
 from flask import Blueprint, jsonify, request
+from services.cache import TTLCache
 from services.jira_utils import create_jira_summary
 
 api_bp = Blueprint('api', __name__, url_prefix='/api')
@@ -14,7 +15,20 @@ def init_data_manager(dm):
 @api_bp.route('/get_promo_details/<promo_code>', methods=['GET'])
 def get_promo_details(promo_code):
     try:
-        promo_data = data_manager.get_promo(promo_code) if data_manager else {}
+        # Fast path: cached minimal fields for first paint
+        cache = getattr(get_promo_details, '_cache', None)
+        if cache is None:
+            cache = TTLCache(ttl_seconds=60, max_items=1000)
+            setattr(get_promo_details, '_cache', cache)
+
+        promo_data = None
+        if data_manager:
+            cache_key = f"promo_core:{promo_code}"
+            promo_data = cache.get(cache_key)
+            if not promo_data:
+                promo_data = data_manager.get_promo_core_by_code(promo_code)
+                if promo_data:
+                    cache.set(cache_key, promo_data)
         if promo_data:
             return jsonify({
                 'found': True,
@@ -90,6 +104,17 @@ def get_promo_details(promo_code):
         return jsonify({'found': False, 'message': f'Promo code {promo_code} not found'})
     except Exception as e:
         return jsonify({'found': False, 'error': str(e)})
+
+# Full payload endpoint for asynchronous secondary fetch on edit pages
+@api_bp.route('/get_promo_details_full/<promo_code>', methods=['GET'])
+def get_promo_details_full(promo_code):
+    try:
+        promo_data = data_manager.get_promo(promo_code) if data_manager else {}
+        if promo_data:
+            return jsonify({'found': True, 'data': promo_data})
+        return jsonify({'found': False, 'message': f'Promo code {promo_code} not found'})
+    except Exception as e:
+        return jsonify({'found': False, 'error': str(e)}), 500
 
 @api_bp.route('/jira_summary/<promo_code>', methods=['GET'])
 def jira_summary(promo_code):

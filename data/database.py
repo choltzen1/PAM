@@ -91,7 +91,18 @@ class DatabaseManager:
                 masked = odbc_str.replace(self.password, '***') if self.password else odbc_str
                 logger.info(f"Attempting DB connect with: {masked}")
                 params = urllib.parse.quote_plus(odbc_str)
-                self._engine = create_engine(f'mssql+pyodbc:///?odbc_connect={params}', pool_pre_ping=True, pool_recycle=1800)
+                # Tune connection pooling: adjust via env if needed
+                pool_size = int(os.getenv('SQLALCHEMY_POOL_SIZE', '10'))
+                max_overflow = int(os.getenv('SQLALCHEMY_MAX_OVERFLOW', '10'))
+                recycle = int(os.getenv('SQLALCHEMY_POOL_RECYCLE', '1800'))  # seconds
+                logger.info(f"SQLAlchemy pool configured: pool_size={pool_size} max_overflow={max_overflow} recycle={recycle}s pre_ping=True")
+                self._engine = create_engine(
+                    f'mssql+pyodbc:///?odbc_connect={params}',
+                    pool_pre_ping=True,
+                    pool_recycle=recycle,
+                    pool_size=pool_size,
+                    max_overflow=max_overflow
+                )
                 # Test connection (duplicate code removed)
                 with self._engine.connect() as conn:
                     conn.execute(text("SELECT 1"))
@@ -138,7 +149,7 @@ class DatabaseManager:
         """
         try:
             # Efficient: pull only code column; ordering DESC to hit highest early
-            sql = f"SELECT TOP 200 code FROM {self.source_table} WHERE code IS NOT NULL ORDER BY code DESC"
+            sql = f"SELECT TOP 200 code FROM {self.source_table} WITH (NOLOCK) WHERE code IS NOT NULL ORDER BY code DESC"
             df = self.get_dataframe(sql)
             import re
             pat = re.compile(r'^[A-Z]([0-9]{1,4})$')
@@ -212,7 +223,7 @@ class DatabaseManager:
                 cat_eligibledevices,
                 cat_channelsname,
                 cat_description
-            FROM {self.source_table}
+            FROM {self.source_table} WITH (NOLOCK)
             WHERE Desired_Execution = :execution_type
             ORDER BY code DESC
         """
@@ -261,27 +272,30 @@ class DatabaseManager:
 
         # Search logic
         if search:
-            s = search.strip().lower()
+            s = search.strip()
             if s and s.isalnum() and len(s) <= 8:  # treat as possible code prefix
-                where_clauses.append("(LOWER(code) LIKE :code_prefix OR LOWER(Owner) LIKE :wild OR LOWER([bill facing name]) LIKE :wild)")
+                # Use case-insensitive collation to avoid LOWER() on indexed cols
+                where_clauses.append("(code COLLATE Latin1_General_CI_AS LIKE :code_prefix OR Owner COLLATE Latin1_General_CI_AS LIKE :wild OR [bill facing name] COLLATE Latin1_General_CI_AS LIKE :wild)")
                 params['code_prefix'] = s + '%'
             else:
-                where_clauses.append("(LOWER(code) LIKE :wild OR LOWER(Owner) LIKE :wild OR LOWER([bill facing name]) LIKE :wild)")
+                where_clauses.append("(code COLLATE Latin1_General_CI_AS LIKE :wild OR Owner COLLATE Latin1_General_CI_AS LIKE :wild OR [bill facing name] COLLATE Latin1_General_CI_AS LIKE :wild)")
             params['wild'] = f"%{s}%"
 
         where_sql = " AND ".join(where_clauses)
 
         # Count query
-        count_sql = f"SELECT COUNT(1) as cnt FROM {self.source_table} WHERE {where_sql}"
+        count_sql = f"SELECT COUNT(1) as cnt FROM {self.source_table} WITH (NOLOCK) WHERE {where_sql}"
         # Data query (order: earliest upcoming first when filtering upcoming, else code desc)
+        # Align ordering to index (Desired_Execution, Code DESC) to avoid sorts
         if force_upcoming or (base_query_mode and upcoming_only_when_no_query):
-            order_clause = "ORDER BY promo_start_date ASC, code DESC"
+            # Keep code DESC primary ordering; if needed, secondary by promo_start_date is okay but may introduce sort
+            order_clause = "ORDER BY code DESC"
         else:
             order_clause = "ORDER BY code DESC"
         data_sql = f"""
             SELECT code, Owner, [bill facing name] as bill_facing_name, orbit_id,
                    promo_start_date, promo_end_date
-            FROM {self.source_table}
+            FROM {self.source_table} WITH (NOLOCK)
             WHERE {where_sql}
             {order_clause}
             OFFSET :offset ROWS FETCH NEXT :limit ROWS ONLY
@@ -317,12 +331,37 @@ class DatabaseManager:
             owner_params = {'execution_type': execution_type}
             if force_upcoming or (base_query_mode and upcoming_only_when_no_query):
                 owner_where += " AND (promo_start_date IS NULL OR promo_start_date > CAST(GETUTCDATE() AS DATE))"
-            owner_sql = f"SELECT DISTINCT Owner FROM {self.source_table} WHERE {owner_where} AND Owner IS NOT NULL ORDER BY Owner"
-            owner_df = self.get_dataframe(owner_sql, owner_params)
+            # Try owners cache for base mode; else query
+            owner_df = None
+            use_cache = base_query_mode
+            cached_owners = None
+            try:
+                # Access admin owners cache if module is loaded
+                from admin import routes as admin_routes
+                cached = getattr(admin_routes, '_OWNERS_CACHE', {'ts': 0, 'data': []})
+                from time import time
+                if cached and cached.get('data') and (time() - cached.get('ts', 0) < 600) and use_cache:
+                    cached_owners = cached.get('data')
+            except Exception:
+                cached_owners = None
+            if cached_owners:
+                import pandas as pd
+                owner_df = pd.DataFrame({'Owner': cached_owners})
+            else:
+                owner_sql = f"SELECT DISTINCT Owner FROM {self.source_table} WITH (NOLOCK) WHERE {owner_where} AND Owner IS NOT NULL ORDER BY Owner"
+                owner_df = self.get_dataframe(owner_sql, owner_params)
             # Strip all quote types from owner values using sanitization
             strip_chars = '"\'"`'
             trans_table = str.maketrans('', '', strip_chars)
             owners = [str(o).translate(trans_table).strip() for o in owner_df['Owner'].dropna().tolist() if str(o).strip()]
+            # Update owners cache for base mode
+            try:
+                if use_cache and owners:
+                    from admin import routes as admin_routes
+                    from time import time
+                    admin_routes._OWNERS_CACHE = {'ts': time(), 'data': owners}
+            except Exception:
+                pass
         except Exception:
             pass
 
@@ -406,7 +445,7 @@ class DatabaseManager:
         """Fetch specific promotion by code."""
         # Pull ALL columns so downstream generator can map any newly added field without code change.
         # Rationale: we have a broad SQL generation mapping that may evolve; selecting * avoids drifting lists.
-        sql = f"SELECT * FROM {self.source_table} WHERE code = :promo_code"
+        sql = f"SELECT * FROM {self.source_table} WITH (NOLOCK) WHERE code = :promo_code"
         
         try:
             df = self.get_dataframe(sql, {'promo_code': promo_code})
@@ -415,6 +454,31 @@ class DatabaseManager:
             return None
         except Exception as e:
             logger.error(f"Failed to fetch promo {promo_code}: {str(e)}")
+            return None
+
+    def get_promo_core_by_code(self, promo_code: str) -> Optional[Dict[str, Any]]:
+        """Fetch minimal fields for fast first-paint on edit pages."""
+        sql = f"""
+            SELECT 
+                code,
+                Owner,
+                [bill facing name] AS bill_facing_name,
+                Desired_Execution,
+                orbit_id,
+                Status,
+                promo_start_date,
+                promo_end_date,
+                description
+            FROM {self.source_table} WITH (NOLOCK)
+            WHERE code = :promo_code
+        """
+        try:
+            df = self.get_dataframe(sql, {'promo_code': promo_code})
+            if not df.empty:
+                return self._sanitize_record(df.iloc[0].to_dict())
+            return None
+        except Exception as e:
+            logger.error(f"Failed to fetch core promo {promo_code}: {str(e)}")
             return None
 
     def get_recent_promos(self, days: int = 30) -> List[Dict[str, Any]]:
@@ -444,7 +508,7 @@ class DatabaseManager:
             # Diagnostic: count invalid date rows skipped
             try:
                 # Pull a lightweight set of raw date values to count invalids
-                raw_sql = f"SELECT promo_start_date FROM {self.source_table} WHERE promo_start_date IS NOT NULL"
+                raw_sql = f"SELECT promo_start_date FROM {self.source_table} WITH (NOLOCK) WHERE promo_start_date IS NOT NULL"
                 raw_df = self.get_dataframe(raw_sql)
                 total_with_value = len(raw_df)
                 valid_mask = raw_df['promo_start_date'].apply(lambda v: self._is_valid_date_string(v))
@@ -543,7 +607,7 @@ class DatabaseManager:
                 amount,
                 operator_id,
                 orbit_id
-            FROM {self.source_table}
+            FROM {self.source_table} WITH (NOLOCK)
             WHERE TRY_CONVERT(date, promo_start_date) IS NOT NULL
               AND TRY_CONVERT(date, promo_end_date) IS NOT NULL
               AND CONVERT(date, GETDATE()) BETWEEN TRY_CONVERT(date, promo_start_date) AND TRY_CONVERT(date, promo_end_date)
@@ -624,7 +688,7 @@ class DatabaseManager:
                 cat_eligibledevices,
                 cat_channelsname,
                 cat_description
-            FROM {self.source_table}
+            FROM {self.source_table} WITH (NOLOCK)
             WHERE (
                 code LIKE :search_term
                 OR description LIKE :search_term
@@ -1103,7 +1167,7 @@ class DatabaseManager:
     # --- SKU Group ID helpers ---
     def get_all_sku_group_ids(self) -> list[str]:
         """Return list of distinct sku_group_id values present in the source table (uppercase, pattern-like)."""
-        sql = f"SELECT DISTINCT sku_group_id FROM {self.source_table} WHERE sku_group_id IS NOT NULL AND LEN(sku_group_id)=3"
+        sql = f"SELECT DISTINCT sku_group_id FROM {self.source_table} WITH (NOLOCK) WHERE sku_group_id IS NOT NULL AND LEN(sku_group_id)=3"
         try:
             engine = self.get_engine()
             with engine.connect() as conn:

@@ -11,6 +11,7 @@ admin_bp = Blueprint('admin_bp', __name__)
 
 data_manager = None
 _PAM_PROMO_CACHE = {'ts': 0, 'data': None}  # in-process cache for PAM promotions page
+_OWNERS_CACHE = {'ts': 0, 'data': []}       # in-process cache for owners dropdown
 
 def init_data_manager(dm):
     global data_manager
