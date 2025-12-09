@@ -1,4 +1,5 @@
-/* Layout allowing natural scrolling */
+/* Layout allowing natural scrolling at 75% scale */
+html { font-size: 12px; }
 .layout-container {
   display: flex;
   flex-direction: column;
@@ -18,11 +19,11 @@
 .version-controls {
   display: flex;
   align-items: center;
-  padding: 1rem 2rem;
+  padding: 0.75rem 1.5rem;
   background: var(--control-surface, #fff);
   border-bottom: 1px solid var(--border-color, #dee2e6);
   flex-shrink: 0;
-  min-height: 80px;
+  min-height: 60px;
   position: relative;
   width: 100%;
   box-sizing: border-box;
@@ -40,7 +41,7 @@
 .left-side-controls {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 0.75rem;
   width: auto;
 }
 
@@ -61,8 +62,8 @@
   border-radius: 4px !important;
   background: var(--input-bg, white) !important;
   color: var(--input-color, #212529) !important;
-  font-size: 0.9rem !important;
-  height: 38px !important;
+  font-size: 0.85rem !important;
+  height: 34px !important;
   min-width: 150px !important;
   box-sizing: border-box !important;
   display: flex !important;
@@ -74,16 +75,16 @@
 .promo-info {
   display: flex;
   align-items: center;
-  height: 38px;
+  height: 34px;
   box-sizing: border-box;
 }
 
 .version-controls .promo-title {
-  font-size: 1rem !important;
+  font-size: 0.95rem !important;
   font-weight: 600 !important;
   color: var(--title-color, #495057) !important;
-  height: 38px !important;
-  line-height: 38px !important;
+  height: 34px !important;
+  line-height: 34px !important;
   display: flex !important;
   align-items: center !important;
   margin: 0 !important;
@@ -92,18 +93,18 @@
 
 .action-buttons {
   display: flex;
-  gap: 0.5rem;
+  gap: 0.4rem;
   align-items: center;
 }
 
 .version-controls .apple-dropdown {
-  padding: 0.5rem !important;
+  padding: 0.45rem !important;
   border: 1px solid var(--input-border, #ced4da) !important;
   border-radius: 4px !important;
   background: var(--select-bg, #E20074) !important;
   color: white !important;
-  font-size: 0.9rem !important;
-  height: 38px !important;
+  font-size: 0.85rem !important;
+  height: 34px !important;
   box-sizing: border-box !important;
   display: flex !important;
   align-items: center !important;
@@ -116,8 +117,8 @@
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  gap: 0.5rem !important;
-  padding: 0.5rem 1rem !important;
+  gap: 0.4rem !important;
+  padding: 0.4rem 0.8rem !important;
   background: var(--button-bg, #E20074) !important;
   color: var(--button-color, white) !important;
   border: none !important;
@@ -126,7 +127,7 @@
   cursor: pointer !important;
   text-decoration: none !important;
   transition: filter 0.12s !important;
-  height: 38px !important;
+  height: 34px !important;
   box-sizing: border-box !important;
   line-height: 1 !important;
   vertical-align: middle !important;
@@ -274,8 +275,8 @@
 /* Table section with card styling - now underneath description */
 .table-section {
   display: flex;
-  gap: 1rem;
-  padding: 0 2rem 1rem 2rem;
+  gap: 0.75rem;
+  padding: 0 1.5rem 0.75rem 1.5rem;
   align-items: stretch;
 }
 
@@ -284,7 +285,7 @@
   display: flex;
   flex-direction: column;
   background: white;
-  border-radius: 8px;
+  border-radius: 6px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
@@ -292,42 +293,42 @@
   background: #E20074;
   color: white;
   text-align: center;
-  padding: 1rem;
+  padding: 0.75rem;
   font-weight: bold;
-  font-size: 16px;
+  font-size: 14px;
   margin: 0;
-  border-radius: 8px 8px 0 0;
+  border-radius: 6px 6px 0 0;
   flex-shrink: 0;
 }
 
 .panel-content {
-  padding: 1rem;
+  padding: 0.75rem;
   background: white;
-  border-radius: 0 0 8px 8px;
+  border-radius: 0 0 6px 6px;
   flex-grow: 1;
 }
 
 .data-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 12px;
+  font-size: 0.85rem;
   background: white;
 }
 
 .data-table thead th {
   background: #E20074;
   color: white;
-  padding: 8px 6px;
+  padding: 0.75em 0.6em;
   text-align: left;
   font-weight: 600;
-  font-size: 11px;
+  font-size: 0.8rem;
   border: none;
 }
 
 .data-table tbody td {
-  padding: 6px;
+  padding: 0.6em;
   border-bottom: 1px solid #eee;
-  font-size: 11px;
+  font-size: 0.8rem;
   vertical-align: top;
   color: #000;
 }
@@ -345,8 +346,8 @@
 }
 
 .detail-line {
-  margin-bottom: 0.75rem;
-  font-size: 12px;
+  margin-bottom: 0.6rem;
+  font-size: 0.85rem;
   color: #495057;
   line-height: 1.4;
 }
