@@ -1,4 +1,5 @@
-/* Admin Page Specific Styles */
+/* Admin Page Specific Styles (75% scaling) */
+html { font-size: 12px; }
 
 .admin-page {
   padding: 2rem;
@@ -20,23 +21,23 @@
 }
 
 /* ================= Admin Dashboard Extracted Styles ================= */
-.admin-dashboard { padding: 20px; background: #f8f9fa; min-height: calc(100vh - 80px); }
+.admin-dashboard { padding: 16px; background: #f8f9fa; min-height: calc(100vh - 80px); }
 /* Dark mode: expose global gradient instead of flat light panel */
 [data-theme='dark'] .admin-dashboard { background: transparent; }
-.admin-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px; margin-bottom: 40px; }
-.admin-card { background: white; border-radius: 12px; padding: 24px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); border: 1px solid #e9ecef; }
+.admin-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; margin-bottom: 28px; }
+.admin-card { background: white; border-radius: 10px; padding: 18px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); border: 1px solid #e9ecef; }
 
 /* KPI Bar */
 .kpi-bar {
   display: grid;
   grid-template-columns: repeat(auto-fit,minmax(140px,1fr));
-  gap: 12px;
+  gap: 10px;
   background: #ffffff;
-  padding: 12px 14px;
+  padding: 10px 12px;
   border: 1px solid #e2e8f0;
-  border-radius: 10px;
+  border-radius: 8px;
   box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-  margin-bottom: 28px; /* new spacing between metrics and cards */
+  margin-bottom: 20px; /* spacing between metrics and cards */
 }
 [data-theme='dark'] .kpi-bar { background: var(--card-bg, #d0d2d3); border-color: #b9bbbc; }
 .kpi {display:flex;flex-direction:column;gap:4px;padding:6px 8px;border-radius:8px;position:relative;}
@@ -62,12 +63,12 @@
 @media (max-width: 900px){
   .admin-card.large {grid-column: span 1;}
 }
-.card-header { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
-.card-icon { width: 48px; height: 48px; background: linear-gradient(135deg, #E20074, #f59e0b); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: white; font-size: 20px; }
-.card-title { font-size: 1.2rem; font-weight: 600; color: #1e293b; }
-.card-content { color: #64748b; margin-bottom: 20px; line-height: 1.6; }
-.card-actions { display: flex; gap: 8px; flex-wrap: wrap; }
-.btn-admin { background: #E20074; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-size: 0.9rem; font-weight: 500; cursor: pointer; transition: all 0.2s; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; }
+.card-header { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+.card-icon { width: 40px; height: 40px; background: linear-gradient(135deg, #E20074, #f59e0b); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: white; font-size: 18px; }
+.card-title { font-size: 1.05rem; font-weight: 600; color: #1e293b; }
+.card-content { color: #64748b; margin-bottom: 16px; line-height: 1.55; }
+.card-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+.btn-admin { background: #E20074; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 0.9rem; font-weight: 500; cursor: pointer; transition: all 0.2s; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; }
 .btn-admin:hover { background: #b91c5c; color: white; text-decoration: none; transform: translateY(-1px); }
 .btn-admin.secondary { background: #f1f5f9; color: #64748b; border: 1px solid #e2e8f0; }
 .btn-admin.secondary:hover { background: #e2e8f0; color: #475569; }

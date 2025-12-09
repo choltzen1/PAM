@@ -1,4 +1,6 @@
 /* Approvers Page Specific Styles */
+/* 75% scale: reduce base font-size and proportional spacings */
+html { font-size: 12px; }
 
 /* Root Variables for consistency */
 :root {
@@ -11,7 +13,7 @@
 /* Page Layout */
 .date-mismatch-page {
   min-height: calc(100vh - 120px);
-  padding: 1rem;
+  padding: 0.75rem;
   background: var(--tmobile-light-gray);
   box-sizing: border-box;
   overflow-x: hidden;
@@ -47,30 +49,20 @@ html[data-theme='dark'] .search-group label {
 /* Dark mode alternating row striping */
 /* Refined dark mode zebra striping: use two greys (no pure white) */
 /* Light mode zebra striping to exactly mirror RDC table */
-.approvers-table tbody tr:nth-child(odd) { background:#eceeef; }
-.approvers-table tbody tr:nth-child(even) { background:#d8dadb; }
-
-/* Exact RDC dark mode stripe colors applied at tr level (not td) for consistent hover brightness */
-html[data-theme='dark'] .approvers-table tbody tr:nth-child(odd) { background:#d2d4d5; }
-html[data-theme='dark'] .approvers-table tbody tr:nth-child(even) { background:#b9bbbc; }
+/* Use global zebra striping */
 /* Remove any dark mode row hover background */
 /* (Removed dark mode hover background – consolidated single no-hover rule placed at end) */
 
 /* Controls Container */
 .controls-container {
   /* Use global unified control-bar surface; retain spacing & sizing only */
-  padding: 1.5rem; /* keep slightly larger internal padding if desired */
-  margin-bottom: 2rem;
+  padding: 1.125rem; /* 75% scale */
+  margin-bottom: 1.5rem;
   max-width: calc(100vw - 2rem);
   box-sizing: border-box;
 }
 
-.filters-section {
-  display: flex;
-  gap: 2rem;
-  align-items: end;
-  flex-wrap: wrap;
-}
+.filters-section { display:flex; gap: 1.5rem; align-items:end; flex-wrap:wrap; }
 
 .filter-group, .search-group {
   display: flex;
@@ -87,7 +79,7 @@ html[data-theme='dark'] .approvers-table tbody tr:nth-child(even) { background:#
   border-collapse: collapse;
   table-layout: fixed;
   min-width: 100%; /* Fill container width */
-  font-size: 0.875rem;
+  /* sizing inherits global standardized tables */
 }
 
 /* Column widths optimized for responsive design using percentages */
@@ -101,14 +93,11 @@ html[data-theme='dark'] .approvers-table tbody tr:nth-child(even) { background:#
   background: var(--tmobile-magenta);
   color: white;
   font-weight: 600;
-  padding: 1rem 0.75rem;
-  text-align: left;
-  border-bottom: 2px solid #c7005f;
-  font-size: 0.875rem;
+  /* sizing and alignment from global standardized tables */
 }
 
 .approvers-table td {
-  padding: 0.75rem;
+  /* sizing from global; keep cell behavior */
   border-bottom: none;
   vertical-align: middle;
   overflow: hidden;
@@ -125,7 +114,7 @@ html[data-theme='dark'] .approvers-table tbody tr:nth-child(even) { background:#
 /* Purged all row hover styling intentionally */
 /* (Intentionally no :hover rule for rows) */
 /* Reintroduce RDC table hover effect exactly (brightness 1.02) */
-.approvers-table tbody tr:hover { filter:brightness(1.02); }
+/* Use global hover styling */
 
 /* Ensure table in approvers page inherits unified container styling */
 /* Hook class reserved for future approvers-specific container tweaks */
@@ -291,13 +280,7 @@ html[data-theme='dark'] .approvers-table tbody tr:nth-child(even) { background:#
     border-right: none;
   }
   
-  .approvers-table {
-    font-size: 0.75rem;
-  }
-  
-  .approvers-table th, .approvers-table td {
-    padding: 0.5rem 0.25rem;
-  }
+  /* Use global table sizing on small screens as well */
   
   .device-finance-select, .revenue-accounting-select {
     font-size: 0.7rem;

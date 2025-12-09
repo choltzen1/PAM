@@ -45,6 +45,36 @@
 
   <!-- Main Content -->
   <div class="content-container">
+    {% if pagination.total_pages > 1 %}
+    <div class="pagination-container top-pagination">
+      <div class="pagination-info">
+        Showing {{ ((pagination.page - 1) * pagination.per_page + 1) }} to {{ 
+          pagination.page * pagination.per_page if pagination.page * pagination.per_page <= pagination.total_items 
+          else pagination.total_items 
+        }} of {{ pagination.total_items }} promotions
+      </div>
+      <div class="pagination-controls">
+        {% if pagination.has_prev %}
+        <a href="{{ url_for('promo.approvers_page', page=1, search=search_query, owner=selected_owner, promo_code=target_promo_code) }}" class="pagination-btn">First</a>
+        <a href="{{ url_for('promo.approvers_page', page=pagination.prev_num, search=search_query, owner=selected_owner, promo_code=target_promo_code) }}" class="pagination-btn">‹ Prev</a>
+        {% endif %}
+        {% for page_num in range([
+          pagination.page - 2, 1]|max, 
+          [pagination.page + 2, pagination.total_pages]|min + 1
+        ) %}
+          {% if page_num == pagination.page %}
+            <span class="pagination-btn active">{{ page_num }}</span>
+          {% else %}
+            <a href="{{ url_for('promo.approvers_page', page=page_num, search=search_query, owner=selected_owner, promo_code=target_promo_code) }}" class="pagination-btn">{{ page_num }}</a>
+          {% endif %}
+        {% endfor %}
+        {% if pagination.has_next %}
+        <a href="{{ url_for('promo.approvers_page', page=pagination.next_num, search=search_query, owner=selected_owner, promo_code=target_promo_code) }}" class="pagination-btn">Next ›</a>
+        <a href="{{ url_for('promo.approvers_page', page=pagination.total_pages, search=search_query, owner=selected_owner, promo_code=target_promo_code) }}" class="pagination-btn">Last</a>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
     {% if promo_codes %}
     <div class="table-container">
       <table class="approvers-table sortable">
@@ -101,6 +131,39 @@
         <button class="btn btn-primary mt-3" onclick="refreshData()">
           <i class="fas fa-sync-alt"></i> Refresh Data
         </button>
+      </div>
+    </div>
+    {% endif %}
+    {% if pagination.total_pages > 1 %}
+    <div class="pagination-container">
+      <div class="pagination-info">
+        Showing {{ ((pagination.page - 1) * pagination.per_page + 1) }} to {{ 
+          pagination.page * pagination.per_page if pagination.page * pagination.per_page <= pagination.total_items 
+          else pagination.total_items 
+        }} of {{ pagination.total_items }} promotions
+      </div>
+      
+      <div class="pagination-controls">
+        {% if pagination.has_prev %}
+        <a href="{{ url_for('promo.approvers_page', page=1, search=search_query, owner=selected_owner, promo_code=target_promo_code) }}" class="pagination-btn">First</a>
+        <a href="{{ url_for('promo.approvers_page', page=pagination.prev_num, search=search_query, owner=selected_owner, promo_code=target_promo_code) }}" class="pagination-btn">‹ Prev</a>
+        {% endif %}
+        
+        {% for page_num in range([
+          pagination.page - 2, 1]|max, 
+          [pagination.page + 2, pagination.total_pages]|min + 1
+        ) %}
+          {% if page_num == pagination.page %}
+            <span class="pagination-btn active">{{ page_num }}</span>
+          {% else %}
+            <a href="{{ url_for('promo.approvers_page', page=page_num, search=search_query, owner=selected_owner, promo_code=target_promo_code) }}" class="pagination-btn">{{ page_num }}</a>
+          {% endif %}
+        {% endfor %}
+        
+        {% if pagination.has_next %}
+        <a href="{{ url_for('promo.approvers_page', page=pagination.next_num, search=search_query, owner=selected_owner, promo_code=target_promo_code) }}" class="pagination-btn">Next ›</a>
+        <a href="{{ url_for('promo.approvers_page', page=pagination.total_pages, search=search_query, owner=selected_owner, promo_code=target_promo_code) }}" class="pagination-btn">Last</a>
+        {% endif %}
       </div>
     </div>
     {% endif %}
@@ -193,43 +256,23 @@ function sendApprovalRequest(promoCode) {
 }
 
 // Filter functionality
-document.getElementById('owner-filter').addEventListener('change', applyFilters);
+document.getElementById('owner-filter').addEventListener('change', applyServerFilters);
 
-function applyFilters() {
-  const ownerFilter = document.getElementById('owner-filter').value;
-  const rows = document.querySelectorAll('.approver-row');
-  
-  rows.forEach(row => {
-    const owner = row.dataset.owner;
-    const matchesOwner = ownerFilter === 'all' || owner === ownerFilter;
-    
-    if (matchesOwner) {
-      row.style.display = '';
-    } else {
-      row.style.display = 'none';
-    }
-  });
-  
-  // Update stats if needed
-  const visibleRows = document.querySelectorAll('.approver-row[style=""], .approver-row:not([style])');
-  console.log(`Showing ${visibleRows.length} promotions`);
+function applyServerFilters() {
+  const owner = document.getElementById('owner-filter').value;
+  const searchTerm = document.getElementById('promo-search').value;
+  const url = new URL(window.location);
+  url.searchParams.set('owner', owner);
+  url.searchParams.set('promo_code', searchTerm);
+  url.searchParams.set('page', '1');
+  window.location.href = url.toString();
 }
 
 // Search functionality for promo codes
+let searchDebounce;
 document.getElementById('promo-search').addEventListener('input', function() {
-  const searchTerm = this.value.toLowerCase();
-  const rows = document.querySelectorAll('.approver-row');
-  
-  rows.forEach(row => {
-    const promoCode = row.querySelector('.promo-code').textContent.toLowerCase();
-    const owner = row.querySelector('.promo-owner').textContent.toLowerCase();
-    
-    if (promoCode.includes(searchTerm) || owner.includes(searchTerm)) {
-      row.style.display = '';
-    } else {
-      row.style.display = 'none';
-    }
-  });
+  clearTimeout(searchDebounce);
+  searchDebounce = setTimeout(applyServerFilters, 400);
 });
 
 // Auto-enable send button when checkboxes are selected

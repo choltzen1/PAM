@@ -1,16 +1,17 @@
-/* Groupings Management Page Styles (extracted from inline and admin.css) */
+/* Groupings Management Page Styles (75% scaling, extracted from inline and admin.css) */
+html { font-size: 12px; }
 
 .groupings-layout { max-width:1180px; margin:0 auto; }
-.panel { border:1px solid #d6d6dc; border-radius:10px; background:#fff; box-shadow:0 2px 4px rgba(0,0,0,0.06); display:flex; flex-direction:column; }
-.panel-header { padding:12px 16px; border-bottom:1px solid #eee; font-weight:600; display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+.panel { border:1px solid #d6d6dc; border-radius:8px; background:#fff; box-shadow:0 2px 4px rgba(0,0,0,0.06); display:flex; flex-direction:column; }
+.panel-header { padding:10px 14px; border-bottom:1px solid #eee; font-weight:600; display:flex; flex-wrap:wrap; gap:6px; align-items:center; }
 .panel-header > span { flex:1 1 auto; }
 .toolbar { display:flex; gap:6px; flex-wrap:wrap; align-items:center; }
 .panel-body { padding:0; }
-.panel-section { padding:14px 18px; }
+.panel-section { padding:12px 14px; }
 .panel-section + .panel-section { border-top:1px solid #f1f1f4; }
 .sku-pill { display:inline-block; background:#f8f9fb; border:1px solid #e0e2e6; padding:3px 7px; margin:2px; border-radius:14px; font-size:11px; line-height:14px; white-space:nowrap; }
 .sku-pill:hover { background:#eef1f5; }
-.reference-row { border:1px solid #ececee; border-radius:8px; padding:10px 12px; font-size:12px; margin-bottom:10px; background:#fafbfc; position:relative; transition:filter .15s ease; }
+.reference-row { border:1px solid #ececee; border-radius:8px; padding:8px 10px; font-size:12px; margin-bottom:8px; background:#fafbfc; position:relative; transition:filter .15s ease; }
 .reference-row.collapsed .row-items { display:none; }
 .reference-row-header { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; }
 .code-badge { display:inline-block; background:#5e0066; color:#fff; padding:2px 8px; font-size:11px; border-radius:12px; font-weight:600; letter-spacing:0.5px; box-shadow:0 1px 2px rgba(0,0,0,0.15); }
@@ -28,7 +29,7 @@ pill-cluster { margin-top:6px; }
 .view-mode-btn.active { background:#5e0066; color:#fff; }
 .form-inline-grid { display:grid; grid-template-columns: repeat(auto-fit,minmax(210px,1fr)); gap:10px; }
 .panel-footer { padding:10px 16px; background:#f8f8fa; border-top:1px solid #eee; display:flex; justify-content:flex-end; gap:6px; }
-.inline-edit-code, .inline-edit-input, .inline-edit-textarea { width:100%; padding:6px 8px; border:1px solid #cbd5e1; border-radius:6px; font-size:12px; background:#fff; }
+.inline-edit-code, .inline-edit-input, .inline-edit-textarea { width:100%; padding:6px 8px; border:1px solid #cbd5e1; border-radius:6px; font-size:11px; background:#fff; }
 .inline-edit-textarea { resize:vertical; }
 .inline-edit-code:focus, .inline-edit-input:focus, .inline-edit-textarea:focus { outline:2px solid #5e0066; outline-offset:1px; }
 .inline-rename-hint { font-size:10px; color:#555; margin-top:6px; }

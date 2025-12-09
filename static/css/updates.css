@@ -1,23 +1,17 @@
 /* Updates page matching promo edit form layout */
-body.updates-page {
+/* 75% scale: reduce base font-size, tighten spacings */
+html { font-size: 12px; }
+.updates-page {
     margin: 0;
     padding: 0;
     font-family: Arial, sans-serif;
-    background: #f5f5f5;
+    background: transparent; /* global gradient controls background */
     overflow-y: auto;
 }
 
 /* Header right actions */
-.updates-header-actions {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-}
-.updates-user-label {
-    color: rgba(255,255,255,0.9);
-    font-size: 0.9rem;
-    font-weight: 500;
-}
+.updates-header-actions { display:flex; align-items:center; gap: 0.75rem; }
+.updates-user-label { color: rgba(255,255,255,0.9); font-size: 0.85rem; font-weight: 500; }
 
 /* Reusable check icon */
 .updates-check-icon {
@@ -27,82 +21,29 @@ body.updates-page {
 }
 
 /* Universal header styling for updates */
-.global-header-updates {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-}
+.global-header-updates { display:flex; align-items:center; gap: 0.56rem; }
 
-.global-header-updates .header-icon {
-    font-size: 1.5rem;
-    color: #fff;
-}
+.global-header-updates .header-icon { font-size: 1.125rem; color: #fff; }
 
-.global-header-updates .header-text h2 {
-    margin: 0;
-    font-size: 1.3rem;
-    font-weight: 600;
-    color: #fff;
-    line-height: 1.2;
-}
+.global-header-updates .header-text h2 { margin:0; font-size: 0.975rem; font-weight: 600; color:#fff; line-height:1.2; }
 
-.global-header-updates .header-text p {
-    margin: 0;
-    font-size: 0.9rem;
-    color: rgba(255, 255, 255, 0.9);
-    font-weight: 400;
-    line-height: 1.1;
-}
+.global-header-updates .header-text p { margin:0; font-size: 0.675rem; color: rgba(255,255,255,0.9); font-weight:400; line-height:1.1; }
 
 /* Control group with search and promo details */
-.control-group {
-    /* Now fully inherits global unified control-bar surface; keep layout-specific gap */
-    gap: 30px; /* retain wider gap unique to updates */
-    position: static; /* only admin promo manager uses sticky */
-}
+.control-group { gap: 22.5px; position: static; }
 
-.search-bar {
-    display: flex;
-    align-items: center;
-    background: #f8f9fa;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    overflow: hidden;
-    min-width: 90px;
-    max-width: 100px;
-}
+.search-bar { display:flex; align-items:center; background:#f8f9fa; border:1px solid #ddd; border-radius:5px; overflow:hidden; min-width: 67.5px; max-width: 75px; }
 
-.search-input {
-    padding: 10px 15px;
-    border: none;
-    outline: none;
-    font-size: 14px;
-    width: 100%;
-    color: #333;
-    background: transparent;
-}
+.search-input { padding: 7.5px 11.25px; border:none; outline:none; font-size: 10.5px; width:100%; color:#333; background:transparent; }
 
 .search-input::placeholder {
     color: #999;
 }
 
-.promo-details {
-    display: flex;
-    align-items: center;
-    gap: 20px; /* uniform spacing between each label/value cluster */
-    flex: 1;
-    flex-wrap: wrap;
-}
+.promo-details { display:flex; align-items:center; gap: 15px; flex:1; flex-wrap:wrap; }
 
 /* Aligned label/value typography (consistent size & baseline) */
-.info-label, .info-value {
-    font-size: 14px;
-    line-height: 1.15;
-    display: inline-flex;
-    align-items: center;
-    margin: 0;
-    padding: 0;
-}
+.info-label, .info-value { font-size: 10.5px; line-height: 1.15; display:inline-flex; align-items:center; margin:0; padding:0; }
 .info-label { font-weight:600; color:#444; }
 .info-value { font-weight:500; color:#111; }
 
@@ -118,21 +59,11 @@ body.updates-page {
 /* Tighten control group vertical rhythm */
 .control-group { line-height:1; }
 
-/* Dark mode color alignment (already forcing black text elsewhere, ensure labels use same) */
-html[data-theme='dark'] .info-label { color:#111 !important; }
-html[data-theme='dark'] .info-value { color:#111 !important; }
+/* Dark mode control group text should be white */
+html[data-theme='dark'] .info-label { color:#ffffff !important; }
+html[data-theme='dark'] .info-value { color:#ffffff !important; }
 
-.status-active {
-    background: #4caf50;
-    color: white;
-    padding: 3px 10px;
-    border-radius: 12px;
-    font-size: 12px;
-    font-weight: 600;
-    text-align: center;
-    display: inline-block;
-    margin-right: 12px;
-}
+.status-active { background:#4caf50; color:white; padding: 2.25px 7.5px; border-radius: 9px; font-size: 9px; font-weight:600; text-align:center; display:inline-block; margin-right: 9px; }
 
 /* Main container with 2 columns */
 .four-column-container {
@@ -146,13 +77,7 @@ html[data-theme='dark'] .info-value { color:#111 !important; }
 }
 
 /* Updates container for card layout */
-.updates-container {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 20px;
-    padding: 20px;
-    min-height: calc(100vh - 120px);
-}
+.updates-container { display:grid; grid-template-columns:1fr 1fr; gap: 15px; padding: 15px; min-height: calc(100vh - 120px); }
 
 /* Card styling matching admin cards */
 .updates-card {
@@ -166,64 +91,18 @@ html[data-theme='dark'] .info-value { color:#111 !important; }
     overflow: hidden;
 }
 
-.card-header {
-    background: #e91e63;
-    padding: 16px 24px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 0;
-}
+.card-header { background:#e91e63; padding: 12px 18px; display:flex; align-items:center; gap: 9px; margin-bottom:0; }
 
-.card-icon {
-    width: 24px;
-    height: 24px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-size: 18px;
-}
+.card-icon { width: 18px; height: 18px; display:flex; align-items:center; justify-content:center; color:white; font-size: 13.5px; }
 
-.card-title {
-    font-size: 1.1rem;
-    font-weight: 600;
-    color: white;
-    margin: 0;
-}
+.card-title { font-size: 0.825rem; font-weight:600; color:white; margin:0; }
 
-.card-content {
-    color: #64748b;
-    line-height: 1.6;
-    flex: 1;
-    padding: 24px;
-}
+.card-content { color:#64748b; line-height:1.6; flex:1; padding: 18px; }
 
 /* Section Headers within cards */
-.section-header {
-    background: transparent;
-    color: #2c3e50;
-    padding: 8px 0 12px 0;
-    font-weight: 600;
-    font-size: 15px;
-    margin: 20px 0 15px 0;
-    text-align: left;
-    border-bottom: 2px solid #e91e63;
-    position: relative;
-    display: flex;
-    align-items: center;
-}
+.section-header { background:transparent; color:#2c3e50; padding: 6px 0 9px 0; font-weight:600; font-size: 11.25px; margin: 15px 0 11.25px 0; text-align:left; border-bottom:2px solid #e91e63; position:relative; display:flex; align-items:center; }
 
-.section-header::before {
-    content: '';
-    position: absolute;
-    bottom: -2px;
-    left: 0;
-    width: 30px;
-    height: 2px;
-    background: #e91e63;
-    border-radius: 1px;
-}
+.section-header::before { content:''; position:absolute; bottom:-2px; left:0; width:22.5px; height:2px; background:#e91e63; border-radius:1px; }
 
 .card-content .section-header:first-child {
     margin-top: 0;
@@ -261,6 +140,10 @@ html[data-theme='dark'] .column {
     box-shadow:none !important; /* flatten elevation in dark mode */
 }
 
+/* Control group overall text color: white in dark mode */
+html[data-theme='dark'] .control-group { color:#ffffff; }
+html[data-theme='dark'] .control-group label { color:#ffffff !important; }
+
 /* Internal accent elements retain magenta header color; card headers already magenta */
 html[data-theme='dark'] .card-header,
 html[data-theme='dark'] .column-header { filter:none; }
@@ -297,9 +180,9 @@ html[data-theme='dark'] .bptcr-item.selected,
 html[data-theme='dark'] .status-button.active,
 html[data-theme='dark'] .status-button.primary { color:#fff !important; }
 
-/* Info labels/values forced to dark text */
+/* Info labels/values: white in dark mode (override dark text) */
 html[data-theme='dark'] .info-label,
-html[data-theme='dark'] .info-value { color:#111 !important; }
+html[data-theme='dark'] .info-value { color:#ffffff !important; }
 
 /* Column headers */
 .column-header {
@@ -313,11 +196,7 @@ html[data-theme='dark'] .info-value { color:#111 !important; }
 }
 
 /* Column content */
-.column-content {
-    padding: 15px;
-    flex: 1;
-    overflow-y: auto;
-}
+.column-content { padding: 11.25px; flex:1; overflow-y:auto; }
 
 /* BPTCR Section */
 .bptcr-section {

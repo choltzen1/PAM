@@ -1,6 +1,7 @@
 /* Frontpage Specific Styles */
 
 /* Page layout overrides */
+html { font-size: 12px; }
 html, body {
   height: 100vh;
   width: 100vw;
@@ -14,12 +15,12 @@ html, body {
   left: 0;
   top: 60px; /* Position directly below global header */
   bottom: 45px; /* Account for footer height */
-  width: 200px;
+  width: 150px; /* 75% of original 200px */
   background: var(--tmobile-magenta);
   color: #fff;
   z-index: 50; /* Lower than header */
-  padding-top: 20px;
-  padding-bottom: 20px;
+  padding-top: 15px;
+  padding-bottom: 15px;
   overflow-y: auto;
   box-shadow: 2px 0 8px #e2007420;
 }
@@ -29,7 +30,7 @@ html, body {
 .sidebar a {
   color: #fff;
   text-decoration: none;
-  padding: 0.9em 1.5em;
+  padding: 0.675em 1.125em; /* 75% */
   font-size: 1.05rem;
   display: flex;
   align-items: center;
@@ -37,14 +38,14 @@ html, body {
   border: none;
   background: none;
   transition: background 0.15s, padding-left 0.2s;
-  border-radius: 0 20px 20px 0;
+  border-radius: 0 15px 15px 0;
   margin-right: 0.5em;
   white-space: nowrap;
 }
 
 .sidebar a:hover, .sidebar a:focus {
   background: #b8005a;
-  padding-left: 2em;
+  padding-left: 1.5em; /* 75% */
   color: #fff;
 }
 
@@ -52,10 +53,10 @@ html, body {
   position: fixed;
   top: 60px; /* below fixed global header */
   bottom: 92px; /* Height of footer (60px) + disclaimer (~32px) */
-  left: 200px;
+  left: 150px; /* match sidebar width */
   right: 0;
   overflow-y: auto;
-  padding: 2.5rem 1.5rem 2rem 1.5rem;
+  padding: 1.875rem 1.125rem 1.5rem 1.125rem; /* 75% */
   background: transparent; /* expose body background */
   display: flex;
   flex-direction: column;
@@ -68,26 +69,26 @@ html, body {
   font-size: 2.2rem;
   font-weight: 700;
   color: #23272b;
-  margin-bottom: 0.5em;
-  margin-top: 1.5em;
+  margin-bottom: 0.375em; /* 75% */
+  margin-top: 1.125em; /* 75% */
 }
 
 .main h5 {
   color: #e20074;
-  font-size: 1.15rem;
+  font-size: 0.8625rem; /* 75% */
   font-style: italic;
-  margin-bottom: 2.5em;
+  margin-bottom: 1.875em; /* 75% */
 }
 
 .disclaimer {
   position: fixed;
   bottom: 60px; /* Position above the 60px footer */
-  left: 200px;
+  left: 150px; /* match sidebar */
   right: 0;
   background-color: #666;
   color: white;
-  padding: 8px 16px;
-  font-size: 0.75rem;
+  padding: 6px 12px; /* 75% */
+  font-size: 0.75rem; /* keep readable */
   line-height: 1.2;
   z-index: 150;
   margin: 0;
@@ -244,8 +245,8 @@ html, body {
 }
 
 .process-icon-container {
-  width: 60px;
-  height: 60px;
+  width: 45px; /* 75% */
+  height: 45px; /* 75% */
   border-radius: 14px;
   background: var(--card-bg); /* white light / grey dark */
   border: 2px solid var(--tmobile-magenta);
@@ -268,7 +269,7 @@ html[data-theme='dark'] .process-icon-container:hover { box-shadow:none; }
 }
 
 .process-icon {
-  font-size: 1.5rem;
+  font-size: 1.125rem; /* 75% */
   color: var(--tmobile-magenta);
   transition: color 0.3s ease;
 }
@@ -278,7 +279,7 @@ html[data-theme='dark'] .process-icon-container:hover { box-shadow:none; }
 }
 
 .process-label {
-  font-size: 0.9rem;
+  font-size: 0.675rem; /* 75% */
   font-weight: 600;
   color: #333;
   margin: 0;

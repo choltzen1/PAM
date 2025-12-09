@@ -1,7 +1,8 @@
-/* Links Page Styles - Based on Version History Control Group */
-.links-header-actions { display:flex; align-items:center; gap:1rem; }
-.links-user-label { color:rgba(255,255,255,0.9); font-size:0.9rem; }
-.links-save-message { color:#e20074; font-size:14px; font-weight:500; margin-left:15px; }
+/* Links Page Styles - 75% scaling and proportional spacing */
+html { font-size: 12px; }
+.links-header-actions { display:flex; align-items:center; gap:0.75rem; }
+.links-user-label { color:rgba(255,255,255,0.9); font-size:0.85rem; }
+.links-save-message { color:#e20074; font-size:0.85rem; font-weight:500; margin-left:12px; }
 .links-page {
   display: flex;
   flex-direction: column;
@@ -13,7 +14,7 @@
 /* Control bar (now standardized via global .control-bar / .version-controls styles).
    Keep only unique height requirement; remove surface overrides so global takes effect. */
 .version-controls {
-  min-height: 80px; /* Preserve explicit height while deferring all other styling to global */
+  min-height: 60px; /* 75% of previous explicit height; other styling via global */
 }
 
 /* All plain text in control groups adapts to theme */
@@ -34,24 +35,24 @@
 }
 
 .filter-group label {
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   font-weight: 500;
   margin-bottom: 0.25rem;
 }
 
 .filter-group select {
-  padding: 0.5rem;
+  padding: 0.45rem;
   border: 1px solid #ced4da;
   border-radius: 4px;
   background: white;
-  font-size: 0.9rem;
-  height: 38px;
-  min-width: 150px;
+  font-size: 0.85rem;
+  height: 34px;
+  min-width: 140px;
 }
 
 .search-group {
   flex: 1;
-  max-width: 300px;
+  max-width: 280px;
   display: flex;
   align-items: center; /* Center the search input */
   align-self: center; /* Align this group to center of the parent container */
@@ -59,11 +60,11 @@
 
 .search-group input {
   width: 100%;
-  padding: 0.5rem;
+  padding: 0.45rem;
   border: 1px solid #ced4da;
   border-radius: 4px;
-  font-size: 0.9rem;
-  height: 38px; /* Consistent height */
+  font-size: 0.85rem;
+  height: 34px; /* Consistent reduced height */
 }
 
 /* Remove all the dropdown constraint overrides */
@@ -81,7 +82,7 @@
 
 .action-buttons {
   display: flex;
-  gap: 0.5rem;
+  gap: 0.4rem;
   align-items: center; /* Center the buttons */
   align-self: center; /* Align this group to center of the parent container */
 }
@@ -89,8 +90,8 @@
 .btn {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 1rem;
+  gap: 0.4rem;
+  padding: 0.4rem 0.8rem;
   background: #E20074;
   color: white;
   border: none;
@@ -99,7 +100,7 @@
   cursor: pointer;
   text-decoration: none;
   transition: background-color 0.2s;
-  height: 38px; /* Consistent height with other controls */
+  height: 34px; /* Consistent reduced height */
   white-space: nowrap; /* Prevent text wrapping */
 }
 
@@ -121,8 +122,8 @@
 .content-container {
   flex: 1;
   overflow-x: auto;
-  padding: 0 2rem;
-  padding-top: 1rem;
+  padding: 0 1.5rem;
+  padding-top: 0.75rem;
   width: 100%;
   max-width: 100vw;
 }
@@ -139,9 +140,9 @@
 
 /* Alert styling */
 .alert {
-  margin: 1rem 2rem;
-  padding: 1rem;
-  border-radius: 8px;
+  margin: 0.75rem 1.5rem;
+  padding: 0.75rem;
+  border-radius: 6px;
   border: 1px solid transparent;
 }
 
@@ -157,31 +158,31 @@
 
 /* Promotion info styling */
 .promotion-info {
-  padding: 0 2rem;
+  padding: 0 1.5rem;
 }
 
 .card {
   background: white;
-  border-radius: 8px;
+  border-radius: 6px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   border: 1px solid #dee2e6;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1rem;
 }
 
 .card-header {
   background: #f8f9fa;
   border-bottom: 1px solid #dee2e6;
-  padding: 1rem 1.5rem;
-  border-radius: 8px 8px 0 0;
+  padding: 0.75rem 1.125rem;
+  border-radius: 6px 6px 0 0;
 }
 
 .card-header h5 {
   margin: 0;
   color: #495057;
-  font-size: 1.1rem;
+  font-size: 1rem;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.4rem;
 }
 
 .card-header h5 i {
@@ -196,7 +197,7 @@
   margin: 0;
   color: #495057;
   line-height: 1.6;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
 }
 
 .promotion-header-info strong {
@@ -205,7 +206,7 @@
 }
 
 .card-body {
-  padding: 1.5rem;
+  padding: 1rem;
 }
 
 .card-body .row {
@@ -229,23 +230,23 @@
 
 /* Form styling */
 .mb-3 {
-  margin-bottom: 1rem;
+  margin-bottom: 0.75rem;
 }
 
 .form-label {
   display: block;
   font-weight: 600;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.4rem;
   color: #495057;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
 }
 
 .form-control {
   width: 100%;
-  padding: 0.75rem;
+  padding: 0.6rem;
   border: 1px solid #ced4da;
   border-radius: 4px;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 
@@ -258,13 +259,14 @@
 /* -------------------- Dark Theme Overrides (consistent grey panel surface) -------------------- */
 /* Let the global gradient show through in dark mode; only panels use grey surfaces */
 html[data-theme='dark'] .links-page { background: transparent; }
-/* Dark mode inherits unified control group styling from global; local overrides removed */
+/* Dark mode: use unified grey surfaces and white text for readability */
 html[data-theme='dark'] .card { background:var(--card-bg); border-color:#b9bbbc; box-shadow:0 2px 6px rgba(0,0,0,0.4); }
 html[data-theme='dark'] .card-header { background:var(--card-bg); border-color:#b9bbbc; }
 html[data-theme='dark'] .promotion-header-info p,
 html[data-theme='dark'] .promotion-header-info strong,
-html[data-theme='dark'] .form-label { color:#111 !important; }
-/* Removed page-specific dark mode input overrides; global unified styling applies */
+html[data-theme='dark'] .form-label { color:#000 !important; }
+html[data-theme='dark'] .card-header h5 { color:#000 !important; }
+/* Inputs remain readable via global styling; keep buttons unfiltered */
 html[data-theme='dark'] .btn { filter:none; }
 /* Ensure save confirmation message keeps brand color readability */
 html[data-theme='dark'] .links-save-message { color:#E20074; }
@@ -276,30 +278,30 @@ html[data-theme='dark'] .links-save-message { color:#E20074; }
 /* Empty state */
 .empty-state {
   text-align: center;
-  padding: 4rem 2rem;
+  padding: 3rem 1.5rem;
   color: #6c757d;
 }
 
 .empty-state i {
-  font-size: 4rem;
+  font-size: 3rem;
   color: #E20074;
-  margin-bottom: 1rem;
+  margin-bottom: 0.85rem;
 }
 
 .empty-state h3 {
   color: #495057;
-  margin-bottom: 1rem;
+  margin-bottom: 0.85rem;
 }
 
 /* Placeholder content styling */
 .placeholder-content {
   text-align: center;
-  padding: 4rem 2rem;
+  padding: 3rem 1.5rem;
   background: white;
-  border-radius: 8px;
+  border-radius: 6px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
   max-width: 600px;
-  margin: 2rem auto;
+  margin: 1.5rem auto;
 }
 
 .placeholder-icon {
@@ -308,9 +310,9 @@ html[data-theme='dark'] .links-save-message { color:#E20074; }
 
 .feature-preview {
   background: #f8f9fa;
-  padding: 1.5rem;
+  padding: 1rem;
   border-radius: 6px;
-  margin-top: 2rem;
+  margin-top: 1.5rem;
 }
 
 .feature-preview ul {
@@ -320,7 +322,7 @@ html[data-theme='dark'] .links-save-message { color:#E20074; }
 }
 
 .feature-preview li {
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.4rem;
   color: #6c757d;
 }
 

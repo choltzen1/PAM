@@ -330,6 +330,7 @@ filter-group select:focus, .search-group input:focus,
    Targets existing table classes to avoid markup changes.
    ============================= */
 .promo-table,
+.approvers-table,
 .date-mismatch-table,
 .workload-table,
 table.standard-table {
@@ -340,31 +341,34 @@ table.standard-table {
   border: 1px solid var(--tmobile-border);
   border-radius: 12px;
   overflow: hidden; /* clip radius */
-  font-size: 0.85rem;
+  font-size: 1.1rem; /* Upsized for readability (RDC baseline) */
 }
 
 .promo-table th,
+.approvers-table th,
 .date-mismatch-table th,
 .workload-table th,
 table.standard-table th {
   background: var(--tmobile-magenta);
   color: #fff;
   font-weight: 600;
-  padding: .65rem .75rem;
+  padding: 1.05em .8em; /* RDC header spacing */
   text-align: center;
-  font-size: 0.75rem;
+  font-size: 1rem; /* RDC header size */
   letter-spacing: .5px;
   text-transform: uppercase;
 }
 
 /* Zebra striping */
 .promo-table tbody tr:nth-child(even),
+.approvers-table tbody tr:nth-child(even),
 .date-mismatch-table tbody tr:nth-child(even),
 .workload-table tbody tr:nth-child(even),
 table.standard-table tbody tr:nth-child(even) {
   background: #f8f9fa;
 }
 .promo-table tbody tr:nth-child(odd),
+.approvers-table tbody tr:nth-child(odd),
 .date-mismatch-table tbody tr:nth-child(odd),
 .workload-table tbody tr:nth-child(odd),
 table.standard-table tbody tr:nth-child(odd) {
@@ -372,33 +376,51 @@ table.standard-table tbody tr:nth-child(odd) {
 }
 
 .promo-table td,
+.approvers-table td,
 .date-mismatch-table td,
 .workload-table td,
 table.standard-table td {
-  padding: .6rem .65rem;
+  padding: 1em .8em; /* RDC cell spacing */
   text-align: center;
   border-bottom: 1px solid #e5e5e5;
+  font-size: 1.05rem; /* RDC cell font size */
 }
 
 /* Remove bottom border for last row */
 .promo-table tbody tr:last-child td,
+.approvers-table tbody tr:last-child td,
 .date-mismatch-table tbody tr:last-child td,
 .workload-table tbody tr:last-child td,
 table.standard-table tbody tr:last-child td { border-bottom: none; }
 
 /* Action cell neutrality */
 .promo-table td.promo-actions,
+.approvers-table td.actions-cell,
 .workload-table td.actions-cell,
 table.standard-table td.actions-cell { background: inherit; }
 
+/* In-table button sizing (RDC baseline) */
+.promo-table .btn,
+.approvers-table .btn { font-size: 1rem; padding: 0.5rem 1rem; border-radius: 6px; }
+.promo-table td.promo-actions .icon-button { padding: .25em .25em; font-size: 1.3em; border-radius: 6px; }
+
 /* Hover highlight */
 .promo-table tbody tr:hover,
+.approvers-table tbody tr:hover,
 .date-mismatch-table tbody tr:hover,
 .workload-table tbody tr:hover,
 table.standard-table tbody tr:hover { background: #f3e8f1; }
 
 /* Responsive scroll wrapper optional utility */
 .table-wrap { overflow-x:auto; background:transparent; border-radius:14px; padding:4px; }
+
+/* =============================
+  Global Pagination Styles
+  ============================= */
+.pagination-container { display:flex; justify-content:space-between; align-items:center; margin:1.5rem 0; padding:1rem; background:var(--bg-soft); border-radius:8px; border:1px solid var(--border-color); backdrop-filter:blur(3px); }
+.pagination-controls { display:flex; gap:.5rem; align-items:center; flex-wrap:wrap; }
+.pagination-btn { padding:.5rem .75rem; border:1px solid var(--tmobile-border); background:#fff; color:var(--tmobile-magenta); text-decoration:none; border-radius:4px; font-size:.9rem; transition:all .2s ease; min-width:40px; text-align:center; }
+.pagination-btn:hover, .pagination-btn.active { background:var(--tmobile-magenta); color:#fff; border-color:var(--tmobile-magenta); }
 
 /* =============================
   Background Standardization
