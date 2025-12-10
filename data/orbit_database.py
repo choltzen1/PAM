@@ -89,7 +89,8 @@ class OrbitDatabaseManager:
                 # Map Fabric fields to expected format
                 return {
                     'Owner': result.get('cat_businessowner'),
-                    'bill_facing_name': result.get('cat_initiativename'),  # Initiative name for bill-facing
+                    'bill_facing_name': result.get('cat_billname'),  # Bill facing name
+                    'initiative_name': result.get('cat_initiativename'),  # Initiative name
                     'orbit_id': result.get('cat_gtmentryid'),
                     'description': result.get('cat_description'),  # Full description
                     'promo_start_date': result.get('cat_startdate'),
