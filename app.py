@@ -2,7 +2,6 @@ from factory import create_app, data_manager as factory_data_manager  # import a
 from perf.metrics import collector  # request metrics collector
 import time
 from flask import request, make_response, jsonify
-import os
 
 app = create_app()
 # After factory create_app, re-import the factory module variable to ensure it's initialized
@@ -34,21 +33,7 @@ app.before_request(_perf_begin)
 app.after_request(_perf_end)
 app.add_url_rule('/__perf_metrics', 'perf_metrics', perf_metrics)
 
-# Lightweight health check endpoint for Azure App Service health probes
-# Keep checks shallow and fast to avoid load and false negatives
-def healthz():
-    start = time.time()
-    status = {
-        "status": "ok",
-        "version": os.getenv("APP_VERSION", "dev"),
-        "uptime_ms": int((time.time() - start) * 1000),
-        "dependencies": {
-            "app": "ok"
-        }
-    }
-    return jsonify(status), 200
-
-app.add_url_rule('/healthz', 'healthz', healthz, methods=['GET'])
+# Removed explicit /healthz endpoint per request
 
 
 if data_manager is None:  # defensive assertion during test/dev
