@@ -132,12 +132,10 @@ class PromoCodeWorkflow:
         candidate_fields = {
             'code': new_code,
             'orbit_id': oid,
-            # Strict mapping: orbit.description -> initiative_name (nullable)
-            'initiative_name': full_row.get('description'),
-            # Strict mapping: orbit.cat_description -> description (nullable)
-            'description': full_row.get('cat_description'),
-            # Preserve bill_facing_name separately; do not use for initiative/description fallback
-            'bill_facing_name': full_row.get('bill_facing_name'),
+            # Map from Fabric fields (already transformed by orbit_database.py)
+            'initiative_name': full_row.get('initiative_name'),  # From cat_initiativename
+            'description': full_row.get('description'),  # From cat_description
+            'bill_facing_name': full_row.get('bill_facing_name'),  # From cat_billname
             'Owner': full_row.get('Owner') or full_row.get('owner') or 'Unassigned',
             'promo_start_date': full_row.get('promo_start_date') or full_row.get('promo_start_date'),
             'promo_end_date': full_row.get('promo_end_date'),

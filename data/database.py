@@ -29,24 +29,10 @@ class DatabaseManager:
         self.source_table = os.getenv('PAM_SOURCE_TABLE', '[PAM].[PAM_Orbit_Data_Updated]')
         # Raw intake Orbit table (no promo code yet). Always query this FIRST for orbit lookups.
         self.orbit_source_table = os.getenv('PAM_ORBIT_SOURCE_TABLE', '[RDC].[PAM_Orbit_Data]')
-        # Load connection parameters from environment for security
-        self.server = os.getenv('PAM_DB_SERVER', 'localhost')
-        self.database = os.getenv('PAM_DB_DATABASE', 'PromoQuality')
-        self.username = os.getenv('PAM_DB_USERNAME', '')
-        self.password = os.getenv('PAM_DB_PASSWORD', '')
-        self.driver = os.getenv('PAM_DB_DRIVER', 'ODBC Driver 17 for SQL Server')
-        self.encrypt = os.getenv('PAM_DB_ENCRYPT', 'no').lower()  # yes/no
-        self.trust_cert = os.getenv('PAM_DB_TRUST_CERT', 'yes').lower()  # yes/no
-        self.timeout = int(os.getenv('PAM_DB_LOGIN_TIMEOUT', '15'))
-        self.source_table = os.getenv('PAM_SOURCE_TABLE', '[PAM].[PAM_Orbit_Data_Updated]')
-        # Raw intake Orbit table (no promo code yet). Always query this FIRST for orbit lookups.
-        self.orbit_source_table = os.getenv('PAM_ORBIT_SOURCE_TABLE', '[RDC].[PAM_Orbit_Data]')
         self._engine = None
-        # (Duplicate _ensure_diag_tables block removed)
         # Diagnostics persistence moved to SQL Server `PAM.date_diagnostics_history`.
         # Local SQLite has been deprecated and removed.
         self._diag_db_path = None
-        # Do not create local SQLite tables.
         # Threshold from environment
         self.invalid_ratio_threshold = float(os.environ.get('INVALID_DATE_RATIO_WARN_THRESHOLD', '0.10'))
 
