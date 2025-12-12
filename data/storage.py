@@ -1177,9 +1177,9 @@ class PromoDataManager:
         return None
     
     def get_date_mismatched_promos(self) -> Dict[str, Any]:
-        """Compare ORBIT (raw intake table) vs PAM (updated table) end dates.
+        """Compare ORBIT (from Fabric/OrbitDatabaseManager) vs PAM (updated table) end dates.
 
-        ORBIT end date comes from DatabaseManager.orbit_source_table (via get_orbit_dates_map).
+        ORBIT end date comes from OrbitDatabaseManager (Fabric if enabled, or local SQL fallback).
         PAM end date comes from the primary source table (self.get_all_promos()).
         If JSON overlay edits existed they would be merged already in get_all_promos(); for now DB is primary.
         """
