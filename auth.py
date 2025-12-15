@@ -20,15 +20,15 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-# Configure your RBAC group mappings (Group Object IDs from Entra ID)
-# You can get these from Azure Portal > Entra ID > Groups
-RBAC_GROUPS = {
-    'pam_admin': os.getenv('ENTRA_GROUP_PAM_ADMIN', ''),  # Full admin, override system controls
-    'pam_approvers': os.getenv('ENTRA_GROUP_PAM_APPROVERS', ''),  # Approvals on promotions
-    'pam_users': os.getenv('ENTRA_GROUP_PAM_USERS', ''),  # Promo owners - full edit access
-    'pam_viewonly': os.getenv('ENTRA_GROUP_PAM_VIEWONLY', ''),  # Review and audit only
-    'pam_research': os.getenv('ENTRA_GROUP_PAM_RESEARCH', ''),  # Research tools access
-    'pam_offers': os.getenv('ENTRA_GROUP_PAM_OFFERS', ''),  # Offers workspace access
+# Map Azure App Roles to internal role names
+# These come from Enterprise Application > Users and groups > Assigned roles
+AZURE_ROLE_MAPPING = {
+    'Admin': 'pam_admin',  # Full admin, override system controls
+    'Approver': 'pam_approvers',  # Approvals on promotions
+    'User': 'pam_users',  # Promo owners - full edit access
+    'ViewOnly': 'pam_viewonly',  # Review and audit only
+    'Research': 'pam_research',  # Research tools access
+    'Offers': 'pam_offers',  # Offers workspace access
 }
 
 # Role hierarchy and permissions
@@ -83,19 +83,35 @@ def get_user_from_headers() -> Optional[Dict[str, Any]]:
         principal_json = base64.b64decode(principal_header).decode('utf-8')
         principal_data = json.loads(principal_json)
         
+        # Extract claims
+        claims = principal_data.get('claims', [])
+        
+        # Helper to get claim value by type
+        def get_claim(claim_type: str) -> Optional[str]:
+            for claim in claims:
+                if claim.get('typ') == claim_type:
+                    return claim.get('val')
+            return None
+        
         # Extract user information
         user_info = {
-            'name': principal_data.get('userDetails', 'Unknown'),
-            'email': principal_data.get('userId', request.headers.get('X-MS-CLIENT-PRINCIPAL-NAME', 'unknown')),
-            'id': principal_data.get('userPrincipalId', request.headers.get('X-MS-CLIENT-PRINCIPAL-ID', 'unknown')),
-            'groups': principal_data.get('claims', {}).get('groups', []),
+            'name': get_claim('name') or get_claim('preferred_username') or 'Unknown',
+            'email': get_claim('http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress') or get_claim('preferred_username') or 'unknown',
+            'id': get_claim('http://schemas.microsoft.com/identity/claims/objectidentifier') or request.headers.get('X-MS-CLIENT-PRINCIPAL-ID', 'unknown'),
+            'azure_roles': [],
             'roles': [],
         }
         
-        # Map groups to roles
-        user_info['roles'] = get_user_roles(user_info['groups'])
+        # Extract Azure App Roles (can be in 'roles' or 'assignedroles' claim)
+        azure_roles = get_claim('roles') or get_claim('assignedroles')
+        if azure_roles:
+            # Could be a single string or comma-separated
+            user_info['azure_roles'] = [r.strip() for r in azure_roles.split(',')] if isinstance(azure_roles, str) else [azure_roles]
         
-        logger.info(f"Authenticated user: {user_info['email']} with roles: {user_info['roles']}")
+        # Map Azure roles to internal roles
+        user_info['roles'] = get_user_roles_from_azure_roles(user_info['azure_roles'])
+        
+        logger.info(f"Authenticated user: {user_info['email']} with Azure roles: {user_info['azure_roles']} -> Internal roles: {user_info['roles']}")
         return user_info
         
     except Exception as e:
@@ -103,23 +119,27 @@ def get_user_from_headers() -> Optional[Dict[str, Any]]:
         return None
 
 
-def get_user_roles(user_groups: List[str]) -> List[str]:
-    """Map Azure AD group memberships to application roles.
+def get_user_roles_from_azure_roles(azure_roles: List[str]) -> List[str]:
+    """Map Azure App Roles to internal application roles.
     
     Args:
-        user_groups: List of Azure AD group object IDs the user belongs to
+        azure_roles: List of Azure App Role names (e.g., ['Admin', 'User'])
         
     Returns:
-        List of role names (e.g., ['admin', 'power_user'])
+        List of internal role names (e.g., ['pam_admin', 'pam_users'])
     """
     roles = []
     
-    for role_name, group_id in RBAC_GROUPS.items():
-        if group_id and group_id in user_groups:
-            roles.append(role_name)
+    for azure_role in azure_roles:
+        internal_role = AZURE_ROLE_MAPPING.get(azure_role)
+        if internal_role:
+            roles.append(internal_role)
+        else:
+            logger.warning(f"Unknown Azure role: {azure_role}")
     
     # If no roles matched, default to viewonly
     if not roles:
+        logger.info("No roles matched, defaulting to pam_viewonly")
         roles.append('pam_viewonly')
     
     return roles
