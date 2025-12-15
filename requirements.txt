@@ -13,7 +13,7 @@ azure-identity==1.15.0
 
 # HTTP requests and networking
 requests==2.31.0
-urllib3==2.1.0
+urllib3==2.6.2
 
 # Environment and configuration
 python-dotenv==1.0.0
