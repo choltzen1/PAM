@@ -1,5 +1,6 @@
 import os
 from flask import Flask, request
+import base64, json
 from dotenv import load_dotenv
 from datetime import datetime
 import urllib3
@@ -69,6 +70,56 @@ def create_app(config: dict | None = None) -> Flask:
             'server_theme': raw,
             'server_theme_resolved': resolved
         }
+
+    def _extract_user_name(req: request) -> str | None:
+        """Extract display name from Azure App Service Easy Auth headers.
+        Preference order: givenname+surname -> name -> preferred_username/email -> header fallback.
+        """
+        try:
+            b64 = req.headers.get('X-MS-CLIENT-PRINCIPAL')
+            if b64:
+                try:
+                    decoded = base64.b64decode(b64)
+                    payload = json.loads(decoded.decode('utf-8'))
+                    claims = payload.get('claims', [])
+                    def claim(key: str):
+                        for c in claims:
+                            if c.get('typ') == key:
+                                return c.get('val')
+                        return None
+                    given = claim('givenname') or claim('http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname')
+                    surname = claim('surname') or claim('http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname')
+                    full = None
+                    if (given or surname):
+                        gn = (given or '').strip()
+                        sn = (surname or '').strip()
+                        full = f"{gn} {sn}".strip()
+                    name = claim('name') or claim('http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name')
+                    if not full:
+                        full = name
+                    if not full:
+                        preferred = claim('preferred_username') or claim('http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress') or claim('emailaddress')
+                        full = preferred
+                    if full:
+                        return full
+                except Exception:
+                    pass
+            # Fallback simple header
+            simple = req.headers.get('X-MS-CLIENT-PRINCIPAL-NAME')
+            if simple:
+                # Try to convert email to First Last if we also have given/surname in individual headers
+                return simple
+        except Exception:
+            pass
+        return None
+
+    @app.context_processor
+    def inject_user():  # type: ignore
+        try:
+            uname = _extract_user_name(request)
+            return {'user_name': uname}
+        except Exception:
+            return {'user_name': None}
 
     return app
 

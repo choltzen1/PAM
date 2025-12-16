@@ -217,12 +217,11 @@ def date_mismatch_page():
             })
         
         return render_template('pam/date_mismatch.html',
-                               promos=mismatch_promos,
-                               owners=promo_data['owners'],
-                               user_name='Cade Holtzen')
+                       promos=mismatch_promos,
+                       owners=promo_data['owners'])
     except Exception as e:
         flash(f'Error loading date mismatch data: {e}', 'error')
-        return render_template('pam/date_mismatch.html', promos=[], owners=[], user_name='Cade Holtzen')
+        return render_template('pam/date_mismatch.html', promos=[], owners=[])
 
 @promo_bp.route('/update-pam-date/<promo_code>', methods=['POST'], endpoint='update_pam_date')
 @promo_bp.route('/update_pam_date/<promo_code>', methods=['POST'])  # backward-compatible alias (old JS used underscore)
@@ -493,8 +492,7 @@ def edit_spe_page(promo_code):
         account_types=dm.get_account_types(),
         account_type_details=dm.get_account_type_details(),
         sales_applications=dm.get_sales_applications(),
-        sales_application_details=dm.get_sales_application_details(),
-        user_name='Cade Holtzen'
+        sales_application_details=dm.get_sales_application_details()
     )
 
 @promo_bp.route('/test-page', endpoint='test_page')
@@ -1354,7 +1352,6 @@ def _edit_rdc(promo_code):
                          account_type_details=dm.get_account_type_details(),
                          sales_applications=dm.get_sales_applications(),
                          sales_application_details=dm.get_sales_application_details(),
-                         user_name="Cade Holtzen",
                          jira_dcd_ticket=os.getenv('JIRA_DCD_CURRENT_TICKET', 'DCOMM-13037'))
 
 @promo_bp.route('/autosave/<promo_code>', methods=['POST'])

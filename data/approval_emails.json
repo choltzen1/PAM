@@ -32,6 +32,15 @@
     "request_subject": "RDC Approval request - R223 - Mobile Internet ID250396 - Version #1",
     "request_recipients": "cade.holtzen1@t-mobile.com",
     "request_timestamp": "2025-11-07T11:14:59.168965",
+    "approval_timestamp": "2025-12-16T13:25:04.062346",
+    "approved": true
+  },
+  "R395_v1": {
+    "promo_code": "R395",
+    "version_number": "1",
+    "request_subject": "RDC Approval request - R395 - Google Pixel Promo with Trade (ID250702) - Version #1",
+    "request_recipients": "cade.holtzen1@t-mobile.com",
+    "request_timestamp": "2025-12-16T13:28:10.288512",
     "approval_timestamp": null,
     "approved": false
   }

@@ -70,7 +70,7 @@
             <div class="theme-switch-indicator" id="themeIndicator">L</div>
           </div>
         </div>
-        {% block header_right %}User: Coming Soon{% endblock %}
+        {% block header_right %}User: {{ user_name or 'Coming Soon' }}{% endblock %}
       </div>
    </header>
    <!-- Scrollable region between fixed header & footer -->
