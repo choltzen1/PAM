@@ -40,7 +40,7 @@
           <div class="theme-switch-indicator" id="themeIndicator">L</div>
         </div>
       </div>
-      {% block header_right %}{% endblock %}
+      {% block header_right %}{{ user_name or 'Coming Soon' }}{% endblock %}
     </div>
   </header>
   <main class="hub-main app-main-scroll">

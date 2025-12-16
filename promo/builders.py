@@ -1,7 +1,7 @@
 # promo/builders.py
 from services.jira_utils import create_jira_summary
 
-def generate_promo_eligibility_sql(promo_data):
+def generate_promo_eligibility_sql(promo_data, current_user: str | None = None):
     """Generate PROMO_ELIGIBILITY_RULES INSERT statement from promo data with template header"""
     from datetime import datetime, timedelta
     import time
@@ -327,7 +327,7 @@ def generate_promo_eligibility_sql(promo_data):
     
     # Create template header
     operator_id = promo_data.get('operator_id', '')
-    current_user = "Cade Holtzen"  # This should be dynamic based on logged-in user
+    current_user = current_user or "System"
     
     # Calculate day before launch date (promo_start_date - 1 day)
     launch_date = "DAY BEFORE LAUNCH DATE"

@@ -1,4 +1,5 @@
 from flask import Blueprint, request, render_template, redirect, url_for, flash, jsonify, send_file
+import base64, json
 from werkzeug.utils import secure_filename
 import os
 from typing import Optional, TYPE_CHECKING, Dict, Any
@@ -27,6 +28,46 @@ def _ensure_data_manager():
     if data_manager is None:
         raise RuntimeError("Data manager not initialized. Call init_data_manager() first.")
     return data_manager
+
+def _get_current_user_name() -> str | None:
+    """Extract display name from Azure App Service Easy Auth headers.
+    Preference order: givenname+surname -> name -> preferred_username/email -> header fallback.
+    """
+    try:
+        b64 = request.headers.get('X-MS-CLIENT-PRINCIPAL')
+        if b64:
+            try:
+                decoded = base64.b64decode(b64)
+                payload = json.loads(decoded.decode('utf-8'))
+                claims = payload.get('claims', [])
+                def claim(key: str):
+                    for c in claims:
+                        if c.get('typ') == key:
+                            return c.get('val')
+                    return None
+                given = claim('givenname') or claim('http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname')
+                surname = claim('surname') or claim('http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname')
+                full = None
+                if (given or surname):
+                    gn = (given or '').strip()
+                    sn = (surname or '').strip()
+                    full = f"{gn} {sn}".strip()
+                name = claim('name') or claim('http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name')
+                if not full:
+                    full = name
+                if not full:
+                    preferred = claim('preferred_username') or claim('http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress') or claim('emailaddress')
+                    full = preferred
+                if full:
+                    return full
+            except Exception:
+                pass
+        simple = request.headers.get('X-MS-CLIENT-PRINCIPAL-NAME')
+        if simple:
+            return simple
+    except Exception:
+        pass
+    return None
 
 # --- Primary RDC list route (legacy /promotions removed) ---
 @promo_bp.route('/rdc', endpoint='rdc_page')
@@ -228,7 +269,7 @@ def date_mismatch_page():
 def update_pam_date_bp(promo_code):
     dm = _ensure_data_manager()
     try:
-        res = dm.sync_promo_end_date_from_orbit(promo_code, user_name='System')
+        res = dm.sync_promo_end_date_from_orbit(promo_code, user_name=_get_current_user_name() or 'System')
         status = 200 if res.get('success') else 400
         return jsonify(res), status
     except Exception as e:
@@ -474,7 +515,7 @@ def edit_spe_page(promo_code):
             spe_data['code'] = promo_code
         try:
             # Persist using existing JSON compatibility path (SPE still legacy)
-            dm.save_spe_promo(promo_code, spe_data, user_name='Cade Holtzen')
+            dm.save_spe_promo(promo_code, spe_data, user_name=_get_current_user_name() or 'System')
             flash(f'SPE {promo_code} saved successfully!', 'success')
             return redirect(url_for('promo.edit_spe_page', promo_code=promo_code, tab=tab))
         except Exception as e:
@@ -1012,11 +1053,11 @@ def links_page(promo_code):
             try:
                 regular_promos = dm.get_all_promos()
                 if promo_code_upper in regular_promos:
-                    dm.save_promo(promo_code_upper, promo_data, user_name='Current User')
+                    dm.save_promo(promo_code_upper, promo_data, user_name=_get_current_user_name() or 'System')
                 else:
                     from data.storage import PromoDataManager as JSONManager
                     json_manager = JSONManager()
-                    json_manager.save_spe_promo(promo_code_upper, promo_data, user_name='Current User')
+                    json_manager.save_spe_promo(promo_code_upper, promo_data, user_name=_get_current_user_name() or 'System')
                 return redirect(url_for('promo.links_page', promo_code=promo_code_upper))
             except Exception as e:
                 flash(f'Error saving links: {e}', 'error')
@@ -1114,7 +1155,7 @@ def _edit_rdc(promo_code):
                                 except Exception as e:
                                     flash(f"Error processing trade-in Excel: {str(e)}", "warning")
                             
-                            dm.save_promo(promo_code, promo_data)
+                            dm.save_promo(promo_code, promo_data, user_name=_get_current_user_name() or 'System')
                             
                             flash(f"{file_key.replace('_', ' ').title()} uploaded successfully", "success")
                         else:
@@ -1140,7 +1181,7 @@ def _edit_rdc(promo_code):
         # Save changes
         if updated_fields:
             promo_data['last_changes'] = f"Updated {', '.join(updated_fields)} on {active_tab} tab"
-            dm.save_promo(promo_code, promo_data, user_name="Cade Holtzen")
+            dm.save_promo(promo_code, promo_data, user_name=_get_current_user_name() or 'System')
             flash(f"Saved {active_tab} successfully", "success")
 
         # 4. Generate SQL only after saving & reloading DB state (source-of-truth requirement)
@@ -1173,7 +1214,7 @@ def _edit_rdc(promo_code):
                 print(f"[SQL GEN][DEBUG] Generating for {promo_code} with keys: {sorted(list(db_snapshot.keys()))[:30]} ...")
                 print(f"[SQL GEN][DEBUG] Field snapshot core values: code={db_snapshot.get('code')} orbit_id={db_snapshot.get('orbit_id')} sku_group_id={db_snapshot.get('sku_group_id')} start={db_snapshot.get('promo_start_date')} end={db_snapshot.get('promo_end_date')} operator_id={db_snapshot.get('operator_id')}")
                 start_time = time.time()
-                sql_content = generate_promo_eligibility_sql(db_snapshot)
+                sql_content = generate_promo_eligibility_sql(db_snapshot, current_user=_get_current_user_name() or 'System')
                 end_time = time.time()
                 generation_time = end_time - start_time
                 if not sql_content or not sql_content.strip():
@@ -1366,7 +1407,7 @@ def autosave_promo(promo_code):
         for ro in ['code','promo_code','orbit_id']:
             if ro in raw_changes:
                 del raw_changes[ro]
-        result = dm.save_promo(promo_code, raw_changes, user_name=payload.get('user','Autosave'))
+        result = dm.save_promo(promo_code, raw_changes, user_name=(payload.get('user') or _get_current_user_name() or 'System'))
         return jsonify({'success': True, 'promo_code': promo_code, **result})
     except Exception as e:
         return jsonify({'success': False, 'promo_code': promo_code, 'error': str(e)}), 500
@@ -1425,7 +1466,7 @@ def clear_trade_data(promo_code):
                 promo_data[field] = ''  # Clear the field
         
         # Save the updated promo data
-        dm.save_promo(promo_code, promo_data, user_name="Cade Holtzen")
+        dm.save_promo(promo_code, promo_data, user_name=_get_current_user_name() or 'System')
         
         return jsonify({'success': True, 'message': 'Trade data cleared successfully'})
     
@@ -1454,7 +1495,7 @@ def clear_tiers_data(promo_code):
             promo_data[field] = ''  # Clear the field
         
         # Save the updated promo data
-        dm.save_promo(promo_code, promo_data, user_name="Cade Holtzen")
+        dm.save_promo(promo_code, promo_data, user_name=_get_current_user_name() or 'System')
         
         return jsonify({'success': True, 'message': 'Tiers data cleared successfully'})
     except Exception as e:
@@ -1478,7 +1519,7 @@ def clear_segment_data(promo_code):
             promo_data[field] = ''  # Clear the field
         
         # Save the updated promo data
-        dm.save_promo(promo_code, promo_data, user_name="Cade Holtzen")
+        dm.save_promo(promo_code, promo_data, user_name=_get_current_user_name() or 'System')
         
         return jsonify({'success': True, 'message': 'Segmentation data cleared successfully'})
     except Exception as e:
@@ -1605,7 +1646,7 @@ def get_promo_codes_page():
                 'description': description,
                 'status': 'Draft',
                 'created_date': datetime.now().strftime('%Y-%m-%d'),
-                'created_by': 'System'
+                'created_by': _get_current_user_name() or 'System'
             }
 
             if promo_type == 'spe':
@@ -1613,11 +1654,11 @@ def get_promo_codes_page():
                 promo_data['spe_type'] = request.form.get('speType', '')
                 # SPE uses JSON manager still
                 from data.storage import PromoDataManager as JSONManager
-                JSONManager().save_spe_promo(generated_code, promo_data, user_name='System')
+                JSONManager().save_spe_promo(generated_code, promo_data, user_name=_get_current_user_name() or 'System')
                 flash(f'SPE promo code {generated_code} created successfully!', 'success')
                 return redirect(url_for('promo.spe_page'))
             else:
-                dm.save_promo(generated_code, promo_data, user_name='System')
+                dm.save_promo(generated_code, promo_data, user_name=_get_current_user_name() or 'System')
                 flash(f'RDC promo code {generated_code} created successfully!', 'success')
                 return redirect(url_for('promo.rdc_page'))
 
