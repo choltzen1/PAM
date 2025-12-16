@@ -13,6 +13,7 @@ from typing import Optional, Dict, Any
 import re
 
 from data.database import DatabaseManager
+from data.orbit_database import OrbitDatabaseManager
 from data.storage import PromoDataManager
 from data.sku_group_tracking import (
     load_issued_sku_group_ids,
@@ -33,7 +34,8 @@ CODE_PATTERN = re.compile(r'^[A-Z](\d{3,4})$')
 
 class PromoCodeWorkflow:
     def __init__(self, data_manager: Optional[PromoDataManager] = None):
-        self.db = DatabaseManager()
+        self.db = DatabaseManager()  # For PAM database writes
+        self.orbit_db = OrbitDatabaseManager()  # For Fabric/orbit data reads
         self.data_manager = data_manager or PromoDataManager()
 
     # ---------------- Orbit Lookup -----------------
@@ -45,9 +47,11 @@ class PromoCodeWorkflow:
         oid = (orbit_id or '').strip()
         if not oid:
             return {'found': False, 'error': 'orbit_id required'}
-        row = self.db.get_orbit_record_by_orbit_id(oid)
-        if row:
+        # Use orbit_db directly for Fabric data
+        row = self.orbit_db.get_orbit_record(oid)
+        if row and not row.get('_error'):
             # Not yet created as promo (no code)
+            return {'found': True, 'table': 'orbit', 'existing_code': None, 'orbit': row}
             return {'found': True, 'table': row.get('_table'), 'existing_code': None, 'orbit': row}
         # Check promotions for existing assignment
         for rec in self.db.get_all_promotions_unified():
@@ -105,9 +109,9 @@ class PromoCodeWorkflow:
             return {'success': False, 'error': f'Orbit {oid} not found'}
         if raw_lookup.get('existing_code'):
             return {'success': False, 'error': 'Orbit already assigned', 'existing_code': raw_lookup['existing_code']}
-        # Obtain full orbit row (may include more columns than lightweight lookup)
-        full_row = self.db.get_full_orbit_record_by_orbit_id(oid)
-        if not full_row:
+        # Obtain full orbit row (use orbit_db directly)
+        full_row = self.orbit_db.get_orbit_record(oid)
+        if not full_row or full_row.get('_error'):
             return {'success': False, 'error': f'Orbit {oid} not found'}
         new_code = self.generate_next_code()
         cfg = (config or '').lower()

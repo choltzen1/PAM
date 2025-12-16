@@ -1,8 +1,7 @@
-"""Lightweight Orbit DB manager.
+"""Orbit DB manager - Microsoft Fabric ONLY.
 
-Provides minimal read-only access to the orbit table using ORBIT_* env vars or
-ORBIT_CONNECTION_STRING. Supports both local SQL Server and Microsoft Fabric 
-Data Warehouse based on USE_FABRIC_ORBIT environment variable.
+Provides read-only access to orbit data from Microsoft Fabric Data Warehouse.
+No fallback to local SQL Server or fake data - if Fabric fails, the app fails.
 """
 from __future__ import annotations
 from typing import Any, Dict, List, Optional
@@ -19,161 +18,90 @@ class OrbitDatabaseManager:
         except Exception:
             pass
         
-        # Check if we should use Fabric instead of local SQL Server
-        self.use_fabric = os.getenv('USE_FABRIC_ORBIT', 'false').lower() == 'true'
-        
-        if self.use_fabric:
-            # Delegate to Fabric manager
-            from .fabric_database import FabricDatabaseManager
-            self._fabric_manager = FabricDatabaseManager()
-            self._last_error = None
-            self.table = 'dbo.ORBIT_Reporting_Table'  # Fabric table name
-            return
-        
-        # Original SQL Server configuration
-        raw_conn = os.getenv('ORBIT_CONNECTION_STRING')
-        # Treat placeholder as absent
-        if raw_conn and 'Server=server;' in raw_conn:
-            raw_conn = None
-        self.connection_string = raw_conn
-        self.server = os.getenv('ORBIT_DB_SERVER') or os.getenv('PAM_DB_SERVER','localhost')
-        self.database = os.getenv('ORBIT_DB_DATABASE') or os.getenv('PAM_DB_DATABASE','PromoQuality')
-        self.username = os.getenv('ORBIT_DB_USERNAME') or os.getenv('PAM_DB_USERNAME','')
-        self.password = os.getenv('ORBIT_DB_PASSWORD') or os.getenv('PAM_DB_PASSWORD','')
-        self.driver = os.getenv('ORBIT_DB_DRIVER','ODBC Driver 17 for SQL Server')
-        self.encrypt = os.getenv('ORBIT_DB_ENCRYPT','no').lower()
-        self.trust_cert = os.getenv('ORBIT_DB_TRUST_CERT','yes').lower()
-        self.login_timeout = os.getenv('ORBIT_DB_LOGIN_TIMEOUT','15')
-        self.table = os.getenv('ORBIT_TABLE') or '[RDC].[PAM_Orbit_Data]'
-        self._used_connection_string = None
+        # ALWAYS use Fabric - no fallback
+        from .fabric_database import FabricDatabaseManager
+        self._fabric_manager = FabricDatabaseManager()
         self._last_error = None
-
-    def _build_conn_str(self) -> str:
-        if self.connection_string:
-            return self.connection_string
-        return (f"DRIVER={{{self.driver}}};SERVER={self.server};DATABASE={self.database};"\
-                f"UID={self.username};PWD={self.password};Encrypt={self.encrypt};TrustServerCertificate={self.trust_cert};"\
-                f"LoginTimeout={self.login_timeout}")
-
-    def _connect(self):
-        import pyodbc
-        attempted = []
-        base_conn_str = self._build_conn_str()
-        variants = []
-        # If server has pattern Host\Instance,Port produce stripped variants
-        if '\\' in self.server and ',' in self.server:
-            host_part = self.server.split('\\')[0]
-            instance_part = self.server.split('\\')[1].split(',')[0]
-            port_part = self.server.split(',')[1]
-            # Variant 1: host,port
-            variants.append(f"DRIVER={{{self.driver}}};SERVER={host_part},{port_part};DATABASE={self.database};UID={self.username};PWD={self.password};Encrypt={self.encrypt};TrustServerCertificate={self.trust_cert};LoginTimeout={self.login_timeout}")
-            # Variant 2: host\\instance (drop port)
-            variants.append(f"DRIVER={{{self.driver}}};SERVER={host_part}\\{instance_part};DATABASE={self.database};UID={self.username};PWD={self.password};Encrypt={self.encrypt};TrustServerCertificate={self.trust_cert};LoginTimeout={self.login_timeout}")
-        # Always attempt original first
-        for conn_str in [base_conn_str] + variants:
-            try:
-                c = pyodbc.connect(conn_str)
-                self._used_connection_string = conn_str
-                return c
-            except Exception as e:
-                attempted.append(f"{e}")
-                self._last_error = f"connection failed: {e}"
-                continue
-        raise Exception(self._last_error or 'connection attempts failed')
+        self.table = 'dbo.ORBIT_Reporting_Table'  # Fabric table name
 
     def get_orbit_record(self, orbit_id: str) -> Optional[Dict[str, Any]]:
-        # Route to Fabric if enabled
-        if self.use_fabric:
-            result = self._fabric_manager.search_by_gtm_id(orbit_id)
-            if result:
-                # Map Fabric fields to expected format
-                return {
-                    'Owner': result.get('cat_businessowner'),
-                    'bill_facing_name': result.get('cat_billname'),  # Bill facing name
-                    'initiative_name': result.get('cat_initiativename'),  # Initiative name
-                    'orbit_id': result.get('cat_gtmentryid'),
-                    'description': result.get('cat_description'),  # Full description
-                    'promo_start_date': result.get('cat_startdate'),
-                    'promo_end_date': result.get('cat_enddate'),
-                    **result  # Include all other fields
-                }
-            return {'_error': 'not found'}
+        """Get orbit record from Fabric by GTM ID (GUID or legacy numeric ID)."""
+        result = self._fabric_manager.search_by_gtm_id(orbit_id)
+        if result:
+            # Map Fabric fields to expected PAM format
+            # Core fields
+            mapped = {
+                'Owner': result.get('crffc_productownername') or result.get('crffc_businessownername'),
+                'business_owner': result.get('crffc_businessownername'),
+                'sponsoring_vp': result.get('crffc_sponsoringvpname'),
+                'product_owner': result.get('crffc_productownername'),
+                'bill_facing_name': result.get('cat_billname'),
+                'initiative_name': result.get('cat_initiativename'),
+                'orbit_id': result.get('cat_gtmentryid') or result.get('cat_legacygtmentryid'),
+                'description': result.get('cat_description'),
+                'promo_notes': result.get('cat_notes'),
+                # Use cat_startdate if available, otherwise fall back to cat_requestedlaunchdate
+                'promo_start_date': result.get('cat_startdate') or result.get('cat_requestedlaunchdate'),
+                'promo_end_date': result.get('cat_enddate'),
+                'comm_end_date': result.get('cat_commenddate'),
+                
+                # Pricing / offer terms
+                'discount': result.get('cat_discount'),
+                'amount': result.get('cat_amount') or result.get('crffc_amount'),
+                'nseip_drop': result.get('cat_nseipdrop'),
+                'dcd_web_cart': result.get('cat_dcdwebcart'),
+                'product_type': result.get('cat_producttypename'),
+                'bogo': result.get('cat_bogo'),
+                'fpd_display_promo': result.get('cat_fpddisplaypromo'),
+                'on_menu': result.get('cat_onmenu'),
+                
+                # Execution & eligibility
+                'device_sales_type': result.get('cat_devicesalestypename'),
+                'activation_type': result.get('cat_activationtypename'),
+                'active_line_required': result.get('cat_activelinerequired'),
+                'maintain_soc': result.get('cat_maintainsoc'),
+                'maintain_active_line': result.get('crffc_maintainactivelinedev'),
+                'crffc_maintainactivelinedev': result.get('crffc_maintainactivelinedev'),
+                'limit_per_ban': result.get('cat_limitperban'),
+                'application_grace_period': result.get('cat_applicationgraceperiod'),
+                'trade_in_grace': result.get('cat_tradeingraceperiod'),
+                
+                # Groupings / segmentation
+                'market_group': result.get('cat_marketgroupname'),
+                'store_group': result.get('cat_storegroupname'),
+                'soc_grouping': result.get('cat_socgrouping'),
+                'account_type': result.get('cat_accounttypename'),
+                'sales_application': result.get('cat_salesapplicationname'),
+                'device_status_group_id': result.get('cat_devicestatusgroupid'),
+                'segment_name': result.get('cat_segmentname'),
+                
+                # Links
+                'orbit_link': result.get('cat_orbitlink'),
+                'legal_link': result.get('cat_legallink'),
+                'c2_link': result.get('cat_c2link'),
+                
+                # Additional Fabric-specific fields
+                'cat_lobchannelhorizontalname': result.get('cat_lobchannelhorizontalname'),
+                'cat_additionaleligibilityrequirementsname': result.get('cat_additionaleligibilityrequirementsname'),
+                'cat_eligibledevices': result.get('cat_eligibledevices'),
+                'cat_channelsname': result.get('cat_channelsname'),
+                'crffc_eligibletradeindevices': result.get('crffc_eligibletradeindevices'),
+                
+                # Include all raw Fabric fields as well (for debugging/completeness)
+                **result
+            }
+            return {k: v for k, v in mapped.items() if v is not None}
         
-        # Original SQL Server logic
-        oid = (orbit_id or '').strip()
-        if not oid:
-            return {'_error': 'orbit_id required'}
-        sql = ("SELECT Owner, [bill facing name] AS bill_facing_name, orbit_id, description, "
-               "promo_srart_date AS promo_start_date, promo_end_date "
-               f"FROM {self.table} WHERE orbit_id = ?")
-        self._last_error = None
-        try:
-            conn = self._connect()
-        except Exception:
-            # Include attempted connection info in error payload
-            return {'_error': self._last_error, '_used_connection': self._used_connection_string}
-        try:
-            cur = conn.cursor()
-            cur.execute(sql, (oid,))
-            row = cur.fetchone()
-            if not row:
-                return {'_error': 'not found'}
-            cols = [c[0] for c in cur.description]
-            data = {c: (v.strip() if isinstance(v, str) else v) for c, v in zip(cols, row)}
-            return data
-        except Exception as ex:
-            self._last_error = f"query failed: {ex}"
-            return {'_error': self._last_error, '_used_connection': self._used_connection_string}
-        finally:
-            try: conn.close()
-            except Exception: pass
+        return {'_error': 'not found'}
 
     def list_orbit_ids(self, limit: int = 10) -> List[str]:
-        # Route to Fabric if enabled
-        if self.use_fabric:
-            promotions = self._fabric_manager.get_all_promotions(limit=limit)
-            return [p.get('cat_gtmentryid', '') for p in promotions if p.get('cat_gtmentryid')]
-        
-        # Original SQL Server logic
-        sql = f"SELECT TOP {limit} orbit_id FROM {self.table} WHERE orbit_id IS NOT NULL"
-        out: List[str] = []
-        try:
-            conn = self._connect()
-        except Exception:
-            return out
-        try:
-            cur = conn.cursor()
-            cur.execute(sql)
-            for r in cur.fetchall():
-                out.append(str(r[0]))
-        except Exception:
-            return out
-        finally:
-            try: conn.close()
-            except Exception: pass
-        return out
+        """List orbit IDs from Fabric."""
+        promotions = self._fabric_manager.get_all_promotions(limit=limit)
+        return [p.get('cat_gtmentryid', '') for p in promotions if p.get('cat_gtmentryid')]
 
     def get_columns(self) -> List[str]:
-        # Route to Fabric if enabled
-        if self.use_fabric:
-            # Return common Fabric column names
-            return ['cat_initiativename', 'crffc_promocodeid', 'cat_gtmentryid', 'cat_startdate', 
-                    'cat_enddate', 'cat_billname', 'cat_description', 'modifiedon']
-        
-        # Original SQL Server logic
-        sql = f"SELECT TOP 1 * FROM {self.table}"
-        try:
-            conn = self._connect()
-        except Exception:
-            return []
-        try:
-            cur = conn.cursor()
-            cur.execute(sql)
-            return [c[0] for c in cur.description]
-        except Exception:
-            return []
-        finally:
-            try: conn.close()
-            except Exception: pass
+        """Return Fabric column names."""
+        return ['cat_initiativename', 'crffc_promocodeid', 'cat_gtmentryid', 'cat_startdate', 
+                'cat_enddate', 'cat_billname', 'cat_description', 'modifiedon']
 
 __all__ = ["OrbitDatabaseManager"]

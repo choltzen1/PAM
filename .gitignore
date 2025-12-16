@@ -62,6 +62,9 @@ logs/
 .env
 .flaskenv
 
+# Azure deployment configuration
+.azure/
+
 # Test artifacts
 .pytest_cache/
 coverage.xml
@@ -71,6 +74,11 @@ coverage.xml
 # User data (keep structure but ignore actual data)
 data/uploads/promotions/*/
 data/uploads/promotions/.gitkeep
+
+# SQLite database files (deprecated for production)
+*.db
+version_history.db
+
 # Backup files
 *_backup.py
 *_old.py
@@ -80,3 +88,5 @@ data/__pycache__/storage.cpython-313.pyc
 
 # Refactor audit documentation (local-only)
 REFACTOR_AUDIT.md
+AZURE_DEPLOYMENT_GUIDE.md
+AZURE_DEPLOYMENT_GUIDE.md

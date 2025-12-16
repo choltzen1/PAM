@@ -26,9 +26,9 @@ class DatabaseManager:
         self.encrypt = os.getenv('PAM_DB_ENCRYPT', 'no').lower()  # yes/no
         self.trust_cert = os.getenv('PAM_DB_TRUST_CERT', 'yes').lower()  # yes/no
         self.timeout = int(os.getenv('PAM_DB_LOGIN_TIMEOUT', '15'))
+        # PAM promotions table (where generated promos are stored)
         self.source_table = os.getenv('PAM_SOURCE_TABLE', '[PAM].[PAM_Orbit_Data_Updated]')
-        # Raw intake Orbit table (no promo code yet). Always query this FIRST for orbit lookups.
-        self.orbit_source_table = os.getenv('PAM_ORBIT_SOURCE_TABLE', '[RDC].[PAM_Orbit_Data]')
+        # Note: Orbit data now comes from OrbitDatabaseManager (Fabric or fallback to local SQL)
         self._engine = None
         # Diagnostics persistence moved to SQL Server `PAM.date_diagnostics_history`.
         # Local SQLite has been deprecated and removed.
@@ -691,138 +691,75 @@ class DatabaseManager:
             logger.error(f"Failed to search promos: {e}")
             return []
 
+    # ==================== ORBIT DATA METHODS (Delegate to OrbitDatabaseManager) ====================
+    # These methods provide a unified interface for legacy code.
+    # They delegate to OrbitDatabaseManager which ALWAYS uses Microsoft Fabric.
+    # 
+    # NOTE: New code should use OrbitDatabaseManager directly for orbit data reads.
+    #       DatabaseManager should only be used for PAM database writes/reads.
+    # 
+    # IMPORTANT: If Fabric is down, these methods will FAIL - no fallback to fake data!
+    # ================================================================================================
+    
     def get_orbit_record_by_orbit_id(self, orbit_id: str) -> Optional[Dict[str, Any]]:
-        """Return minimal orbit record (bill facing name, dates) preferring orbit source table."""
-        # NOTE: Source table uses a misspelled column 'promo_srart_date'. We alias it as promo_start_date.
-        query_tpl = """
-            SELECT orbit_id, [bill facing name] AS bill_facing_name, description, Owner,
-                   promo_srart_date AS promo_start_date, promo_end_date
-            FROM {table}
-            WHERE orbit_id = :orbit_id
+        """Return minimal orbit record (bill facing name, dates).
+        
+        DELEGATES to OrbitDatabaseManager which uses Microsoft Fabric ONLY.
+        If Fabric is unavailable, this will fail (no fallback).
         """
-        def _fetch(table: str):
-            try:
-                sql_local = query_tpl.format(table=table)
-                df_l = self.get_dataframe(sql_local, {'orbit_id': orbit_id})
-                if df_l.empty:
-                    return None
-                rec = df_l.iloc[0].to_dict()
-                rec.setdefault('bill_facing_name', rec.get('description',''))
-                rec['_table'] = table
-                return rec
-            except Exception as ex:
-                logger.warning(f"Orbit lookup failed on {table}: {ex}")
-                return None
-        rec = _fetch(self.orbit_source_table)
-        if rec:
-            return rec
-        if self.orbit_source_table != self.source_table:
-            return _fetch(self.source_table)
-        return None
+        from .orbit_database import OrbitDatabaseManager
+        orbit_mgr = OrbitDatabaseManager()
+        result = orbit_mgr.get_orbit_record(orbit_id)
+        
+        # Handle error responses from orbit manager
+        if result and result.get('_error'):
+            return None
+        
+        return result
 
     def get_orbit_dates_map(self, orbit_ids: List[str]) -> Dict[str, Dict[str, Any]]:
         """Return mapping of orbit_id -> { 'orbit_start_date': ..., 'orbit_end_date': ... }
 
-        ALWAYS queries the orbit source table (no fallback to PAM table).
+        DELEGATES to OrbitDatabaseManager which uses Microsoft Fabric ONLY.
         """
+        from .orbit_database import OrbitDatabaseManager
+        orbit_mgr = OrbitDatabaseManager()
+        
         out: Dict[str, Dict[str, Any]] = {}
         if not orbit_ids:
             return out
-        # Deduplicate & chunk to avoid parameter explosion
-        unique_ids = list({oid for oid in orbit_ids if oid})
-        CHUNK = 200
         
-        # Query ONLY the orbit source table
-        for i in range(0, len(unique_ids), CHUNK):
-            chunk = unique_ids[i:i+CHUNK]
-            # Build parameter list safely
-            param_names = [f"p{j}" for j in range(len(chunk))]
-            in_clause = ",".join(f":{n}" for n in param_names)
-            sql = f"""
-                SELECT orbit_id, promo_srart_date AS orbit_start_date, promo_end_date AS orbit_end_date
-                FROM {self.orbit_source_table}
-                WHERE orbit_id IN ({in_clause})
-            """
-            params = {n: v for n,v in zip(param_names, chunk)}
+        # Fetch each orbit record individually (Fabric doesn't support batch queries yet)
+        for oid in orbit_ids:
+            if not oid:
+                continue
             try:
-                df = self.get_dataframe(sql, params)
-                if not df.empty:
-                    for rec in df.to_dict('records'):
-                        oid = str(rec.get('orbit_id') or '')
-                        if oid and oid not in out:
-                            out[oid] = {
-                                'orbit_start_date': rec.get('orbit_start_date',''),
-                                'orbit_end_date': rec.get('orbit_end_date','')
-                            }
+                result = orbit_mgr.get_orbit_record(oid)
+                if result and not result.get('_error'):
+                    out[oid] = {
+                        'orbit_start_date': result.get('promo_start_date', ''),
+                        'orbit_end_date': result.get('promo_end_date', '')
+                    }
             except Exception as e:
-                logger.warning(f"Orbit batch date fetch failed: {e}")
-                break
+                logger.warning(f"Failed to fetch orbit dates for {oid}: {e}")
+                continue
+        
         return out
 
     def get_full_orbit_record_by_orbit_id(self, orbit_id: str) -> Optional[Dict[str, Any]]:
-        """Return full orbit record (all relevant columns) with source fallback."""
-        base = """
-            SELECT 
-                code,
-                Owner,
-                [bill facing name] AS bill_facing_name,
-                orbit_id,
-                description,
-                cat_description,
-                promo_notes,
-                discount,
-                amount,
-                nseip_drop,
-                dcd_web_cart,
-                product_type,
-                bogo,
-                fpd_display_promo,
-                on_menu,
-                market_group,
-                store_group,
-                promo_srart_date AS promo_start_date,
-                promo_end_date,
-                comm_end_date,
-                promo_duration,
-                delay_time,
-                application_grace_period,
-                device_sales_type,
-                activation_type,
-                active_line_required,
-                maintain_soc,
-                crffc_maintainactivelinedev,
-                limit_per_ban,
-                soc_grouping,
-                account_type,
-                sales_application,
-                operator_id,
-                sku_group_id,
-                device_status_group_id,
-                clawback_indicator,
-                Broken_Trade,
-                Anticipated_volume_take_rates_total,
-                Desired_Execution
-            FROM {table} WHERE orbit_id = :orbit_id
+        """Return full orbit record (all relevant columns).
+        
+        DELEGATES to OrbitDatabaseManager which uses Microsoft Fabric ONLY.
         """
-        def _get(table: str):
-            try:
-                sql_full = base.format(table=table)
-                df_f = self.get_dataframe(sql_full, {'orbit_id': orbit_id})
-                if df_f.empty:
-                    return None
-                rec = df_f.iloc[0].to_dict()
-                rec.setdefault('bill_facing_name', rec.get('description',''))
-                rec['_table'] = table
-                return rec
-            except Exception as ex:
-                logger.warning(f"Full orbit lookup failed on {table}: {ex}")
-                return None
-        rec = _get(self.orbit_source_table)
-        if rec:
-            return rec
-        if self.orbit_source_table != self.source_table:
-            return _get(self.source_table)
-        return None
+        from .orbit_database import OrbitDatabaseManager
+        orbit_mgr = OrbitDatabaseManager()
+        result = orbit_mgr.get_orbit_record(orbit_id)
+        
+        # Handle error responses from orbit manager
+        if result and result.get('_error'):
+            return None
+        
+        return result
     
     def _extract_mpss_lookback(self, description: str) -> str:
         """

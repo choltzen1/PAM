@@ -64,6 +64,57 @@ def offers_workspace():
     # Updated to new offers workspace hub layout (similar to research workspace)
     return render_template('offers/placeholder.html')
 
+@core_bp.route('/debug/me', endpoint='debug_user')
+def debug_user():
+    """Debug endpoint to inspect Azure Easy Auth headers and user identity.
+    
+    Shows the raw X-MS-CLIENT-PRINCIPAL header decoded, plus processed user info
+    from the auth module.
+    """
+    import base64
+    import json
+    from flask import request, jsonify
+    
+    # Get raw header
+    encoded = request.headers.get('X-MS-CLIENT-PRINCIPAL')
+    
+    if not encoded:
+        # Not running with Easy Auth - show dev mode status
+        import os
+        dev_mode = os.getenv('DEV_MODE') == 'true'
+        
+        return jsonify({
+            'error': 'No X-MS-CLIENT-PRINCIPAL header found',
+            'dev_mode': dev_mode,
+            'message': 'Running locally without Azure Easy Auth' if dev_mode else 'Easy Auth not configured',
+            'all_headers': dict(request.headers)
+        }), 200
+    
+    try:
+        # Decode the Easy Auth header
+        decoded = base64.b64decode(encoded)
+        principal = json.loads(decoded.decode('utf-8'))
+        
+        # Also get processed user info from auth module
+        from auth import get_current_user
+        processed_user = get_current_user()
+        
+        return jsonify({
+            'raw_principal': principal,
+            'processed_user': processed_user,
+            'headers': {
+                'X-MS-CLIENT-PRINCIPAL-NAME': request.headers.get('X-MS-CLIENT-PRINCIPAL-NAME'),
+                'X-MS-CLIENT-PRINCIPAL-ID': request.headers.get('X-MS-CLIENT-PRINCIPAL-ID'),
+            }
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'error': 'Failed to decode principal header',
+            'exception': str(e),
+            'raw_header': encoded[:100] + '...' if len(encoded) > 100 else encoded
+        }), 500
+
 # Research workspace handled by research blueprint (/research)
 
 __all__ = ['core_bp']

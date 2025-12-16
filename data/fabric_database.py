@@ -30,6 +30,11 @@ class FabricDatabaseManager:
     _token_expiry = None
     _token_lock = Lock()
     
+    # Class-level persistent connection (shared across instances)
+    _connection = None
+    _connection_lock = Lock()
+    _connection_last_used = None
+    
     def __init__(self):
         """Initialize Fabric connection parameters from environment"""
         # Load environment variables
@@ -117,46 +122,67 @@ class FabricDatabaseManager:
                 self._last_error = str(e)
                 return None
     
-    def _connect(self):
-        """Establish connection to Fabric Data Warehouse
+    def _get_connection(self):
+        """Get or establish persistent connection to Fabric Data Warehouse
         
         Returns:
             pyodbc connection object or None
         """
-        try:
-            import pyodbc
+        with self._connection_lock:
+            # Check if connection exists and is alive
+            if self._connection:
+                try:
+                    # Test connection with a simple query
+                    cursor = self._connection.cursor()
+                    cursor.execute("SELECT 1")
+                    cursor.close()
+                    self._connection_last_used = datetime.now()
+                    return self._connection
+                except Exception:
+                    # Connection is dead, will recreate below
+                    logger.warning("Existing Fabric connection is dead, recreating...")
+                    try:
+                        self._connection.close()
+                    except:
+                        pass
+                    self._connection = None
             
-            # Get access token
-            token_struct = self._get_access_token()
-            if not token_struct:
+            # Create new persistent connection
+            try:
+                import pyodbc
+                
+                # Get access token
+                token_struct = self._get_access_token()
+                if not token_struct:
+                    return None
+                
+                # Build connection string (Fabric-specific requirements)
+                connection_string = (
+                    f"DRIVER={{{self.driver}}};"
+                    f"SERVER={self.server};"
+                    f"DATABASE={self.database};"
+                    f"Encrypt=yes;"
+                    f"TrustServerCertificate=no;"
+                    f"Connection Timeout=30;"
+                    f"Login Timeout=30;"
+                )
+                
+                self._used_connection_string = connection_string
+                
+                # Connect with access token
+                self._connection = pyodbc.connect(
+                    connection_string,
+                    attrs_before={1256: token_struct}  # SQL_COPT_SS_ACCESS_TOKEN
+                )
+                
+                self._connection_last_used = datetime.now()
+                logger.info("✅ Established persistent Fabric Data Warehouse connection")
+                return self._connection
+                
+            except Exception as e:
+                logger.error(f"Failed to connect to Fabric: {e}")
+                self._last_error = str(e)
                 return None
-            
-            # Build connection string
-            connection_string = (
-                f"DRIVER={{{self.driver}}};"
-                f"SERVER={self.server},{self.port};"
-                f"DATABASE={self.database};"
-                f"Encrypt=yes;"
-                f"TrustServerCertificate=yes;"
-                f"Connection Timeout=60;"
-                f"Login Timeout=60;"
-            )
-            
-            self._used_connection_string = connection_string
-            
-            # Connect with access token
-            conn = pyodbc.connect(
-                connection_string,
-                attrs_before={1256: token_struct}  # SQL_COPT_SS_ACCESS_TOKEN
-            )
-            
-            logger.info("✅ Connected to Fabric Data Warehouse")
-            return conn
-            
-        except Exception as e:
-            logger.error(f"Failed to connect to Fabric: {e}")
-            self._last_error = str(e)
-            return None
     
     def search_by_promo_code(self, promo_code: str) -> Optional[Dict[str, Any]]:
         """Search for a promotion by promo code
@@ -167,7 +193,7 @@ class FabricDatabaseManager:
         Returns:
             Dictionary of promotion data or None if not found
         """
-        conn = self._connect()
+        conn = self._get_connection()
         if not conn:
             return None
         
@@ -178,6 +204,7 @@ class FabricDatabaseManager:
             
             row = cursor.fetchone()
             if not row:
+                cursor.close()
                 return None
             
             # Convert row to dictionary
@@ -185,15 +212,11 @@ class FabricDatabaseManager:
             result = dict(zip(columns, row))
             
             cursor.close()
-            conn.close()
-            
             return result
             
         except Exception as e:
             logger.error(f"Error searching for promo code {promo_code}: {e}")
             self._last_error = str(e)
-            if conn:
-                conn.close()
             return None
     
     def search_by_gtm_id(self, gtm_id: str) -> Optional[Dict[str, Any]]:
@@ -205,7 +228,7 @@ class FabricDatabaseManager:
         Returns:
             Dictionary of promotion data or None if not found
         """
-        conn = self._connect()
+        conn = self._get_connection()
         if not conn:
             return None
         
@@ -227,21 +250,18 @@ class FabricDatabaseManager:
             
             row = cursor.fetchone()
             if not row:
+                cursor.close()
                 return None
             
             columns = [column[0] for column in cursor.description]
             result = dict(zip(columns, row))
             
             cursor.close()
-            conn.close()
-            
             return result
             
         except Exception as e:
             logger.error(f"Error searching for GTM ID {gtm_id}: {e}")
             self._last_error = str(e)
-            if conn:
-                conn.close()
             return None
     
     def get_all_promotions(self, limit: Optional[int] = None) -> List[Dict[str, Any]]:
@@ -253,7 +273,7 @@ class FabricDatabaseManager:
         Returns:
             List of promotion dictionaries
         """
-        conn = self._connect()
+        conn = self._get_connection()
         if not conn:
             return []
         
@@ -274,7 +294,6 @@ class FabricDatabaseManager:
                 results.append(dict(zip(columns, row)))
             
             cursor.close()
-            conn.close()
             
             logger.info(f"Retrieved {len(results)} promotions from Fabric")
             return results
@@ -282,8 +301,6 @@ class FabricDatabaseManager:
         except Exception as e:
             logger.error(f"Error getting all promotions: {e}")
             self._last_error = str(e)
-            if conn:
-                conn.close()
             return []
     
     def search_promotions(self, 
@@ -302,7 +319,7 @@ class FabricDatabaseManager:
         Returns:
             List of matching promotion dictionaries
         """
-        conn = self._connect()
+        conn = self._get_connection()
         if not conn:
             return []
         
@@ -338,7 +355,6 @@ class FabricDatabaseManager:
                 results.append(dict(zip(columns, row)))
             
             cursor.close()
-            conn.close()
             
             logger.info(f"Search returned {len(results)} promotions")
             return results
@@ -346,8 +362,6 @@ class FabricDatabaseManager:
         except Exception as e:
             logger.error(f"Error searching promotions: {e}")
             self._last_error = str(e)
-            if conn:
-                conn.close()
             return []
     
     def test_connection(self) -> bool:
@@ -356,7 +370,7 @@ class FabricDatabaseManager:
         Returns:
             True if connection successful, False otherwise
         """
-        conn = self._connect()
+        conn = self._get_connection()
         if not conn:
             return False
         
@@ -366,13 +380,10 @@ class FabricDatabaseManager:
             version = cursor.fetchone()
             logger.info(f"Fabric connection test successful: {version[0][:50]}...")
             cursor.close()
-            conn.close()
             return True
         except Exception as e:
             logger.error(f"Fabric connection test failed: {e}")
             self._last_error = str(e)
-            if conn:
-                conn.close()
             return False
     
     def get_last_error(self) -> Optional[str]:
