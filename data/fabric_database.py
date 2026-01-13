@@ -165,7 +165,7 @@ class FabricDatabaseManager:
                     f"DATABASE={self.database};"
                     f"Encrypt=yes;"
                     f"TrustServerCertificate=no;"
-                    f"HostNameInCertificate=*.datawarehouse.fabric.microsoft.com;"
+                    f"HostNameInCertificate=*.fabric.microsoft.com;"
                     f"Connection Timeout=30;"
                     f"Login Timeout=30;"
                 )
