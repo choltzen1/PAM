@@ -159,10 +159,10 @@ class FabricDatabaseManager:
                 # Build connection string (Fabric-specific requirements)
                 connection_string = (
                     f"DRIVER={{{self.driver}}};"
-                    f"SERVER={self.server};"
+                    f"SERVER={self.server},{self.port};"
                     f"DATABASE={self.database};"
                     f"Encrypt=yes;"
-                    f"TrustServerCertificate=no;"
+                    f"TrustServerCertificate=yes;"
                     f"Connection Timeout=30;"
                     f"Login Timeout=30;"
                 )

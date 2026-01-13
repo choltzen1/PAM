@@ -115,6 +115,196 @@ def debug_user():
             'raw_header': encoded[:100] + '...' if len(encoded) > 100 else encoded
         }), 500
 
+
+@core_bp.route('/health', endpoint='health')
+def health_check():
+    """Basic health check - returns 200 if app is running."""
+    from flask import jsonify
+    return jsonify({'status': 'ok', 'message': 'PAM is running'})
+
+
+@core_bp.route('/debug/env', endpoint='debug_env')
+def debug_env():
+    """Debug endpoint to check which environment variables are set (not values, just presence)."""
+    import os
+    from flask import jsonify
+    
+    # Check for required env vars (show presence, not values)
+    env_checks = {
+        # Fabric (ORBIT data source)
+        'FABRIC_SERVER': bool(os.getenv('FABRIC_SERVER')),
+        'FABRIC_DATABASE': bool(os.getenv('FABRIC_DATABASE')),
+        'FABRIC_CLIENT_ID': bool(os.getenv('FABRIC_CLIENT_ID')),
+        'FABRIC_TENANT_ID': bool(os.getenv('FABRIC_TENANT_ID')),
+        'FABRIC_CLIENT_SECRET': bool(os.getenv('FABRIC_CLIENT_SECRET')),
+        # PAM Database
+        'PAM_DB_SERVER': bool(os.getenv('PAM_DB_SERVER')),
+        'PAM_DB_DATABASE': bool(os.getenv('PAM_DB_DATABASE')),
+        'PAM_DB_USERNAME': bool(os.getenv('PAM_DB_USERNAME')),
+        'PAM_DB_PASSWORD': bool(os.getenv('PAM_DB_PASSWORD')),
+        # JIRA
+        'JIRA_URL': bool(os.getenv('JIRA_URL')),
+        'JIRA_USERNAME': bool(os.getenv('JIRA_USERNAME')),
+        'JIRA_API_TOKEN': bool(os.getenv('JIRA_API_TOKEN')),
+        # RBAC Groups
+        'ENTRA_GROUP_PAM_ADMIN': bool(os.getenv('ENTRA_GROUP_PAM_ADMIN')),
+        'ENTRA_GROUP_PAM_USERS': bool(os.getenv('ENTRA_GROUP_PAM_USERS')),
+        # App settings
+        'FLASK_ENV': os.getenv('FLASK_ENV', 'not set'),
+        'DEV_MODE': os.getenv('DEV_MODE', 'not set'),
+    }
+    
+    # Count how many required vars are missing
+    required = ['FABRIC_SERVER', 'FABRIC_DATABASE', 'FABRIC_CLIENT_ID', 
+                'FABRIC_TENANT_ID', 'FABRIC_CLIENT_SECRET',
+                'PAM_DB_SERVER', 'PAM_DB_DATABASE', 'PAM_DB_USERNAME', 'PAM_DB_PASSWORD']
+    missing = [k for k in required if not env_checks.get(k)]
+    
+    return jsonify({
+        'env_vars': env_checks,
+        'missing_required': missing,
+        'status': 'ok' if not missing else 'missing_vars',
+        'ready': len(missing) == 0
+    })
+
+
+@core_bp.route('/debug/db', endpoint='debug_db')
+def debug_db():
+    """Debug endpoint to test database connectivity."""
+    from flask import jsonify
+    import os
+    
+    results = {
+        'fabric': {'status': 'unknown', 'error': None},
+        'pam_db': {'status': 'unknown', 'error': None}
+    }
+    
+    # Test Fabric connection
+    try:
+        from data.fabric_database import FabricDatabaseManager
+        fabric = FabricDatabaseManager()
+        conn = fabric._get_connection()
+        if conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT TOP 1 cat_billname FROM dbo.ORBIT_Reporting_Table")
+            row = cursor.fetchone()
+            results['fabric'] = {
+                'status': 'connected',
+                'sample_record': bool(row),
+                'server': os.getenv('FABRIC_SERVER', '')[:50] + '...' if os.getenv('FABRIC_SERVER') else None
+            }
+            cursor.close()
+            conn.close()
+        else:
+            results['fabric'] = {'status': 'failed', 'error': 'Could not establish connection'}
+    except Exception as e:
+        results['fabric'] = {'status': 'error', 'error': str(e)[:200]}
+    
+    # Test PAM DB connection
+    try:
+        from data.database import DatabaseManager
+        dbm = DatabaseManager()
+        engine = dbm.get_engine()
+        if engine:
+            with engine.connect() as conn:
+                from sqlalchemy import text
+                result = conn.execute(text("SELECT TOP 1 promo_code FROM [PAM].[PAM_Orbit_Data_Updated]"))
+                row = result.fetchone()
+                results['pam_db'] = {
+                    'status': 'connected',
+                    'sample_record': bool(row),
+                    'server': os.getenv('PAM_DB_SERVER', '')
+                }
+        else:
+            results['pam_db'] = {'status': 'failed', 'error': 'Could not create engine'}
+    except Exception as e:
+        results['pam_db'] = {'status': 'error', 'error': str(e)[:200]}
+    
+    all_ok = all(r['status'] == 'connected' for r in results.values())
+    
+    return jsonify({
+        'databases': results,
+        'all_connected': all_ok,
+        'status': 'ok' if all_ok else 'degraded'
+    })
+
+
+@core_bp.route('/debug/fabric', endpoint='debug_fabric')
+def debug_fabric():
+    """Debug endpoint specifically for Fabric/ORBIT connection issues."""
+    from flask import jsonify
+    import os
+    
+    debug_info = {
+        'config': {
+            'server_set': bool(os.getenv('FABRIC_SERVER')),
+            'database_set': bool(os.getenv('FABRIC_DATABASE')),
+            'client_id_set': bool(os.getenv('FABRIC_CLIENT_ID')),
+            'tenant_id_set': bool(os.getenv('FABRIC_TENANT_ID')),
+            'client_secret_set': bool(os.getenv('FABRIC_CLIENT_SECRET')),
+            'server_preview': os.getenv('FABRIC_SERVER', '')[:30] + '...' if os.getenv('FABRIC_SERVER') else None,
+        },
+        'connection_test': None,
+        'token_test': None,
+        'query_test': None,
+        'connection_string_used': None,
+        'driver': None,
+        'last_error': None
+    }
+    
+    try:
+        from data.fabric_database import FabricDatabaseManager
+        fabric = FabricDatabaseManager()
+        
+        # Show driver being used
+        debug_info['driver'] = fabric.driver
+        
+        # Test token acquisition
+        try:
+            token = fabric._get_access_token()
+            debug_info['token_test'] = {
+                'status': 'success' if token else 'failed',
+                'token_length': len(token) if token else 0
+            }
+        except Exception as e:
+            debug_info['token_test'] = {'status': 'error', 'error': str(e)[:150]}
+        
+        # Test connection
+        try:
+            conn = fabric._get_connection()
+            # Show what connection string was used (without secrets)
+            debug_info['connection_string_used'] = fabric._used_connection_string
+            debug_info['last_error'] = fabric._last_error
+            
+            if conn:
+                debug_info['connection_test'] = {'status': 'success'}
+                
+                # Test query
+                try:
+                    cursor = conn.cursor()
+                    cursor.execute("SELECT COUNT(*) FROM dbo.ORBIT_Reporting_Table")
+                    count = cursor.fetchone()[0]
+                    debug_info['query_test'] = {
+                        'status': 'success',
+                        'total_records': count
+                    }
+                    cursor.close()
+                except Exception as e:
+                    debug_info['query_test'] = {'status': 'error', 'error': str(e)[:150]}
+                
+                conn.close()
+            else:
+                debug_info['connection_test'] = {'status': 'failed', 'error': 'No connection returned', 'last_error': fabric._last_error}
+        except Exception as e:
+            debug_info['connection_test'] = {'status': 'error', 'error': str(e)[:150]}
+            debug_info['last_error'] = fabric._last_error
+            
+    except Exception as e:
+        debug_info['init_error'] = str(e)[:200]
+    
+    return jsonify(debug_info)
+
+
 # Research workspace handled by research blueprint (/research)
 
 __all__ = ['core_bp']
