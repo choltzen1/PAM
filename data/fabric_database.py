@@ -157,12 +157,15 @@ class FabricDatabaseManager:
                     return None
                 
                 # Build connection string (Fabric-specific requirements)
+                # Note: HostNameInCertificate is required for Azure Linux App Service
+                # to handle TLS/SNI correctly with Fabric endpoints
                 connection_string = (
                     f"DRIVER={{{self.driver}}};"
                     f"SERVER={self.server},{self.port};"
                     f"DATABASE={self.database};"
                     f"Encrypt=yes;"
-                    f"TrustServerCertificate=yes;"
+                    f"TrustServerCertificate=no;"
+                    f"HostNameInCertificate=*.datawarehouse.fabric.microsoft.com;"
                     f"Connection Timeout=30;"
                     f"Login Timeout=30;"
                 )
