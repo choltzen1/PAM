@@ -30,16 +30,19 @@ class OrbitDatabaseManager:
         if result:
             # Map Fabric fields to expected PAM format
             # Core fields
+            # Owner: Use promo owner from Promotion_Details JOIN only (no fallback to business owner)
             mapped = {
-                'Owner': result.get('crffc_productownername') or result.get('crffc_businessownername'),
+                'Owner': result.get('crffc_promoowner'),
+                'promo_owner': result.get('crffc_promoowner'),
+                'promo_owner_email': result.get('crffc_promoowneremail'),
                 'business_owner': result.get('crffc_businessownername'),
                 'sponsoring_vp': result.get('crffc_sponsoringvpname'),
-                'product_owner': result.get('crffc_productownername'),
+                'product_owner': result.get('crffc_productownerfullname'),
                 'bill_facing_name': result.get('cat_billname'),
                 'initiative_name': result.get('cat_initiativename'),
                 'orbit_id': result.get('cat_gtmentryid') or result.get('cat_legacygtmentryid'),
                 'description': result.get('cat_description'),
-                'promo_notes': result.get('cat_notes'),
+                'promo_notes': result.get('cat_productnotes'),
                 # Use cat_startdate if available, otherwise fall back to cat_requestedlaunchdate
                 'promo_start_date': result.get('cat_startdate') or result.get('cat_requestedlaunchdate'),
                 'promo_end_date': result.get('cat_enddate'),
@@ -73,15 +76,15 @@ class OrbitDatabaseManager:
                 'account_type': result.get('cat_accounttypename'),
                 'sales_application': result.get('cat_salesapplicationname'),
                 'device_status_group_id': result.get('cat_devicestatusgroupid'),
-                'segment_name': result.get('cat_segmentname'),
+                'segment_name': result.get('CustomerSegmentsOptionLabels.OptionValues'),
                 
                 # Links
                 'orbit_link': result.get('cat_orbitlink'),
                 'legal_link': result.get('cat_legallink'),
-                'c2_link': result.get('cat_c2link'),
+                'c2_link': result.get('crffc_c2link'),
                 
                 # Additional Fabric-specific fields
-                'cat_lobchannelhorizontalname': result.get('cat_lobchannelhorizontalname'),
+                'cat_lobchannelhorizontalname': result.get('cat_lobchannelhorizontal_display'),
                 'cat_additionaleligibilityrequirementsname': result.get('cat_additionaleligibilityrequirementsname'),
                 'cat_eligibledevices': result.get('cat_eligibledevices'),
                 'cat_channelsname': result.get('cat_channelsname'),

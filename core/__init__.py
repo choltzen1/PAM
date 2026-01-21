@@ -305,6 +305,108 @@ def debug_fabric():
     return jsonify(debug_info)
 
 
+@core_bp.route('/debug/jira', endpoint='debug_jira')
+def debug_jira():
+    """Debug endpoint to test JIRA connectivity from Azure."""
+    from flask import jsonify
+    import os
+    import requests
+    import socket
+    
+    jira_url = os.getenv('JIRA_URL', 'https://t-mobile.atlassian.net')
+    username = os.getenv('JIRA_USERNAME', '')
+    api_token = os.getenv('JIRA_API_TOKEN', '')
+    
+    debug_info = {
+        'config': {
+            'url': jira_url,
+            'username_set': bool(username),
+            'api_token_set': bool(api_token),
+            'api_token_length': len(api_token) if api_token else 0,
+            'api_token_preview': api_token[:10] + '...' if api_token and len(api_token) > 10 else 'too_short_or_empty',
+        },
+        'dns_test': None,
+        'connection_test': None,
+        'auth_test': None,
+    }
+    
+    # Extract hostname from URL
+    try:
+        from urllib.parse import urlparse
+        parsed = urlparse(jira_url)
+        hostname = parsed.netloc
+        debug_info['hostname'] = hostname
+    except Exception as e:
+        debug_info['hostname_error'] = str(e)
+        hostname = None
+    
+    # Test DNS resolution
+    if hostname:
+        try:
+            ip = socket.gethostbyname(hostname)
+            debug_info['dns_test'] = {'status': 'success', 'ip': ip}
+        except socket.gaierror as e:
+            debug_info['dns_test'] = {'status': 'failed', 'error': str(e)}
+        except Exception as e:
+            debug_info['dns_test'] = {'status': 'error', 'error': str(e)}
+    
+    # Test basic HTTPS connection (no auth)
+    try:
+        resp = requests.get(jira_url, timeout=10, verify=True)
+        debug_info['connection_test'] = {
+            'status': 'success',
+            'http_status': resp.status_code,
+            'response_time_ms': int(resp.elapsed.total_seconds() * 1000),
+        }
+    except requests.exceptions.SSLError as e:
+        debug_info['connection_test'] = {'status': 'ssl_error', 'error': str(e)[:200]}
+    except requests.exceptions.ConnectionError as e:
+        debug_info['connection_test'] = {'status': 'connection_failed', 'error': str(e)[:200]}
+    except requests.exceptions.Timeout:
+        debug_info['connection_test'] = {'status': 'timeout', 'error': 'Request timed out after 10s'}
+    except Exception as e:
+        debug_info['connection_test'] = {'status': 'error', 'error': str(e)[:200]}
+    
+    # Test authenticated API call
+    if username and api_token:
+        try:
+            resp = requests.get(
+                f"{jira_url}/rest/api/2/myself",
+                auth=(username, api_token),
+                timeout=15,
+                verify=True
+            )
+            if resp.status_code == 200:
+                user_data = resp.json()
+                debug_info['auth_test'] = {
+                    'status': 'success',
+                    'authenticated_as': user_data.get('displayName', user_data.get('name', 'unknown')),
+                    'email': user_data.get('emailAddress', 'unknown'),
+                }
+            else:
+                debug_info['auth_test'] = {
+                    'status': 'auth_failed',
+                    'http_status': resp.status_code,
+                    'response': resp.text[:200]
+                }
+        except requests.exceptions.ConnectionError as e:
+            debug_info['auth_test'] = {'status': 'connection_failed', 'error': str(e)[:200]}
+        except Exception as e:
+            debug_info['auth_test'] = {'status': 'error', 'error': str(e)[:200]}
+    else:
+        debug_info['auth_test'] = {'status': 'skipped', 'reason': 'Missing username or api_token'}
+    
+    # Overall status
+    all_ok = (
+        debug_info.get('dns_test', {}).get('status') == 'success' and
+        debug_info.get('connection_test', {}).get('status') == 'success' and
+        debug_info.get('auth_test', {}).get('status') == 'success'
+    )
+    debug_info['overall_status'] = 'ok' if all_ok else 'failed'
+    
+    return jsonify(debug_info)
+
+
 # Research workspace handled by research blueprint (/research)
 
 __all__ = ['core_bp']
