@@ -242,13 +242,29 @@ class FabricDatabaseManager:
             # Legacy IDs are typically 5-6 digit numbers
             gtm_str = str(gtm_id).strip()
             
+            # JOIN with Promotion_Details to get promo owner info
+            # Use LEFT JOIN so we still get results even if no promo code assigned
             if gtm_str.isdigit():
                 # Search by legacy GTM ID
-                query = f"SELECT * FROM {self.table} WHERE cat_legacygtmentryid = ?"
+                query = f"""
+                    SELECT o.*, 
+                           pd.crffc_promoowner, 
+                           pd.crffc_promoowneremail
+                    FROM {self.table} o
+                    LEFT JOIN dbo.Promotion_Details pd ON o.cat_gtmentryid = pd.crffc_gtmentryrecord
+                    WHERE o.cat_legacygtmentryid = ?
+                """
                 cursor.execute(query, (int(gtm_str),))
             else:
                 # Search by GTM Entry ID (GUID)
-                query = f"SELECT * FROM {self.table} WHERE cat_gtmentryid = ?"
+                query = f"""
+                    SELECT o.*, 
+                           pd.crffc_promoowner, 
+                           pd.crffc_promoowneremail
+                    FROM {self.table} o
+                    LEFT JOIN dbo.Promotion_Details pd ON o.cat_gtmentryid = pd.crffc_gtmentryrecord
+                    WHERE o.cat_gtmentryid = ?
+                """
                 cursor.execute(query, (gtm_str,))
             
             row = cursor.fetchone()

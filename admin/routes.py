@@ -734,3 +734,280 @@ def admin_delete_reference_grouping(code):
         return jsonify({'success': True, 'message': 'Grouping deleted'})
     except Exception as e:
         return jsonify({'success': False, 'message': f'Failed to delete grouping: {e}'})
+
+
+# =============================================================================
+# ORBIT DATA VALIDATION ENDPOINTS
+# =============================================================================
+
+@admin_bp.route('/admin/validate-orbit-data')
+def validate_orbit_data():
+    """Validate ORBIT data from Fabric against PAM field requirements.
+    
+    This endpoint queries Fabric for sample records and validates each field
+    against what PAM needs. Used to prove data quality for stakeholder meetings.
+    
+    Returns JSON with:
+    - field_stats: Population % and validation status for each field
+    - summary: Overall counts of good/warning/missing fields
+    - sample_records: A few records mapped to PAM format
+    """
+    from datetime import datetime
+    
+    # PAM field mapping requirements
+    PAM_FIELD_MAPPINGS = {
+        # Required Identity Fields
+        'bill_facing_name': {'fabric_columns': ['cat_billname'], 'required': True},
+        'initiative_name': {'fabric_columns': ['cat_initiativename'], 'required': True},
+        'orbit_id': {'fabric_columns': ['cat_gtmentryid', 'cat_legacygtmentryid'], 'required': True},
+        'Owner': {'fabric_columns': ['crffc_productownername', 'crffc_businessownername'], 'required': True},
+        'promo_start_date': {'fabric_columns': ['cat_startdate', 'cat_requestedlaunchdate'], 'required': True},
+        
+        # Optional but important fields
+        'description': {'fabric_columns': ['cat_description'], 'required': False},
+        'promo_notes': {'fabric_columns': ['cat_notes'], 'required': False},
+        'promo_end_date': {'fabric_columns': ['cat_enddate'], 'required': False},
+        'comm_end_date': {'fabric_columns': ['cat_commenddate'], 'required': False},
+        'amount': {'fabric_columns': ['cat_amount', 'crffc_amount'], 'required': False},
+        'discount': {'fabric_columns': ['cat_discount'], 'required': False},
+        'product_type': {'fabric_columns': ['cat_producttypename'], 'required': False},
+        
+        # Segmentation fields
+        'market_group': {'fabric_columns': ['cat_marketgroupname'], 'required': False},
+        'store_group': {'fabric_columns': ['cat_storegroupname'], 'required': False},
+        'soc_grouping': {'fabric_columns': ['cat_socgrouping'], 'required': False},
+        'account_type': {'fabric_columns': ['cat_accounttypename'], 'required': False},
+        'sales_application': {'fabric_columns': ['cat_salesapplicationname'], 'required': False},
+        'segment_name': {'fabric_columns': ['cat_segmentname'], 'required': False},
+        'channels': {'fabric_columns': ['cat_channelsname'], 'required': False},
+        
+        # Execution fields
+        'device_sales_type': {'fabric_columns': ['cat_devicesalestypename'], 'required': False},
+        'activation_type': {'fabric_columns': ['cat_activationtypename'], 'required': False},
+        'active_line_required': {'fabric_columns': ['cat_activelinerequired'], 'required': False},
+        'maintain_soc': {'fabric_columns': ['cat_maintainsoc'], 'required': False},
+        'limit_per_ban': {'fabric_columns': ['cat_limitperban'], 'required': False},
+        
+        # Links
+        'orbit_link': {'fabric_columns': ['cat_orbitlink'], 'required': False},
+        'legal_link': {'fabric_columns': ['cat_legallink'], 'required': False},
+        'c2_link': {'fabric_columns': ['cat_c2link'], 'required': False},
+        
+        # Additional owners
+        'business_owner': {'fabric_columns': ['crffc_businessownername'], 'required': False},
+        'sponsoring_vp': {'fabric_columns': ['crffc_sponsoringvpname'], 'required': False},
+        'product_owner': {'fabric_columns': ['crffc_productownername'], 'required': False},
+    }
+    
+    try:
+        from data.fabric_database import FabricDatabaseManager
+        fabric = FabricDatabaseManager()
+        
+        # Test connection
+        if not fabric.test_connection():
+            return jsonify({
+                'success': False, 
+                'message': 'Failed to connect to Fabric',
+                'last_error': getattr(fabric, '_last_error', 'Unknown error')
+            }), 500
+        
+        # Query sample data
+        conn = fabric._get_connection()
+        cursor = conn.cursor()
+        
+        # Get 100 recent active records for analysis
+        query = """
+        SELECT TOP 100 *
+        FROM dbo.ORBIT_Reporting_Table
+        WHERE statuscodename = 'Active'
+        ORDER BY modifiedon DESC
+        """
+        
+        cursor.execute(query)
+        rows = cursor.fetchall()
+        columns = [desc[0] for desc in cursor.description]
+        
+        if not rows:
+            return jsonify({
+                'success': True,
+                'message': 'No active records found in ORBIT',
+                'record_count': 0
+            })
+        
+        # Convert to list of dicts
+        records = [dict(zip(columns, row)) for row in rows]
+        
+        # Analyze each PAM field
+        field_stats = {}
+        for pam_field, config in PAM_FIELD_MAPPINGS.items():
+            fabric_cols = config['fabric_columns']
+            required = config.get('required', False)
+            
+            values_found = 0
+            sample_values = []
+            source_column_used = None
+            
+            for record in records:
+                value = None
+                for fc in fabric_cols:
+                    if fc in record and record[fc] is not None and str(record[fc]).strip() != '':
+                        value = record[fc]
+                        source_column_used = fc
+                        break
+                
+                if value is not None:
+                    values_found += 1
+                    if len(sample_values) < 3:
+                        sample_values.append(str(value)[:80])
+            
+            population_pct = round((values_found / len(records) * 100), 1)
+            
+            # Determine status
+            if required and values_found == 0:
+                status = "MISSING"
+                status_icon = "🔴"
+            elif required and population_pct < 80:
+                status = "LOW_DATA"
+                status_icon = "🟡"
+            elif values_found > 0:
+                status = "GOOD"
+                status_icon = "🟢"
+            else:
+                status = "EMPTY"
+                status_icon = "⚪"
+            
+            field_stats[pam_field] = {
+                'status': status,
+                'status_icon': status_icon,
+                'source_column': source_column_used or fabric_cols[0],
+                'population_pct': population_pct,
+                'required': required,
+                'sample_values': sample_values
+            }
+        
+        # Calculate summary
+        good = len([f for f, s in field_stats.items() if s['status'] == 'GOOD'])
+        low_data = len([f for f, s in field_stats.items() if s['status'] == 'LOW_DATA'])
+        missing = len([f for f, s in field_stats.items() if s['status'] == 'MISSING'])
+        empty = len([f for f, s in field_stats.items() if s['status'] == 'EMPTY'])
+        
+        required_fields = [f for f, c in PAM_FIELD_MAPPINGS.items() if c.get('required')]
+        required_ok = len([f for f in required_fields if field_stats[f]['status'] == 'GOOD'])
+        
+        # Create sample records in PAM format
+        sample_records = []
+        for record in records[:5]:
+            pam_record = {}
+            for pam_field, config in PAM_FIELD_MAPPINGS.items():
+                value = None
+                for fc in config['fabric_columns']:
+                    if fc in record and record[fc]:
+                        value = record[fc]
+                        break
+                if value is not None:
+                    # Truncate for display
+                    pam_record[pam_field] = str(value)[:100] if isinstance(value, str) else value
+            sample_records.append(pam_record)
+        
+        return jsonify({
+            'success': True,
+            'generated_at': datetime.now().isoformat(),
+            'record_count': len(records),
+            'field_stats': field_stats,
+            'summary': {
+                'good': good,
+                'low_data': low_data,
+                'missing': missing,
+                'empty': empty,
+                'required_ok': required_ok,
+                'required_total': len(required_fields),
+                'all_required_passing': required_ok == len(required_fields)
+            },
+            'sample_records': sample_records
+        })
+        
+    except Exception as e:
+        import traceback
+        return jsonify({
+            'success': False,
+            'message': f'Validation failed: {str(e)}',
+            'traceback': traceback.format_exc()
+        }), 500
+
+
+@admin_bp.route('/admin/orbit-field-coverage')
+def orbit_field_coverage():
+    """Get detailed field coverage stats from ORBIT/Fabric.
+    
+    Runs aggregate queries to get population % for all fields.
+    """
+    try:
+        from data.fabric_database import FabricDatabaseManager
+        fabric = FabricDatabaseManager()
+        
+        if not fabric.test_connection():
+            return jsonify({'success': False, 'message': 'Failed to connect to Fabric'}), 500
+        
+        conn = fabric._get_connection()
+        cursor = conn.cursor()
+        
+        # Query field population percentages
+        query = """
+        SELECT 
+            COUNT(*) as total_records,
+            
+            -- Required fields
+            ROUND(100.0 * SUM(CASE WHEN cat_billname IS NOT NULL AND cat_billname != '' THEN 1 ELSE 0 END) / COUNT(*), 1) as bill_name_pct,
+            ROUND(100.0 * SUM(CASE WHEN cat_initiativename IS NOT NULL AND cat_initiativename != '' THEN 1 ELSE 0 END) / COUNT(*), 1) as initiative_name_pct,
+            ROUND(100.0 * SUM(CASE WHEN cat_gtmentryid IS NOT NULL OR cat_legacygtmentryid IS NOT NULL THEN 1 ELSE 0 END) / COUNT(*), 1) as orbit_id_pct,
+            ROUND(100.0 * SUM(CASE WHEN crffc_productownername IS NOT NULL OR crffc_businessownername IS NOT NULL THEN 1 ELSE 0 END) / COUNT(*), 1) as owner_pct,
+            ROUND(100.0 * SUM(CASE WHEN cat_startdate IS NOT NULL OR cat_requestedlaunchdate IS NOT NULL THEN 1 ELSE 0 END) / COUNT(*), 1) as start_date_pct,
+            
+            -- Dates
+            ROUND(100.0 * SUM(CASE WHEN cat_enddate IS NOT NULL THEN 1 ELSE 0 END) / COUNT(*), 1) as end_date_pct,
+            ROUND(100.0 * SUM(CASE WHEN cat_commenddate IS NOT NULL THEN 1 ELSE 0 END) / COUNT(*), 1) as comm_end_date_pct,
+            
+            -- Amounts
+            ROUND(100.0 * SUM(CASE WHEN cat_amount IS NOT NULL OR crffc_amount IS NOT NULL THEN 1 ELSE 0 END) / COUNT(*), 1) as amount_pct,
+            ROUND(100.0 * SUM(CASE WHEN cat_discount IS NOT NULL THEN 1 ELSE 0 END) / COUNT(*), 1) as discount_pct,
+            
+            -- Description
+            ROUND(100.0 * SUM(CASE WHEN cat_description IS NOT NULL AND cat_description != '' THEN 1 ELSE 0 END) / COUNT(*), 1) as description_pct,
+            
+            -- Groupings
+            ROUND(100.0 * SUM(CASE WHEN cat_marketgroupname IS NOT NULL THEN 1 ELSE 0 END) / COUNT(*), 1) as market_group_pct,
+            ROUND(100.0 * SUM(CASE WHEN cat_storegroupname IS NOT NULL THEN 1 ELSE 0 END) / COUNT(*), 1) as store_group_pct,
+            ROUND(100.0 * SUM(CASE WHEN cat_socgrouping IS NOT NULL THEN 1 ELSE 0 END) / COUNT(*), 1) as soc_grouping_pct,
+            ROUND(100.0 * SUM(CASE WHEN cat_accounttypename IS NOT NULL THEN 1 ELSE 0 END) / COUNT(*), 1) as account_type_pct,
+            ROUND(100.0 * SUM(CASE WHEN cat_channelsname IS NOT NULL THEN 1 ELSE 0 END) / COUNT(*), 1) as channels_pct,
+            
+            -- Execution
+            ROUND(100.0 * SUM(CASE WHEN cat_devicesalestypename IS NOT NULL THEN 1 ELSE 0 END) / COUNT(*), 1) as device_sales_type_pct,
+            ROUND(100.0 * SUM(CASE WHEN cat_activationtypename IS NOT NULL THEN 1 ELSE 0 END) / COUNT(*), 1) as activation_type_pct,
+            
+            -- Links
+            ROUND(100.0 * SUM(CASE WHEN cat_orbitlink IS NOT NULL THEN 1 ELSE 0 END) / COUNT(*), 1) as orbit_link_pct,
+            ROUND(100.0 * SUM(CASE WHEN cat_legallink IS NOT NULL THEN 1 ELSE 0 END) / COUNT(*), 1) as legal_link_pct
+            
+        FROM dbo.ORBIT_Reporting_Table
+        WHERE statuscodename = 'Active'
+        """
+        
+        cursor.execute(query)
+        row = cursor.fetchone()
+        columns = [desc[0] for desc in cursor.description]
+        
+        result = dict(zip(columns, row)) if row else {}
+        
+        return jsonify({
+            'success': True,
+            'coverage': result
+        })
+        
+    except Exception as e:
+        import traceback
+        return jsonify({
+            'success': False,
+            'message': str(e),
+            'traceback': traceback.format_exc()
+        }), 500
