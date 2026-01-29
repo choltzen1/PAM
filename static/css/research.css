@@ -1,4 +1,4 @@
-/* Research Workspace Styles */
+/* Research Workspace Styles - Hub Design */
 :root {
   --rs-spacing: 1rem;
   --rs-card-radius: 14px;
@@ -7,11 +7,71 @@
   --rs-magenta: #E20074;
   --rs-text-muted: #5c6370;
   --rs-code-bg: #f5f7fa;
+  --hub-magenta: #E61B7F;
+  --hub-dark-bg: #1a0a22;
+  --hub-card-bg: #3d1f3d;
+  --hub-light-text: #e0e0e0;
 }
 
 #research-app { padding: 2.5rem 2.25rem; max-width: 1500px; }
 #research-app h2 { font-size: 2.1rem; font-weight:600; margin-bottom:.3rem; }
 #research-app .rs-sub { font-size: .95rem; color: var(--rs-text-muted); max-width: 960px; line-height:1.35rem; }
+
+/* Hub wrapper styles */
+.hub-wrapper {
+  background: linear-gradient(135deg, var(--hub-magenta) 0%, #c71767 50%, #8b0950 100%) !important;
+  min-height: 100vh;
+  padding: 2rem !important;
+}
+
+/* Hub hero banner */
+.hub-wrapper .hub-hero-banner {
+  background: rgba(61, 31, 61, 0.4);
+  border-radius: 24px;
+  padding: 3rem 2.5rem !important;
+  margin-bottom: 2.5rem !important;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+.hub-hero-content {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  max-width: 1000px;
+}
+
+.hub-hero-logo {
+  width: 120px;
+  height: 120px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.05));
+  border-radius: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 3.5rem;
+  color: rgba(255, 255, 255, 0.9);
+  flex-shrink: 0;
+}
+
+.hub-wrapper .hub-hero-banner h1 {
+  color: #fff !important;
+  font-size: 2.5rem !important;
+  font-weight: 700 !important;
+  margin: 0 0 0.5rem 0 !important;
+  letter-spacing: 0.5px;
+}
+
+.hub-wrapper .hub-hero-banner .tagline {
+  color: rgba(255, 255, 255, 0.85) !important;
+  font-size: 1.1rem !important;
+  font-style: italic !important;
+  margin: 0 !important;
+  max-width: 600px;
+}
+
+
 
 .rs-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(320px,1fr)); gap:1.25rem; margin-top:1.5rem; }
 .rs-card { background:#fff; border:var(--rs-border); border-radius:var(--rs-card-radius); padding:1rem 1rem .85rem; display:flex; flex-direction:column; box-shadow:0 2px 4px rgba(0,0,0,.04); position:relative; }
@@ -21,6 +81,102 @@
 .rs-card small.helper { color:var(--rs-text-muted); display:block; margin-top:.4rem; font-size:.7rem; letter-spacing:.5px; }
 .rs-card .result-mount { margin-top:.65rem; font-size:.7rem; }
 .rs-card .loading { color: var(--rs-magenta); font-weight:500; }
+
+/* Hub landing grid */
+.hub-wrapper .landing-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 2rem;
+  margin-top: 2rem;
+  max-width: 100%;
+  padding: 0 !important;
+}
+
+.hub-wrapper .landing-tile {
+  background: var(--hub-card-bg);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 20px;
+  padding: 2.5rem 2rem;
+  color: #fff;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.hub-wrapper .landing-tile::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(230, 27, 127, 0.1), transparent);
+  pointer-events: none;
+}
+
+.hub-wrapper .landing-tile:hover {
+  border-color: rgba(255, 255, 255, 0.3);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+  transform: translateY(-8px);
+  background: rgba(70, 30, 70, 0.6);
+}
+
+.hub-wrapper .landing-tile .icon-circle {
+  width: 90px;
+  height: 90px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.05));
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #fff;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+.hub-wrapper .landing-tile .tile-label {
+  color: #fff;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.hub-wrapper .landing-tile .tile-sub {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  top: 20px;
+  right: 20px;
+}
+
+.hub-wrapper .landing-tile .tile-desc {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.hub-wrapper .landing-tile:hover .tile-desc {
+  color: #fff;
+}
+
+.hub-wrapper .landing-tile.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.hub-wrapper .landing-tile.disabled:hover {
+  transform: none;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+  background: var(--hub-card-bg);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.hub-wrapper .ribbon {
+  background: linear-gradient(135deg, var(--hub-magenta), #ff35a1);
+  color: #fff;
+  font-size: 0.65rem;
+  padding: 4px 40px;
+  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 1px;
+  box-shadow: 0 4px 12px rgba(230, 27, 127, 0.3);
+}
+
+
 
 .rs-section-title { margin-top:2.5rem; font-size:1.1rem; font-weight:600; letter-spacing:.5px; text-transform:uppercase; color:#222; }
 

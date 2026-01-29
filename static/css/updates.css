@@ -23,11 +23,11 @@ html { font-size: 12px; }
 /* Universal header styling for updates */
 .global-header-updates { display:flex; align-items:center; gap: 0.56rem; }
 
-.global-header-updates .header-icon { font-size: 1.125rem; color: #fff; }
+.global-header-updates .header-icon { font-size: 1.125rem; color: #D91970; }
 
-.global-header-updates .header-text h2 { margin:0; font-size: 0.975rem; font-weight: 600; color:#fff; line-height:1.2; }
+.global-header-updates .header-text h2 { margin:0; font-size: 0.975rem; font-weight: 600; color:#D91970; line-height:1.2; }
 
-.global-header-updates .header-text p { margin:0; font-size: 0.675rem; color: rgba(255,255,255,0.9); font-weight:400; line-height:1.1; }
+.global-header-updates .header-text p { margin:0; font-size: 0.675rem; color: rgba(217, 25, 112, 0.9); font-weight:400; line-height:1.1; }
 
 /* Control group with search and promo details */
 .control-group { gap: 22.5px; position: static; }

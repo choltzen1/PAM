@@ -14,7 +14,7 @@ def pam_homepage():
 @core_bp.route('/landing', endpoint='landing')
 def landing_page():
     """Primary entry landing page (workspace hub) with three selectable workspaces."""
-    hub_name = "Workspace Hub"
+    hub_name = "Promo Operations Management Tool"
     tiles = [
         {
             'key': 'pam',
@@ -23,14 +23,6 @@ def landing_page():
             'url': url_for('core.PAM_homepage'),
             'ribbon': 'Live',
             'sub': 'Promo & Workflow'
-        },
-        {
-            'key': 'offers',
-            'label': 'Offers',
-            'icon': 'bi-gift-fill',
-            'url': url_for('core.offers_workspace'),
-            'ribbon': 'Preview',
-            'sub': 'Placeholder'
         },
         {
             'key': 'research',

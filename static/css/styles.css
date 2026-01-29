@@ -5,7 +5,7 @@
   --tmobile-magenta-dark: #b8005a;
   --tmobile-gray: #f4f4f4;
   --tmobile-border: #e0e0e0;
-  --header-height: 60px;              /* standardized sticky header height */
+  --header-height: 48px;              /* standardized sticky header height */
   --footer-height: 60px;              /* standardized sticky footer height */
   --header-content-gap: 14px;         /* space between fixed header and first content */
   --page-vertical-pad: 0.5rem;        /* further reduced (was 1rem) */
@@ -128,8 +128,8 @@ body.body-fixed-header-footer > .app-main-scroll:not([style*='padding-bottom']) 
 
 /* Global Header */
 .global-header {
-  background: var(--tmobile-magenta);
-  color: #fff;
+  background: #fff;
+  color: #D91970;
   padding: 0 2rem; /* horizontal only; vertical derived from height */
   display: flex;
   justify-content: space-between;
@@ -146,14 +146,24 @@ body.body-fixed-header-footer > .app-main-scroll:not([style*='padding-bottom']) 
   height: var(--header-height);
   line-height: var(--header-height);
   width: 100%;
-  /* Remove shadow to avoid a dark seam below header over gradient */
   box-shadow: none;
+}
+
+.global-header::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: #D91970;
+  pointer-events: none;
 }
 
 .global-header-title {
   font-size: 1.2rem;
   font-weight: 600;
-  color: #fff;
+  color: #D91970;
   display: flex;
   align-items: center;
   gap: 0.75rem;
@@ -168,21 +178,21 @@ body.body-fixed-header-footer > .app-main-scroll:not([style*='padding-bottom']) 
 
 .global-header-promotions .header-icon {
   font-size: 1.5rem;
-  color: #fff;
+  color: #D91970;
 }
 
 .global-header-promotions .header-text h2 {
   margin: 0;
   font-size: 1.3rem;
   font-weight: 600;
-  color: #fff;
+  color: #D91970;
   line-height: 1.2;
 }
 
 .global-header-promotions .header-text p {
   margin: 0;
   font-size: 0.9rem;
-  color: rgba(255, 255, 255, 0.9);
+  color: rgba(217, 25, 112, 0.9);
   font-weight: 400;
   line-height: 1.1;
 }
@@ -190,7 +200,7 @@ body.body-fixed-header-footer > .app-main-scroll:not([style*='padding-bottom']) 
 .global-header-user {
   font-size: 1rem;
   font-weight: 500;
-  color: #fff;
+  color: #D91970;
   opacity: 0.9;
 }
 
@@ -506,8 +516,8 @@ table.standard-table tbody tr:hover { background: #f3e8f1; }
 /* Unified fixed footer bar (landing workspace) */
 .footer-bar {
   flex-shrink: 0;
-  background: var(--tmobile-magenta);
-  color: #fff;
+  background: #F5F5F5;
+  color: #111;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -517,10 +527,15 @@ table.standard-table tbody tr:hover { background: #f3e8f1; }
   box-sizing: border-box;
 }
 
+html[data-theme='dark'] .footer-bar {
+  background: #3A2F3D;
+  color: rgba(255,255,255,0.9);
+}
+
 /* Research footer nav (remove inline styles) */
 .footer-nav {
-  background: var(--tmobile-magenta);
-  color: #fff;
+  background: #F5F5F5;
+  color: #111;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -528,6 +543,11 @@ table.standard-table tbody tr:hover { background: #f3e8f1; }
   font-size: 1rem;
   height: var(--footer-height);
   box-sizing: border-box;
+}
+
+html[data-theme='dark'] .footer-nav {
+  background: #3A2F3D;
+  color: rgba(255,255,255,0.9);
 }
 
 /* Shared hub main wrapper used in landing_base */

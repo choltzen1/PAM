@@ -1,7 +1,7 @@
 from factory import create_app, data_manager as factory_data_manager  # import alias
 from perf.metrics import collector  # request metrics collector
 import time
-from flask import request, make_response, jsonify
+from flask import render_template, request, make_response, jsonify
 
 app = create_app()
 # After factory create_app, re-import the factory module variable to ensure it's initialized
@@ -57,3 +57,4 @@ if __name__ == "__main__":
     
     # Run the app on the specified port
     app.run(debug=True, port=args.port)
+

@@ -67,33 +67,201 @@ html[data-theme='dark'] #research-app.pete-theme a:hover { color:#ffc9e7; }
 
 /* (Removed dark theme card & section styling; unified on light variants) */
 /* Light panel variant (requested revert to light theme for content blocks) */
-.pete-light-card { background:var(--pete-panel-bg); border:1px solid #d6d8dc; border-radius:var(--pete-radius); padding:14px 16px 18px; color:#111; box-shadow:0 1px 2px rgba(0,0,0,.06), 0 3px 8px -2px rgba(0,0,0,.05); }
-.pete-light-section { background:transparent; border:none; border-radius:12px; padding:6px 0 10px; margin-bottom:28px; box-shadow:none; color:#111; }
-.pete-light-section .pete-data-header h6 { background:rgba(255,255,255,0.35); backdrop-filter:blur(2px); padding:4px 8px; border-radius:6px; color:#222; }
-.pete-light-section .copy-btn { background:var(--pete-accent); border-color:var(--pete-accent); color:#fff; }
-.pete-light-section .copy-btn:hover { filter:brightness(1.07); }
+.pete-light-card { 
+  background: linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(253,250,252,0.95) 100%);
+  border: 1px solid rgba(226,0,116,0.12);
+  border-radius: var(--pete-radius);
+  padding: 14px 16px 18px;
+  color: #111;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.pete-light-card:hover {
+  border-color: rgba(226,0,116,0.35);
+  box-shadow: 0 12px 32px rgba(226,0,116,0.15);
+}
+
+html[data-theme='dark'] .pete-light-card {
+  background: rgba(25,10,20,0.4);
+  border: 1px solid rgba(226,0,116,0.3);
+  box-shadow: 0 3px 16px rgba(0,0,0,0.4), 0 0 12px rgba(226,0,116,0.15);
+}
+
+html[data-theme='dark'] .pete-light-card:hover {
+  border-color: rgba(226,0,116,0.5);
+  box-shadow: 0 6px 24px rgba(0,0,0,0.5), 0 0 24px rgba(226,0,116,0.3), inset 0 0 20px rgba(226,0,116,0.08);
+  background: rgba(35,15,28,0.6);
+}
+
+.pete-light-section { 
+  background: transparent;
+  border: none;
+  border-radius: 12px;
+  padding: 6px 0 10px;
+  margin-bottom: 28px;
+  box-shadow: none;
+  color: #111;
+}
+
+.pete-light-section .pete-data-header h6 { 
+  background: linear-gradient(135deg, rgba(226,0,116,0.1) 0%, rgba(226,0,116,0.05) 100%);
+  border: 1px solid rgba(226,0,116,0.15);
+  backdrop-filter: blur(2px);
+  padding: 8px 12px;
+  border-radius: 8px;
+  color: #222;
+  font-weight: 600;
+}
+
+html[data-theme='dark'] .pete-light-section .pete-data-header h6 {
+  background: rgba(226,0,116,0.2);
+  border: 1px solid rgba(226,0,116,0.4);
+  color: #fff;
+}
+
+.pete-light-section .copy-btn { 
+  background: var(--pete-accent);
+  border-color: var(--pete-accent);
+  color: #fff;
+}
+
+.pete-light-section .copy-btn:hover { 
+  filter: brightness(1.07);
+}
 
 /* Light tables inside light sections */
-.pete-light-section .table-wrap { background:var(--pete-panel-bg-alt); border:1px solid #d6d8dc; box-shadow:none; }
-.pete-search-card { background:var(--pete-panel-bg); border:1px solid #d6d8dc; border-radius:12px; padding:16px 18px 20px; box-shadow:0 1px 3px rgba(0,0,0,.08); margin-bottom:32px; }
-.pete-search-card .card-title { font-size:.95rem; font-weight:600; margin-bottom:12px; }
-.pete-search-card hr { margin:14px 0; }
+.pete-light-section .table-wrap { 
+  background: linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(253,250,252,0.95) 100%);
+  border: 1px solid rgba(226,0,116,0.12);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  border-radius: 8px;
+}
+
+html[data-theme='dark'] .pete-light-section .table-wrap {
+  background: rgba(25,10,20,0.4);
+  border: 1px solid rgba(226,0,116,0.3);
+  box-shadow: 0 3px 16px rgba(0,0,0,0.4), 0 0 12px rgba(226,0,116,0.15);
+}
+
+.pete-search-card { 
+  background: linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(253,250,252,0.95) 100%);
+  border: 1px solid rgba(226,0,116,0.12);
+  border-radius: 12px;
+  padding: 16px 18px 20px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  margin-bottom: 32px;
+  transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.pete-search-card:hover {
+  border-color: rgba(226,0,116,0.35);
+  box-shadow: 0 12px 32px rgba(226,0,116,0.15);
+}
+
+html[data-theme='dark'] .pete-search-card {
+  background: rgba(25,10,20,0.4);
+  border: 1px solid rgba(226,0,116,0.3);
+  box-shadow: 0 3px 16px rgba(0,0,0,0.4), 0 0 12px rgba(226,0,116,0.15);
+}
+
+html[data-theme='dark'] .pete-search-card:hover {
+  border-color: rgba(226,0,116,0.5);
+  box-shadow: 0 6px 24px rgba(0,0,0,0.5), 0 0 24px rgba(226,0,116,0.3), inset 0 0 20px rgba(226,0,116,0.08);
+  background: rgba(35,15,28,0.6);
+}
+
+.pete-search-card .card-title { 
+  font-size: .95rem;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.pete-search-card hr { 
+  margin: 14px 0;
+}
 
 /* Space between multiple data sections now relies on margin-bottom in .pete-light-section */
 .pete-light-section .table-wrap, .pete-light-section p.small, .pete-light-section .small-note { margin-left:4px; margin-right:4px; }
-.pete-light-section .table-wrap table { color:#222; }
-.pete-light-section .table-wrap table { background:var(--pete-panel-bg-alt); }
-.pete-light-section .table-wrap table thead th { background:linear-gradient(var(--pete-panel-bg-alt), var(--pete-panel-bg)); color:#222; border-color:#d6d8dc; }
-.pete-light-section .table-wrap table tbody td { border-color:#e4e6e8; background:var(--pete-panel-bg-alt); }
-.pete-light-section .table-wrap table tbody tr:nth-child(odd) { background:var(--pete-panel-bg-alt); }
-.pete-light-section .table-wrap table tbody tr:nth-child(even) { background:var(--pete-panel-bg); }
-.pete-light-section .table-wrap table tbody tr:hover { background:#d0d2d3; }
+.pete-light-section .table-wrap table { 
+  color: #222;
+  background: linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(253,250,252,0.95) 100%);
+}
+
+html[data-theme='dark'] .pete-light-section .table-wrap table {
+  color: rgba(255,255,255,0.8);
+  background: rgba(25,10,20,0.4);
+}
+
+.pete-light-section .table-wrap table thead th { 
+  background: linear-gradient(135deg, rgba(226,0,116,0.1) 0%, rgba(226,0,116,0.05) 100%);
+  color: #222;
+  border-color: rgba(226,0,116,0.15);
+  font-weight: 600;
+}
+
+html[data-theme='dark'] .pete-light-section .table-wrap table thead th {
+  background: rgba(226,0,116,0.2);
+  color: #fff;
+  border-color: rgba(226,0,116,0.4);
+}
+
+.pete-light-section .table-wrap table tbody td { 
+  border-color: rgba(226,0,116,0.1);
+  background: linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(253,250,252,0.95) 100%);
+}
+
+html[data-theme='dark'] .pete-light-section .table-wrap table tbody td {
+  border-color: rgba(226,0,116,0.2);
+  background: rgba(25,10,20,0.4);
+  color: rgba(255,255,255,0.8);
+}
+
+.pete-light-section .table-wrap table tbody tr:nth-child(odd) { 
+  background: linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(253,250,252,0.95) 100%);
+}
+
+.pete-light-section .table-wrap table tbody tr:nth-child(even) { 
+  background: linear-gradient(135deg, rgba(254,251,253,1) 0%, rgba(255,252,254,1) 100%);
+}
+
+html[data-theme='dark'] .pete-light-section .table-wrap table tbody tr:nth-child(odd) {
+  background: rgba(25,10,20,0.4);
+}
+
+html[data-theme='dark'] .pete-light-section .table-wrap table tbody tr:nth-child(even) {
+  background: rgba(35,15,28,0.6);
+}
+
+.pete-light-section .table-wrap table tbody tr:hover { 
+  background: rgba(226,0,116,0.08);
+}
+
+html[data-theme='dark'] .pete-light-section .table-wrap table tbody tr:hover {
+  background: rgba(226,0,116,0.15);
+}
 
 /* Scope to revert inputs to light within the light card/sections */
 .pete-light-scope input.form-control,
-.pete-light-scope select.form-select { color:#111 !important; border:1px solid #c3c6ca !important; }
-html[data-theme='dark'] .pete-light-scope select.form-select { background-color: var(--input-light-gray) !important; color:#000 !important; border:1px solid var(--tmobile-border-dark) !important; }
-.pete-light-scope .form-check-label { color:#111 !important; }
+.pete-light-scope select.form-select { 
+  color: #111 !important;
+  border: 1px solid #c3c6ca !important;
+}
+
+html[data-theme='dark'] .pete-light-scope input.form-control,
+html[data-theme='dark'] .pete-light-scope select.form-select {
+  background-color: var(--input-light-gray) !important;
+  color: #000 !important;
+  border: 1px solid var(--tmobile-border-dark) !important;
+}
+
+.pete-light-scope .form-check-label { 
+  color: #111 !important;
+}
+
+html[data-theme='dark'] .pete-light-scope .form-check-label {
+  color: rgba(255,255,255,0.9) !important;
+}
 /* Specific styling for EIP_ID and BAN search inputs */
 .pete-light-scope input[name="eip_id"],
 .pete-light-scope input[name="ban"] {
@@ -126,10 +294,33 @@ html[data-theme='dark'] .pete-light-scope select.form-select { background-color:
 .pete-light-section p,
 .pete-light-section span,
 .pete-light-section label,
-.pete-light-section .copy-btn { color:#111 !important; }
+.pete-light-section .copy-btn { 
+  color: #111 !important;
+}
 
-/* Ensure table header retains dark text */
-.pete-light-section .table-wrap table thead th { color:#111 !important; }
+html[data-theme='dark'] .pete-light-scope,
+html[data-theme='dark'] .pete-light-section,
+html[data-theme='dark'] .pete-light-section td,
+html[data-theme='dark'] .pete-light-section p,
+html[data-theme='dark'] .pete-light-section span,
+html[data-theme='dark'] .pete-light-section label {
+  color: rgba(255,255,255,0.9) !important;
+}
+
+html[data-theme='dark'] .pete-light-section h6,
+html[data-theme='dark'] .pete-light-section .pete-data-header h6,
+html[data-theme='dark'] .pete-light-section .small-note {
+  color: #fff !important;
+}
+
+html[data-theme='dark'] .pete-light-section th {
+  color: #fff !important;
+}
+
+/* Ensure table header retains readable text */
+.pete-light-section .table-wrap table thead th { 
+  color: #111 !important;
+}
 
 /* Links inside light sections */
 .pete-light-scope a { color:#0d3b66; }
@@ -143,11 +334,61 @@ html[data-theme='dark'] .pete-light-scope select.form-select { background-color:
   -webkit-text-fill-color:#111 !important;
   caret-color:#111 !important;
 }
-.pete-hero-banner { display:flex; align-items:center; gap:22px; background:#ffffff; border:1px solid #e0e0e3; border-radius:20px; padding:20px 34px; box-shadow:0 6px 24px -8px rgba(0,0,0,.18), 0 2px 6px rgba(0,0,0,.08); backdrop-filter:none; margin:0 auto 26px; max-width:980px; }
-.pete-hero-banner img { max-height:64px; width:auto; display:block; border-radius:6px; }
-.pete-hero-banner .pete-title { font-size:1.6rem; font-weight:700; letter-spacing:.6px; line-height:1.12; color:#222; text-shadow:none; }
-.pete-hero-banner .pete-sub { margin-top:3px; font-size:.68rem; letter-spacing:.4px; color:#555; font-weight:500; }
-html[data-theme='dark'] .pete-hero-banner { background:rgba(27,0,22,0.55); border:1px solid #ff2892; box-shadow:0 0 24px -6px #ff2892, 0 0 10px #ff2892 inset, 0 0 2px #ff2892; backdrop-filter:blur(5px); }
+.pete-hero-banner { 
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(253,248,252,1) 100%);
+  border: 2px solid rgba(226,0,116,0.2);
+  border-radius: 16px;
+  padding: 20px 34px;
+  box-shadow: 0 4px 24px rgba(226,0,116,0.15), 0 0 0 1px rgba(226,0,116,0.05) inset;
+  backdrop-filter: none;
+  margin: 0 auto 26px;
+  max-width: 980px;
+}
+
+.pete-hero-banner img { 
+  max-height: 64px;
+  width: auto;
+  display: block;
+  border-radius: 6px;
+}
+
+.pete-hero-banner .pete-title { 
+  font-size: 1.6rem;
+  font-weight: 700;
+  letter-spacing: .6px;
+  line-height: 1.12;
+  color: #222;
+  text-shadow: none;
+}
+
+.pete-hero-banner .pete-sub { 
+  margin-top: 3px;
+  font-size: .68rem;
+  letter-spacing: .4px;
+  color: #555;
+  font-weight: 500;
+}
+
+html[data-theme='dark'] .pete-hero-banner { 
+  background: rgba(30,10,25,0.6);
+  border: 2px solid rgba(226,0,116,0.8);
+  box-shadow: 
+    0 0 30px rgba(226,0,116,0.6),
+    0 0 60px rgba(226,0,116,0.3),
+    inset 0 0 30px rgba(226,0,116,0.15);
+  backdrop-filter: blur(5px);
+}
+
+html[data-theme='dark'] .pete-hero-banner .pete-title {
+  color: white;
+}
+
+html[data-theme='dark'] .pete-hero-banner .pete-sub {
+  color: rgba(255,255,255,0.85);
+}
 html[data-theme='dark'] .pete-hero-banner .pete-title { color:#fff; text-shadow:0 0 10px rgba(255,40,146,.6),0 0 3px #ff2892; }
 html[data-theme='dark'] .pete-hero-banner .pete-sub { color:#ffd9ef; }
 /* (Removed unused .pete-card rules) */

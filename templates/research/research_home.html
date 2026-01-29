@@ -1,33 +1,532 @@
 {% extends 'research/research_base.html' %}
-{% block title %}Research Workspace{% endblock %}
+{% block title %}Research Workspace · Promo Operations{% endblock %}
+{% block head %}
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet" />
+  <style>
+    /* Light theme backgrounds */
+    html:not([data-theme='dark']) body {
+      background: #F5F5F5 !important;
+      background-attachment: fixed;
+    }
+    
+    /* Dark theme backgrounds - neutral plum */
+    html[data-theme='dark'] body {
+      background: #3A2F3D !important;
+      background-attachment: fixed;
+    }
+    
+    .landing-wrapper {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 1.5rem;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+    }
+    
+    .hero-compact {
+      border-radius: 16px;
+      padding: 2.5rem 3rem;
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      gap: 2.5rem;
+    }
+    
+    html:not([data-theme='dark']) .hero-compact {
+      background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(253,248,252,1) 100%);
+      border: 2px solid rgba(226,0,116,0.2);
+      box-shadow: 0 2px 10px rgba(0,0,0,0.08), inset 0 1px 0 rgba(226,0,116,0.04);
+    }
+    
+    html[data-theme='dark'] .hero-compact {
+      background: rgba(30,10,25,0.6);
+      border: 2px solid rgba(226,0,116,0.8);
+      box-shadow: 0 6px 18px rgba(0,0,0,0.4), inset 0 1px 0 rgba(226,0,116,0.12);
+    }
+    
+    .hero-logo {
+      height: 90px;
+      width: auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 3rem;
+      color: #E20074;
+    }
+    
+    html:not([data-theme='dark']) .hero-logo {
+      filter: drop-shadow(0 1px 4px rgba(226,0,116,0.15));
+    }
+    
+    html[data-theme='dark'] .hero-logo {
+      color: white;
+      filter: drop-shadow(0 0 12px rgba(226,0,116,0.8)) drop-shadow(0 0 24px rgba(226,0,116,0.4));
+    }
+    
+    .hero-content h1 {
+      font-size: 2.25rem;
+      font-weight: 700;
+      margin: 0 0 0.5rem 0;
+      letter-spacing: -0.5px;
+    }
+    
+    html:not([data-theme='dark']) .hero-content h1 {
+      color: #1A1A1A;
+    }
+    
+    html[data-theme='dark'] .hero-content h1 {
+      color: white;
+    }
+    
+    .hero-content p {
+      font-size: 1rem;
+      margin: 0;
+      line-height: 1.5;
+    }
+    
+    html:not([data-theme='dark']) .hero-content p {
+      color: #666;
+    }
+    
+    html[data-theme='dark'] .hero-content p {
+      color: rgba(255,255,255,0.85);
+    }
+    
+    .hero-stats {
+      display: flex;
+      gap: 2rem;
+      padding-left: 2rem;
+    }
+    
+    html:not([data-theme='dark']) .hero-stats {
+      border-left: 1px solid rgba(226,0,116,0.15);
+    }
+    
+    html[data-theme='dark'] .hero-stats {
+      border-left: 1px solid rgba(226,0,116,0.3);
+    }
+    
+    .stat-item {
+      text-align: center;
+    }
+    
+    .stat-value {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: #E20074;
+      display: block;
+    }
+    
+    html[data-theme='dark'] .stat-value {
+      color: #FF2A93;
+    }
+    
+    .stat-label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    html:not([data-theme='dark']) .stat-label {
+      color: #999;
+    }
+    
+    html[data-theme='dark'] .stat-label {
+      color: rgba(255,255,255,0.5);
+    }
+    
+    .workspaces-section {
+      flex: 1;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.5rem;
+      align-content: start;
+    }
+    
+    .workspace-card {
+      border-radius: 10px;
+      padding: 0;
+      text-decoration: none;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+      overflow: hidden;
+      position: relative;
+      min-height: 240px;
+      cursor: pointer;
+    }
+    
+    html:not([data-theme='dark']) .workspace-card {
+      background: linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(253,250,252,0.95) 100%);
+      border: 1px solid rgba(226,0,116,0.12);
+      color: #1A1A1A;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    }
+    
+    html[data-theme='dark'] .workspace-card {
+      background: rgba(25,10,20,0.4);
+      border: 1px solid rgba(226,0,116,0.3);
+      color: white;
+      box-shadow: 
+        0 3px 16px rgba(0,0,0,0.4),
+        0 0 12px rgba(226,0,116,0.15);
+    }
+    
+    html:not([data-theme='dark']) .workspace-card:hover {
+      transform: translateY(-4px) scale(1.01);
+      border-color: rgba(226,0,116,0.35);
+      box-shadow: 0 12px 32px rgba(226,0,116,0.15);
+      background: linear-gradient(135deg, rgba(255,255,255,1) 0%, rgba(254,251,253,1) 100%);
+    }
+    
+    html[data-theme='dark'] .workspace-card:hover {
+      transform: translateY(-3px) scale(1.005);
+      border-color: rgba(226,0,116,0.5);
+      box-shadow: 
+        0 6px 24px rgba(0,0,0,0.5),
+        0 0 24px rgba(226,0,116,0.3),
+        inset 0 0 20px rgba(226,0,116,0.08);
+      background: rgba(35,15,28,0.6);
+    }
+    
+    .workspace-card:active {
+      transform: translateY(-2px) scale(0.99);
+    }
+    
+    .card-header-row {
+      padding: 1.25rem 1.25rem 0.5rem 1.25rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+    
+    .card-icon-wrapper {
+      height: 56px;
+      width: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 8px;
+      font-size: 1.5rem;
+    }
+    
+    html:not([data-theme='dark']) .card-icon-wrapper {
+      background: rgba(226,0,116,0.08);
+      color: #E20074;
+    }
+    
+    html[data-theme='dark'] .card-icon-wrapper {
+      background: rgba(226,0,116,0.2);
+      color: #FF2A93;
+    }
+    
+    .status-badge {
+      font-size: 0.6rem;
+      padding: 0.35rem 0.65rem;
+      border-radius: 999px;
+      text-transform: uppercase;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+    
+    html:not([data-theme='dark']) .status-badge {
+      background: rgba(226,0,116,0.1);
+      color: #E20074;
+      border: 0.5px solid rgba(226,0,116,0.2);
+    }
+    
+    html[data-theme='dark'] .status-badge {
+      background: rgba(226,0,116,0.2);
+      color: #FF2A93;
+      border: 0.5px solid rgba(226,0,116,0.4);
+    }
+    
+    .status-live {
+      background: linear-gradient(135deg, #D4FFB9 0%, #B8F3A5 100%);
+      color: #2D6E0F;
+      border: 0.5px solid #A8E894;
+    }
+    
+    html[data-theme='dark'] .status-live {
+      background: rgba(78,201,50,0.2);
+      color: #86FF44;
+      border: 0.5px solid rgba(78,201,50,0.4);
+    }
+    
+    .status-planned {
+      background: rgba(0,0,0,0.04);
+      color: #666;
+      border: 0.5px solid rgba(0,0,0,0.1);
+    }
+    
+    html[data-theme='dark'] .status-planned {
+      background: rgba(255,255,255,0.05);
+      color: rgba(255,255,255,0.6);
+      border: 0.5px solid rgba(255,255,255,0.1);
+    }
+    
+    .card-body {
+      padding: 0.75rem 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    
+    .card-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin: 0;
+      letter-spacing: -0.3px;
+    }
+    
+    .card-subtitle {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin: 0;
+      font-weight: 600;
+    }
+    
+    html:not([data-theme='dark']) .card-subtitle {
+      color: #999;
+    }
+    
+    html[data-theme='dark'] .card-subtitle {
+      color: rgba(255,255,255,0.5);
+    }
+    
+    .card-description {
+      font-size: 0.875rem;
+      line-height: 1.6;
+      margin: 0;
+    }
+    
+    html:not([data-theme='dark']) .card-description {
+      color: #666;
+    }
+    
+    html[data-theme='dark'] .card-description {
+      color: rgba(255,255,255,0.8);
+    }
+    
+    .card-footer-row {
+      padding: 0 1.25rem 1.25rem 1.25rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: auto;
+    }
+    
+    .card-meta {
+      display: flex;
+      gap: 1.25rem;
+      font-size: 0.7rem;
+    }
+    
+    html:not([data-theme='dark']) .card-meta {
+      color: #999;
+    }
+    
+    html[data-theme='dark'] .card-meta {
+      color: rgba(255,255,255,0.5);
+    }
+    
+    .meta-item {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+    
+    .meta-item i {
+      font-size: 0.75rem;
+    }
+    
+    .card-cta {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-weight: 600;
+      font-size: 0.8rem;
+      transition: all 0.18s ease;
+      padding: 0.4rem 0.8rem;
+      border-radius: 6px;
+      border: 1px solid transparent;
+    }
+    
+    html:not([data-theme='dark']) .card-cta {
+      color: #E20074;
+      background: rgba(226,0,116,0.05);
+    }
+    
+    html[data-theme='dark'] .card-cta {
+      color: #FF2A93;
+      background: rgba(255,42,147,0.15);
+    }
+    
+    html:not([data-theme='dark']) .workspace-card:hover .card-cta {
+      gap: 0.7rem;
+      background: rgba(226,0,116,0.1);
+      border-color: rgba(226,0,116,0.15);
+    }
+    
+    html[data-theme='dark'] .workspace-card:hover .card-cta {
+      gap: 0.7rem;
+      background: rgba(255,42,147,0.25);
+      border-color: rgba(255,42,147,0.3);
+    }
+    
+    .card-cta i {
+      transition: transform 0.18s ease;
+    }
+    
+    .workspace-card:hover .card-cta i {
+      transform: translateX(2px);
+    }
+    
+    @media (max-width: 1024px) {
+      .workspaces-section {
+        grid-template-columns: 1fr;
+      }
+      
+      .hero-compact {
+        grid-template-columns: 1fr;
+        text-align: center;
+        gap: 1.5rem;
+      }
+      
+      .hero-stats {
+        border-left: none;
+        border-top: 1px solid rgba(226,0,116,0.2);
+        padding-left: 0;
+        padding-top: 1.5rem;
+        justify-content: center;
+      }
+      
+      .hero-logo {
+        margin: 0 auto;
+      }
+    }
+  </style>
+{% endblock %}
+
 {% block content %}
-<div class="landing-wrapper research-landing">
-  <div class="landing-intro hub-hero-banner">
-    <h1>Research Workspace</h1>
-    <p class="tagline">Select a diagnostic space to begin.</p>
+<div class="landing-wrapper">
+  <!-- Compact Hero -->
+  <div class="hero-compact">
+    <div class="hero-logo">
+      <i class="bi bi-search"></i>
+    </div>
+    <div class="hero-content">
+      <h1>Research Workspace</h1>
+      <p>Performance analytics, experimentation results, and exploratory promo insights for data driven decision making.</p>
+    </div>
+    <div class="hero-stats">
+      <div class="stat-item">
+        <span class="stat-value">3</span>
+        <span class="stat-label">Bots</span>
+      </div>
+    </div>
   </div>
-  <div class="landing-grid">
-    <a class="landing-tile" href="{{ url_for('research.pete') }}" data-key="pete">
-      <div class="ribbon">Live</div>
-      <div class="icon-circle"><i class="bi bi-tools"></i></div>
-      <div class="tile-label">PETE</div>
-      <div class="tile-sub">Promo Escalation</div>
-      <div class="tile-desc">Promo & equipment troubleshooting: EIP lookup, BAN context, rate plans, errors, trade, eligibility chat.</div>
+
+  <!-- Workspace Cards -->
+  <div class="workspaces-section">
+    <a href="{{ url_for('research.pete') }}" class="workspace-card">
+      <div class="card-header-row">
+        <div class="card-icon-wrapper">
+          <i class="bi bi-tools"></i>
+        </div>
+        <span class="status-badge status-live">Live</span>
+      </div>
+      
+      <div class="card-body">
+        <h2 class="card-title">PETE</h2>
+        <p class="card-subtitle">Promo Escalation</p>
+        <p class="card-description">Promo & equipment troubleshooting: EIP lookup, BAN context, rate plans, errors, trade, eligibility chat.</p>
+      </div>
+      
+      <div class="card-footer-row">
+        <div class="card-meta">
+          <div class="meta-item">
+            <i class="bi bi-clock-fill"></i>
+            <span>Active</span>
+          </div>
+        </div>
+        <div class="card-cta">
+          <span>Open Workspace</span>
+          <i class="bi bi-arrow-right"></i>
+        </div>
+      </div>
     </a>
-    <a class="landing-tile disabled" href="#" data-key="spete" aria-disabled="true">
-      <div class="ribbon">Planned</div>
-      <div class="icon-circle"><i class="bi bi-graph-up"></i></div>
-      <div class="tile-label">SPETE</div>
-      <div class="tile-sub">Segmentation</div>
-      <div class="tile-desc">Service promotional data (coming soon).</div>
+    
+    <a href="#" class="workspace-card" aria-disabled="true" style="opacity:0.6;pointer-events:none;">
+      <div class="card-header-row">
+        <div class="card-icon-wrapper">
+          <i class="bi bi-graph-up"></i>
+        </div>
+        <span class="status-badge status-planned">Planned</span>
+      </div>
+      
+      <div class="card-body">
+        <h2 class="card-title">SPETE</h2>
+        <p class="card-subtitle">Segmentation</p>
+        <p class="card-description">Service promotional data (coming soon).</p>
+      </div>
+      
+      <div class="card-footer-row">
+        <div class="card-meta">
+          <div class="meta-item">
+            <i class="bi bi-clock-fill"></i>
+            <span>Coming Soon</span>
+          </div>
+        </div>
+        <div class="card-cta">
+          <span>Open Workspace</span>
+          <i class="bi bi-arrow-right"></i>
+        </div>
+      </div>
     </a>
-    <a class="landing-tile disabled" href="#" data-key="repete" aria-disabled="true">
-      <div class="ribbon">Planned</div>
-      <div class="icon-circle"><i class="bi bi-clock-history"></i></div>
-      <div class="tile-label">Re-PETE</div>
-      <div class="tile-sub">Historical Diff</div>
-      <div class="tile-desc">Rebate research and data (coming soon).</div>
+    
+    <a href="#" class="workspace-card" aria-disabled="true" style="opacity:0.6;pointer-events:none;">
+      <div class="card-header-row">
+        <div class="card-icon-wrapper">
+          <i class="bi bi-clock-history"></i>
+        </div>
+        <span class="status-badge status-planned">Planned</span>
+      </div>
+      
+      <div class="card-body">
+        <h2 class="card-title">Re-PETE</h2>
+        <p class="card-subtitle">Historical Diff</p>
+        <p class="card-description">Rebate research and data (coming soon).</p>
+      </div>
+      
+      <div class="card-footer-row">
+        <div class="card-meta">
+          <div class="meta-item">
+            <i class="bi bi-clock-fill"></i>
+            <span>Coming Soon</span>
+          </div>
+        </div>
+        <div class="card-cta">
+          <span>Open Workspace</span>
+          <i class="bi bi-arrow-right"></i>
+        </div>
+      </div>
     </a>
   </div>
-  </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+  document.querySelectorAll('.workspace-card').forEach(card => {
+    card.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        card.click();
+      }
+    });
+  });
+</script>
 {% endblock %}

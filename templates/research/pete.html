@@ -1,5 +1,26 @@
 {% extends 'research/research_base.html' %}
 {% block title %}PETE - Promo Escalation Tool{% endblock %}
+{% block head %}
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet" />
+  <style>
+    /* Light theme backgrounds */
+    html:not([data-theme='dark']) body {
+      background: #FAF8FC !important;
+      background-image: 
+        radial-gradient(1200px 600px at 50% 15%, rgba(226,0,116,0.04) 0%, rgba(226,0,116,0.00) 60%),
+        radial-gradient(900px 500px at 80% 80%, rgba(226,0,116,0.03) 0%, rgba(0,0,0,0.00) 55%),
+        linear-gradient(180deg, #FDFCFD 0%, #FAF8FC 55%, #F9F7FB 100%) !important;
+      background-blend-mode: normal, normal, normal;
+      background-attachment: fixed;
+    }
+    
+    /* Dark theme backgrounds - vibrant magenta to purple gradient */
+    html[data-theme='dark'] body {
+      background: linear-gradient(135deg, #E20074 0%, #C8006D 25%, #8B0066 50%, #640056 75%, #3D0042 100%) !important;
+      background-attachment: fixed;
+    }
+  </style>
+{% endblock %}
 {% block content %}
 <div id="research-app" class="pete-form-flow pete-theme">
   <style>

@@ -57,7 +57,7 @@
   <main class="app-main-scroll" style="padding-top:calc(var(--header-height) + var(--header-content-gap));padding-bottom:var(--footer-height);">
      {% block content %}{% endblock %}
    </main>
-   <footer class="footer-nav" style="background:var(--tmobile-magenta);color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0.5em 2em;font-size:1rem;height:var(--footer-height);box-sizing:border-box;position:fixed;bottom:0;left:0;right:0;z-index:1000;">
+  <footer class="footer-nav">
     <div id="footer-time">{{ current_datetime }}</div>
     <nav class="footer-links" style="display:flex;gap:1.5em;align-items:center;">
       <a title="Back" href="javascript:history.back()" style="color:#fff;text-decoration:none;font-size:1.2em;"><i class="fas fa-chevron-left"></i></a>
