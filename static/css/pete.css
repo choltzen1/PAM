@@ -299,6 +299,11 @@ html[data-theme='dark'] .pete-light-scope .form-check-label {
 }
 
 html[data-theme='dark'] .pete-light-scope,
+html[data-theme='dark'] .pete-light-scope h2,
+html[data-theme='dark'] .pete-light-scope h5,
+html[data-theme='dark'] .pete-light-scope h6,
+html[data-theme='dark'] .pete-light-scope .form-label,
+html[data-theme='dark'] .pete-light-scope .card-title,
 html[data-theme='dark'] .pete-light-section,
 html[data-theme='dark'] .pete-light-section td,
 html[data-theme='dark'] .pete-light-section p,
@@ -313,11 +318,12 @@ html[data-theme='dark'] .pete-light-section .small-note {
   color: #fff !important;
 }
 
-html[data-theme='dark'] .pete-light-section th {
+html[data-theme='dark'] .pete-light-section th,
+html[data-theme='dark'] .pete-light-section .table-wrap table thead th {
   color: #fff !important;
 }
 
-/* Ensure table header retains readable text */
+/* Ensure table header retains readable text in light mode */
 .pete-light-section .table-wrap table thead th { 
   color: #111 !important;
 }
@@ -373,13 +379,10 @@ html[data-theme='dark'] .pete-light-section th {
 }
 
 html[data-theme='dark'] .pete-hero-banner { 
-  background: rgba(30,10,25,0.6);
+  background: linear-gradient(135deg, #D91970 0%, #C11468 25%, #81005C 50%, #5D004F 75%, #380040 100%);
+  background-attachment: fixed;
   border: 2px solid rgba(226,0,116,0.8);
-  box-shadow: 
-    0 0 30px rgba(226,0,116,0.6),
-    0 0 60px rgba(226,0,116,0.3),
-    inset 0 0 30px rgba(226,0,116,0.15);
-  backdrop-filter: blur(5px);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.4), inset 0 1px 0 rgba(226,0,116,0.12);
 }
 
 html[data-theme='dark'] .pete-hero-banner .pete-title {
@@ -497,7 +500,13 @@ html, body { height:100%; }
 .pete-col-highlight td.highlight, .pete-col-highlight th.highlight { background:#ffe0f4 !important; }
 
 /* Order Detail ID single-value box */
-.order-id-box { background:var(--pete-panel-bg-alt); border:1px solid #000; border-radius:0; font-size:calc(.72rem * var(--pete-font-scale)); padding:3px 6px; display:inline-block; min-width:160px; }
+.order-id-box { background: linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(253,250,252,0.95) 100%); border:1px solid rgba(226,0,116,0.12); border-radius:8px; font-size:calc(.72rem * var(--pete-font-scale)); padding:3px 6px; display:inline-block; min-width:160px; color:#222; }
+
+html[data-theme='dark'] .order-id-box {
+  background: rgba(25,10,20,0.4);
+  border: 1px solid rgba(226,0,116,0.2);
+  color: rgba(255,255,255,0.8);
+}
 
 .copy-btn { font-size:var(--pete-font-xs); padding:.3rem .55rem; line-height:1; border:1px solid var(--pete-accent); background:var(--pete-accent); color:#fff; border-radius:6px; cursor:pointer; }
 .copy-btn:hover { filter:brightness(1.05); }

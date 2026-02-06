@@ -13,8 +13,8 @@ html, body {
 .sidebar {
   position: fixed;
   left: 0;
-  top: 60px; /* Position directly below global header */
-  bottom: 45px; /* Account for footer height */
+  top: var(--header-height); /* Position directly below global header */
+  bottom: var(--footer-height); /* Account for footer height */
   width: 150px; /* 75% of original 200px */
   background: var(--tmobile-magenta);
   color: #fff;
@@ -51,8 +51,8 @@ html, body {
 
 .main {
   position: fixed;
-  top: 60px; /* below fixed global header */
-  bottom: 92px; /* Height of footer (60px) + disclaimer (~32px) */
+  top: var(--header-height); /* below fixed global header */
+  bottom: var(--footer-height); /* above footer */
   left: 150px; /* match sidebar width */
   right: 0;
   overflow-y: auto;
@@ -82,8 +82,8 @@ html, body {
 
 .disclaimer {
   position: fixed;
-  bottom: 60px; /* Position above the 60px footer */
-  left: 150px; /* match sidebar */
+  bottom: var(--footer-height); /* Position above footer */
+  left: 0;
   right: 0;
   background-color: #666;
   color: white;
@@ -103,12 +103,12 @@ html, body {
 /* Update main content area positioning for responsive */
 @media (max-width: 900px) {  .sidebar {
     width: 140px; /* Reduce width for better space usage */
-    top: 60px; /* Position below global header */
-    bottom: 45px;
+    top: var(--header-height); /* Position below global header */
+    bottom: var(--footer-height);
     padding-bottom: 20px;
   }  .main {
-    top: 60px; /* below fixed header */
-    bottom: 92px;
+    top: var(--header-height); /* below fixed header */
+    bottom: var(--footer-height);
     left: 140px;
     padding: 1.5rem 1rem 1.5rem 1rem;
   }
@@ -127,7 +127,7 @@ html, body {
     gap: 0.4em;
   }
   .disclaimer {
-    left: 140px;
+    left: 0;
     font-size: 0.7rem;
     padding: 6px 12px;
   }
@@ -135,12 +135,12 @@ html, body {
 
 @media (max-width: 600px) {  .sidebar {
     width: 120px;
-    top: 60px; /* Position below global header */
-    bottom: 45px;
+    top: var(--header-height); /* Position below global header */
+    bottom: var(--footer-height);
     padding-bottom: 15px;
   }  .main {
-    top: 60px; /* below fixed header */
-    bottom: 92px;
+    top: var(--header-height); /* below fixed header */
+    bottom: var(--footer-height);
     left: 120px;
     padding: 1rem 0.5rem 1rem 0.5rem;
   }
@@ -161,7 +161,7 @@ html, body {
     gap: 0.3em;
   }
   .disclaimer {
-    left: 120px;
+    left: 0;
     font-size: 0.65rem;
     padding: 4px 8px;
     line-height: 1.1;
@@ -170,11 +170,11 @@ html, body {
 
 @media (max-width: 400px) {  .sidebar {
     width: 100px;
-    top: 60px; /* Position below global header */
-    bottom: 45px;
+    top: var(--header-height); /* Position below global header */
+    bottom: var(--footer-height);
   }  .main {
-    top: 60px; /* below fixed header */
-    bottom: 92px;
+    top: var(--header-height); /* below fixed header */
+    bottom: var(--footer-height);
     left: 100px;
     padding: 0.8rem 0.3rem 0.8rem 0.3rem;
   }
@@ -192,7 +192,7 @@ html, body {
     gap: 0.2em;
   }
   .disclaimer {
-    left: 100px;
+    left: 0;
     font-size: 0.6rem;
     padding: 3px 6px;
   }
@@ -201,16 +201,16 @@ html, body {
 /* Extra small screens */
 @media (max-width: 320px) {  .sidebar {
     width: 80px;
-    top: 60px; /* Position below global header */
-    bottom: 45px;
+    top: var(--header-height); /* Position below global header */
+    bottom: var(--footer-height);
   }  .main {
-    top: 60px; /* below fixed header */
-    bottom: 92px;
+    top: var(--header-height); /* below fixed header */
+    bottom: var(--footer-height);
     left: 80px;
     padding: 0.5rem 0.2rem 0.5rem 0.2rem;
   }
   .disclaimer {
-    left: 80px;
+    left: 0;
     font-size: 0.55rem;
     padding: 2px 4px;
   }

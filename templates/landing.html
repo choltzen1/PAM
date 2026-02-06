@@ -23,6 +23,23 @@
       display: flex;
       flex-direction: column;
       gap: 2rem;
+      box-sizing: border-box;
+    }
+    
+    .landing-disclaimer {
+      background-color: #666;
+      color: white;
+      padding: 8px 20px;
+      font-size: 0.65rem;
+      line-height: 1.3;
+      text-align: center;
+      border-radius: 10px;
+      margin-top: auto;
+    }
+    .landing-disclaimer p { margin: 0; }
+    html[data-theme='dark'] .landing-disclaimer {
+      background-color: rgba(255,255,255,0.06);
+      color: rgba(255,255,255,0.55);
     }
     
     .hero-compact {
@@ -150,8 +167,8 @@
       transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
       overflow: hidden;
       position: relative;
-      min-height: 240px;
       cursor: pointer;
+      min-height: 240px;
     }
     
     html:not([data-theme='dark']) .workspace-card {
@@ -285,6 +302,7 @@
       display: flex;
       flex-direction: column;
       gap: 0.4rem;
+      flex: 1;
     }
     
     .card-title-row {
@@ -295,7 +313,7 @@
     }
     
     .card-title {
-      font-size: 1.1rem;
+      font-size: 1.35rem;
       font-weight: 700;
       margin: 0;
     }
@@ -324,7 +342,7 @@
     }
     
     .card-description {
-      font-size: 0.875rem;
+      font-size: 1rem;
       line-height: 1.6;
       margin: 0;
     }
@@ -511,6 +529,11 @@
       </div>
     </a>
     {% endfor %}
+  </div>
+
+  <!-- Disclaimer -->
+  <div class="landing-disclaimer">
+    <p>The information contained within this area is designated T-Mobile Restricted. Disclosure of the information to anyone without a direct need to know may result in termination of your employment or contract with T-Mobile. T-Mobile reserves the right to pursue civil and or criminal remedies against persons who disclose T-Mobile information to any third party without proper authorization.</p>
   </div>
 </div>
 {% endblock %}
