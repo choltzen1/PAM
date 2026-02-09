@@ -10,6 +10,16 @@ html, body {
   overflow: hidden; /* Prevent all scrolling on the main page */
 }
 
+/* Light theme */
+html:not([data-theme='dark']) body {
+  background: #F5F5F5 !important;
+}
+
+/* Dark theme - neutral plum matching landing page */
+html[data-theme='dark'] body {
+  background: #3A2F3D !important;
+}
+
 .sidebar {
   position: fixed;
   left: 0;
@@ -259,8 +269,8 @@ html, body {
 }
 
 /* Dark mode flatten: remove shadow for cleaner, low-contrast surface */
-html[data-theme='dark'] .process-icon-container { box-shadow:none; }
-html[data-theme='dark'] .process-icon-container:hover { box-shadow:none; }
+html[data-theme='dark'] .process-icon-container { background: rgba(25,10,20,0.4); border-color: rgba(226,0,116,0.5); box-shadow:none; }
+html[data-theme='dark'] .process-icon-container:hover { background: var(--tmobile-magenta); box-shadow:none; }
 
 .process-icon-container:hover {
   background: var(--tmobile-magenta);

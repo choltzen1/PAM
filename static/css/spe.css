@@ -1,52 +1,38 @@
 /* SPE Page Specific Styles */
 :root {
   --spe-color: #e20074;  /* T-Mobile magenta as default */
-  --spe-row-bg: #dadada;
-  --spe-row-bg-alt: #f3f3f3;
-  --spe-header-bg: var(--spe-color);
-  --spe-header-color: #fff;
-  --spe-action-size: 1.5em;
-  --spe-table-radius: 12px;
-  --spe-table-shadow: 0 2px 16px #0001;
 }
 
 /* Page layout overrides */
-html { font-size: 12px; } /* 75% rem scale for SPE only */
+html { font-size: 12px; }
 body {
   font-family: 'Inter', Arial, sans-serif;
   overflow-x: hidden;
 }
 
-/* 2. Header (fixed) */
-.header-bar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background: var(--tmobile-magenta);
-  color: #fff;
-  padding: 1rem 1.5rem;
-  border-radius: 0;
-  flex-shrink: 0;
-  font-size: 1.25rem;
-  font-weight: 600;
+/* Light theme background */
+html:not([data-theme='dark']) body {
+  background: #F5F5F5 !important;
+  background-attachment: fixed;
 }
 
-.header-title {
-  font-size: 1.25rem;
-  font-weight: 600;
-}
-
-.user-name {
-  font-size: 1rem;
+/* Dark theme background - neutral plum matching landing/RDC pages */
+html[data-theme='dark'] body {
+  background: #3A2F3D !important;
+  background-attachment: fixed;
 }
 
 /* SPE Page Container */
 .promotions-page {
-  min-height: calc(100vh - 120px); /* Account for header and footer */
-  padding: 0.75rem 1.5rem; /* 75% */
-  padding-bottom: 1.5rem; /* 75% */
+  min-height: calc(100vh - 120px);
+  padding: 0.75rem 1.5rem 1.5rem;
   box-sizing: border-box;
-  background: transparent; /* allow global body background to show */
+  background: transparent;
+}
+
+.promotions-page,
+.promotions-page * {
+  box-sizing: border-box;
 }
 
 /* Controls row */
@@ -54,8 +40,8 @@ body {
   display: flex;
   flex-wrap: wrap;
   align-items: flex-end;
-  gap: 1rem;
-  margin: 1.5rem 0;
+  gap: 0.75rem;
+  margin: 1.125rem 0;
 }
 
 .filter-group,
@@ -67,239 +53,152 @@ body {
 
 .filter-group select,
 .search-group input {
-  min-width: 180px;
-  padding: 0.5rem;
-  border: 1px solid var(--tmobile-border);
-  border-radius: 4px;
-  background:#ffffff;
-  color:#111;
-}
-
-.action-buttons {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-}
-.action-buttons .btn {
-  padding: 0.5rem 1rem;
-  font-size: 0.9rem;
-}
-
-/* Tabs row - shared with promotions page but needed here too */
-.promotions-tabs {
-  display: flex;
-  gap: 0.375rem;
-  margin-bottom: 0.75rem;
-}
-.tab {
-  flex: 1;
-  min-width: 45px;
-  text-align: center;
+  min-width: 150px;
   padding: 0.375rem;
-  border: 1px solid #ccc;
-  background: #f0f0f0;
-  border-radius: 3px 3px 0 0;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background 0.2s;
-  color: inherit;
-  text-decoration: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.tab.active {
-  background: var(--spe-color);
-  color: #fff;
-  border-color: var(--spe-color);
-}
-/* Dark mode flatten for active tab */
-html[data-theme='dark'] .promotions-page-spe .tab.active { box-shadow:none; }
-
-.promotions-page,
-.promotions-page * {
-  box-sizing: border-box;
+  border: 1px solid var(--tmobile-border);
+  border-radius: 3px;
+  background: #ffffff;
+  color: #111;
 }
 
-/* Header Bar */
-.spe-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background: var(--spe-color);
-  color: #fff;
-  padding: 1rem 1.5rem;
-  border-radius: 4px;
+/* Dark mode controls container - frosted glass effect */
+html[data-theme='dark'] .promotions-controls {
+  background: rgba(45,22,38,0.55);
+  border: 1px solid rgba(226,0,116,0.25);
+  border-radius: 8px;
+  padding: 1rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  backdrop-filter: blur(8px);
 }
 
-.spe-header-title {
-  font-size: 1.25rem;
-  font-weight: 600;
+/* Dark mode: white text in control group */
+html[data-theme='dark'] .promotions-page-spe .promotions-controls { color:#ffffff; }
+html[data-theme='dark'] .promotions-page-spe .promotions-controls label { color:#ffffff !important; }
+html[data-theme='dark'] .promotions-page-spe .promotions-user-label { color:#ffffff !important; }
+
+/* Dark mode: keep form field text dark for readability */
+html[data-theme='dark'] .promotions-page-spe .promotions-controls input,
+html[data-theme='dark'] .promotions-page-spe .promotions-controls select { color:#111 !important; }
+
+/* Dark mode search input - white background */
+html[data-theme='dark'] .promotions-page-spe .search-group input { background:#ffffff; color:#111; border:1px solid #c5c7c9; }
+html[data-theme='dark'] .promotions-page-spe .search-group input::placeholder { color:#555; }
+
+/* Dark mode select boxes - white background */
+html[data-theme='dark'] .promotions-page-spe .filter-group select {
+  background: #ffffff;
+  color: #111;
+  border: 1px solid #c5c7c9;
 }
 
-.spe-user-name {
-  font-size: 1rem;
-}
-
-/* Controls row */
-.spe-controls {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  gap: 1rem;
-  margin: 1.5rem 0;
-}
-
-.spe-filter-group,
-.spe-search-group {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.spe-filter-group select,
-.spe-search-group input {
-  min-width: 180px;
-  padding: 0.5rem;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-}
-
-.spe-action-buttons {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-}
-
-/* General button styles */
-.btn {
-  background: var(--tmobile-magenta);
-  color: #fff;
-  border: none;
-  border-radius: 5px;
-  padding: 0.5em 1.5em;
-  font-weight: 500;
-  font-size: 1rem;
-  transition: background 0.2s;
-  cursor: pointer;
-}
-.btn:hover {
-  background: var(--tmobile-magenta-dark);
-}
-
-/* SPE Table */
-.promo-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-family: 'Inter', Arial, sans-serif;
-  margin: 0;
-  background: var(--bg-alt);
-}
-.promo-table { /* use global table sizing & line-height */ }
-/* Dark mode: remove outer border (if any from UA) */
-html[data-theme='dark'] .promotions-page-spe .promo-table { border:none; }
-
-.promo-table th {
-  background: var(--spe-header-bg);
-  color: var(--spe-header-color);
-  font-weight: 700;
-  text-align: center;
-  /* sizing from global */
-}
-
-/* Unified full-width row separators (override global cell borders) */
-/* Use global table borders & separators */
-
-/* Use global zebra striping in both themes */
-
-.promo-table td { /* sizing from global */ }
-
-.promo-table td.promo-owner {
-  font-weight: 700;
-}
-
-.promo-table td.promo-actions {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 0.7em;
-  background: inherit;
-}
-
-.promo-table td.promo-actions .icon-button {
-  background: none;
-  border: none;
-  /* sizing from global table context */
-  color: #222;
-  cursor: pointer;
-  border-radius: 5px;
-  transition: background 0.15s, color 0.15s;
-}
-
-.promo-table td.promo-actions .icon-button:hover { background: #f8d6ec; color: var(--spe-color); }
-
-/* Remove local scale-up; rely on global table sizing */
-
-.promo-table tr:not(:last-child) td {
-  border-bottom: 1.5px solid #eee;
-}
-html[data-theme='dark'] .promotions-page-spe .promo-table tr:not(:last-child) td { border-bottom:1.5px solid #b3b5b7; }
-
-@media (max-width: 900px) {
-  .promotions-page {
-    padding: 1rem;
-  }  .header-bar {
-    padding: 0.8rem 1rem;
-  }
-  .promo-table th, .promo-table td {
-    font-size: 0.97em;
-    padding: 0.7em 0.2em;
-  }
-  .promo-table td.promo-actions {
-    gap: 0.3em;
-  }
-}
-
-/* =============================
-   SPE PAGE DARK MODE PARITY
-   ============================= */
-/* Light grey surfaces for controls (and future pagination) */
-/* Removed local surface/shadow overrides for controls & pagination; rely on global .control-bar styling. */
-.promotions-page-spe .promotions-controls { gap:1.1rem; }
-/* Full-width override so SPE control group matches table width (pagination forthcoming) */
+/* SPE controls full-width */
 .promotions-page-spe .promotions-controls {
+  gap: 1.1rem;
   width: 100%;
   max-width: none;
   margin-left: 0;
   margin-right: 0;
 }
-/* Dark mode: white text in SPE control group (labels & user label) while keeping form field text dark for contrast */
-html[data-theme='dark'] .promotions-page-spe .promotions-controls { color:#ffffff; }
-html[data-theme='dark'] .promotions-page-spe .promotions-controls label { color:#ffffff !important; }
-html[data-theme='dark'] .promotions-page-spe .promotions-user-label { color:#ffffff !important; }
-html[data-theme='dark'] .promotions-page-spe .promotions-controls input,
-html[data-theme='dark'] .promotions-page-spe .promotions-controls select { color:#111 !important; }
 
-/* Search input white with dark text in dark mode */
-html[data-theme='dark'] .promotions-page-spe .search-group input { background:#ffffff; color:#111; border:1px solid #c5c7c9; }
-html[data-theme='dark'] .promotions-page-spe .search-group input::placeholder { color:#555; }
+/* Tabs */
+.promotions-tabs { display:flex; gap:0.375rem; margin-bottom:0.75rem; }
+.tab { flex:1; min-width:45px; text-align:center; padding:0.375rem; border:1px solid var(--border-color); background: var(--bg-soft); border-radius:3px 3px 0 0; font-weight:500; cursor:pointer; transition: all .3s ease; color:inherit; text-decoration:none; display:flex; align-items:center; justify-content:center; position:relative; }
+.tab:hover { background:#e9e9e9; border-color:#ccc; }
+.tab.active { background:var(--tmobile-magenta); color:#fff; border-color:var(--tmobile-magenta); font-weight:600; box-shadow:0 2px 8px rgba(226,0,116,0.3); transform:translateY(-1px); }
+html[data-theme='dark'] .promotions-page-spe .tab.active { box-shadow:none; }
 
-/* Placeholder pagination styles (if pagination added later) */
-.promotions-page-spe .pagination-container { display:flex; justify-content:space-between; align-items:center; margin:1.5rem 0; }
-.promotions-page-spe .pagination-btn { padding:.5rem .75rem; border:1px solid var(--tmobile-border); background:#fff; color:var(--tmobile-magenta); text-decoration:none; border-radius:4px; font-size:.9rem; transition:all .2s ease; min-width:40px; text-align:center; }
-.promotions-page-spe .pagination-btn:hover, .promotions-page-spe .pagination-btn.active { background:var(--tmobile-magenta); color:#fff; border-color:var(--tmobile-magenta); }
+/* =============================
+   TABLE STYLING (matching RDC)
+   ============================= */
+.promo-table { width:100%; border-collapse:collapse; margin:0; background:var(--bg-alt); }
+.promo-table th { background: var(--tmobile-magenta); color:#fff; font-weight:700; text-align:center; white-space:nowrap; border: none; }
+
+.promo-table td { border: none; }
+.promo-table td.promo-owner { font-weight:700; }
+
+/* Single clean border per row on the tr */
+.promo-table tbody tr { border-bottom: 1px solid #c5c7c9; }
+html[data-theme='dark'] .promo-table tbody tr { border-bottom: 1px solid #aaa; }
+
+/* Light Mode Table Striping */
+.promo-table tbody tr:nth-child(odd) { background: #eceeef; }
+.promo-table tbody tr:nth-child(even) { background: #d8dadb; }
+
+/* Dark Mode Table Striping */
+html[data-theme='dark'] .promo-table tbody tr:nth-child(odd) { background: #d2d4d5; }
+html[data-theme='dark'] .promo-table tbody tr:nth-child(even) { background: #b9bbbc; }
+
+/* Dark mode table text - dark for readability on light grey rows */
+html[data-theme='dark'] .promo-table td { color: #111; }
+
+/* Table container - remove white border/background gap */
+.promotions-page-spe .table-container {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  border-radius: 0;
+  overflow: visible;
+}
+html[data-theme='dark'] .promotions-page-spe .table-container {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+/* Action buttons - keep black icons */
+.promo-table td.promo-actions { display:flex; justify-content:center; align-items:center; gap:.7em; background:inherit; }
+.promo-table td.promo-actions .icon-button { background:none; border:none; padding:.15em; margin:0 .075em; font-size:1.125em; color:#222; cursor:pointer; border-radius:5px; transition:background .15s,color .15s; }
+.promo-table td.promo-actions .icon-button:hover { background:#f8d6ec; color:var(--tmobile-magenta); }
+
+html[data-theme='dark'] .promo-table td.promo-actions .icon-button { color: #222; }
+html[data-theme='dark'] .promo-table td.promo-actions .icon-button:hover { background: #f8d6ec; color: var(--tmobile-magenta); }
+
+/* Enhanced dark mode styling for action buttons */
+html[data-theme='dark'] .action-buttons .btn-magenta {
+  box-shadow: 0 2px 8px rgba(226,0,116,0.3);
+}
+html[data-theme='dark'] .action-buttons .btn-magenta:hover {
+  box-shadow: 0 4px 12px rgba(226,0,116,0.5);
+  transform: translateY(-1px);
+}
+
+/* Pagination (matching RDC) */
+.pagination-container { display:flex; justify-content:space-between; align-items:center; margin:1.5rem 0; padding:1rem; background:var(--bg-soft); border-radius:8px; border:1px solid var(--border-color); backdrop-filter:blur(3px); }
+
+html[data-theme='dark'] .pagination-container {
+  background: rgba(45,22,38,0.55);
+  border: 1px solid rgba(226,0,116,0.25);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  backdrop-filter: blur(8px);
+}
+html[data-theme='dark'] .promotions-page-spe .pagination-container { color:#ffffff; }
+html[data-theme='dark'] .promotions-page-spe .pagination-container .pagination-info { color:#ffffff; }
+
+.pagination-btn { padding:.5rem .75rem; border:1px solid var(--tmobile-border); background:#fff; color:var(--tmobile-magenta); text-decoration:none; border-radius:4px; font-size:.9rem; transition:all .2s ease; min-width:40px; text-align:center; }
+.pagination-btn:hover, .pagination-btn.active { background:var(--tmobile-magenta); color:#fff; border-color:var(--tmobile-magenta); }
+
+html[data-theme='dark'] .pagination-btn {
+  background: rgba(255,255,255,0.12);
+  color: #FF2A93;
+  border-color: rgba(226,0,116,0.3);
+}
+html[data-theme='dark'] .pagination-btn:hover,
+html[data-theme='dark'] .pagination-btn.active {
+  background: var(--tmobile-magenta);
+  color: #fff;
+  border-color: var(--tmobile-magenta);
+}
+
+/* =============================
+   RESPONSIVE
+   ============================= */
+@media (max-width: 900px) {
+  .promotions-page { padding: 1rem; }
+  .promo-table th, .promo-table td { font-size: 0.97em; padding: 0.7em 0.2em; }
+  .promo-table td.promo-actions { gap: 0.3em; }
+}
 
 @media (max-width: 600px) {
-  .promotions-page {
-    padding: 0.5rem;
-  }  .header-bar {
-    padding: 0.8rem 1rem;
-    flex-direction: column;
-    gap: 0.5rem;
-    text-align: center;
-  }
-  .promo-table th, .promo-table td {
-    font-size: 0.85em;
-    padding: 0.5em 0.1em;
-  }
+  .promotions-page { padding: 0.5rem; }
+  .promo-table th, .promo-table td { font-size: 0.85em; padding: 0.5em 0.1em; }
 }

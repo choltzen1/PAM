@@ -8,6 +8,19 @@ body {
 	font-family: 'Inter', Arial, sans-serif;
 	overflow-x: hidden;
 }
+
+/* Light theme background */
+html:not([data-theme='dark']) body {
+	background: #F5F5F5 !important;
+	background-attachment: fixed;
+}
+
+/* Dark theme background - neutral plum matching landing page */
+html[data-theme='dark'] body {
+	background: #3A2F3D !important;
+	background-attachment: fixed;
+}
+
 /* (truncated import source for brevity: retain essential selectors actually used by rdc.html) */
 .promotions-page { min-height: calc(100vh - 120px); padding:0.75rem 1.5rem 1.5rem; box-sizing:border-box; background: transparent; }
 .promotions-tabs { display:flex; gap:0.375rem; margin-bottom:0.75rem; }
@@ -21,11 +34,61 @@ html[data-theme='dark'] .promotions-page-rdc .tab.active { box-shadow:none; }
 /* row striping from global */
 /* remove dark-mode table border override; use global */
 /* Use global table borders & separators */
-.promo-table td { /* sizing from global */ }
+.promo-table td { border: none; }
 .promo-table td.promo-owner { font-weight:700; }
+
+/* Single clean border per row on the tr, not individual tds */
+.promo-table tbody tr { border-bottom: 1px solid #c5c7c9; }
+.promo-table th { border: none; }
+html[data-theme='dark'] .promo-table tbody tr { border-bottom: 1px solid #aaa; }
+
+/* Light Mode Table Striping for promo-table */
+.promo-table tbody tr:nth-child(odd) {
+	background: #eceeef;
+}
+.promo-table tbody tr:nth-child(even) {
+	background: #d8dadb;
+}
+
+/* Dark Mode Table Striping for promo-table */
+html[data-theme='dark'] .promo-table tbody tr:nth-child(odd) {
+	background: #d2d4d5;
+}
+html[data-theme='dark'] .promo-table tbody tr:nth-child(even) {
+	background: #b9bbbc;
+}
+
+/* Dark mode table text - keep dark for readability on light grey rows */
+html[data-theme='dark'] .promo-table td {
+	color: #111;
+}
+
+/* Table container - remove white border/background gap */
+.promotions-page-rdc .table-container {
+	background: transparent;
+	border: none;
+	box-shadow: none;
+	border-radius: 0;
+	overflow: visible;
+}
+html[data-theme='dark'] .promotions-page-rdc .table-container {
+	background: transparent;
+	border: none;
+	box-shadow: none;
+}
+
 .promo-table td.promo-actions { display:flex; justify-content:center; align-items:center; gap:.7em; background:inherit; }
 .promo-table td.promo-actions .icon-button { background:none; border:none; padding:.15em; margin:0 .075em; font-size:1.125em; color:#222; cursor:pointer; border-radius:5px; transition:background .15s,color .15s; }
 .promo-table td.promo-actions .icon-button:hover { background:#f8d6ec; color:var(--tmobile-magenta); }
+
+/* Dark mode icon button styling - keep black */
+html[data-theme='dark'] .promo-table td.promo-actions .icon-button {
+	color: #222;
+}
+html[data-theme='dark'] .promo-table td.promo-actions .icon-button:hover {
+	background: #f8d6ec;
+	color: var(--tmobile-magenta);
+}
 .promotions-controls { display:flex; flex-wrap:wrap; align-items:flex-end; gap:0.75rem; margin:1.125rem 0; }
 .filter-group, .search-group { display:flex; flex-direction:column; gap:0.25rem; }
 .filter-group select, .search-group input { min-width:150px; padding:0.375rem; border:1px solid var(--tmobile-border); border-radius:3px; }
@@ -35,9 +98,47 @@ html[data-theme='dark'] .promotions-page-rdc .search-group input { background:#f
 html[data-theme='dark'] .promotions-page-rdc .search-group input::placeholder {
 	color:#555555;
 }
+/* Dark mode select boxes - keep white background for readability */
+html[data-theme='dark'] .promotions-page-rdc .filter-group select {
+	background: #ffffff;
+	color: #111;
+	border: 1px solid #c5c7c9;
+}
 .pagination-container { display:flex; justify-content:space-between; align-items:center; margin:1.5rem 0; padding:1rem; background:var(--bg-soft); border-radius:8px; border:1px solid var(--border-color); backdrop-filter:blur(3px); }
+
+/* Dark mode pagination container - frosted glass effect */
+html[data-theme='dark'] .pagination-container {
+	background: rgba(45,22,38,0.55);
+	border: 1px solid rgba(226,0,116,0.25);
+	box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+	backdrop-filter: blur(8px);
+}
+
+/* Dark mode controls container - frosted glass effect */
+html[data-theme='dark'] .promotions-controls {
+	background: rgba(45,22,38,0.55);
+	border: 1px solid rgba(226,0,116,0.25);
+	border-radius: 8px;
+	padding: 1rem;
+	box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+	backdrop-filter: blur(8px);
+}
+
 .pagination-btn { padding:.5rem .75rem; border:1px solid var(--tmobile-border); background:#fff; color:var(--tmobile-magenta); text-decoration:none; border-radius:4px; font-size:.9rem; transition:all .2s ease; min-width:40px; text-align:center; }
 .pagination-btn:hover, .pagination-btn.active { background:var(--tmobile-magenta); color:#fff; border-color:var(--tmobile-magenta); }
+
+/* Dark mode pagination buttons */
+html[data-theme='dark'] .pagination-btn {
+	background: rgba(255,255,255,0.12);
+	color: #FF2A93;
+	border-color: rgba(226,0,116,0.3);
+}
+html[data-theme='dark'] .pagination-btn:hover,
+html[data-theme='dark'] .pagination-btn.active {
+	background: var(--tmobile-magenta);
+	color: #fff;
+	border-color: var(--tmobile-magenta);
+}
 
 /* =============================
 	 RDC PAGE SPECIFIC OVERRIDES
@@ -64,6 +165,28 @@ html[data-theme='dark'] .promotions-page-rdc .promotions-controls select { color
 /* Dark mode pagination info text to white for contrast on translucent surface */
 html[data-theme='dark'] .promotions-page-rdc .pagination-container { color:#ffffff; }
 html[data-theme='dark'] .promotions-page-rdc .pagination-container .pagination-info { color:#ffffff; }
+
+/* Enhanced dark mode styling for action buttons */
+html[data-theme='dark'] .action-buttons .btn-magenta {
+	box-shadow: 0 2px 8px rgba(226,0,116,0.3);
+}
+
+html[data-theme='dark'] .action-buttons .btn-magenta:hover {
+	box-shadow: 0 4px 12px rgba(226,0,116,0.5);
+	transform: translateY(-1px);
+}
+
+/* Remove status badge box on RDC page */
+.promotions-page-rdc .status-badge {
+	background: none !important;
+	border: none !important;
+	border-radius: 0;
+	padding: 0;
+	font-weight: 700;
+	text-transform: none;
+	font-size: inherit;
+	color: inherit;
+}
 
 /* Table row striping: light & darker grey for improved scanability */
 /* Use global zebra striping in both themes */

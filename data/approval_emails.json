@@ -43,5 +43,14 @@
     "request_timestamp": "2025-12-16T13:28:10.288512",
     "approval_timestamp": null,
     "approved": false
+  },
+  "R402_v1": {
+    "promo_code": "R402",
+    "version_number": "1",
+    "request_subject": "RDC Approval request - R402 - Smartphone Promo with Trade (ID260109) - Version #1",
+    "request_recipients": "cade.holtzen1@t-mobile.com",
+    "request_timestamp": "2026-02-09T13:00:30.704785",
+    "approval_timestamp": "2026-02-09T13:01:28.675846",
+    "approved": true
   }
 }

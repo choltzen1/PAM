@@ -21,6 +21,18 @@ html, body {
   font-size: 12px; /* 75% scaling */
 }
 
+/* Light theme background */
+html:not([data-theme='dark']) body {
+  background: #F5F5F5 !important;
+  background-attachment: fixed;
+}
+
+/* Dark theme background - neutral plum matching landing/RDC pages */
+html[data-theme='dark'] body {
+  background: #3A2F3D !important;
+  background-attachment: fixed;
+}
+
 *, *::before, *::after {
   box-sizing: border-box;
 }
@@ -129,7 +141,20 @@ html[data-theme='dark'] .date-mismatch-page .controls-container .search-group la
   overflow-x: auto;
   margin-bottom: 1.25rem;
   box-sizing: border-box;
-  background: transparent; /* match global pages */
+  background: transparent;
+}
+
+/* Remove white border/background gap from table container */
+.date-mismatch-page .table-container {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  border-radius: 0;
+}
+html[data-theme='dark'] .date-mismatch-page .table-container {
+  background: transparent;
+  border: none;
+  box-shadow: none;
 }
 
 /* Table Styling - responsive columns */
@@ -205,11 +230,19 @@ html[data-theme='dark'] .date-mismatch-page .controls-container .search-group la
 
 /* Ensure td columns match th widths */
 
+/* Single clean border per row on the tr (matching RDC) */
 .promo-table tbody tr {
   transition: background-color 0.2s ease;
-  border-bottom: 1px solid var(--tmobile-border);
+  border-bottom: 1px solid #c5c7c9;
 }
-.promo-table tbody tr:hover { background: var(--bg-soft); }
+.promo-table td { border: none; }
+html[data-theme='dark'] .date-mismatch-table tbody tr { border-bottom: 1px solid #aaa; }
+.date-mismatch-table th { border: none; }
+
+/* Light Mode Table Striping (matching RDC) */
+.date-mismatch-table tbody tr:nth-child(odd) { background: #eceeef; }
+.date-mismatch-table tbody tr:nth-child(even) { background: #d8dadb; }
+
 .promo-table tbody tr:last-child td { border-bottom: none; }
 
 /* Action buttons - fit within column width */
@@ -567,14 +600,24 @@ html[data-theme='dark'] .date-mismatch-page .controls-container .search-group la
 
 /* -------------------- Dark Mode Overrides (Light Grey Panel + White Inputs + Striped Table) -------------------- */
 html[data-theme='dark'] .date-mismatch-page { background:transparent; }
-/* Removed local dark mode surface override for controls-container to use global translucent control-surface */
+
+/* Dark mode controls container - frosted glass effect (matching RDC) */
+html[data-theme='dark'] .date-mismatch-page .controls-container {
+  background: rgba(45,22,38,0.55);
+  border: 1px solid rgba(226,0,116,0.25);
+  border-radius: 8px;
+  padding: 1rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  backdrop-filter: blur(8px);
+}
+
 /* Dark mode: make control group text white (labels) while keeping form field text dark for readability */
 html[data-theme='dark'] .date-mismatch-page .controls-container { color:#ffffff; }
 html[data-theme='dark'] .date-mismatch-page .controls-container label { color:#ffffff !important; }
 html[data-theme='dark'] .date-mismatch-page .controls-container .results-label { color:#ffffff !important; }
 html[data-theme='dark'] .filters-section label,
 html[data-theme='dark'] .filter-group label,
-html[data-theme='dark'] .search-group label { color:#111 !important; }
+html[data-theme='dark'] .search-group label { color:#ffffff !important; }
 html[data-theme='dark'] .search-group input,
 html[data-theme='dark'] #search-input,
 html[data-theme='dark'] #operatorId { background-color:#ffffff !important; color:#000 !important; border:1px solid #c5c7c9 !important; }
@@ -585,7 +628,7 @@ html[data-theme='dark'] #operatorId:focus { box-shadow:0 0 0 2px rgba(226,0,116,
 /* Table striping (light grey / darker grey) */
 html[data-theme='dark'] .date-mismatch-table tbody tr:nth-child(odd) { background:#d2d4d5 !important; }
 html[data-theme='dark'] .date-mismatch-table tbody tr:nth-child(even) { background:#b9bbbc !important; }
-html[data-theme='dark'] .date-mismatch-table tbody tr:hover { filter:brightness(1.02); }
+html[data-theme='dark'] .date-mismatch-table tbody tr:hover { background: inherit; }
 html[data-theme='dark'] .date-mismatch-table td { color:#111 !important; background:transparent !important; }
 html[data-theme='dark'] .date-mismatch-table th { background:#E20074 !important; color:#fff !important; }
 /* Batch actions & preview panels adopt card surface */
@@ -595,5 +638,9 @@ html[data-theme='dark'] #sqlPreviewContainer { background:#ffffff; border-color:
 html[data-theme='dark'] .operator-id-section { background:#ffffff; border-color:#c5c7c9; }
 html[data-theme='dark'] .sql-preview-header { background:#e9ecef; color:#111; }
 html[data-theme='dark'] .file-meta { color:#444; }
+
+/* Dark mode stats group text */
+html[data-theme='dark'] .stats-group .stat-label { color: rgba(255,255,255,0.7); }
+html[data-theme='dark'] .stats-group .stat-number { color: #FF2A93; }
 
 

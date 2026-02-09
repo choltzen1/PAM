@@ -11,7 +11,7 @@
   --page-vertical-pad: 0.5rem;        /* further reduced (was 1rem) */
 
   /* THEME (light default) */
-  --bg: #ffffff; /* Light mode body background */
+  --bg: #F5F5F5; /* Light mode body background */
   --bg-alt: #ffffff;
   --bg-soft: #fafafa;
   --text: #111111;
@@ -26,9 +26,9 @@
 }
 
 html[data-theme='dark'] {
-  /* Dark mode now uses PETE brand gradient (magenta -> deep purple) */
-  --bg: linear-gradient(135deg,#E20074 0%, #640056 55%, #2a0130 100%);
-  --bg-alt: rgba(45,22,38,0.72); /* translucent panel layering over gradient */
+  /* Dark mode uses neutral plum background matching landing page */
+  --bg: #3A2F3D;
+  --bg-alt: rgba(45,22,38,0.72); /* translucent panel layering */
   --bg-soft: rgba(45,22,38,0.55);
   --text: #f2f3f5;
   --text-muted: #b9b0bd;
@@ -37,7 +37,7 @@ html[data-theme='dark'] {
   --control-surface: rgba(55,28,46,0.62);
   --control-hover: rgba(75,38,60,0.65);
   --focus-ring: rgba(226,0,116,0.65);
-  /* Neutral light-grey card surface aligned with PETE panels */
+  /* Neutral light-grey card surface */
   --card-bg: #d0d2d3;
 }
 
@@ -599,8 +599,8 @@ body .form-control {
 .hub-hero-banner { background:#ffffff; border:1px solid #e0e0e3; border-radius:22px; padding:22px 34px 24px; box-shadow:0 8px 26px -8px rgba(0,0,0,.18), 0 2px 6px rgba(0,0,0,.08); position:relative; backdrop-filter:none; }
 .hub-hero-banner h1 { color:#222; margin:0 0 .4rem; font-weight:700; letter-spacing:.55px; }
 .hub-hero-banner .tagline { margin:0; font-size:1.02rem; letter-spacing:.4px; color:var(--tmobile-magenta-dark); font-style:italic; }
-html[data-theme='dark'] .hub-hero-banner { background:rgba(27,0,22,0.55); border:1px solid #ff2892; box-shadow:0 0 24px -6px #ff2892, 0 0 10px #ff2892 inset, 0 0 2px #ff2892; backdrop-filter:blur(6px); }
-html[data-theme='dark'] .hub-hero-banner h1 { color:#fff; letter-spacing:.65px; text-shadow:0 0 10px rgba(255,40,146,.65),0 0 3px #ff2892; }
+html[data-theme='dark'] .hub-hero-banner { background:linear-gradient(135deg, #D91970 0%, #C11468 25%, #81005C 50%, #5D004F 75%, #380040 100%); border:2px solid rgba(226,0,116,0.8); box-shadow:0 6px 18px rgba(0,0,0,0.4), inset 0 1px 0 rgba(226,0,116,0.12); backdrop-filter:none; }
+html[data-theme='dark'] .hub-hero-banner h1 { color:#fff; letter-spacing:.65px; text-shadow:none; }
 html[data-theme='dark'] .hub-hero-banner .tagline { color:#ffd9ef; }
 
 /* Unified Theme Switch (global) */
@@ -623,3 +623,16 @@ html[data-theme='dark'] .hub-hero-banner .tagline { color:#ffd9ef; }
 /* Hero description color handling */
 .hero-desc { font-style:normal; letter-spacing:.35px; color:#222; }
 html[data-theme='dark'] .hero-desc { color:#ffffff; }
+
+/* PAM Hero Logo in homepage banner */
+.pam-hero-logo {
+  height: 90px;
+  width: auto;
+  flex-shrink: 0;
+}
+html:not([data-theme='dark']) .pam-hero-logo {
+  filter: drop-shadow(0 1px 4px rgba(226,0,116,0.15));
+}
+html[data-theme='dark'] .pam-hero-logo {
+  filter: drop-shadow(0 0 12px rgba(226,0,116,0.8)) drop-shadow(0 0 24px rgba(226,0,116,0.4));
+}
