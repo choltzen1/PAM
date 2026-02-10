@@ -1012,6 +1012,65 @@ def approve_promo():
         logging.error(error_msg, exc_info=True)
         return jsonify({'success': False, 'message': error_msg}), 500
 
+@promo_bp.route('/reject-promo', methods=['POST'])
+def reject_promo():
+    """Handle promo rejection and send rejection reply email"""
+    from services.mail_service import MailService
+    try:
+        data = request.get_json()
+        promo_code = data.get('promo_code', '').upper()
+        version_number = data.get('version_number', '1')
+        reason = data.get('reason', '').strip()
+
+        if not promo_code:
+            return jsonify({'success': False, 'message': 'Promo code is required'}), 400
+
+        dm = _ensure_data_manager()
+        promo_data = dm.get_promo(promo_code)
+        if not promo_data:
+            from data.storage import PromoDataManager as JSONManager
+            json_manager = JSONManager()
+            spe_data = json_manager.get_all_spe_promos()
+            promo_data = spe_data.get(promo_code)
+            if not promo_data:
+                rebates_data = json_manager.get_all_rebates()
+                promo_data = rebates_data.get(promo_code)
+
+        if not promo_data:
+            return jsonify({'success': False, 'message': f'Promo code {promo_code} not found'}), 404
+
+        bill_facing_name = promo_data.get('bill_facing_name', 'Unknown')
+        promo_desired_execution = promo_data.get('Desired_Execution', 'Unknown')
+
+        from data.approval_email_tracking import get_approval_tracking
+        tracking = get_approval_tracking(promo_code, version_number)
+        request_mail_id = tracking.get('request_mail_id') if tracking else None
+
+        rejection_subject = f'RE: {promo_desired_execution} Approval request - {promo_code} - {bill_facing_name} - Version #{version_number}'
+        reason_line = f'<br><br><strong>Reason:</strong> {reason}' if reason else ''
+        rejection_body = f'''Hello All,<br><br>I am writing to inform you that {promo_code} - {bill_facing_name} - Version #{version_number} has been <strong style="color:#dc3545;">rejected</strong>.{reason_line}<br><br>Please address the concerns and resubmit for approval.<br><br>Thank you!'''
+
+        mail_service = MailService()
+        result = mail_service.send_approval_email(
+            recipients='cade.holtzen1@t-mobile.com',
+            subject=rejection_subject,
+            body=rejection_body,
+            body_format='HTML',
+            is_reply=True,
+            in_reply_to_mail_id=request_mail_id
+        )
+
+        if result['success']:
+            return jsonify({'success': True, 'message': f'Rejection sent for {promo_code} Version #{version_number}'}), 200
+        else:
+            return jsonify({'success': False, 'message': result['message']}), 500
+
+    except Exception as e:
+        error_msg = f'Error rejecting promo: {str(e)}'
+        import logging
+        logging.error(error_msg, exc_info=True)
+        return jsonify({'success': False, 'message': error_msg}), 500
+
 @promo_bp.route('/reviewers', defaults={'promo_code': None}, endpoint='reviewers_page')
 @promo_bp.route('/reviewers/<promo_code>', endpoint='reviewers_with_code')
 def reviewers_page(promo_code):

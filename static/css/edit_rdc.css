@@ -28,8 +28,8 @@ html { font-size:12px; }
 .btn:hover { background:var(--tmobile-magenta-dark); }
 .btn-outline { background:#f8f9fa; color:var(--tmobile-magenta); border:1px solid var(--tmobile-magenta); border-radius:5px; padding:.225em .62em; font-weight:500; font-size:.85rem; transition:background .2s,color .2s; text-decoration:none; display:inline-block; }
 .btn-outline:hover { background:#f8d6ec; }
-.btn-danger-outline { border-color:#b71c1c; color:#b71c1c; }
-.btn-danger-outline:hover { background:#ffe5e5; }
+.btn-danger-outline { border-color:var(--tmobile-magenta); color:var(--tmobile-magenta); }
+.btn-danger-outline:hover { background:#f8d6ec; }
 .sql-preview-area { font-family:monospace; }
 .hidden { display:none; }
 
@@ -266,8 +266,8 @@ html[data-theme='dark'] .dcd-jira-form textarea.form-control {
 }
 html[data-theme='dark'] .right-panel .upload-section { 
 	background:#ffffff; 
-	border-color:#c5c7c9; 
-	box-shadow:none; 
+	border:2px solid var(--tmobile-magenta); 
+	box-shadow:0 2px 12px rgba(226,0,116,0.18); 
 	color:#000; 
 }
 /* Add spacing and style between upload/SQL boxes */
@@ -312,7 +312,10 @@ html[data-theme='dark'] .right-panel .upload-section {
 .sql-gen-row.second-row .full-width { max-width:100%; width:100%; }
 /* Increase spacing between action buttons in upload boxes */
 .upload-section .file-actions { display:flex; gap:0.9rem; }
-.upload-section .file-actions .btn { margin:0; }
+.upload-section .file-actions .btn { margin:0; background:var(--tmobile-magenta); color:#fff; border:1px solid var(--tmobile-magenta); border-radius:5px; padding:.3em .7em; font-weight:500; font-size:.8rem; }
+.upload-section .file-actions .btn:hover { background:var(--tmobile-magenta-dark,#b91c5c); border-color:var(--tmobile-magenta-dark,#b91c5c); color:#fff; }
+html[data-theme='dark'] .upload-section .file-actions .btn { background:var(--tmobile-magenta); color:#fff; border-color:var(--tmobile-magenta); }
+html[data-theme='dark'] .upload-section .file-actions .btn:hover { background:var(--tmobile-magenta-dark,#b91c5c); border-color:var(--tmobile-magenta-dark,#b91c5c); }
 /* Spacing between Save SQL Generation and Generate SQL buttons */
 .save-footer .btn + .btn { margin-left:0.85rem; }
 @media (max-width:900px){

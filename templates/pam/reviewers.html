@@ -60,7 +60,7 @@
         <span>Approval</span>
       </div>
       <div class="approval-content">
-        <div class="approval-controls">
+        <div id="approval-view" class="approval-controls">
           <div class="version-control">
             <label for="version-select">Select Version:</label>
             <select id="version-select" class="form-control version-dropdown">
@@ -72,9 +72,26 @@
               {% endif %}
             </select>
           </div>
-          <button class="btn btn-success approve-btn" onclick="approvePromo()">
-            <i class="fas fa-check"></i> Approve
-          </button>
+          <div class="approval-btn-group">
+            <button class="btn btn-success approve-btn" onclick="approvePromo()">
+              <i class="fas fa-check"></i> Approve
+            </button>
+            <button class="btn btn-danger reject-btn" onclick="rejectPromo()">
+              <i class="fas fa-times"></i> Reject
+            </button>
+          </div>
+        </div>
+        <div id="rejection-view" class="rejection-notes-wrapper" style="display:none;">
+          <label for="rejection-notes" class="rejection-notes-label">Rejection Notes:</label>
+          <textarea id="rejection-notes" class="form-control rejection-notes-input" rows="2" placeholder="Enter reason for rejection..."></textarea>
+          <div class="rejection-btn-row">
+            <button class="btn reject-back-btn" onclick="cancelReject()">
+              <i class="fas fa-arrow-left"></i> Back
+            </button>
+            <button class="btn btn-danger reject-confirm-btn" onclick="confirmReject()">
+              <i class="fas fa-paper-plane"></i> Send Rejection
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -703,6 +720,69 @@ function handleSearchKeyPress(event) {
   if (event.key === 'Enter') {
     searchPromo();
   }
+}
+
+function rejectPromo() {
+  const versionSelect = document.getElementById('version-select');
+  const selectedVersion = versionSelect.value;
+
+  if (!selectedVersion) {
+    alert('Please select a version to reject');
+    return;
+  }
+
+  document.getElementById('approval-view').style.display = 'none';
+  document.getElementById('rejection-view').style.display = 'flex';
+  document.getElementById('rejection-notes').focus();
+}
+
+function cancelReject() {
+  document.getElementById('rejection-view').style.display = 'none';
+  document.getElementById('approval-view').style.display = 'flex';
+  document.getElementById('rejection-notes').value = '';
+}
+
+function confirmReject() {
+  const versionSelect = document.getElementById('version-select');
+  const selectedVersion = versionSelect.value;
+  const reason = document.getElementById('rejection-notes').value.trim();
+
+  const urlParts = window.location.pathname.split('/');
+  const promoCode = urlParts[urlParts.length - 1];
+
+  const sendBtn = document.querySelector('.reject-confirm-btn');
+  const originalText = sendBtn.innerHTML;
+  sendBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+  sendBtn.disabled = true;
+
+  fetch('/reject-promo', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      promo_code: promoCode,
+      version_number: selectedVersion,
+      reason: reason
+    })
+  })
+  .then(response => response.json())
+  .then(data => {
+    sendBtn.innerHTML = originalText;
+    sendBtn.disabled = false;
+    if (data.success) {
+      alert('Rejection email sent successfully!');
+      versionSelect.value = '';
+      document.getElementById('rejection-notes').value = '';
+      document.getElementById('rejection-view').style.display = 'none';
+      document.getElementById('approval-view').style.display = 'flex';
+    } else {
+      alert('Error: ' + data.message);
+    }
+  })
+  .catch(error => {
+    sendBtn.innerHTML = originalText;
+    sendBtn.disabled = false;
+    alert('Error sending rejection: ' + error);
+  });
 }
 
 function approvePromo() {

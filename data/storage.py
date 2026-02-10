@@ -108,7 +108,37 @@ class PromoDataManager:
                     converted['phase'] = 'Build'
                 # Uploaded file metadata is now only read from disk; promo_history queries removed.
                 try:
-                    sql_file_path = os.path.join(self.promo_uploads_dir, promo_code, f"{promo_code}_promo_eligibility_rules.sql")
+                    promo_dir = os.path.join(self.promo_uploads_dir, promo_code)
+                    # Rebuild uploaded_files from disk
+                    uploaded_files = {}
+                    for file_type, disk_name in [('sku_excel', 'sku_list.xlsx'), ('tradein_excel', 'tradein_list.xlsx')]:
+                        fpath = os.path.join(promo_dir, disk_name)
+                        if os.path.exists(fpath):
+                            # Try reading sidecar metadata first
+                            meta_path = os.path.join(promo_dir, f"{file_type}.meta.json")
+                            if os.path.exists(meta_path):
+                                try:
+                                    with open(meta_path, 'r', encoding='utf-8') as mf:
+                                        uploaded_files[file_type] = json.load(mf)
+                                    # Ensure file_path is current
+                                    uploaded_files[file_type]['file_path'] = fpath
+                                    continue
+                                except Exception:
+                                    pass
+                            # Fallback: build metadata from file stats
+                            stat = os.stat(fpath)
+                            uploaded_files[file_type] = {
+                                'filename': disk_name,
+                                'original_name': disk_name,
+                                'upload_date': datetime.fromtimestamp(stat.st_mtime).isoformat(),
+                                'file_size': stat.st_size,
+                                'file_path': fpath,
+                            }
+                    if uploaded_files:
+                        converted['uploaded_files'] = uploaded_files
+
+                    # Attach generated SQL content
+                    sql_file_path = os.path.join(promo_dir, f"{promo_code}_promo_eligibility_rules.sql")
                     if os.path.exists(sql_file_path):
                         try:
                             with open(sql_file_path, 'r', encoding='utf-8', errors='replace') as sf:
@@ -1086,6 +1116,13 @@ class PromoDataManager:
                 "file_path": file_path,
                 "checksum": checksum
             }
+            # Persist metadata sidecar so original_name survives reload
+            meta_path = os.path.join(upload_dir, f"{file_type}.meta.json")
+            try:
+                with open(meta_path, 'w', encoding='utf-8') as mf:
+                    json.dump(file_metadata, mf, indent=2, ensure_ascii=False)
+            except Exception:
+                pass  # non-critical; disk file still present
             # File metadata tracking removed per version history deletion
             return file_metadata
             
@@ -1162,8 +1199,10 @@ class PromoDataManager:
                 file_path = file_info['file_path']
                 if os.path.exists(file_path):
                     os.remove(file_path)
-                # Remove metadata row from SQL Server via DatabaseManager
-                # Version history/file events removed: only delete local file
+                # Also remove metadata sidecar
+                meta_path = os.path.join(os.path.dirname(file_path), f"{file_type}.meta.json")
+                if os.path.exists(meta_path):
+                    os.remove(meta_path)
                 # No need to call save_promo; uploaded_files rebuilt dynamically
             return True
         except Exception:
