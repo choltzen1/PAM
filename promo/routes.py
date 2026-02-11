@@ -719,9 +719,9 @@ def updates_page():
         search_lower = search.lower()
         for code, promo in all_promos.items():
             if (search_lower in code.lower() or
-                search_lower in promo.get('description', '').lower() or
-                search_lower in promo.get('bill_facing_name', '').lower() or
-                search_lower in promo.get('owner', '').lower()):
+                search_lower in (promo.get('description') or '').lower() or
+                search_lower in (promo.get('bill_facing_name') or '').lower() or
+                search_lower in (promo.get('owner') or '').lower()):
                 filtered_promos[code] = promo
         all_promos = filtered_promos
     default_promo = None

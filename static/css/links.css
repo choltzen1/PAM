@@ -1,5 +1,17 @@
 /* Links Page Styles - 75% scaling and proportional spacing */
 html { font-size: 12px; }
+
+/* Light theme background */
+html:not([data-theme='dark']) body {
+  background: #F5F5F5 !important;
+  background-attachment: fixed;
+}
+
+/* Dark theme background - neutral plum matching landing page */
+html[data-theme='dark'] body {
+  background: #3A2F3D !important;
+  background-attachment: fixed;
+}
 .links-header-actions { display:flex; align-items:center; gap:0.75rem; }
 .links-user-label { color:rgba(255,255,255,0.9); font-size:0.85rem; }
 .links-save-message { color:#e20074; font-size:0.85rem; font-weight:500; margin-left:12px; }
@@ -256,20 +268,87 @@ html { font-size: 12px; }
   box-shadow: 0 0 0 0.2rem rgba(226, 0, 116, 0.25);
 }
 
-/* -------------------- Dark Theme Overrides (consistent grey panel surface) -------------------- */
-/* Let the global gradient show through in dark mode; only panels use grey surfaces */
+/* -------------------- Dark Theme Overrides (frosted glass matching landing/RDC branding) -------------------- */
+/* Dark plum background shows through; panels use frosted glass */
 html[data-theme='dark'] .links-page { background: transparent; }
-/* Dark mode: use unified grey surfaces and white text for readability */
-html[data-theme='dark'] .card { background:var(--card-bg); border-color:#b9bbbc; box-shadow:0 2px 6px rgba(0,0,0,0.4); }
-html[data-theme='dark'] .card-header { background:var(--card-bg); border-color:#b9bbbc; }
+
+/* Control bar / version controls - frosted glass */
+html[data-theme='dark'] .version-controls {
+  background: rgba(45,22,38,0.55) !important;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,0.12) !important;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+}
+html[data-theme='dark'] .version-controls,
+html[data-theme='dark'] .version-controls label,
+html[data-theme='dark'] .version-controls span,
+html[data-theme='dark'] .version-controls p { color: #fff !important; }
+html[data-theme='dark'] .version-controls input,
+html[data-theme='dark'] .version-controls select {
+  background: rgba(255,255,255,0.12);
+  border-color: rgba(255,255,255,0.18);
+  color: #fff;
+}
+html[data-theme='dark'] .version-controls input::placeholder { color: rgba(255,255,255,0.5); }
+
+/* Cards - frosted glass */
+html[data-theme='dark'] .card {
+  background: rgba(45,22,38,0.55);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,0.12);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+}
+html[data-theme='dark'] .card-header {
+  background: rgba(255,255,255,0.06);
+  border-color: rgba(255,255,255,0.1);
+}
+html[data-theme='dark'] .card-header h5 { color: #fff !important; }
+html[data-theme='dark'] .card-header h5 i { color: var(--tmobile-magenta); }
+
+/* Text inside cards */
 html[data-theme='dark'] .promotion-header-info p,
-html[data-theme='dark'] .promotion-header-info strong,
-html[data-theme='dark'] .form-label { color:#000 !important; }
-html[data-theme='dark'] .card-header h5 { color:#000 !important; }
-/* Inputs remain readable via global styling; keep buttons unfiltered */
-html[data-theme='dark'] .btn { filter:none; }
-/* Ensure save confirmation message keeps brand color readability */
-html[data-theme='dark'] .links-save-message { color:#E20074; }
+html[data-theme='dark'] .promotion-header-info strong { color: #fff !important; }
+html[data-theme='dark'] .form-label { color: rgba(255,255,255,0.9) !important; }
+html[data-theme='dark'] .card-body p,
+html[data-theme='dark'] .card-body strong { color: #fff; }
+
+/* Form inputs - subtle frosted inset */
+html[data-theme='dark'] .form-control {
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.18);
+  color: #fff;
+}
+html[data-theme='dark'] .form-control::placeholder { color: rgba(255,255,255,0.45); }
+html[data-theme='dark'] .form-control:focus {
+  border-color: var(--tmobile-magenta);
+  box-shadow: 0 0 0 0.2rem rgba(226,0,116,0.3);
+  background: rgba(255,255,255,0.14);
+}
+
+/* Buttons stay visible */
+html[data-theme='dark'] .btn { filter: none; }
+/* Save message brand color */
+html[data-theme='dark'] .links-save-message { color: #ff86cc; }
+
+/* Alert */
+html[data-theme='dark'] .alert-warning {
+  background: rgba(45,22,38,0.55);
+  color: #fff;
+  border-color: rgba(255,255,255,0.12);
+}
+
+/* Empty / placeholder states */
+html[data-theme='dark'] .empty-state,
+html[data-theme='dark'] .placeholder-content {
+  background: rgba(45,22,38,0.55);
+  color: #fff;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+}
+html[data-theme='dark'] .empty-state h3 { color: #fff; }
+html[data-theme='dark'] .feature-preview { background: rgba(255,255,255,0.06); }
+html[data-theme='dark'] .feature-preview li { color: rgba(255,255,255,0.7); }
 
 .text-end {
   text-align: right;

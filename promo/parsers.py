@@ -180,31 +180,3 @@ def parse_tradein_excel(file_path: str, promo_data: Dict[str, Any]) -> List[str]
         
     except Exception as e:
         raise Exception(f"Error parsing trade-in Excel file: {str(e)}")
-
-
-def parse_sku_excel(file_path: str, promo_data: Dict[str, Any]) -> List[str]:
-    """
-    Parse SKU Excel file and generate SQL INSERT statements
-    
-    Args:
-        file_path: Path to the Excel file  
-        promo_data: Promotion data dictionary containing necessary fields
-        
-    Returns:
-        List of SQL INSERT statements
-    """
-    try:
-        # Read the Excel file
-        df = pd.read_excel(file_path)
-        
-        sql_statements = []
-        operator_id = promo_data.get('operator_id', '16086')
-        promo_code = promo_data.get('code', 'UNKNOWN')
-        
-        # Process SKU data (this would depend on your SKU Excel format)
-        # Add your SKU processing logic here based on the actual Excel structure
-        
-        return sql_statements
-        
-    except Exception as e:
-        raise Exception(f"Error parsing SKU Excel file: {str(e)}")

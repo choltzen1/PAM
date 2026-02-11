@@ -5,9 +5,12 @@ html { font-size: 12px; }
     margin: 0;
     padding: 0;
     font-family: Arial, sans-serif;
-    background: transparent; /* global gradient controls background */
+    background: transparent;
     overflow-y: auto;
 }
+
+/* Dark plum body background */
+html[data-theme='dark'] body { background: #3A2F3D !important; }
 
 /* Header right actions */
 .updates-header-actions { display:flex; align-items:center; gap: 0.75rem; }
@@ -128,29 +131,46 @@ html[data-theme='dark'] .info-value { color:#ffffff !important; }
     flex-direction: column;
 }
 /* =============================
-   Dark Mode Light Grey Surfaces (match reviewers/approvers pattern)
-   Apply to top control group and primary cards/columns
+   Dark Mode – Dark Plum + Frosted Glass
    ============================= */
+
+/* --- Cards & Columns: frosted glass --- */
 html[data-theme='dark'] .updates-card,
 html[data-theme='dark'] .updates-column,
 html[data-theme='dark'] .column {
-    background:#e4e6e8 !important; /* light neutral grey surface */
-    color:#111 !important;
-    border-color:#c5c7c9 !important;
-    box-shadow:none !important; /* flatten elevation in dark mode */
+    background: rgba(45,22,38,0.55) !important;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,255,255,0.12) !important;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.25) !important;
+    color: #fff !important;
 }
 
-/* Control group overall text color: white in dark mode */
-html[data-theme='dark'] .control-group { color:#ffffff; }
-html[data-theme='dark'] .control-group label { color:#ffffff !important; }
+/* --- Control bar: frosted glass --- */
+html[data-theme='dark'] .control-group,
+html[data-theme='dark'] .control-bar {
+    background: rgba(45,22,38,0.55) !important;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,255,255,0.12) !important;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.25) !important;
+    color: #fff;
+}
+html[data-theme='dark'] .control-group label { color: #fff !important; }
 
-/* Internal accent elements retain magenta header color; card headers already magenta */
-html[data-theme='dark'] .card-header,
-html[data-theme='dark'] .column-header { filter:none; }
+/* --- Card content text white --- */
+html[data-theme='dark'] .card-content { color: rgba(255,255,255,0.85) !important; }
+html[data-theme='dark'] .card-content .section-header { color: #fff !important; border-bottom-color: var(--tmobile-magenta) !important; }
+html[data-theme='dark'] .section-divider { color: var(--tmobile-magenta) !important; border-top-color: rgba(255,255,255,0.12) !important; }
 
-/* Inputs / interactive inner elements: ensure white background + dark text for contrast */
+/* --- Inputs: translucent with white text --- */
 html[data-theme='dark'] .control-group .search-input,
-html[data-theme='dark'] .control-group .search-bar,
+html[data-theme='dark'] .control-group .search-bar {
+    background: rgba(255,255,255,0.08) !important;
+    color: #fff !important;
+    border: 1px solid rgba(255,255,255,0.18) !important;
+}
+html[data-theme='dark'] .control-group .search-input::placeholder { color: rgba(255,255,255,0.45) !important; }
 html[data-theme='dark'] .control-group .promo-owner-dropdown,
 html[data-theme='dark'] .control-group .form-control,
 html[data-theme='dark'] .updates-card input,
@@ -158,31 +178,70 @@ html[data-theme='dark'] .updates-card select,
 html[data-theme='dark'] .updates-card textarea,
 html[data-theme='dark'] .column input,
 html[data-theme='dark'] .column select,
-html[data-theme='dark'] .column textarea {
-    background:#ffffff !important;
-    color:#111 !important;
-    border:1px solid #b9bbbc !important;
+html[data-theme='dark'] .column textarea,
+html[data-theme='dark'] .form-input,
+html[data-theme='dark'] .form-control,
+html[data-theme='dark'] .promo-owner-dropdown {
+    background: rgba(255,255,255,0.08) !important;
+    color: #fff !important;
+    border: 1px solid rgba(255,255,255,0.18) !important;
+}
+html[data-theme='dark'] .form-input:focus,
+html[data-theme='dark'] .form-control:focus,
+html[data-theme='dark'] .promo-owner-dropdown:focus {
+    border-color: var(--tmobile-magenta) !important;
+    box-shadow: 0 0 0 2px rgba(226,0,116,0.3) !important;
 }
 
-/* Subtle panel-internal chips / list items maintain light backgrounds */
+/* --- Inner elements: translucent glass panels --- */
 html[data-theme='dark'] .bptcr-item,
-html[data-theme='dark'] .status-button,
-html[data-theme='dark'] .updates-info,
-html[data-theme='dark'] .activity-log,
-html[data-theme='dark'] .version-entry {
-    background:#ffffff !important;
-    color:#222 !important;
-    border-color:#c7c9ca !important;
+html[data-theme='dark'] .activity-log {
+    background: rgba(255,255,255,0.06) !important;
+    color: rgba(255,255,255,0.85) !important;
+    border-color: rgba(255,255,255,0.10) !important;
+}
+html[data-theme='dark'] .bptcr-item:hover {
+    background: rgba(255,255,255,0.12) !important;
+    border-color: var(--tmobile-magenta) !important;
+}
+html[data-theme='dark'] .status-button {
+    background: rgba(255,255,255,0.06) !important;
+    color: rgba(255,255,255,0.85) !important;
+    border-color: rgba(255,255,255,0.15) !important;
+}
+html[data-theme='dark'] .status-button:hover {
+    background: rgba(255,255,255,0.12) !important;
 }
 
-/* Preserve active/selected state color contrast */
-html[data-theme='dark'] .bptcr-item.selected,
+/* Preserve active/selected state colors */
+html[data-theme='dark'] .bptcr-item.selected { background: var(--tmobile-magenta) !important; color: #fff !important; border-color: var(--tmobile-magenta) !important; }
 html[data-theme='dark'] .status-button.active,
-html[data-theme='dark'] .status-button.primary { color:#fff !important; }
+html[data-theme='dark'] .status-button.primary { background: var(--tmobile-magenta) !important; color: #fff !important; border-color: var(--tmobile-magenta) !important; }
+html[data-theme='dark'] .status-button.complete { color: #28a745 !important; border-color: #28a745 !important; }
+html[data-theme='dark'] .status-button.complete.active { background: #28a745 !important; color: #fff !important; }
+html[data-theme='dark'] .status-button.incomplete { color: #ff6b6b !important; border-color: #ff6b6b !important; }
+html[data-theme='dark'] .status-button.incomplete.active { background: #dc3545 !important; color: #fff !important; }
 
-/* Info labels/values: white in dark mode (override dark text) */
+/* --- Log entries --- */
+html[data-theme='dark'] .log-entry { color: rgba(255,255,255,0.7) !important; }
+html[data-theme='dark'] .log-entry.success { color: #51cf66 !important; }
+html[data-theme='dark'] .log-entry.error { color: #ff6b6b !important; }
+html[data-theme='dark'] .log-entry.warning { color: #ffd43b !important; }
+
+/* --- Labels / values white --- */
 html[data-theme='dark'] .info-label,
-html[data-theme='dark'] .info-value { color:#ffffff !important; }
+html[data-theme='dark'] .info-value { color: #fff !important; }
+html[data-theme='dark'] .form-group label { color: rgba(255,255,255,0.85) !important; }
+html[data-theme='dark'] .info-row { border-bottom-color: rgba(255,255,255,0.08) !important; }
+
+/* --- Progress bar --- */
+html[data-theme='dark'] .progress-bar { background: rgba(255,255,255,0.1) !important; }
+html[data-theme='dark'] .progress-text { color: rgba(255,255,255,0.7) !important; }
+
+/* --- Section h4 headings --- */
+html[data-theme='dark'] .bptcr-section h4,
+html[data-theme='dark'] .status-section h4,
+html[data-theme='dark'] .updates-info h4 { color: var(--tmobile-magenta) !important; }
 
 /* Column headers */
 .column-header {
@@ -338,7 +397,6 @@ html[data-theme='dark'] .info-value { color:#ffffff !important; }
     padding: 10px 12px 10px 14px;
     background:#ffffff;
     border:1px solid #dcdedf;
-    border-left:4px solid #e91e63; /* magenta accent */
     border-radius:6px;
     font-size:13px;
     line-height:1.3;
@@ -601,13 +659,22 @@ html[data-theme='dark'] .info-value { color:#ffffff !important; }
     color: #495057;
     line-height: 1.4;
     border:1px solid #e1e2e3;
-    border-left: 4px solid #e91e63;
 }
+
 /* Dark Mode adjustments for segmented info items */
 html[data-theme='dark'] .updates-info { background:transparent !important; border:none !important; box-shadow:none !important; }
-html[data-theme='dark'] .info-item { background:#ffffff !important; border-color:#c5c7c9 !important; box-shadow:0 1px 2px rgba(0,0,0,0.05); }
-html[data-theme='dark'] .info-item strong { color:#111 !important; }
-html[data-theme='dark'] .version-entry { background:#ffffff; border-color:#c5c7c9; }
+html[data-theme='dark'] .info-item {
+    background: rgba(255,255,255,0.06) !important;
+    border-color: rgba(255,255,255,0.10) !important;
+    box-shadow: none;
+    color: rgba(255,255,255,0.85) !important;
+}
+html[data-theme='dark'] .info-item strong { color: #fff !important; }
+html[data-theme='dark'] .version-entry {
+    background: rgba(255,255,255,0.06) !important;
+    border-color: rgba(255,255,255,0.10) !important;
+    color: rgba(255,255,255,0.85) !important;
+}
 
 .form-control {
     width: 100%;
