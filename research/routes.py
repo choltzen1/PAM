@@ -1,4 +1,5 @@
 from flask import Blueprint, jsonify, render_template, request, session, redirect, url_for
+from auth import role_required
 from .services import (
     get_main_data,
     get_promo_error_reasons,
@@ -16,6 +17,7 @@ from .services import (
 research_bp = Blueprint('research', __name__, url_prefix='/research')
 
 @research_bp.route('/')
+@role_required('pam_research')
 def index():
     return render_template('research/research_home.html')
 
@@ -30,6 +32,7 @@ from .pete_workflow import (
 )
 
 @research_bp.route('/pete', methods=['GET', 'POST'])
+@role_required('pam_research')
 def pete():
     ensure_session_defaults()
     # If this is a plain GET (no POST redirect) we clear prior query state so page loads blank
@@ -74,6 +77,7 @@ def pete():
     return render_template('research/pete.html', **ctx)
 
 @research_bp.route('/pete/chat', methods=['POST'])
+@role_required('pam_research')
 def pete_chat():
     """AJAX endpoint for PETE chat; returns latest two messages (user + assistant) and full history."""
     ensure_session_defaults()
@@ -92,6 +96,7 @@ def pete_chat():
     return jsonify({'messages': last_two, 'chat_history': history, 'count': len(history)})
 
 @research_bp.route('/api/main-data')
+@role_required('pam_research')
 def api_main_data():
     eip_id = request.args.get('eip_id','').strip()
     if not eip_id:
@@ -100,6 +105,7 @@ def api_main_data():
     return jsonify({'rows': df.to_dict(orient='records'), 'count': len(df)})
 
 @research_bp.route('/api/promo-error-reasons')
+@role_required('pam_research')
 def api_promo_error_reasons():
     eip_id = request.args.get('eip_id','').strip()
     if not eip_id:
@@ -108,6 +114,7 @@ def api_promo_error_reasons():
     return jsonify({'rows': df.to_dict(orient='records'), 'count': len(df)})
 
 @research_bp.route('/api/rate-plans')
+@role_required('pam_research')
 def api_rate_plans():
     ban = request.args.get('ban','').strip()
     if not ban:
@@ -116,6 +123,7 @@ def api_rate_plans():
     return jsonify({'rows': df.to_dict(orient='records'), 'count': len(df)})
 
 @research_bp.route('/api/aal-lines')
+@role_required('pam_research')
 def api_aal_lines():
     ban = request.args.get('ban','').strip()
     if not ban:
@@ -124,6 +132,7 @@ def api_aal_lines():
     return jsonify({'rows': df.to_dict(orient='records'), 'count': len(df)})
 
 @research_bp.route('/api/trade-data-qr')
+@role_required('pam_research')
 def api_trade_data_qr():
     raw = request.args.get('order_ids','').strip()
     if not raw:
@@ -133,6 +142,7 @@ def api_trade_data_qr():
     return jsonify({'rows': df.to_dict(orient='records'), 'count': len(df)})
 
 @research_bp.route('/api/eip-by-ban')
+@role_required('pam_research')
 def api_eip_by_ban():
     ban = request.args.get('ban','').strip()
     if not ban:
@@ -141,6 +151,7 @@ def api_eip_by_ban():
     return jsonify({'rows': df.to_dict(orient='records'), 'count': len(df)})
 
 @research_bp.route('/api/eip-identify')
+@role_required('pam_research')
 def api_eip_identify():
     """Unified identification endpoint. Provide either ban=<ban> or msisdn=<msisdn>.
     Returns list of EIP accounts with BAN + MSISDN for selection. Prioritizes BAN if both given.
@@ -156,6 +167,7 @@ def api_eip_identify():
     return jsonify({'rows': df.to_dict(orient='records'), 'count': len(df), 'ban': ban, 'msisdn': msisdn})
 
 @research_bp.route('/api/promo-eligibility')
+@role_required('pam_research')
 def api_promo_eligibility():
     promo_code = request.args.get('promo_code','').strip().upper()
     if not promo_code:
@@ -165,6 +177,7 @@ def api_promo_eligibility():
     return jsonify({'rows': df.to_dict(orient='records'), 'count': len(df)})
 
 @research_bp.route('/api/extract-promo-code', methods=['POST'])
+@role_required('pam_research')
 def api_extract_promo_code():
     data = request.get_json(force=True, silent=True) or {}
     prompt = data.get('prompt','')
@@ -172,6 +185,7 @@ def api_extract_promo_code():
     return jsonify({'promo_code': code})
 
 @research_bp.route('/api/pete/chat', methods=['POST'])
+@role_required('pam_research')
 def api_pete_chat():
     data = request.get_json(force=True, silent=True) or {}
     prompt = data.get('prompt','')
@@ -183,6 +197,7 @@ def api_pete_chat():
     return jsonify({'prompt': prompt, 'promo_code': promo_code, 'reply': reply})
 
 @research_bp.route('/api/pete/aggregate')
+@role_required('pam_research')
 def api_pete_aggregate():
     """Aggregate data pull similar to original PETE flow: eip -> promo errors, trade, rate plans, lines."""
     eip_id = request.args.get('eip_id','').strip()

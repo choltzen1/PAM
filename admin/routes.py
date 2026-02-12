@@ -3,6 +3,7 @@ from datetime import datetime
 from sqlalchemy import text
 import os, json
 from typing import Optional, TYPE_CHECKING
+from auth import role_required
 
 if TYPE_CHECKING:
     from data.storage import PromoDataManager
@@ -208,6 +209,7 @@ def save_users(users):
 
 # --- Core admin pages ---
 @admin_bp.route('/admin', endpoint='dashboard')
+@role_required('pam_admin')
 def admin_dashboard():
     dm = _ensure_dm()
     try:
@@ -223,6 +225,7 @@ def admin_dashboard():
         return render_template('pam/admin.html', promotions_count=847, spe_count=234, pending_reviews=12)
 
 @admin_bp.route('/admin/pam-promotions')
+@role_required('pam_admin')
 def admin_pam_promotions():
     dm = _ensure_dm()
     # Pagination + search params
@@ -265,27 +268,33 @@ def admin_pam_promotions():
                            cache_age=(0 if not cache_key_applicable or not _PAM_PROMO_CACHE['data'] else int(now - _PAM_PROMO_CACHE['ts'])))
 
 @admin_bp.route('/admin/user-management', endpoint='user_management')
+@role_required('pam_admin')
 def admin_user_management():
     return render_template('pam/admin_user_management.html')
 
 # New subpages for decluttered functionality
 @admin_bp.route('/admin/data')
+@role_required('pam_admin')
 def admin_data_page():
     return render_template('pam/admin_data.html')
 
 @admin_bp.route('/admin/performance')
+@role_required('pam_admin')
 def admin_performance_page():
     return render_template('pam/admin_performance.html')
 
 @admin_bp.route('/admin/integrations')
+@role_required('pam_admin')
 def admin_integrations_page():
     return render_template('pam/admin_integrations.html')
 
 @admin_bp.route('/admin/security')
+@role_required('pam_admin')
 def admin_security_page():
     return render_template('pam/admin_security.html')
 
 @admin_bp.route('/admin/groupings')
+@role_required('pam_admin')
 def admin_groupings_page():
     """Dedicated management page for device & reference groupings."""
     return render_template('pam/admin_groupings.html')
@@ -294,6 +303,7 @@ def admin_groupings_page():
 
 # --- Admin actions ---
 @admin_bp.route('/admin/backup', methods=['POST'])
+@role_required('pam_admin')
 def admin_backup():
     try:
         import shutil
@@ -310,6 +320,7 @@ def admin_backup():
         return jsonify({'success': False, 'message': f'Backup failed: {e}'})
 
 @admin_bp.route('/admin/stats', methods=['GET'])
+@role_required('pam_admin')
 def admin_stats():
     dm = _ensure_dm()
     try:
@@ -347,6 +358,7 @@ def admin_stats():
             return jsonify({'success': False, 'message': f'Phase sweep failed: {e}'})
 
 @admin_bp.route('/admin/dashboard-summary')
+@role_required('pam_admin')
 def admin_dashboard_summary():
     dm = _ensure_dm()
     summary = {}
@@ -409,6 +421,7 @@ def admin_dashboard_summary():
         return jsonify({'success': False, 'message': f'Failed to load dashboard summary: {e}', 'summary': summary})
 
 @admin_bp.route('/admin/test-connections', methods=['POST'])
+@role_required('pam_admin')
 def admin_test_connections():
     results = {}
     try:
@@ -424,7 +437,248 @@ def admin_test_connections():
     except Exception as e:
         return jsonify({'success': False, 'message': f'Failed to test connections: {e}'})
 
+
+@admin_bp.route('/admin/azure-diagnostics')
+@role_required('pam_admin')
+def admin_azure_diagnostics():
+    """Comprehensive Azure → On-Prem SQL Server connectivity diagnostics.
+    
+    Checks:
+    1. Environment configuration
+    2. DNS resolution for SQL server
+    3. TCP port connectivity  
+    4. ODBC driver availability
+    5. SQL Server actual connection test
+    6. Azure-specific environment indicators
+    7. Hybrid Connection Manager status hints
+    """
+    import socket
+    import time
+    import subprocess
+    
+    diagnostics = {
+        'timestamp': datetime.now().isoformat(),
+        'environment': {},
+        'network': {},
+        'odbc': {},
+        'sql_connection': {},
+        'azure_indicators': {},
+        'recommendations': []
+    }
+    
+    # 1. Environment Configuration
+    pam_server = os.getenv('PAM_DB_SERVER', 'NOT SET')
+    pam_database = os.getenv('PAM_DB_DATABASE', 'NOT SET')
+    pam_driver = os.getenv('PAM_DB_DRIVER', 'ODBC Driver 17 for SQL Server')
+    pam_timeout = os.getenv('PAM_DB_LOGIN_TIMEOUT', '15')
+    pam_encrypt = os.getenv('PAM_DB_ENCRYPT', 'no')
+    pam_trust_cert = os.getenv('PAM_DB_TRUST_CERT', 'yes')
+    has_username = bool(os.getenv('PAM_DB_USERNAME'))
+    has_password = bool(os.getenv('PAM_DB_PASSWORD'))
+    
+    diagnostics['environment'] = {
+        'PAM_DB_SERVER': pam_server,
+        'PAM_DB_DATABASE': pam_database,
+        'PAM_DB_DRIVER': pam_driver,
+        'PAM_DB_LOGIN_TIMEOUT': pam_timeout,
+        'PAM_DB_ENCRYPT': pam_encrypt,
+        'PAM_DB_TRUST_CERT': pam_trust_cert,
+        'has_username': has_username,
+        'has_password': has_password,
+        'auth_mode': 'SQL Auth' if has_username else 'Windows/Integrated'
+    }
+    
+    # Parse server and port
+    server_host = pam_server
+    server_port = 1433  # Default SQL Server port
+    if ',' in pam_server:
+        parts = pam_server.rsplit(',', 1)
+        server_host = parts[0]
+        try:
+            server_port = int(parts[1])
+        except ValueError:
+            pass
+    elif '\\' in pam_server:
+        # Named instance - extract host
+        server_host = pam_server.split('\\')[0]
+    
+    diagnostics['network']['parsed_host'] = server_host
+    diagnostics['network']['parsed_port'] = server_port
+    
+    # 2. DNS Resolution
+    try:
+        start = time.time()
+        ip_addresses = socket.gethostbyname_ex(server_host)
+        dns_time = (time.time() - start) * 1000
+        diagnostics['network']['dns_resolution'] = {
+            'status': 'success',
+            'hostname': ip_addresses[0],
+            'aliases': ip_addresses[1],
+            'ip_addresses': ip_addresses[2],
+            'resolution_time_ms': round(dns_time, 2)
+        }
+    except socket.gaierror as e:
+        diagnostics['network']['dns_resolution'] = {
+            'status': 'failed',
+            'error': str(e),
+            'hint': 'DNS failure suggests Hybrid Connection not active or VPN not connected'
+        }
+        diagnostics['recommendations'].append('Check Azure Hybrid Connection Manager is running on-prem')
+        diagnostics['recommendations'].append('Verify VPN/ExpressRoute connectivity if using VNet integration')
+    
+    # 3. TCP Port Connectivity
+    try:
+        start = time.time()
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.settimeout(5)
+        result = sock.connect_ex((server_host, server_port))
+        tcp_time = (time.time() - start) * 1000
+        sock.close()
+        if result == 0:
+            diagnostics['network']['tcp_connectivity'] = {
+                'status': 'success',
+                'port': server_port,
+                'connect_time_ms': round(tcp_time, 2)
+            }
+        else:
+            diagnostics['network']['tcp_connectivity'] = {
+                'status': 'failed',
+                'port': server_port,
+                'error_code': result,
+                'hint': 'Port blocked or Hybrid Connection not forwarding'
+            }
+            diagnostics['recommendations'].append(f'Verify port {server_port} is allowed through on-prem firewall')
+            diagnostics['recommendations'].append('Check Hybrid Connection endpoint configuration matches server:port')
+    except Exception as e:
+        diagnostics['network']['tcp_connectivity'] = {
+            'status': 'error',
+            'error': str(e)
+        }
+    
+    # 4. ODBC Driver Check
+    try:
+        import pyodbc
+        available_drivers = pyodbc.drivers()
+        target_driver = pam_driver.replace('{', '').replace('}', '')
+        driver_found = target_driver in available_drivers
+        diagnostics['odbc'] = {
+            'pyodbc_version': pyodbc.version,
+            'target_driver': target_driver,
+            'driver_found': driver_found,
+            'available_drivers': available_drivers[:5]  # First 5 to avoid clutter
+        }
+        if not driver_found:
+            diagnostics['recommendations'].append(f'Install {target_driver} on Azure App Service')
+    except ImportError:
+        diagnostics['odbc'] = {'status': 'pyodbc not installed'}
+        diagnostics['recommendations'].append('Install pyodbc package')
+    
+    # 5. SQL Server Connection Test
+    try:
+        from data.database import DatabaseManager
+        db = DatabaseManager()
+        start = time.time()
+        
+        # Force fresh connection (bypass cached engine)
+        db._engine = None
+        engine = db.get_engine()
+        
+        with engine.connect() as conn:
+            # Test query
+            row = conn.execute(text("SELECT @@VERSION AS version, GETDATE() AS server_time, DB_NAME() AS current_db")).fetchone()
+            connect_time = (time.time() - start) * 1000
+            diagnostics['sql_connection'] = {
+                'status': 'success',
+                'connect_time_ms': round(connect_time, 2),
+                'sql_server_version': str(row.version)[:100] if row else 'unknown',
+                'server_time': str(row.server_time) if row else 'unknown',
+                'current_database': str(row.current_db) if row else 'unknown'
+            }
+    except Exception as e:
+        diagnostics['sql_connection'] = {
+            'status': 'failed',
+            'error': str(e),
+            'error_type': type(e).__name__
+        }
+        error_str = str(e).lower()
+        if 'login failed' in error_str:
+            diagnostics['recommendations'].append('Check SQL credentials (PAM_DB_USERNAME/PASSWORD)')
+        elif 'timeout' in error_str or 'timed out' in error_str:
+            diagnostics['recommendations'].append('Connection timeout - Hybrid Connection may be down')
+            diagnostics['recommendations'].append('Check if on-prem SQL Server service is running')
+        elif 'network' in error_str or 'tcp' in error_str:
+            diagnostics['recommendations'].append('Network error - check VPN/Hybrid Connection status')
+        elif 'ssl' in error_str or 'certificate' in error_str:
+            diagnostics['recommendations'].append('SSL/TLS error - try PAM_DB_ENCRYPT=no PAM_DB_TRUST_CERT=yes')
+    
+    # 6. Azure-Specific Environment Indicators
+    azure_indicators = {
+        'WEBSITE_SITE_NAME': os.getenv('WEBSITE_SITE_NAME'),
+        'WEBSITE_INSTANCE_ID': os.getenv('WEBSITE_INSTANCE_ID', '')[:12] + '...' if os.getenv('WEBSITE_INSTANCE_ID') else None,
+        'WEBSITE_SKU': os.getenv('WEBSITE_SKU'),
+        'REGION_NAME': os.getenv('REGION_NAME'),
+        'WEBSITE_HOSTNAME': os.getenv('WEBSITE_HOSTNAME'),
+        'is_azure': bool(os.getenv('WEBSITE_SITE_NAME')),
+        'WEBSITE_VNET_ROUTE_ALL': os.getenv('WEBSITE_VNET_ROUTE_ALL'),
+        'WEBSITE_PRIVATE_IP': os.getenv('WEBSITE_PRIVATE_IP'),
+    }
+    diagnostics['azure_indicators'] = {k: v for k, v in azure_indicators.items() if v is not None}
+    
+    # Add Azure-specific recommendations
+    if azure_indicators.get('is_azure'):
+        if not diagnostics['azure_indicators'].get('WEBSITE_PRIVATE_IP'):
+            diagnostics['recommendations'].append('No VNet integration detected - using Hybrid Connection for on-prem access')
+        
+        if diagnostics['sql_connection'].get('status') == 'failed':
+            diagnostics['recommendations'].append('In Azure Portal: Check Hybrid Connection status under Networking')
+            diagnostics['recommendations'].append('Verify Hybrid Connection Manager (HCM) service is running on-prem')
+            diagnostics['recommendations'].append('HCM logs: Event Viewer > Applications and Services > Microsoft > HybridConnectionManager')
+    
+    # 7. Summary status
+    all_ok = (
+        diagnostics['network'].get('dns_resolution', {}).get('status') == 'success' and
+        diagnostics['network'].get('tcp_connectivity', {}).get('status') == 'success' and
+        diagnostics['sql_connection'].get('status') == 'success'
+    )
+    diagnostics['overall_status'] = 'healthy' if all_ok else 'unhealthy'
+    
+    return jsonify({'success': True, 'diagnostics': diagnostics})
+
+
+@admin_bp.route('/admin/sql-connection-reset', methods=['POST'])
+@role_required('pam_admin')
+def admin_sql_connection_reset():
+    """Force reset of all SQL connection pools. Use when connections go stale."""
+    try:
+        from data.database import DatabaseManager
+        db = DatabaseManager()
+        
+        # Dispose existing engine to close all pooled connections
+        if db._engine:
+            db._engine.dispose()
+            db._engine = None
+        
+        # Attempt fresh connection
+        engine = db.get_engine()
+        with engine.connect() as conn:
+            conn.execute(text("SELECT 1"))
+        
+        return jsonify({
+            'success': True,
+            'message': 'Connection pool reset and new connection established',
+            'timestamp': datetime.now().isoformat()
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'message': 'Failed to reset connection pool',
+            'timestamp': datetime.now().isoformat()
+        })
+
+
 @admin_bp.route('/admin/cache-status')
+@role_required('pam_admin')
 def admin_cache_status():
     dm = _ensure_dm()
     try:
@@ -434,6 +688,7 @@ def admin_cache_status():
         return jsonify({'success': False, 'message': f'Failed to get cache status: {e}'})
 
 @admin_bp.route('/admin/cache-refresh', methods=['POST'])
+@role_required('pam_admin')
 def admin_cache_refresh():
     dm = _ensure_dm()
     try:
@@ -446,6 +701,7 @@ def admin_cache_refresh():
         return jsonify({'success': False, 'message': f'Failed to refresh cache: {e}'})
 
 @admin_bp.route('/admin/delete-promo', methods=['POST'])
+@role_required('pam_admin')
 def admin_delete_promo():
     dm = _ensure_dm()
     try:
@@ -468,6 +724,7 @@ def admin_delete_promo():
         return jsonify({'success': False, 'message': f'Error deleting promo: {e}'})
 
 @admin_bp.route('/admin/delete-promos', methods=['POST'])
+@role_required('pam_admin')
 def admin_delete_promos():
     dm = _ensure_dm()
     try:
@@ -496,6 +753,7 @@ def admin_delete_promos():
         return jsonify({'success': False, 'message': f'Bulk delete error: {e}'})
 
 @admin_bp.route('/admin/data-refresh', methods=['POST'])
+@role_required('pam_admin')
 def admin_data_refresh():
     dm = _ensure_dm()
     try:
@@ -513,12 +771,14 @@ def admin_data_refresh():
         return jsonify({'success': False, 'message': f'Failed to perform data refresh: {e}'})
 
 @admin_bp.route('/admin/pcr-stats')
+@role_required('pam_admin')
 def admin_pcr_stats():
     # Provide counts of PCR Version events per promo
     # Version history removed: return empty PCR stats
     return jsonify({'success': True, 'pcr_stats': []})
 
 @admin_bp.route('/admin/date-diagnostics')
+@role_required('pam_admin')
 def admin_date_diagnostics():
     # Use DatabaseManager diagnostics by invoking get_recent_promos (days=30) without impacting cache
     try:
@@ -558,6 +818,7 @@ def admin_date_diagnostics():
         return jsonify({'success': False, 'message': f'Failed to load date diagnostics: {e}'})
 
 @admin_bp.route('/admin/data-health')
+@role_required('pam_admin')
 def admin_data_health():
     # Aggregate latest diagnostics snapshot & PCR counts summary
     try:
@@ -586,6 +847,7 @@ def admin_data_health():
 
 # --- User management API ---
 @admin_bp.route('/admin/users', methods=['GET'])
+@role_required('pam_admin')
 def admin_users():
     try:
         users = get_all_users()
@@ -595,6 +857,7 @@ def admin_users():
         return jsonify({'success': False, 'message': f'Failed to get users: {e}'})
 
 @admin_bp.route('/admin/users', methods=['POST'])
+@role_required('pam_admin')
 def admin_create_user():
     try:
         data = request.get_json()
@@ -619,6 +882,7 @@ def admin_create_user():
         return jsonify({'success': False, 'message': f'Failed to create user: {e}'})
 
 @admin_bp.route('/admin/users/<username>', methods=['PUT'])
+@role_required('pam_admin')
 def admin_update_user(username):
     try:
         data = request.get_json()
@@ -636,6 +900,7 @@ def admin_update_user(username):
         return jsonify({'success': False, 'message': f'Failed to update user: {e}'})
 
 @admin_bp.route('/admin/users/<username>', methods=['DELETE'])
+@role_required('pam_admin')
 def admin_delete_user(username):
     try:
         users = get_all_users()
@@ -650,6 +915,7 @@ def admin_delete_user(username):
         return jsonify({'success': False, 'message': f'Failed to delete user: {e}'})
 
 @admin_bp.route('/admin/groups', methods=['POST'])
+@role_required('pam_admin')
 def admin_create_group():
     try:
         data = request.get_json()
@@ -673,6 +939,7 @@ def admin_create_group():
 
 # --- Reference Groupings CRUD (txt-backed) ---
 @admin_bp.route('/admin/reference-groupings', methods=['GET'])
+@role_required('pam_admin')
 def admin_list_reference_groupings():
     kind = request.args.get('type','soc').strip()
     try:
@@ -682,6 +949,7 @@ def admin_list_reference_groupings():
         return jsonify({'success': False, 'message': f'Failed to load {kind} groupings: {e}'})
 
 @admin_bp.route('/admin/reference-groupings', methods=['POST'])
+@role_required('pam_admin')
 def admin_create_reference_grouping():
     kind = request.args.get('type','soc').strip()
     try:
@@ -701,6 +969,7 @@ def admin_create_reference_grouping():
         return jsonify({'success': False, 'message': f'Failed to add grouping: {e}'})
 
 @admin_bp.route('/admin/reference-groupings/<code>', methods=['PUT'])
+@role_required('pam_admin')
 def admin_update_reference_grouping(code):
     kind = request.args.get('type','soc').strip()
     try:
@@ -723,6 +992,7 @@ def admin_update_reference_grouping(code):
         return jsonify({'success': False, 'message': f'Failed to update grouping: {e}'})
 
 @admin_bp.route('/admin/reference-groupings/<code>', methods=['DELETE'])
+@role_required('pam_admin')
 def admin_delete_reference_grouping(code):
     kind = request.args.get('type','soc').strip()
     try:
@@ -741,6 +1011,7 @@ def admin_delete_reference_grouping(code):
 # =============================================================================
 
 @admin_bp.route('/admin/validate-orbit-data')
+@role_required('pam_admin')
 def validate_orbit_data():
     """Validate ORBIT data from Fabric against PAM field requirements.
     
@@ -936,6 +1207,7 @@ def validate_orbit_data():
 
 
 @admin_bp.route('/admin/orbit-field-coverage')
+@role_required('pam_admin')
 def orbit_field_coverage():
     """Get detailed field coverage stats from ORBIT/Fabric.
     

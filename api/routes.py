@@ -2,6 +2,7 @@ from flask import Blueprint, jsonify, request
 import base64, json
 from services.cache import TTLCache
 from services.jira_utils import create_jira_summary
+from auth import role_required
 
 api_bp = Blueprint('api', __name__, url_prefix='/api')
 
@@ -55,6 +56,7 @@ def _get_current_user_name() -> str | None:
 
 
 @api_bp.route('/get_promo_details/<promo_code>', methods=['GET'])
+@role_required('pam_users')
 def get_promo_details(promo_code):
     try:
         # Fast path: cached minimal fields for first paint
@@ -149,6 +151,7 @@ def get_promo_details(promo_code):
 
 # Full payload endpoint for asynchronous secondary fetch on edit pages
 @api_bp.route('/get_promo_details_full/<promo_code>', methods=['GET'])
+@role_required('pam_users')
 def get_promo_details_full(promo_code):
     try:
         promo_data = data_manager.get_promo(promo_code) if data_manager else {}
@@ -159,6 +162,7 @@ def get_promo_details_full(promo_code):
         return jsonify({'found': False, 'error': str(e)}), 500
 
 @api_bp.route('/jira_summary/<promo_code>', methods=['GET'])
+@role_required('pam_users')
 def jira_summary(promo_code):
     """Return standardized JIRA summary for a promo code (or orbit-only record fallback)."""
     try:
@@ -186,6 +190,7 @@ def jira_summary(promo_code):
 
 
 @api_bp.route('/search_orbit/<orbit_id>', methods=['GET'])
+@role_required('pam_users')
 def search_orbit(orbit_id):
     try:
         # Orbit-only lookup (no promo table fallback)
@@ -228,6 +233,7 @@ def search_orbit(orbit_id):
 
 
 @api_bp.route('/orbit_lookup_debug/<orbit_id>', methods=['GET'])
+@role_required('pam_users')
 def orbit_lookup_debug(orbit_id):
     try:
         from data.database import DatabaseManager
@@ -241,6 +247,7 @@ def orbit_lookup_debug(orbit_id):
 
 
 @api_bp.route('/update_testing_status', methods=['POST'])
+@role_required('pam_users')
 def update_testing_status():
     try:
         data = request.get_json() or {}
@@ -274,6 +281,7 @@ def update_testing_status():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @api_bp.route('/promo_code_by_orbit/<orbit_id>', methods=['GET'])
+@role_required('pam_users')
 def promo_code_by_orbit(orbit_id):
     """Return promo code for a given orbit_id by scanning PAM promos.
 
@@ -310,6 +318,7 @@ def promo_code_by_orbit(orbit_id):
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @api_bp.route('/set_sales_application', methods=['POST'])
+@role_required('pam_users')
 def set_sales_application():
     """Set sales_application for a given promo code.
 
@@ -336,6 +345,7 @@ def set_sales_application():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @api_bp.route('/generate_next_promo_code', methods=['GET'])
+@role_required('pam_users')
 def generate_next_promo_code():
         """Atomically create (or detect existing) a promo from an orbit record.
 
@@ -367,6 +377,7 @@ def generate_next_promo_code():
                 return jsonify({'success': False, 'error': str(e)}), 500
 
 @api_bp.route('/generate_and_ingest', methods=['POST'])
+@role_required('pam_users')
 def generate_and_ingest():
     """Generate the next promo code and ingest orbit data into PAM storage.
 
@@ -465,6 +476,7 @@ def generate_and_ingest():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @api_bp.route('/create_from_orbit', methods=['POST'])
+@role_required('pam_users')
 def create_from_orbit():
     """Create a new promotion by supplying an orbit_id.
 
@@ -489,6 +501,7 @@ def create_from_orbit():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @api_bp.route('/recent_generated_promos', methods=['GET'])
+@role_required('pam_users')
 def recent_generated_promos():
     """Return last 20 generated promos using database created_at timestamp.
 
