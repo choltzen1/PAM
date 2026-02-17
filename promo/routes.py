@@ -7,6 +7,7 @@ from services.mail_service import MailService
 from sqlalchemy import text
 from data.database import DatabaseManager
 from data.version_history import log_version_event, get_next_sql_gen_count
+from auth import role_required
 
 if TYPE_CHECKING:
     from data.storage import PromoDataManager
@@ -219,6 +220,7 @@ def version_history_page():
 
 # --- Primary RDC list route (legacy /promotions removed) ---
 @promo_bp.route('/rdc', endpoint='rdc_page')
+@role_required('pam_users')
 def rdc_page():
     return _render_rdc_page()
 
@@ -274,6 +276,7 @@ def _render_rdc_page():
     )
 
 @promo_bp.route('/spe', endpoint='spe_page')
+@role_required('pam_users')
 def spe_page():
     dm = _ensure_data_manager()
     page = request.args.get('page', 1, type=int)
@@ -315,6 +318,7 @@ def spe_page():
     )
 
 @promo_bp.route('/rebates', endpoint='rebates_page')
+@role_required('pam_users')
 def rebates_page():
     dm = _ensure_data_manager()
     try:
@@ -338,6 +342,7 @@ def rebates_page():
         return render_template('pam/rebates.html', rebates_data=[], owners=[], search_query='', selected_owner='all', active_tab='Rebates')
 
 @promo_bp.route('/date-mismatch', endpoint='date_mismatch_page')
+@role_required('pam_users')
 def date_mismatch_page():
     dm = _ensure_data_manager()
     try:
@@ -414,6 +419,7 @@ def date_mismatch_page():
 
 @promo_bp.route('/update-pam-date/<promo_code>', methods=['POST'], endpoint='update_pam_date')
 @promo_bp.route('/update_pam_date/<promo_code>', methods=['POST'])  # backward-compatible alias (old JS used underscore)
+@role_required('pam_users')
 def update_pam_date_bp(promo_code):
     dm = _ensure_data_manager()
     try:
@@ -424,6 +430,7 @@ def update_pam_date_bp(promo_code):
         return jsonify({'success': False,'message': f'Error updating PAM date: {str(e)}'}), 500
 
 @promo_bp.route('/generate-date-sql', methods=['POST'], endpoint='generate_date_sql')
+@role_required('pam_users')
 def generate_date_sql_bp():
     try:
         data = request.get_json()
@@ -482,6 +489,7 @@ def _generate_sql_content(promo_code, operator_id, orbit_end_date):
         return f'Error generating SQL: {str(e)}'
 
 @promo_bp.route('/generate-sql-for-promo/<promo_code>', endpoint='generate_sql_for_promo')
+@role_required('pam_users')
 def generate_sql_for_promo_bp(promo_code):
     operator_id = request.args.get('operator_id','')
     orbit_end_date = request.args.get('orbit_end_date','')
@@ -498,6 +506,7 @@ def generate_sql_for_promo_bp(promo_code):
     return send_file(temp_path, as_attachment=True, download_name=filename)
 
 @promo_bp.route('/preview-sql-for-promo/<promo_code>', endpoint='preview_sql_for_promo')
+@role_required('pam_users')
 def preview_sql_for_promo_bp(promo_code):
     operator_id = request.args.get('operator_id','')
     orbit_end_date = request.args.get('orbit_end_date','')
@@ -507,15 +516,18 @@ def preview_sql_for_promo_bp(promo_code):
     return jsonify({'sql': sql})
 
 @promo_bp.route('/generate-sql-form/<promo_code>', endpoint='generate_sql_form')
+@role_required('pam_users')
 def generate_sql_form_bp(promo_code):
     return render_template('pam/generate_sql_form.html', promo_codes=[promo_code], is_batch=False)
 
 @promo_bp.route('/generate-batch-sql-form', methods=['POST'], endpoint='generate_batch_sql_form')
+@role_required('pam_users')
 def generate_batch_sql_form_bp():
     flash('Please select promotions first by checking the boxes, then click Batch Generate SQL', 'info')
     return redirect(url_for('promo.date_mismatch_page'))
 
 @promo_bp.route('/generate-sql-submit', methods=['POST'], endpoint='generate_sql_submit')
+@role_required('pam_users')
 def generate_sql_submit_bp():
     try:
         promo_codes = request.form.getlist('promo_codes')
@@ -551,6 +563,7 @@ def generate_sql_submit_bp():
 
 @promo_bp.route('/generate-batch-sql', methods=['POST'], endpoint='generate_batch_sql')
 @promo_bp.route('/generate_batch_sql', methods=['POST'])  # backward-compatible alias
+@role_required('pam_users')
 def generate_batch_sql_bp():
     try:
         data = request.get_json()
@@ -590,6 +603,7 @@ def generate_batch_sql_bp():
         return jsonify({'success': False,'error': f'Error generating batch SQL: {str(e)}'}), 500
 
 @promo_bp.route('/download_batch_sql/<operator_id>/<date>', endpoint='download_batch_sql')
+@role_required('pam_users')
 def download_batch_sql_bp(operator_id, date):
     try:
         from flask import session, Response
@@ -609,6 +623,7 @@ def download_batch_sql_bp(operator_id, date):
 
 # --- SPE edit page migration ---
 @promo_bp.route('/edit-spe/<promo_code>', methods=['GET','POST'], endpoint='edit_spe_page')
+@role_required('pam_users')
 def edit_spe_page(promo_code):
     """Optimized SPE editor.
 
@@ -685,10 +700,12 @@ def edit_spe_page(promo_code):
     )
 
 @promo_bp.route('/test-page', endpoint='test_page')
+@role_required('pam_users')
 def test_page():
     return render_template('pam/test.html')
 
 @promo_bp.route('/capacity', endpoint='capacity_page')
+@role_required('pam_users')
 def capacity_page():
     dm = _ensure_data_manager()
     try:
@@ -858,6 +875,7 @@ def capacity_page():
 # --- Download & data clear endpoints migrated from legacy app.py ---
 
 @promo_bp.route('/updates', endpoint='updates_page')
+@role_required('pam_users')
 def updates_page():
     dm = _ensure_data_manager()
     search = request.args.get('search', '', type=str)
@@ -884,6 +902,7 @@ def updates_page():
 
 
 @promo_bp.route('/approvers', endpoint='approvers_page')
+@role_required('pam_users')
 def approvers_page():
     dm = _ensure_data_manager()
     import logging
@@ -964,6 +983,7 @@ def approvers_page():
         return render_template('pam/approvers.html', promo_codes=[], owners=[], unique_owners=[], revenue_approvers=[], target_promo_code='')
 
 @promo_bp.route('/send-approval-email', methods=['POST'], endpoint='send_approval_email')
+@role_required('pam_users')
 def send_approval_email():
     """Send approval email via Database Mail with promo details"""
     from services.mail_service import MailService
@@ -1113,6 +1133,7 @@ def send_approval_email():
         return jsonify({'success': False, 'message': error_msg}), 500
 
 @promo_bp.route('/approve-promo', methods=['POST'])
+@role_required('pam_users')
 def approve_promo():
     """Handle promo approval and send reply email"""
     try:
@@ -1279,6 +1300,7 @@ def reject_promo():
 
 @promo_bp.route('/reviewers', defaults={'promo_code': None}, endpoint='reviewers_page')
 @promo_bp.route('/reviewers/<promo_code>', endpoint='reviewers_with_code')
+@role_required('pam_viewonly')
 def reviewers_page(promo_code):
     dm = _ensure_data_manager()
     promo_data = None
@@ -1325,10 +1347,12 @@ def reviewers_page(promo_code):
     )
 
 @promo_bp.route('/links', endpoint='links_main_page')
+@role_required('pam_users')
 def links_main_page():
     return render_template('pam/links.html')
 
 @promo_bp.route('/links/<promo_code>', methods=['GET','POST'], endpoint='links_page')
+@role_required('pam_users')
 def links_page(promo_code):
     dm = _ensure_data_manager()
     try:
@@ -1363,6 +1387,7 @@ def links_page(promo_code):
         return redirect(url_for('promo.rdc_page'))
 
 @promo_bp.route('/edit_rdc/<promo_code>', methods=['GET', 'POST'], endpoint='edit_rdc')
+@role_required('pam_users')
 def edit_rdc(promo_code):
     return _edit_rdc(promo_code)
 
@@ -1708,6 +1733,7 @@ def _edit_rdc(promo_code):
                          jira_dcd_ticket=os.getenv('JIRA_DCD_CURRENT_TICKET', 'DCOMM-13037'))
 
 @promo_bp.route('/autosave/<promo_code>', methods=['POST'])
+@role_required('pam_users')
 def autosave_promo(promo_code):
     """Autosave endpoint to persist partial field changes without full form submission."""
     dm = _ensure_data_manager()
@@ -1725,6 +1751,7 @@ def autosave_promo(promo_code):
         return jsonify({'success': False, 'promo_code': promo_code, 'error': str(e)}), 500
 
 @promo_bp.route('/debug/sql/<promo_code>', methods=['GET'])
+@role_required('pam_users')
 def debug_sql_meta(promo_code):
     """Return JSON metadata about the generated SQL file & in-memory state for deep troubleshooting."""
     dm = _ensure_data_manager()
@@ -1750,6 +1777,7 @@ def debug_sql_meta(promo_code):
     return jsonify(meta)
 
 @promo_bp.route('/clear_trade_data/<promo_code>', methods=['POST'])
+@role_required('pam_users')
 def clear_trade_data(promo_code):
     """Clear all trade-related data for a promotion"""
     try:
@@ -1786,6 +1814,7 @@ def clear_trade_data(promo_code):
         return jsonify({'success': False, 'error': str(e)})
 
 @promo_bp.route('/clear_tiers_data/<promo_code>', methods=['POST'])
+@role_required('pam_users')
 def clear_tiers_data(promo_code):
     """Clear all tiers-related data for a promotion"""
     try:
@@ -1814,6 +1843,7 @@ def clear_tiers_data(promo_code):
         return jsonify({'success': False, 'error': str(e)})
 
 @promo_bp.route('/clear_segment_data/<promo_code>', methods=['POST'])
+@role_required('pam_users')
 def clear_segment_data(promo_code):
     """Clear all segmentation-related data for a promotion"""
     try:
@@ -1838,6 +1868,7 @@ def clear_segment_data(promo_code):
         return jsonify({'success': False, 'error': str(e)})
 
 @promo_bp.route('/delete_file/<promo_code>/<file_type>', methods=['POST'])
+@role_required('pam_users')
 def delete_file(promo_code, file_type):
     """Delete an uploaded file for a promotion"""
     try:
@@ -1851,6 +1882,7 @@ def delete_file(promo_code, file_type):
         return jsonify({'success': False, 'error': str(e)})
 
 @promo_bp.route('/download_file/<promo_code>/<file_type>')
+@role_required('pam_users')
 def download_file(promo_code, file_type):
     """Download uploaded files for a promotion"""
     try:
@@ -1877,6 +1909,7 @@ def download_file(promo_code, file_type):
         return redirect(url_for('promo.edit_promo', promo_code=promo_code))
 
 @promo_bp.route('/download_sql/<promo_code>')
+@role_required('pam_users')
 def download_sql(promo_code):
     """Download generated SQL for a promotion"""
     try:
@@ -1911,6 +1944,7 @@ def download_sql(promo_code):
         return redirect(url_for('promo.edit_promo', promo_code=promo_code))
 
 @promo_bp.route('/get_full_sql/<promo_code>')
+@role_required('pam_users')
 def get_full_sql(promo_code):
     """Get the full SQL for a promotion via AJAX"""
     try:
@@ -1933,6 +1967,7 @@ def get_full_sql(promo_code):
         return jsonify({'success': False, 'error': str(e)})
 
 @promo_bp.route('/get-promo-codes', methods=['GET','POST'], endpoint='get_promo_codes_page')
+@role_required('pam_users')
 def get_promo_codes_page():
     """Blueprint version of get_promo_codes (RDC & SPE)"""
     dm = _ensure_data_manager()

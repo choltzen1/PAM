@@ -1,4 +1,5 @@
 from flask import Blueprint, render_template, redirect, url_for
+from auth import role_required
 
 core_bp = Blueprint('core', __name__)
 
@@ -7,6 +8,7 @@ def home_page():
     return redirect(url_for('core.landing'))
 
 @core_bp.route('/PAM_homepage', endpoint='PAM_homepage')
+@role_required('pam_viewonly')
 def pam_homepage():
     """Primary navigation landing page (formerly index)."""
     return render_template('pam/PAM_homepage.html')

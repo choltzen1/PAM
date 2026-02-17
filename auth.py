@@ -34,14 +34,14 @@ AZURE_ROLE_MAPPING = {
 # Role hierarchy and permissions
 # PAM_Admin: Full administrative control, overriding system controls
 # PAM_Approvers: View only + one approval button (device finance and revenue accounting)
-# PAM_Users: Full edit access - promo owners to configure promotions
-# PAM_ViewOnly: Reviewers and audit - read only
+# PAM_Users: Full edit access - promo owners to configure promotions + research access
+# PAM_ViewOnly: Reviewers and audit - read only (PAM homepage + reviewers tab only)
 # PAM_Research: Only access to research workspaces (analysts and issues research)
 # PAM_Offers: Only access to offers workspace (offers owners / offers ops team)
 ROLE_HIERARCHY = {
     'pam_admin': ['pam_admin', 'pam_approvers', 'pam_users', 'pam_viewonly', 'pam_research', 'pam_offers'],
     'pam_approvers': ['pam_approvers', 'pam_viewonly'],
-    'pam_users': ['pam_users', 'pam_viewonly'],
+    'pam_users': ['pam_users', 'pam_viewonly', 'pam_research'],
     'pam_viewonly': ['pam_viewonly'],
     'pam_research': ['pam_research'],
     'pam_offers': ['pam_offers'],
@@ -69,12 +69,14 @@ def get_user_from_headers() -> Optional[Dict[str, Any]]:
         # Return a default dev user if configured
         if os.getenv('DEV_MODE') == 'true':
             logger.info("Dev mode: Using default dev user")
+            # DEV_USER_ROLE can be: pam_admin, pam_users, pam_viewonly, pam_research, pam_offers
+            dev_role = os.getenv('DEV_USER_ROLE', 'pam_admin')
             return {
                 'name': os.getenv('DEV_USER_NAME', 'Dev User'),
                 'email': os.getenv('DEV_USER_EMAIL', 'dev@example.com'),
                 'id': 'dev-user-id',
                 'groups': [],
-                'roles': ['admin'],  # Dev user gets admin by default
+                'roles': [dev_role],
             }
         return None
     

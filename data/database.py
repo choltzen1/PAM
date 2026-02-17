@@ -49,64 +49,145 @@ class DatabaseManager:
         # No-op: SQL Server should host diagnostic tables. See sql/create_promo_history_denormalized.sql
         logger.debug("_ensure_diag_tables: local SQLite deprecated; ensure SQL Server tables exist instead")
     
-    def get_engine(self):
-        """Create and return SQLAlchemy engine"""
-        if self._engine is None:
+    def reset_engine(self):
+        """Dispose existing engine and force fresh connection on next use.
+        
+        Use this when you suspect stale/broken connections (common with Azure Hybrid Connection).
+        """
+        if self._engine:
             try:
-                server_part = self.server  # Port (if any) is already embedded in server value
-                # Build raw ODBC string
-                odbc_elems = [
-                    f'DRIVER={{{self.driver}}}',
-                    f'SERVER={server_part}',
-                    f'DATABASE={self.database}'
-                ]
-                if self.username:
-                    odbc_elems.append(f'UID={self.username}')
-                    odbc_elems.append(f'PWD={self.password}')
-                else:
-                    # Integrated security fallback (Windows auth)
-                    odbc_elems.append('Trusted_Connection=yes')
-                if self.encrypt in ('yes','true','1'):
-                    odbc_elems.append('Encrypt=yes')
-                else:
-                    odbc_elems.append('Encrypt=no')
-                if self.trust_cert in ('yes','true','1'):
-                    odbc_elems.append('TrustServerCertificate=yes')
-                odbc_elems.append(f'LoginTimeout={self.timeout}')
-                odbc_str = ';'.join(odbc_elems)
-                masked = odbc_str.replace(self.password, '***') if self.password else odbc_str
-                logger.info(f"Attempting DB connect with: {masked}")
-                params = urllib.parse.quote_plus(odbc_str)
-                # Tune connection pooling: adjust via env if needed
-                pool_size = int(os.getenv('SQLALCHEMY_POOL_SIZE', '10'))
-                max_overflow = int(os.getenv('SQLALCHEMY_MAX_OVERFLOW', '10'))
-                recycle = int(os.getenv('SQLALCHEMY_POOL_RECYCLE', '1800'))  # seconds
-                logger.info(f"SQLAlchemy pool configured: pool_size={pool_size} max_overflow={max_overflow} recycle={recycle}s pre_ping=True")
-                self._engine = create_engine(
-                    f'mssql+pyodbc:///?odbc_connect={params}',
-                    pool_pre_ping=True,
-                    pool_recycle=recycle,
-                    pool_size=pool_size,
-                    max_overflow=max_overflow
-                )
-                # Test connection (duplicate code removed)
-                with self._engine.connect() as conn:
-                    conn.execute(text("SELECT 1"))
-                logger.info("Database connection established ✅")
+                self._engine.dispose()
+                logger.info("Database engine disposed, connection pool cleared")
             except Exception as e:
-                logger.error(f"Failed to connect to database: {e}")
-                logger.error("Troubleshooting tips: 1) Verify server/port reachable (ping / Test-NetConnection) 2) Confirm ODBC driver installed 3) Check firewall/VPN 4) Validate credentials.")
-                raise
+                logger.warning(f"Error disposing engine: {e}")
+            self._engine = None
+    
+    def get_engine(self, retry_count: int = 3, retry_delay: float = 2.0):
+        """Create and return SQLAlchemy engine with retry logic for Azure resilience.
+        
+        Args:
+            retry_count: Number of connection attempts (default 3)
+            retry_delay: Seconds between retries (default 2.0)
+        """
+        if self._engine is None:
+            import time
+            last_error = None
+            
+            for attempt in range(1, retry_count + 1):
+                try:
+                    server_part = self.server  # Port (if any) is already embedded in server value
+                    # Build raw ODBC string
+                    odbc_elems = [
+                        f'DRIVER={{{self.driver}}}',
+                        f'SERVER={server_part}',
+                        f'DATABASE={self.database}'
+                    ]
+                    if self.username:
+                        odbc_elems.append(f'UID={self.username}')
+                        odbc_elems.append(f'PWD={self.password}')
+                    else:
+                        # Integrated security fallback (Windows auth)
+                        odbc_elems.append('Trusted_Connection=yes')
+                    if self.encrypt in ('yes','true','1'):
+                        odbc_elems.append('Encrypt=yes')
+                    else:
+                        odbc_elems.append('Encrypt=no')
+                    if self.trust_cert in ('yes','true','1'):
+                        odbc_elems.append('TrustServerCertificate=yes')
+                    odbc_elems.append(f'LoginTimeout={self.timeout}')
+                    odbc_str = ';'.join(odbc_elems)
+                    masked = odbc_str.replace(self.password, '***') if self.password else odbc_str
+                    
+                    if attempt == 1:
+                        logger.info(f"Attempting DB connect with: {masked}")
+                    else:
+                        logger.info(f"DB connection retry attempt {attempt}/{retry_count}")
+                    
+                    params = urllib.parse.quote_plus(odbc_str)
+                    # Tune connection pooling: adjust via env if needed
+                    pool_size = int(os.getenv('SQLALCHEMY_POOL_SIZE', '10'))
+                    max_overflow = int(os.getenv('SQLALCHEMY_MAX_OVERFLOW', '10'))
+                    recycle = int(os.getenv('SQLALCHEMY_POOL_RECYCLE', '1800'))  # seconds
+                    
+                    if attempt == 1:
+                        logger.info(f"SQLAlchemy pool configured: pool_size={pool_size} max_overflow={max_overflow} recycle={recycle}s pre_ping=True")
+                    
+                    self._engine = create_engine(
+                        f'mssql+pyodbc:///?odbc_connect={params}',
+                        pool_pre_ping=True,
+                        pool_recycle=recycle,
+                        pool_size=pool_size,
+                        max_overflow=max_overflow
+                    )
+                    # Test connection
+                    with self._engine.connect() as conn:
+                        conn.execute(text("SELECT 1"))
+                    logger.info("Database connection established ✅")
+                    return self._engine
+                    
+                except Exception as e:
+                    last_error = e
+                    self._engine = None  # Reset on failure
+                    
+                    # Check if error is retryable (network/timeout issues)
+                    error_str = str(e).lower()
+                    is_retryable = any(hint in error_str for hint in [
+                        'timeout', 'timed out', 'network', 'connection', 
+                        'tcp', 'communication link', 'server is not found',
+                        'cannot open database', 'login timeout'
+                    ])
+                    
+                    if attempt < retry_count and is_retryable:
+                        logger.warning(f"Connection attempt {attempt} failed (retryable): {e}")
+                        logger.info(f"Retrying in {retry_delay}s...")
+                        time.sleep(retry_delay)
+                        retry_delay *= 1.5  # Exponential backoff
+                    else:
+                        logger.error(f"Failed to connect to database (attempt {attempt}): {e}")
+                        if not is_retryable:
+                            logger.error("Error is not retryable (likely credentials or config issue)")
+                        break
+            
+            # All retries exhausted
+            logger.error("Troubleshooting tips: 1) Verify server/port reachable (ping / Test-NetConnection) 2) Confirm ODBC driver installed 3) Check firewall/VPN 4) Validate credentials.")
+            logger.error("For Azure App Service: Check Hybrid Connection Manager status in Azure Portal > Networking")
+            raise last_error
         
         return self._engine
     
-    def get_dataframe(self, sql: str, params: Optional[dict] = None) -> pd.DataFrame:
-        """Execute SQL query and return DataFrame"""
+    def _is_transient_error(self, error: Exception) -> bool:
+        """Check if an error is transient and worth retrying."""
+        error_str = str(error).lower()
+        return any(hint in error_str for hint in [
+            'timeout', 'timed out', 'network', 'communication link',
+            'tcp', 'server is not found', 'connection', 'link failure',
+            'cannot open database', 'login timeout', 'transport-level error',
+            'a network-related or instance-specific error'
+        ])
+    
+    def get_dataframe(self, sql: str, params: Optional[dict] = None, retry_on_failure: bool = True) -> pd.DataFrame:
+        """Execute SQL query and return DataFrame with transient error retry.
+        
+        Args:
+            sql: SQL query to execute
+            params: Optional query parameters
+            retry_on_failure: If True, retry once with fresh connection on transient errors
+        """
         try:
             engine = self.get_engine()
             with engine.connect() as conn:
                 return pd.read_sql(text(sql), conn, params=params or {})
         except Exception as e:
+            if retry_on_failure and self._is_transient_error(e):
+                logger.warning(f"Query failed with transient error, retrying with fresh connection: {e}")
+                self.reset_engine()
+                try:
+                    engine = self.get_engine()
+                    with engine.connect() as conn:
+                        return pd.read_sql(text(sql), conn, params=params or {})
+                except Exception as retry_error:
+                    logger.error(f"Query retry also failed: {retry_error}")
+                    raise retry_error
             logger.error(f"Query execution failed: {str(e)}")
             raise
     
