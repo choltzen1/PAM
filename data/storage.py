@@ -8,6 +8,7 @@ from werkzeug.datastructures import FileStorage
 from werkzeug.utils import secure_filename
 from .database import DatabaseManager
 from .field_map import FIELD_DB_MAP, READ_ONLY_FIELDS, EDITABLE_CANONICAL_FIELDS
+from .version_history import log_version_event
 
 
 class PromoDataManager:
@@ -410,6 +411,7 @@ class PromoDataManager:
             base_record = self.db_manager.get_promo_by_code(promo_code) or {}
         except Exception:
             base_record = {}
+        is_new_promo = not bool(base_record)
 
         if not base_record:
             # Attempt minimal creation (Orbit-less) for test harness / admin utilities.
@@ -524,7 +526,43 @@ class PromoDataManager:
                 if changed_fields:
                     human_list = ', '.join(changed_fields[:10]) + ('...' if len(changed_fields) > 10 else '')
                     description = f"Edited fields: {human_list}"
-                    # Version history storage removed; no history event will be recorded here.
+                    _ = description
+
+        # 7. Version history events
+        if is_new_promo:
+            created_snapshot = {
+                'orbit_id': (new_base.get('orbit_id') if new_base else None) or promo_data.get('orbit_id'),
+                'promo_code': promo_code,
+                'promo_owner': (new_base.get('Owner') if new_base else None) or promo_data.get('Owner') or promo_data.get('owner'),
+                'promo_type': (new_base.get('Desired_Execution') if new_base else None) or promo_data.get('Desired_Execution') or promo_data.get('promo_type')
+            }
+            log_version_event(
+                promo_code=promo_code,
+                promo_id=promo_code,
+                orbit_id=created_snapshot.get('orbit_id'),
+                promo_owner=created_snapshot.get('promo_owner'),
+                promo_type=created_snapshot.get('promo_type'),
+                event_type='created',
+                actor=user_name,
+                source='save_promo',
+                created_snapshot=created_snapshot
+            )
+        elif changed_fields:
+            changed_payload = {
+                k: {'from': diff[k].get('old'), 'to': diff[k].get('new')}
+                for k in changed_fields
+            }
+            log_version_event(
+                promo_code=promo_code,
+                promo_id=promo_code,
+                orbit_id=new_base.get('orbit_id') if new_base else None,
+                promo_owner=new_base.get('Owner') if new_base else None,
+                promo_type=new_base.get('Desired_Execution') if new_base else None,
+                event_type='modified',
+                actor=user_name,
+                source='save_promo',
+                changed_fields=changed_payload
+            )
 
         return {
             'success': True,

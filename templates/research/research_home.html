@@ -16,22 +16,23 @@
     }
     
     .landing-wrapper {
-      max-width: 1200px;
+      width: 96vw;
+      max-width: 2000px;
       margin: 0 auto;
-      padding: 1.5rem;
-      height: 100%;
+      padding: clamp(1rem, 2.5vh, 3rem) clamp(1.25rem, 3vw, 4rem);
       display: flex;
       flex-direction: column;
-      gap: 2rem;
+      gap: clamp(1.5rem, 2.5vh, 3rem);
+      box-sizing: border-box;
     }
     
     .hero-compact {
-      border-radius: 16px;
-      padding: 2.5rem 3rem;
+      border-radius: clamp(12px, 1.2vw, 22px);
+      padding: clamp(1.5rem, 2.5vh, 3.5rem) clamp(1.5rem, 3vw, 4rem);
       display: grid;
       grid-template-columns: auto 1fr auto;
       align-items: center;
-      gap: 2.5rem;
+      gap: clamp(1.5rem, 2.5vw, 3rem);
     }
     
     html:not([data-theme='dark']) .hero-compact {
@@ -48,12 +49,12 @@
     }
     
     .hero-logo {
-      height: 90px;
+      height: clamp(70px, 8vh, 130px);
       width: auto;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 3rem;
+      font-size: clamp(2.25rem, 3.2vw, 4rem);
       color: #E20074;
     }
     
@@ -67,7 +68,7 @@
     }
     
     .hero-content h1 {
-      font-size: 2.25rem;
+      font-size: clamp(1.5rem, 2.4vw, 3rem);
       font-weight: 700;
       margin: 0 0 0.5rem 0;
       letter-spacing: -0.5px;
@@ -82,7 +83,7 @@
     }
     
     .hero-content p {
-      font-size: 1rem;
+      font-size: clamp(0.9rem, 1.1vw, 1.4rem);
       margin: 0;
       line-height: 1.5;
     }
@@ -114,7 +115,7 @@
     }
     
     .stat-value {
-      font-size: 1.75rem;
+      font-size: clamp(1.5rem, 2.2vw, 2.8rem);
       font-weight: 700;
       color: #E20074;
       display: block;
@@ -125,7 +126,7 @@
     }
     
     .stat-label {
-      font-size: 0.75rem;
+      font-size: clamp(0.65rem, 0.8vw, 1rem);
       text-transform: uppercase;
       letter-spacing: 0.5px;
     }
@@ -139,15 +140,15 @@
     }
     
     .workspaces-section {
-      flex: 1;
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 1.5rem;
+      gap: clamp(1.25rem, 2vw, 3rem);
       align-content: start;
+      align-items: start;
     }
     
     .workspace-card {
-      border-radius: 10px;
+      border-radius: clamp(8px, 0.8vw, 16px);
       padding: 0;
       text-decoration: none;
       display: grid;
@@ -155,7 +156,7 @@
       transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
       overflow: hidden;
       position: relative;
-      min-height: 240px;
+      min-height: 0;
       cursor: pointer;
     }
     
@@ -198,20 +199,20 @@
     }
     
     .card-header-row {
-      padding: 1.25rem 1.25rem 0.5rem 1.25rem;
+      padding: clamp(1rem, 1.5vw, 2rem) clamp(1rem, 1.5vw, 2rem) clamp(0.5rem, 1vw, 1.25rem) clamp(1rem, 1.5vw, 2rem);
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
     }
     
     .card-icon-wrapper {
-      height: 56px;
-      width: 56px;
+      height: clamp(48px, 4.5vw, 76px);
+      width: clamp(48px, 4.5vw, 76px);
       display: flex;
       align-items: center;
       justify-content: center;
       border-radius: 8px;
-      font-size: 1.5rem;
+      font-size: clamp(1.25rem, 1.6vw, 2rem);
     }
     
     html:not([data-theme='dark']) .card-icon-wrapper {
@@ -270,21 +271,21 @@
     }
     
     .card-body {
-      padding: 0.75rem 1.25rem;
+      padding: 0 clamp(1rem, 1.5vw, 2rem) clamp(0.5rem, 1vw, 1.25rem) clamp(1rem, 1.5vw, 2rem);
       display: flex;
       flex-direction: column;
-      gap: 0.5rem;
+      gap: clamp(0.3rem, 0.5vw, 0.6rem);
     }
     
     .card-title {
-      font-size: 1.1rem;
+      font-size: clamp(1.1rem, 1.4vw, 1.9rem);
       font-weight: 700;
       margin: 0;
       letter-spacing: -0.3px;
     }
     
     .card-subtitle {
-      font-size: 0.75rem;
+      font-size: clamp(0.7rem, 0.85vw, 0.95rem);
       text-transform: uppercase;
       letter-spacing: 0.8px;
       margin: 0;
@@ -300,7 +301,7 @@
     }
     
     .card-description {
-      font-size: 0.875rem;
+      font-size: clamp(0.85rem, 1.05vw, 1.2rem);
       line-height: 1.6;
       margin: 0;
     }
@@ -314,7 +315,7 @@
     }
     
     .card-footer-row {
-      padding: 0 1.25rem 1.25rem 1.25rem;
+      padding: 0 clamp(1rem, 1.5vw, 2rem) clamp(1rem, 1.5vw, 2rem) clamp(1rem, 1.5vw, 2rem);
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -323,8 +324,8 @@
     
     .card-meta {
       display: flex;
-      gap: 1.25rem;
-      font-size: 0.7rem;
+      gap: clamp(0.9rem, 1.2vw, 1.4rem);
+      font-size: clamp(0.65rem, 0.75vw, 0.9rem);
     }
     
     html:not([data-theme='dark']) .card-meta {
@@ -342,7 +343,7 @@
     }
     
     .meta-item i {
-      font-size: 0.75rem;
+      font-size: clamp(0.7rem, 0.8vw, 0.95rem);
     }
     
     .card-cta {
@@ -350,9 +351,9 @@
       align-items: center;
       gap: 0.5rem;
       font-weight: 600;
-      font-size: 0.8rem;
+      font-size: clamp(0.75rem, 0.9vw, 1.1rem);
       transition: all 0.18s ease;
-      padding: 0.4rem 0.8rem;
+      padding: clamp(0.35rem, 0.5vw, 0.6rem) clamp(0.7rem, 1vw, 1.2rem);
       border-radius: 6px;
       border: 1px solid transparent;
     }

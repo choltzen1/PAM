@@ -4,6 +4,9 @@ from werkzeug.utils import secure_filename
 import os
 from typing import Optional, TYPE_CHECKING, Dict, Any
 from services.mail_service import MailService
+from sqlalchemy import text
+from data.database import DatabaseManager
+from data.version_history import log_version_event, get_next_sql_gen_count
 
 if TYPE_CHECKING:
     from data.storage import PromoDataManager
@@ -68,6 +71,151 @@ def _get_current_user_name() -> str | None:
     except Exception:
         pass
     return None
+
+def _format_dt(value) -> str:
+    if not value:
+        return ''
+    try:
+        return value.strftime('%Y-%m-%d %H:%M:%S')
+    except Exception:
+        return str(value)
+
+def _parse_json(value):
+    if value in (None, ''):
+        return None
+    if isinstance(value, (dict, list)):
+        return value
+    try:
+        return json.loads(value)
+    except Exception:
+        return None
+
+@promo_bp.route('/version-history', endpoint='version_history')
+def version_history_page():
+    page = request.args.get('page', 1, type=int)
+    per_page = request.args.get('per_page', 50, type=int)
+    search = (request.args.get('search', '', type=str) or '').strip()
+    owner_filter = (request.args.get('owner', 'all', type=str) or 'all').strip()
+    per_page = max(1, min(per_page, 200))
+    offset = (page - 1) * per_page
+
+    dm = DatabaseManager()
+    engine = dm.get_engine()
+
+    where_clauses = []
+    params: Dict[str, Any] = {}
+    if search:
+        params['search'] = f"%{search}%"
+        where_clauses.append("(promo_code LIKE :search OR promo_owner LIKE :search OR orbit_id LIKE :search OR promo_id LIKE :search)")
+    if owner_filter and owner_filter.lower() != 'all':
+        params['owner'] = owner_filter
+        where_clauses.append("promo_owner = :owner")
+    where_sql = f"WHERE {' AND '.join(where_clauses)}" if where_clauses else ""
+
+    owners_sql = "SELECT DISTINCT promo_owner FROM PAM.Version_History WHERE promo_owner IS NOT NULL ORDER BY promo_owner"
+    count_sql = f"SELECT COUNT(DISTINCT promo_code) AS total_items FROM PAM.Version_History {where_sql}"
+    list_sql = f"""
+        WITH filtered AS (
+            SELECT * FROM PAM.Version_History {where_sql}
+        ), latest AS (
+            SELECT *, ROW_NUMBER() OVER (PARTITION BY promo_code ORDER BY event_ts DESC, id DESC) AS rn
+            FROM filtered
+        )
+        SELECT promo_id, promo_code, orbit_id, promo_owner, promo_type, event_type, event_ts
+        FROM latest
+        WHERE rn = 1
+        ORDER BY event_ts DESC
+        OFFSET :offset ROWS FETCH NEXT :limit ROWS ONLY
+    """
+
+    params_page = dict(params)
+    params_page.update({'offset': offset, 'limit': per_page})
+
+    with engine.connect() as conn:
+        owners_rows = conn.execute(text(owners_sql)).fetchall()
+        owners = [r[0] for r in owners_rows if r and r[0]]
+
+        total_items = conn.execute(text(count_sql), params).scalar() or 0
+        promo_rows = conn.execute(text(list_sql), params_page).mappings().all()
+
+        promo_codes = [r['promo_code'] for r in promo_rows if r.get('promo_code')]
+        events_by_code: Dict[str, list] = {}
+        if promo_codes:
+            placeholders = []
+            events_params: Dict[str, Any] = {}
+            for i, code in enumerate(promo_codes):
+                key = f"code{i}"
+                placeholders.append(f":{key}")
+                events_params[key] = code
+            events_sql = f"""
+                SELECT id, promo_id, promo_code, orbit_id, promo_owner, promo_type,
+                       event_type, event_ts, actor, source,
+                       version_number, sql_gen_count,
+                       approval_request_id, approval_status, approval_recipient, approval_response_ts,
+                       changed_fields, created_snapshot
+                FROM PAM.Version_History
+                WHERE promo_code IN ({', '.join(placeholders)})
+                ORDER BY promo_code, event_ts DESC, id DESC
+            """
+            event_rows = conn.execute(text(events_sql), events_params).mappings().all()
+            for row in event_rows:
+                code = row.get('promo_code') or ''
+                ev = {
+                    'promo_id': row.get('promo_id'),
+                    'promo_code': row.get('promo_code'),
+                    'orbit_id': row.get('orbit_id'),
+                    'promo_owner': row.get('promo_owner'),
+                    'promo_type': row.get('promo_type'),
+                    'event_type': (row.get('event_type') or '').lower(),
+                    'event_ts': _format_dt(row.get('event_ts')),
+                    'actor': row.get('actor'),
+                    'source': row.get('source'),
+                    'version_number': row.get('version_number'),
+                    'sql_gen_count': row.get('sql_gen_count'),
+                    'approval_request_id': row.get('approval_request_id'),
+                    'approval_status': row.get('approval_status'),
+                    'approval_recipient': row.get('approval_recipient'),
+                    'approval_response_ts': _format_dt(row.get('approval_response_ts')),
+                    'changed_fields': _parse_json(row.get('changed_fields')),
+                    'created_snapshot': _parse_json(row.get('created_snapshot')),
+                }
+                events_by_code.setdefault(code, []).append(ev)
+
+    promotions = []
+    for row in promo_rows:
+        code = row.get('promo_code')
+        promotions.append({
+            'promo_id': row.get('promo_id'),
+            'promo_code': code,
+            'orbit_id': row.get('orbit_id'),
+            'promo_owner': row.get('promo_owner'),
+            'promo_type': row.get('promo_type'),
+            'latest_event_type': (row.get('event_type') or '').lower(),
+            'latest_event_ts': _format_dt(row.get('event_ts')),
+            'events': events_by_code.get(code, [])
+        })
+
+    total_pages = (total_items + per_page - 1) // per_page if per_page else 0
+    pagination = {
+        'page': page,
+        'per_page': per_page,
+        'total_items': total_items,
+        'total_pages': total_pages,
+        'has_prev': page > 1,
+        'has_next': page < total_pages,
+        'prev_num': max(1, page - 1),
+        'next_num': min(total_pages, page + 1),
+    }
+
+    return render_template(
+        'pam/version_history.html',
+        promotions=promotions,
+        pagination=pagination,
+        owners=owners,
+        selected_owner=owner_filter,
+        search_query=search,
+        user_name=_get_current_user_name()
+    )
 
 # --- Primary RDC list route (legacy /promotions removed) ---
 @promo_bp.route('/rdc', endpoint='rdc_page')
@@ -911,8 +1059,25 @@ def send_approval_email():
         
         if result['success']:
             # Track this approval request for later reply
-            from data.approval_email_tracking import store_approval_request
+            from data.approval_email_tracking import store_approval_request, generate_tracking_id
             store_approval_request(promo_code, version_number, subject, 'cade.holtzen1@t-mobile.com')
+            try:
+                tracking_id = generate_tracking_id(promo_code, version_number)
+                log_version_event(
+                    promo_code=promo_code,
+                    promo_id=promo_code,
+                    orbit_id=promo_data.get('orbit_id'),
+                    promo_owner=promo_data.get('promo_owner') or promo_data.get('Owner') or promo_data.get('owner'),
+                    promo_type=promo_data.get('Desired_Execution'),
+                    event_type='approval_sent',
+                    actor=_get_current_user_name() or 'System',
+                    source='approval_email',
+                    approval_request_id=tracking_id,
+                    approval_status='sent',
+                    approval_recipient='cade.holtzen1@t-mobile.com'
+                )
+            except Exception:
+                pass
             
             # Send trade devices email if trade is selected
             if send_trade:
@@ -979,7 +1144,7 @@ def approve_promo():
         promo_desired_execution = promo_data.get('Desired_Execution', 'Unknown')
         
         # Get the original approval request's mail ID for threading
-        from data.approval_email_tracking import get_approval_tracking, store_approval_reply
+        from data.approval_email_tracking import get_approval_tracking, store_approval_reply, generate_tracking_id
         tracking = get_approval_tracking(promo_code, version_number)
         request_mail_id = tracking.get('request_mail_id') if tracking else None
         
@@ -1001,6 +1166,25 @@ def approve_promo():
         if result['success']:
             # Track this approval reply
             store_approval_reply(promo_code, version_number)
+            try:
+                tracking_id = generate_tracking_id(promo_code, version_number)
+                from datetime import datetime
+                log_version_event(
+                    promo_code=promo_code,
+                    promo_id=promo_code,
+                    orbit_id=promo_data.get('orbit_id'),
+                    promo_owner=promo_data.get('promo_owner') or promo_data.get('Owner') or promo_data.get('owner'),
+                    promo_type=promo_data.get('Desired_Execution'),
+                    event_type='approved',
+                    actor=_get_current_user_name() or 'System',
+                    source='approval_email',
+                    approval_request_id=tracking_id,
+                    approval_status='approved',
+                    approval_recipient=_get_current_user_name() or 'System',
+                    approval_response_ts=datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
+                )
+            except Exception:
+                pass
             
             return jsonify({'success': True, 'message': f'Approval sent for {promo_code} Version #{version_number}'}), 200
         else:
@@ -1061,6 +1245,28 @@ def reject_promo():
         )
 
         if result['success']:
+            try:
+                from data.approval_email_tracking import generate_tracking_id
+                from datetime import datetime
+                tracking_id = generate_tracking_id(promo_code, version_number)
+                log_version_event(
+                    promo_code=promo_code,
+                    promo_id=promo_code,
+                    orbit_id=promo_data.get('orbit_id'),
+                    promo_owner=promo_data.get('promo_owner') or promo_data.get('Owner') or promo_data.get('owner'),
+                    promo_type=promo_data.get('Desired_Execution'),
+                    event_type='rejected',
+                    actor=_get_current_user_name() or 'System',
+                    source='approval_email',
+                    version_number=int(version_number) if str(version_number).isdigit() else None,
+                    approval_request_id=tracking_id,
+                    approval_status='rejected',
+                    approval_recipient=_get_current_user_name() or 'System',
+                    approval_response_ts=datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S'),
+                    changed_fields={'rejection_notes': {'from': None, 'to': reason}}
+                )
+            except Exception:
+                pass
             return jsonify({'success': True, 'message': f'Rejection sent for {promo_code} Version #{version_number}'}), 200
         else:
             return jsonify({'success': False, 'message': result['message']}), 500
@@ -1077,6 +1283,7 @@ def reviewers_page(promo_code):
     dm = _ensure_data_manager()
     promo_data = None
     error_message = None
+    pcr_versions = []
     if promo_code:
         promo_code_upper = promo_code.upper()
         promo_data = dm.get_promo(promo_code_upper)
@@ -1085,7 +1292,37 @@ def reviewers_page(promo_code):
             promo_data = spe_promos.get(promo_code_upper)
         if not promo_data:
             error_message = f"Promotion code '{promo_code}' not found"
-    return render_template('pam/reviewers.html', promo_code=promo_code, promo_data=promo_data, error_message=error_message)
+        else:
+            try:
+                dbm = DatabaseManager()
+                engine = dbm.get_engine()
+                sql = (
+                    "SELECT version_number, event_ts "
+                    "FROM PAM.Version_History "
+                    "WHERE promo_code = :promo_code AND event_type = 'pcr_generated' "
+                    "ORDER BY event_ts DESC, id DESC"
+                )
+                with engine.connect() as conn:
+                    rows = conn.execute(text(sql), {'promo_code': promo_code_upper}).fetchall()
+                for row in rows:
+                    version_number = row[0]
+                    event_ts = row[1]
+                    try:
+                        ts_display = event_ts.strftime('%Y-%m-%d %H:%M:%S') if event_ts else ''
+                    except Exception:
+                        ts_display = str(event_ts) if event_ts else ''
+                    if version_number is not None:
+                        pcr_versions.append({'version_number': int(version_number), 'event_ts': ts_display})
+            except Exception:
+                pcr_versions = []
+    return render_template(
+        'pam/reviewers.html',
+        promo_code=promo_code,
+        promo_data=promo_data,
+        error_message=error_message,
+        pcr_versions=pcr_versions,
+        user_name=_get_current_user_name()
+    )
 
 @promo_bp.route('/links', endpoint='links_main_page')
 def links_main_page():
@@ -1303,7 +1540,23 @@ def _edit_rdc(promo_code):
                 except Exception as save_err:
                     print(f"[SQL GEN][WRITE][ERROR] File save failed for {promo_code}: {save_err}")
                     flash(f"SQL file save failed: {save_err}", 'warning')
-                # Version history removed: no PCR version recorded
+                # Record PCR generation in version history
+                try:
+                    next_count = get_next_sql_gen_count(promo_code)
+                    log_version_event(
+                        promo_code=promo_code,
+                        promo_id=promo_code,
+                        orbit_id=db_snapshot.get('orbit_id'),
+                        promo_owner=db_snapshot.get('Owner') or db_snapshot.get('owner'),
+                        promo_type=db_snapshot.get('Desired_Execution'),
+                        event_type='pcr_generated',
+                        actor=_get_current_user_name() or 'System',
+                        source='sql_generation',
+                        version_number=next_count,
+                        sql_gen_count=next_count
+                    )
+                except Exception:
+                    pass
                 # Performance + summary flash
                 flash(f"SQL generated in {generation_time:.2f}s | {len(sql_content):,} chars", 'success')
                 # Force tab to SQL Generation

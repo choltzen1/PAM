@@ -20,6 +20,7 @@ from data.sku_group_tracking import (
     record_issued_sku_group_id,
     next_sku_group_id_progressive,
 )
+from data.version_history import log_version_event
 
 # Issued code tracking (reuse existing helper location if available)
 try:
@@ -187,7 +188,23 @@ class PromoCodeWorkflow:
             record_issued_sku_group_id(allocated_sku_group_id)
         except Exception:
             pass
-        # Version history removed: no creation event recorded
+        created_snapshot = {
+            'orbit_id': oid,
+            'promo_code': new_code,
+            'promo_owner': insertion.get('Owner') or user,
+            'promo_type': execution_type
+        }
+        log_version_event(
+            promo_code=new_code,
+            promo_id=new_code,
+            orbit_id=oid,
+            promo_owner=created_snapshot.get('promo_owner'),
+            promo_type=created_snapshot.get('promo_type'),
+            event_type='created',
+            actor=user,
+            source='create_from_orbit',
+            created_snapshot=created_snapshot
+        )
         db_record = self.db.get_promo_by_code(new_code) or {}
         payload = self.db.convert_db_record_to_json_format(db_record)
         payload['success'] = True

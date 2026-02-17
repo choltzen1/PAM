@@ -636,3 +636,11 @@ html:not([data-theme='dark']) .pam-hero-logo {
 html[data-theme='dark'] .pam-hero-logo {
   filter: drop-shadow(0 0 12px rgba(226,0,116,0.8)) drop-shadow(0 0 24px rgba(226,0,116,0.4));
 }
+
+/* Large screens: widen hero banner and scale text/logo only */
+@media (min-width: 1400px) {
+  .hub-hero-banner.wide { max-width: 1600px; }
+  .hub-hero-banner.slim h1 { font-size: 2.3rem; }
+  .hero-desc { font-size: 1.15rem; }
+  .pam-hero-logo { height: 110px; }
+}

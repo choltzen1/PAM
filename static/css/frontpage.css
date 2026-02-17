@@ -310,6 +310,32 @@ html[data-theme='dark'] .process-label {
   flex-shrink: 0;
 }
 
+/* Large screens: widen and scale process flow only */
+@media (min-width: 1400px) {
+  .process-flow-container {
+    max-width: 1400px;
+    gap: 2.6rem;
+    padding: 1.75rem 1.25rem;
+  }
+
+  .process-icon-container {
+    width: 56px;
+    height: 56px;
+  }
+
+  .process-icon {
+    font-size: 1.35rem;
+  }
+
+  .process-label {
+    font-size: 0.8rem;
+  }
+
+  .process-arrow {
+    font-size: 1.35rem;
+  }
+}
+
 /* Responsive Design for Process Flow */
 @media (max-width: 1200px) {
   .process-flow-container {

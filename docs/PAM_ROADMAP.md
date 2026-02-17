@@ -191,10 +191,10 @@ _Harden the platform for full production use across the promotions team._
 │                        USER (Browser)                           │
 ├─────────────────────────────────────────────────────────────────┤
 │                     Flask / Jinja2 Templates                    │
-│  ┌──────┐ ┌───────┐ ┌──────┐ ┌──────┐ ┌──────────┐              │
-│  │ RDC  │ │  SPE  │ │Rebate│ │Admin │ │ Research │              │
-│  │routes│ │routes │ │routes│ │routes│ │  /PETE   │              │
-│  └──┬───┘ └──┬────┘ └──┬───┘ └──┬───┘ └────┬─────┘              │
+│  ┌──────┐ ┌───────┐ ┌──────┐ ┌──────┐  ┌──────────┐             │
+│  │ RDC  │ │  SPE  │ │Rebate│ │Admin │  │ Research │             │
+│  │routes│ │routes │ │routes│ │routes│  │  /PETE   │             │
+│  └──┬───┘ └──┬────┘ └──┬───┘ └──┬───┘  └────┬─────┘             │
 │     │        │         │        │           │                   │
 │  ┌──▼────────▼─────────▼────────▼───────────▼──────┐            │
 │  │              Services Layer                     │            │
@@ -209,11 +209,11 @@ _Harden the platform for full production use across the promotions team._
 │  │  │ (DB CRUD)  │  │   .py        │  │   .py     │ │           │
 │  │  └─────┬──────┘  └──────┬───────┘  └───────────┘ │           │
 │  │        │                │                        │           │
-│  │  ┌─────▼──────┐  ┌─────▼─────────┐               │           │
-│  │  │ SQL Server │  │ MS Fabric     │               │           │
-│  │  │ PAM DB     │  │ ORBIT Data    │               │           │
-│  │  │            │  │ Warehouse     │               │           │
-│  │  └────────────┘  └───────────────┘               │           │
+│  │  ┌─────▼──────┐   ┌─────▼─────────┐              │           │
+│  │  │ SQL Server │   │ MS Fabric     │              │           │
+│  │  │ PAM DB     │   │ ORBIT Data    │              │           │
+│  │  │            │   │ Warehouse     │              │           │
+│  │  └────────────┘   └───────────────┘              │           │
 │  └──────────────────────────────────────────────────┘           │
 │                                                                 │
 │  ┌──────────────────────────────────────────────────┐           │

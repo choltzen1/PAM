@@ -1,5 +1,4 @@
-{# Fixed base template reference: original edit pointed to non-namespaced pam_base.html which doesn't exist. #}
-{% extends "pam/base_pam.html" %}
+{% extends "pam/pam_base.html" %}
 {% block title %}Version History - PAM{% endblock %}
 
 {% block head %}
@@ -10,7 +9,7 @@
 
 {% block header_left %}
 <div class="global-header-promotions">
-  <i class="fas fa-clock-rotate-left header-icon"></i>
+  <i class="bi bi-tags-fill header-icon"></i>
   <div class="header-text">
     <h2>Version History</h2>
     <p>Track changes and updates to promotions</p>
@@ -19,15 +18,15 @@
 {% endblock %}
 
 {% block header_right %}
-<div class="version-history-header-actions">
-  <span class="version-history-user-label">{{ user_name or 'User: Coming Soon' }}</span>
+<div class="promotions-header-actions">
+  <span class="promotions-user-label">{{ user_name or 'Coming Soon' }}</span>
 </div>
 {% endblock %}
 
 {% block content %}
-<div class="version-history-page">
+<div class="version-history-page promotions-page promotions-page-version-history">
   <!-- Controls row converted to standardized global control group -->
-  <form class="controls-container version-controls control-bar" method="get">
+  <form class="promotions-controls control-bar version-controls" method="get">
     <div class="filter-group">
       <select id="owner-filter" name="owner" onchange="this.form.submit()">
         <option value="all" {% if selected_owner=='all' %}selected{% endif %}>All Owners</option>
@@ -41,13 +40,12 @@
       <input type="text" id="search-input" name="search" placeholder="Promo Code, Owner, or Name" value="{{ search_query }}" />
     </div>
     <div class="action-buttons">
-      <button class="btn" type="button"><i class="fas fa-download"></i> Export History</button>
-      <button class="btn" type="button" onclick="expandAllRows()"><i class="fas fa-expand-arrows-alt"></i> Expand All</button>
-      <button class="btn" type="button" onclick="collapseAllRows()"><i class="fas fa-compress-arrows-alt"></i> Collapse All</button>
-      <a href="{{ url_for('admin_bp.dashboard') }}" class="btn btn-secondary"><i class="fas fa-cogs"></i> Back to Admin</a>
-      <a href="{{ url_for('promo.rdc_page') }}" class="btn btn-primary"><i class="fas fa-tags"></i> View RDC</a>
-      <button class="btn-secondary btn" type="submit"><i class="fas fa-search"></i> Apply</button>
-      <a class="btn-secondary btn" href="?"><i class="fas fa-undo"></i> Reset</a>
+      <button class="btn btn-magenta" type="button"><i class="fas fa-download"></i> Export History</button>
+      <button class="btn btn-secondary" type="button" onclick="expandAllRows()"><i class="fas fa-expand-arrows-alt"></i> Expand All</button>
+      <button class="btn btn-secondary" type="button" onclick="collapseAllRows()"><i class="fas fa-compress-arrows-alt"></i> Collapse All</button>
+      <a href="{{ url_for('promo.rdc_page') }}" class="btn btn-magenta"><i class="fas fa-tags"></i> View RDC</a>
+      <button class="btn btn-magenta" type="submit"><i class="fas fa-search"></i> Apply</button>
+      <a class="btn btn-outline" href="?"><i class="fas fa-undo"></i> Reset</a>
     </div>
     <input type="hidden" name="page" value="1" />
     <input type="hidden" name="per_page" value="{{ pagination.per_page if pagination else 50 }}" />
@@ -102,11 +100,10 @@
             <th width="40px"></th>
             <th data-sort-type="string">Promo Code</th>
             <th data-sort-type="string">Orbit ID</th>
-            <th data-sort-type="string">Status</th>
-            <th data-sort-type="string">Bill Facing Name</th>
-            <th data-sort-type="date">Start Date</th>
-            <th data-sort-type="date">End Date</th>
             <th data-sort-type="string">Promo Owner</th>
+            <th data-sort-type="string">Promo Type</th>
+            <th data-sort-type="string">Latest Event</th>
+            <th data-sort-type="date">Latest Time</th>
           </tr>
         </thead>
         <tbody>
@@ -123,110 +120,100 @@
               </a>
             </td>
             <td>{{ promo.orbit_id }}</td>
-            <td>
-              <span class="status-badge status-phase-{{ promo.status.lower() }}">{{ promo.status }}</span>
-            </td>
-            <td class="bill-facing-name">{{ promo.bill_facing_name }}</td>
-            <td>{{ promo.start_date }}</td>
-            <td>{{ promo.end_date }}</td>
             <td class="promo-owner">{{ promo.promo_owner }}</td>
+            <td>{{ promo.promo_type }}</td>
+            <td>
+              <span class="status-badge status-{{ promo.latest_event_type }}">{{ promo.latest_event_type.replace('_',' ')|title }}</span>
+            </td>
+            <td>{{ promo.latest_event_ts }}</td>
           </tr>
           <tr class="change-history-row hidden-row" id="history-{{ promo.promo_code }}">
-            <td colspan="8">
+            <td colspan="7">
               <div class="change-history-container">
-                <h4><i class="fas fa-history"></i> Change History for {{ promo.promo_code }}</h4>
+                <h4><i class="fas fa-history"></i> Event History for {{ promo.promo_code }}</h4>
                 <div class="changes-timeline">
-                  {% for change in promo.changes %}
-                  {# Derive action_label again for class usage (keep in sync with existing logic) #}
-                  {% set vh = (change.field_changes.version_history if change.field_changes is mapping and change.field_changes.version_history is defined else None) %}
-                  {% set base_created = (change.change_type in ['Created','Create']) %}
-                  {% set is_modified = (change.change_type in ['Modified','Edit']) %}
-                  {% set has_dcd = false %}
-                  {% set has_jira = false %}
-                  {% if change.field_changes %}
-                    {% for fk, fv in change.field_changes.items() %}
-                      {% if fk.startswith('dcd_') %}{% set has_dcd = true %}{% endif %}
-                      {% if fk == 'jira_ticket' %}{% set has_jira = true %}{% endif %}
-                    {% endfor %}
-                  {% endif %}
-                  {% if base_created %}
-                    {% if has_dcd %}
-                      {% set action_label = 'Created DCD Jira Ticket' %}
-                    {% elif has_jira %}
-                      {% set action_label = 'Created Jira Ticket' %}
-                    {% else %}
-                      {% set action_label = 'Created Promo' %}
-                    {% endif %}
-                  {% elif is_modified %}
-                    {% set action_label = 'Updated' %}
-                  {% else %}
-                    {% set action_label = change.change_type %}
-                  {% endif %}
-                  {% set icon_map = {
-                    'Created Promo':'plus',
-                    'Created Jira Ticket':'ticket',
-                    'Created DCD Jira Ticket':'ticket',
-                    'Updated':'pen',
-                    'File Upload':'file-upload',
-                    'SQL Generated':'code',
-                    'PCR Version':'flask',
-                    'Date Mismatch SQL':'exclamation-triangle',
-                    'Deleted':'trash'
+                  {% for event in promo.events %}
+                  {% set label_map = {
+                    'created': 'Created',
+                    'modified': 'Modified',
+                    'pcr_generated': 'PCR Generated',
+                    'approval_sent': 'Approval Sent',
+                    'approved': 'Approved',
+                    'rejected': 'Rejected'
                   } %}
-                  {% set css_key = action_label.lower().replace(' ', '-').replace('dcd-', 'dcd-') %}
+                  {% set icon_map = {
+                    'created': 'plus',
+                    'modified': 'pen',
+                    'pcr_generated': 'code',
+                    'approval_sent': 'paper-plane',
+                    'approved': 'check-circle',
+                    'rejected': 'times-circle'
+                  } %}
+                  {% set css_key = event.event_type.replace('_', '-') %}
                   <div class="change-item {{ css_key }}">
                     <div class="change-icon {{ css_key }}">
-                      <i class="fas fa-{{ icon_map.get(action_label, 'info-circle') }}"></i>
+                      <i class="fas fa-{{ icon_map.get(event.event_type, 'info-circle') }}"></i>
                     </div>
                     <div class="change-content">
-                      {% set vh = (change.field_changes.version_history if change.field_changes is mapping and change.field_changes.version_history is defined else None) %}
-                      {% set vh_summary = (vh.new[0] if vh and vh.new is defined and vh.new) %}
-                      {% if vh_summary %}
-                        {% set vh_parts = vh_summary.split(' - ', 2) %}
-                        {% set header_ts = vh_parts[0] if vh_parts|length > 0 else change.timestamp %}
-                        {% set header_user = vh_parts[1] if vh_parts|length > 1 else change.changed_by %}
-                        {% set header_desc = vh_parts[2] if vh_parts|length > 2 else change.description %}
-                      {% else %}
-                        {% set header_ts = change.timestamp %}
-                        {% set header_user = change.changed_by %}
-                        {% set header_desc = change.description %}
-                      {% endif %}
                       <div class="change-header">
-                        <span class="change-type-badge change-{{ action_label.lower().replace(' ', '-') }}">
-                          {{ action_label }}
+                        <span class="change-type-badge change-{{ css_key }}">
+                          {{ label_map.get(event.event_type, event.event_type|title) }}
                         </span>
-                        <span class="change-timestamp">{{ header_ts }}</span>
-                        <span class="change-user">by {{ header_user or 'Unknown' }}</span>
+                        <span class="change-timestamp">{{ event.event_ts }}</span>
+                        <span class="change-user">by {{ event.actor or 'System' }}</span>
                       </div>
                       <div class="change-description">
-                        {% if change.change_type in ['PCR Version','Date Mismatch SQL'] %}
-                          {{ header_desc }}
-                        {% endif %}
-                        {% if change.change_type in ['PCR Version','Date Mismatch SQL'] and change.field_changes %}
-                          <ul class="pcr-meta">
-                            {% if change.field_changes.version is defined %}<li><strong>Version:</strong> {{ change.field_changes.version }}</li>{% endif %}
-                            {% if change.field_changes.sql_generated_at is defined %}<li><strong>Generated At:</strong> {{ change.field_changes.sql_generated_at }}</li>{% endif %}
-                            {% if change.field_changes.sql_generation_time is defined %}<li><strong>Gen Time:</strong> {{ change.field_changes.sql_generation_time }}s</li>{% endif %}
-                            {% if change.field_changes.sql_length is defined %}<li><strong>Length:</strong> {{ change.field_changes.sql_length }}</li>{% endif %}
-                          </ul>
-                        {% endif %}
-                        {% if change.field_changes %}
-                          {% set rendered_any = false %}
+                        {% if event.event_type == 'created' %}
+                          {% set snap = event.created_snapshot or {} %}
                           <ul class="field-changes">
-                            {% for field, details in change.field_changes.items() %}
-                              {% if field not in ['version_history','updated_at','created_at','last_sync','generated_sql','full_sql','sql_text','pcr_sql','sql_preview','sql_payload','spe_generated_sql'] %}
+                            <li><strong>Orbit ID:</strong> {{ snap.orbit_id or event.orbit_id or '—' }}</li>
+                            <li><strong>Promo Code:</strong> {{ snap.promo_code or event.promo_code or '—' }}</li>
+                            <li><strong>Promo Owner:</strong> {{ snap.promo_owner or event.promo_owner or '—' }}</li>
+                            <li><strong>Promo Type:</strong> {{ snap.promo_type or event.promo_type or '—' }}</li>
+                          </ul>
+                        {% elif event.event_type == 'modified' %}
+                          {% if event.changed_fields %}
+                            <ul class="field-changes">
+                              {% for field, details in event.changed_fields.items() %}
                                 {% if details is mapping %}
-                                  {% set old_val = details.old if (details.old is defined) else (details.before if (details.before is defined) else none) %}
-                                  {% set new_val = details.new if (details.new is defined) else (details.after if (details.after is defined) else none) %}
+                                  {% set old_val = details['from'] if 'from' in details else (details['old'] if 'old' in details else (details['before'] if 'before' in details else none)) %}
+                                  {% set new_val = details['to'] if 'to' in details else (details['new'] if 'new' in details else (details['after'] if 'after' in details else none)) %}
                                   <li>
                                     <strong>{{ field }}:</strong>
                                     {{ old_val if old_val is not none else 'NULL' }} → {{ new_val if new_val is not none else 'NULL' }}
                                   </li>
-                                  {% set rendered_any = true %}
                                 {% endif %}
-                              {% endif %}
-                            {% endfor %}
+                              {% endfor %}
+                            </ul>
+                          {% else %}
+                            <div class="no-field-changes">No field changes captured.</div>
+                          {% endif %}
+                        {% elif event.event_type == 'pcr_generated' %}
+                          <ul class="pcr-meta">
+                            {% if event.version_number is not none %}<li><strong>Version #:</strong> {{ event.version_number }}</li>{% endif %}
+                            {% if event.sql_gen_count is not none %}<li><strong>SQL Gen Count:</strong> {{ event.sql_gen_count }}</li>{% endif %}
                           </ul>
+                        {% elif event.event_type == 'approval_sent' %}
+                          <ul class="pcr-meta">
+                            {% if event.approval_recipient %}<li><strong>Recipient:</strong> {{ event.approval_recipient }}</li>{% endif %}
+                            {% if event.approval_request_id %}<li><strong>Request ID:</strong> {{ event.approval_request_id }}</li>{% endif %}
+                          </ul>
+                        {% elif event.event_type == 'approved' %}
+                          <ul class="pcr-meta">
+                            {% if event.approval_recipient %}<li><strong>Approver:</strong> {{ event.approval_recipient }}</li>{% endif %}
+                            {% if event.approval_request_id %}<li><strong>Request ID:</strong> {{ event.approval_request_id }}</li>{% endif %}
+                            {% if event.approval_response_ts %}<li><strong>Approved At:</strong> {{ event.approval_response_ts }}</li>{% endif %}
+                          </ul>
+                        {% elif event.event_type == 'rejected' %}
+                          <ul class="pcr-meta">
+                            {% if event.version_number is not none %}<li><strong>Version #:</strong> {{ event.version_number }}</li>{% endif %}
+                            {% if event.approval_recipient %}<li><strong>Rejecter:</strong> {{ event.approval_recipient }}</li>{% endif %}
+                            {% if event.approval_request_id %}<li><strong>Request ID:</strong> {{ event.approval_request_id }}</li>{% endif %}
+                            {% if event.approval_response_ts %}<li><strong>Rejected At:</strong> {{ event.approval_response_ts }}</li>{% endif %}
+                          </ul>
+                          {% if event.changed_fields and event.changed_fields.rejection_notes is defined %}
+                            <div class="no-field-changes"><strong>Rejection Notes:</strong> {{ event.changed_fields.rejection_notes.to }}</div>
+                          {% endif %}
                         {% endif %}
                       </div>
                     </div>

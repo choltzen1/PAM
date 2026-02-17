@@ -65,7 +65,13 @@
             <label for="version-select">Select Version:</label>
             <select id="version-select" class="form-control version-dropdown">
               <option value="">Choose a version...</option>
-              {% if promo_data.version_number %}
+              {% if pcr_versions and pcr_versions|length > 0 %}
+                {% for v in pcr_versions %}
+                  <option value="{{ v.version_number }}" {% if loop.first %}selected{% endif %}>
+                    Version #{{ v.version_number }}{% if v.event_ts %} — {{ v.event_ts }}{% endif %}
+                  </option>
+                {% endfor %}
+              {% elif promo_data.version_number %}
                 <option value="{{ promo_data.version_number }}" selected>Version #{{ promo_data.version_number }}</option>
               {% else %}
                 <option value="1">Version #1</option>
