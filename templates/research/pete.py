@@ -133,7 +133,7 @@ def get_main_data(engine, eip_id):
 
 def get_promo_error_reasons(engine, eip_id):
     query = f"""
-    SELECT * FROM openquery(PEFPEP, 'SELECT * 
+    SELECT * FROM openquery(PEFPEP_RO, 'SELECT * 
     FROM EFPEBATCHPROD01O.PROMO_ERROR_REASONS 
     WHERE eip_id = ''{eip_id}''')
     ORDER BY error_reason_desc

@@ -86,7 +86,7 @@ def get_promo_error_reasons(eip_id: str) -> pd.DataFrame:
     engine = get_research_engine()
     safe = str(eip_id).replace("'","''")
     query = f"""
-    SELECT * FROM openquery(PEFPEP, 'SELECT * 
+    SELECT * FROM openquery(PEFPEP_RO, 'SELECT * 
     FROM EFPEBATCHPROD01O.PROMO_ERROR_REASONS 
     WHERE eip_id = ''{safe}''')
     ORDER BY error_reason_desc
