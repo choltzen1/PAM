@@ -76,6 +76,10 @@ class FabricDatabaseManager:
     def _get_access_token(self) -> Optional[bytes]:
         """Get OAuth access token for Fabric, with caching
         
+        Supports multiple authentication methods:
+        1. Managed Identity (preferred for Azure App Service)
+        2. Service Principal with client secret (fallback for local dev)
+        
         Returns:
             Token struct bytes for pyodbc, or None if authentication fails
         """
@@ -88,20 +92,50 @@ class FabricDatabaseManager:
             
             # Need to get a new token
             try:
-                from azure.identity import ClientSecretCredential
+                from azure.identity import DefaultAzureCredential, ClientSecretCredential, ManagedIdentityCredential
                 
-                # Disable SSL verification for corporate networks
+                # Disable SSL verification for corporate networks (local dev)
                 os.environ['REQUESTS_CA_BUNDLE'] = ''
                 os.environ['CURL_CA_BUNDLE'] = ''
                 
-                logger.info("Authenticating with Fabric using Service Principal...")
+                credential = None
+                auth_method = "Unknown"
                 
-                credential = ClientSecretCredential(
-                    tenant_id=self.tenant_id,
-                    client_id=self.client_id,
-                    client_secret=self.client_secret,
-                    connection_verify=False
-                )
+                # Check if running on Azure (WEBSITE_INSTANCE_ID is set on Azure App Service)
+                is_azure = os.getenv('WEBSITE_INSTANCE_ID') is not None
+                
+                # Option 1: Use Managed Identity on Azure App Service (most reliable)
+                if is_azure:
+                    try:
+                        logger.info("Detected Azure environment, trying Managed Identity...")
+                        credential = ManagedIdentityCredential()
+                        # Test the credential
+                        credential.get_token("https://database.windows.net/.default")
+                        auth_method = "Managed Identity"
+                        logger.info("✅ Using Managed Identity authentication")
+                    except Exception as mi_err:
+                        logger.warning(f"Managed Identity failed: {mi_err}, falling back to Service Principal")
+                        credential = None
+                
+                # Option 2: Use Service Principal if Managed Identity failed or not on Azure
+                if credential is None and self.client_id and self.client_secret:
+                    logger.info("Authenticating with Fabric using Service Principal...")
+                    credential = ClientSecretCredential(
+                        tenant_id=self.tenant_id,
+                        client_id=self.client_id,
+                        client_secret=self.client_secret,
+                        connection_verify=False
+                    )
+                    auth_method = "Service Principal"
+                
+                # Option 3: Try DefaultAzureCredential as last resort
+                if credential is None:
+                    logger.info("Trying DefaultAzureCredential...")
+                    credential = DefaultAzureCredential(
+                        exclude_interactive_browser_credential=True,
+                        connection_verify=False
+                    )
+                    auth_method = "DefaultAzureCredential"
                 
                 # Get token for SQL Database scope
                 token = credential.get_token("https://database.windows.net/.default")
@@ -114,7 +148,7 @@ class FabricDatabaseManager:
                 self._cached_token = token_struct
                 self._token_expiry = datetime.now() + timedelta(minutes=50)
                 
-                logger.info("✅ Successfully obtained Fabric access token")
+                logger.info(f"✅ Successfully obtained Fabric access token via {auth_method}")
                 return token_struct
                 
             except Exception as e:
@@ -157,20 +191,21 @@ class FabricDatabaseManager:
                     return None
                 
                 # Build connection string (Fabric-specific requirements)
-                # Note: HostNameInCertificate is required for Azure Linux App Service
-                # to handle TLS/SNI correctly with Fabric endpoints
+                # Note: Fabric Data Warehouse requires specific TLS settings
+                # - HostNameInCertificate must match the datawarehouse subdomain
+                # - TrustServerCertificate=yes may be needed for some corporate networks
                 connection_string = (
                     f"DRIVER={{{self.driver}}};"
                     f"SERVER={self.server},{self.port};"
                     f"DATABASE={self.database};"
                     f"Encrypt=yes;"
-                    f"TrustServerCertificate=no;"
-                    f"HostNameInCertificate=*.fabric.microsoft.com;"
-                    f"Connection Timeout=30;"
-                    f"Login Timeout=30;"
+                    f"TrustServerCertificate=yes;"
+                    f"Connection Timeout=60;"
+                    f"Login Timeout=60;"
                 )
                 
                 self._used_connection_string = connection_string
+                logger.info(f"Connecting to Fabric: {self.server}")
                 
                 # Connect with access token
                 self._connection = pyodbc.connect(
