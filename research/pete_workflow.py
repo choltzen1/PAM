@@ -8,6 +8,7 @@ Responsibilities:
 """
 
 from typing import Dict, List, Any
+from io import StringIO
 import pandas as pd
 from flask import session
 from .services import (
@@ -55,6 +56,8 @@ def _decode_df(raw: Any) -> pd.DataFrame:
     if not raw:
         return pd.DataFrame()
     try:
+        if isinstance(raw, str):
+            return pd.read_json(StringIO(raw), orient="split")
         return pd.read_json(raw, orient="split")
     except Exception:
         return pd.DataFrame()

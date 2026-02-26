@@ -1,7 +1,12 @@
 # promo/builders.py
 from services.jira_utils import create_jira_summary
 
-def generate_promo_eligibility_sql(promo_data, current_user: str | None = None):
+def generate_promo_eligibility_sql(
+    promo_data,
+    current_user: str | None = None,
+    target_env: str | None = None,
+    schema: str | None = None
+):
     """Generate PROMO_ELIGIBILITY_RULES INSERT statement from promo data with template header"""
     from datetime import datetime, timedelta
     import time
@@ -15,6 +20,14 @@ def generate_promo_eligibility_sql(promo_data, current_user: str | None = None):
     
     # Start timing overall function
     function_start_time = time.time()
+
+    normalized_env = (target_env or 'PROD').strip().upper()
+    normalized_schema = (schema or '').strip()
+
+    def qualify(name: str) -> str:
+        if normalized_schema:
+            return f"{normalized_schema}.{name}"
+        return name
     
     # Check for tier compatibility conflicts before generating SQL
     # Safe normalization to avoid calling .strip() on None
@@ -57,7 +70,7 @@ def generate_promo_eligibility_sql(promo_data, current_user: str | None = None):
     
     # Helper function to format values for SQL
     def fmt_sql_value(val):
-        if val is None or val == '' or str(val).upper() == 'NULL':
+        if val is None or val == '' or str(val).upper() in ('NULL', 'NONE'):
             return 'NULL'
         if isinstance(val, str):
             if val.startswith('to_date('):
@@ -321,8 +334,12 @@ def generate_promo_eligibility_sql(promo_data, current_user: str | None = None):
         formatted_values[47]  # clawback_ind
     ]
     
+    eligibility_table = qualify('PROMO_ELIGIBILITY_RULES')
+    eligibility_seq = qualify('PROMO_ELIGIBILITY_RULES_1SQ')
+    values_list[0] = f"{eligibility_seq}.NEXTVAL"
+
     # Generate the base SQL statement
-    base_sql = f"INSERT INTO PROMO_ELIGIBILITY_RULES ({','.join(columns)}) VALUES ({','.join(values_list)});"
+    base_sql = f"INSERT INTO {eligibility_table} ({','.join(columns)}) VALUES ({','.join(values_list)});"
     print(f"[GEN][BASE_LEN] {len(base_sql)} chars (without ancillary sections)")
     
     # Create template header
@@ -372,7 +389,8 @@ def generate_promo_eligibility_sql(promo_data, current_user: str | None = None):
                     min_fmv_val = min_fmv if min_fmv else 'NULL'
                     max_fmv_val = max_fmv if max_fmv else 'NULL'
                     
-                    sql = f"Insert into PROMO_TRADEIN_GROUPS (TRADE_IN_GRP_ID, LOAN_SKU_GRP, MK_MDL_GRP_ID, SYS_CREATION_DATE,OPERATOR_ID,APPLICATION_ID,DL_SERVICE_CODE, TRADEIN_AMOUNT, TRADEIN_GROUP_DESC, TRADE_IN_COND_ID, MIN_FMV, MAX_FMV) Values ({trade_grp_id},{loan_sku_grp},{mk_mdl_grp_id},sysdate,{operator_id},'CPO','USRST',{tradein_amount},{desc},{trade_cond_id},{min_fmv_val},{max_fmv_val});"
+                    tradein_table = qualify('PROMO_TRADEIN_GROUPS')
+                    sql = f"Insert into {tradein_table} (TRADE_IN_GRP_ID, LOAN_SKU_GRP, MK_MDL_GRP_ID, SYS_CREATION_DATE,OPERATOR_ID,APPLICATION_ID,DL_SERVICE_CODE, TRADEIN_AMOUNT, TRADEIN_GROUP_DESC, TRADE_IN_COND_ID, MIN_FMV, MAX_FMV) Values ({trade_grp_id},{loan_sku_grp},{mk_mdl_grp_id},sysdate,{operator_id},'CPO','USRST',{tradein_amount},{desc},{trade_cond_id},{min_fmv_val},{max_fmv_val});"
                     tradein_sql_statements.append(sql)
         
         return '\n'.join(tradein_sql_statements) if tradein_sql_statements else ''
@@ -403,7 +421,8 @@ def generate_promo_eligibility_sql(promo_data, current_user: str | None = None):
                         desc += f" - {devices_clean}"
                     desc += f" - {promo_code}'"
                     
-                    sql = f"Insert into PROMO_TIERED_GROUPS (TIERED_GRP_ID,SKU_GRP_ID,SYS_CREATION_DATE,OPERATOR_ID,APPLICATION_ID,DL_SERVICE_CODE,TIERED_AMOUNT,TIERED_GROUP_DESC) values ('{tiered_group_id}','{sku_group_id}',sysdate,{operator_id},'CPO','USRST',{amount},{desc});"
+                    tiered_table = qualify('PROMO_TIERED_GROUPS')
+                    sql = f"Insert into {tiered_table} (TIERED_GRP_ID,SKU_GRP_ID,SYS_CREATION_DATE,OPERATOR_ID,APPLICATION_ID,DL_SERVICE_CODE,TIERED_AMOUNT,TIERED_GROUP_DESC) values ('{tiered_group_id}','{sku_group_id}',sysdate,{operator_id},'CPO','USRST',{amount},{desc});"
                     tiered_sql_statements.append(sql)
         
         return '\n'.join(tiered_sql_statements) if tiered_sql_statements else ''
@@ -490,13 +509,14 @@ def generate_promo_eligibility_sql(promo_data, current_user: str | None = None):
                 description_clean = description.replace("'", "''")[:100]
                 
                 # Generate base INSERT statement
-                base_insert = f"Insert into PROMO_DEVICE_GROUPS (SKU_GROUP_ID,SKU,SYS_CREATION_DATE,OPERATOR_ID,APPLICATION_ID,DL_SERVICE_CODE,SKU_DESCRIPTION,SKU_GROUP_DESCRIPTION) values ('{sku_group_id}','{sku}',sysdate,{operator_id},'CPO','USRST','{description_clean}',{sku_group_desc});"
+                device_table = qualify('PROMO_DEVICE_GROUPS')
+                base_insert = f"Insert into {device_table} (SKU_GROUP_ID,SKU,SYS_CREATION_DATE,OPERATOR_ID,APPLICATION_ID,DL_SERVICE_CODE,SKU_DESCRIPTION,SKU_GROUP_DESCRIPTION) values ('{sku_group_id}','{sku}',sysdate,{operator_id},'CPO','USRST','{description_clean}',{sku_group_desc});"
                 device_sql_statements.append(base_insert)
                 
                 # For numeric SKUs, also generate insert with "000000" prefix
                 if sku.isdigit():
                     prefixed_sku = f"000000{sku}"
-                    prefixed_insert = f"Insert into PROMO_DEVICE_GROUPS (SKU_GROUP_ID,SKU,SYS_CREATION_DATE,OPERATOR_ID,APPLICATION_ID,DL_SERVICE_CODE,SKU_DESCRIPTION,SKU_GROUP_DESCRIPTION) values ('{sku_group_id}','{prefixed_sku}',sysdate,{operator_id},'CPO','USRST','{description_clean}',{sku_group_desc});"
+                    prefixed_insert = f"Insert into {device_table} (SKU_GROUP_ID,SKU,SYS_CREATION_DATE,OPERATOR_ID,APPLICATION_ID,DL_SERVICE_CODE,SKU_DESCRIPTION,SKU_GROUP_DESCRIPTION) values ('{sku_group_id}','{prefixed_sku}',sysdate,{operator_id},'CPO','USRST','{description_clean}',{sku_group_desc});"
                     device_sql_statements.append(prefixed_insert)
         
         except Exception as e:
@@ -529,7 +549,8 @@ def generate_promo_eligibility_sql(promo_data, current_user: str | None = None):
             sub_segment_val = fmt_sql_value(sub_segment) if sub_segment else "'NULL'"
             segment_level_val = fmt_sql_value(segment_level) if segment_level else "'BAN'"  # Default to BAN
             
-            sql = f"Insert into PROMO_SEGMENT_GROUPS (GROUP_ID,SEGMENT_NAME,SYS_CREATION_DATE,OPERATOR_ID,APPLICATION_ID,DL_SERVICE_CODE,SUB_SEGMENT_NAME,SEGMENT_LEVEL) values ({group_id},{segment_name_val},sysdate,{operator_id},'CPO','USRST',{sub_segment_val},{segment_level_val});"
+            segment_table = qualify('PROMO_SEGMENT_GROUPS')
+            sql = f"Insert into {segment_table} (GROUP_ID,SEGMENT_NAME,SYS_CREATION_DATE,OPERATOR_ID,APPLICATION_ID,DL_SERVICE_CODE,SUB_SEGMENT_NAME,SEGMENT_LEVEL) values ({group_id},{segment_name_val},sysdate,{operator_id},'CPO','USRST',{sub_segment_val},{segment_level_val});"
             segment_sql_statements.append(sql)
         
         return '\n'.join(segment_sql_statements) if segment_sql_statements else ''
@@ -552,13 +573,19 @@ def generate_promo_eligibility_sql(promo_data, current_user: str | None = None):
 
     # Generate trade-in device SQL statements
     tradein_device_sql = generate_tradein_device_sql()
+    if tradein_device_sql and normalized_schema:
+        tradein_device_sql = tradein_device_sql.replace(
+            'Insert into PROMO_MK_MDL_GROUPS',
+            f"Insert into {qualify('PROMO_MK_MDL_GROUPS')}"
+        )
     if tradein_device_sql:
         print(f"[GEN][TRADEIN_DEVICE] {len(tradein_device_sql)} chars")
     
     # Generate efpe_generic_params update statement if broken_trade is Y
     efpe_update_sql = ""
     if promo_data.get('broken_trade') == 'Y':
-        efpe_update_sql = f"\n\nupdate efpe_generic_params set GEN_K3 = concat(GEN_K3,',{promo_code}'), SYS_UPDATE_DATE = sysdate where gen_k1 = 'BROKEN_TRD_PROMO_IND';"
+        efpe_table = qualify('efpe_generic_params')
+        efpe_update_sql = f"\n\nupdate {efpe_table} set GEN_K3 = concat(GEN_K3,',{promo_code}'), SYS_UPDATE_DATE = sysdate where gen_k1 = 'BROKEN_TRD_PROMO_IND';"
     
     # Build the complete SQL with template
     template_sql = f"""
@@ -568,7 +595,8 @@ def generate_promo_eligibility_sql(promo_data, current_user: str | None = None):
 -- Project 		  ={jira_summary}
 -------------------------------------------------------------------------
 
---PROD / ZLAB
+-- TARGET_ENV: {normalized_env}
+{f"-- PROD_SCHEMA: {normalized_schema}" if normalized_env == 'PROD' and normalized_schema else ""}
 BEGIN
 
 --PROMO_ELIGIBILITY_RULES 
@@ -589,7 +617,8 @@ BEGIN
 --Promo Segment 
 {segment_groups_sql}
 
-END;{efpe_update_sql}"""
+{efpe_update_sql}
+END;"""
 
     # Prepend diagnostics if any
     diag_lines = []

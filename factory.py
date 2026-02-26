@@ -1,5 +1,6 @@
 import os
 from flask import Flask, request
+from flask_session import Session
 import base64, json
 from dotenv import load_dotenv
 from datetime import datetime
@@ -25,8 +26,21 @@ def create_app(config: dict | None = None) -> Flask:
     app = Flask(__name__)
     app.secret_key = 'your-secret-key-here'
 
+    app.config.update(
+        SESSION_TYPE='filesystem',
+        SESSION_FILE_DIR=os.path.join(os.getcwd(), 'data', 'sessions'),
+        SESSION_PERMANENT=False,
+        SESSION_USE_SIGNER=True,
+    )
+
     if config:
         app.config.update(config)
+
+    session_dir = app.config.get('SESSION_FILE_DIR')
+    if session_dir:
+        os.makedirs(session_dir, exist_ok=True)
+
+    Session(app)
 
     global data_manager
     # Single initialization path (DB-only model); validation mode no longer diverges

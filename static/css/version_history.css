@@ -145,6 +145,12 @@ html[data-theme='dark'] .version-history-page .search-group input { background:#
   min-width: 120px;
 }
 
+.version-history-page .action-buttons .btn-outline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
 /* Table container */
 .table-container {
   flex: 1;

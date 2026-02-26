@@ -43,7 +43,6 @@
       <button class="btn btn-magenta" type="button"><i class="fas fa-download"></i> Export History</button>
       <button class="btn btn-secondary" type="button" onclick="expandAllRows()"><i class="fas fa-expand-arrows-alt"></i> Expand All</button>
       <button class="btn btn-secondary" type="button" onclick="collapseAllRows()"><i class="fas fa-compress-arrows-alt"></i> Collapse All</button>
-      <a href="{{ url_for('promo.rdc_page') }}" class="btn btn-magenta"><i class="fas fa-tags"></i> View RDC</a>
       <button class="btn btn-magenta" type="submit"><i class="fas fa-search"></i> Apply</button>
       <a class="btn btn-outline" href="?"><i class="fas fa-undo"></i> Reset</a>
     </div>
@@ -137,6 +136,8 @@
                     'created': 'Created',
                     'modified': 'Modified',
                     'pcr_generated': 'PCR Generated',
+                    'zlab_inserted': 'ZLAB Inserted',
+                    'zlab_insert_failed': 'ZLAB Insert Failed',
                     'approval_sent': 'Approval Sent',
                     'approved': 'Approved',
                     'rejected': 'Rejected'
@@ -145,6 +146,8 @@
                     'created': 'plus',
                     'modified': 'pen',
                     'pcr_generated': 'code',
+                    'zlab_inserted': 'flask',
+                    'zlab_insert_failed': 'triangle-exclamation',
                     'approval_sent': 'paper-plane',
                     'approved': 'check-circle',
                     'rejected': 'times-circle'
@@ -193,6 +196,15 @@
                             {% if event.version_number is not none %}<li><strong>Version #:</strong> {{ event.version_number }}</li>{% endif %}
                             {% if event.sql_gen_count is not none %}<li><strong>SQL Gen Count:</strong> {{ event.sql_gen_count }}</li>{% endif %}
                           </ul>
+                        {% elif event.event_type in ['zlab_inserted', 'zlab_insert_failed'] %}
+                          <ul class="pcr-meta">
+                            {% if event.version_number is not none %}<li><strong>Version #:</strong> {{ event.version_number }}</li>{% endif %}
+                            {% if event.sql_gen_count is not none %}<li><strong>SQL Gen Count:</strong> {{ event.sql_gen_count }}</li>{% endif %}
+                          </ul>
+                          {% set oracle_error = event.changed_fields.get('oracle_error') if event.changed_fields else none %}
+                          {% if oracle_error %}
+                            <div class="no-field-changes"><strong>Oracle Error:</strong> {{ oracle_error }}</div>
+                          {% endif %}
                         {% elif event.event_type == 'approval_sent' %}
                           <ul class="pcr-meta">
                             {% if event.approval_recipient %}<li><strong>Recipient:</strong> {{ event.approval_recipient }}</li>{% endif %}

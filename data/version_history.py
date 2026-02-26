@@ -1,4 +1,5 @@
 import json
+import os
 from datetime import datetime
 from typing import Any, Dict, Optional
 
@@ -23,6 +24,25 @@ def get_next_sql_gen_count(promo_code: str) -> int:
     sql = (
         "SELECT COUNT(1) AS cnt FROM PAM.Version_History "
         "WHERE promo_code = :promo_code AND event_type = 'pcr_generated'"
+    )
+    try:
+        with engine.connect() as conn:
+            row = conn.execute(text(sql), {'promo_code': promo_code}).fetchone()
+            count = int(row[0]) if row and row[0] is not None else 0
+            return count + 1
+    except Exception:
+        return 1
+
+
+def get_next_zlab_gen_count(promo_code: str) -> int:
+    """Return the next ZLAB insert count for a promo code."""
+    dm = DatabaseManager()
+    engine = dm.get_engine()
+    sql = (
+        "SELECT COUNT(1) AS cnt FROM PAM.Version_History "
+        "WHERE promo_code = :promo_code AND ("
+        "event_type IN ('zlab_inserted', 'zlab_insert_failed') "
+        "OR event_type LIKE 'zlab testing insert%')"
     )
     try:
         with engine.connect() as conn:
@@ -99,5 +119,21 @@ def log_version_event(
         with engine.begin() as conn:
             conn.execute(text(insert_sql), params)
         return True
-    except Exception:
+    except Exception as exc:
+        _log_error(promo_code=promo_code, event_type=event_type_val, error=str(exc))
         return False
+
+
+def _log_error(*, promo_code: str, event_type: str, error: Optional[str] = None) -> None:
+    log_dir = os.path.join(os.getcwd(), 'logs')
+    log_path = os.path.join(log_dir, 'version_history_errors.log')
+    try:
+        os.makedirs(log_dir, exist_ok=True)
+        ts = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
+        error_val = (error or '').replace('\n', ' ').strip()
+        with open(log_path, 'a', encoding='utf-8') as fh:
+            fh.write(
+                f"{ts} | promo_code={promo_code} | event_type={event_type} | error={error_val}\n"
+            )
+    except Exception:
+        return None

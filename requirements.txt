@@ -1,6 +1,7 @@
 # Flask and web framework dependencies
 Flask==3.1.2
 Werkzeug==3.1.2
+Flask-Session==0.8.0
 
 # Data processing and Excel handling
 pandas==2.3.2
@@ -10,6 +11,7 @@ openpyxl==3.1.2
 sqlalchemy==2.0.44
 pyodbc==5.0.1
 azure-identity==1.15.0
+oracledb==2.4.1
 
 # HTTP requests and networking
 requests==2.31.0

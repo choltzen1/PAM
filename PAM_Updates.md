@@ -15,6 +15,7 @@
 * Icon wrapper restored for consistent icon sizing and alignment.
 * RDC input fields completed
 * PETE workflow finalized (anything more robust can be added)
+* Added staging schema reference refresh script for PROD auto-selection.
 
 
 

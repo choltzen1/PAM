@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify, render_template, request, session, redirect, url_for
+from flask import Blueprint, jsonify, render_template, request, session, redirect, url_for, flash
 from auth import role_required
 from .services import (
     get_main_data,
@@ -56,6 +56,10 @@ def pete():
             mode = request.form.get('has_eip','Yes')  # 'Yes' => EIP_ID, 'No' => BAN discovery
             if request.form.get('action') == 'run_lookup_from_select':
                 selected = request.form.get('selected_eip','').strip()
+                if selected and (not selected.isdigit() or len(selected) != 9):
+                    flash('EIP_ID must be exactly 9 digits.', 'error')
+                    session['pete_just_posted'] = True
+                    return redirect(url_for('research.pete'))
                 if selected:
                     run_selected_eip(selected)
                 session['pete_just_posted'] = True
@@ -63,10 +67,18 @@ def pete():
             session['last_mode'] = mode
             if mode == 'Yes':  # EIP lookup
                 eip_id = request.form.get('eip_id','').strip()
+                if eip_id and (not eip_id.isdigit() or len(eip_id) != 9):
+                    flash('EIP_ID must be exactly 9 digits.', 'error')
+                    session['pete_just_posted'] = True
+                    return redirect(url_for('research.pete'))
                 if eip_id:
                     run_eip_lookup(eip_id)
             else:  # BAN discovery path
                 ban = request.form.get('ban','').strip()
+                if ban and (not ban.isdigit() or len(ban) != 9):
+                    flash('BAN must be exactly 9 digits.', 'error')
+                    session['pete_just_posted'] = True
+                    return redirect(url_for('research.pete'))
                 session['last_ban'] = ban
                 session['eip_id'] = ''
                 if ban:
@@ -101,6 +113,8 @@ def api_main_data():
     eip_id = request.args.get('eip_id','').strip()
     if not eip_id:
         return jsonify({'error':'eip_id required'}), 400
+    if not eip_id.isdigit() or len(eip_id) != 9:
+        return jsonify({'error':'eip_id must be 9 digits'}), 400
     df = get_main_data(eip_id)
     return jsonify({'rows': df.to_dict(orient='records'), 'count': len(df)})
 
@@ -110,6 +124,8 @@ def api_promo_error_reasons():
     eip_id = request.args.get('eip_id','').strip()
     if not eip_id:
         return jsonify({'error':'eip_id required'}), 400
+    if not eip_id.isdigit() or len(eip_id) != 9:
+        return jsonify({'error':'eip_id must be 9 digits'}), 400
     df = get_promo_error_reasons(eip_id)
     return jsonify({'rows': df.to_dict(orient='records'), 'count': len(df)})
 
@@ -119,6 +135,8 @@ def api_rate_plans():
     ban = request.args.get('ban','').strip()
     if not ban:
         return jsonify({'error':'ban required'}), 400
+    if not ban.isdigit() or len(ban) != 9:
+        return jsonify({'error':'ban must be 9 digits'}), 400
     df = get_rate_plan_data(ban)
     return jsonify({'rows': df.to_dict(orient='records'), 'count': len(df)})
 
@@ -128,6 +146,8 @@ def api_aal_lines():
     ban = request.args.get('ban','').strip()
     if not ban:
         return jsonify({'error':'ban required'}), 400
+    if not ban.isdigit() or len(ban) != 9:
+        return jsonify({'error':'ban must be 9 digits'}), 400
     df = get_active_aal_lines(ban)
     return jsonify({'rows': df.to_dict(orient='records'), 'count': len(df)})
 
@@ -147,6 +167,8 @@ def api_eip_by_ban():
     ban = request.args.get('ban','').strip()
     if not ban:
         return jsonify({'error':'ban required'}), 400
+    if not ban.isdigit() or len(ban) != 9:
+        return jsonify({'error':'ban must be 9 digits'}), 400
     df = get_eip_ids_by_ban(ban)
     return jsonify({'rows': df.to_dict(orient='records'), 'count': len(df)})
 
@@ -161,8 +183,12 @@ def api_eip_identify():
     if not ban and not msisdn:
         return jsonify({'error': 'ban or msisdn required'}), 400
     if ban:
+        if not ban.isdigit() or len(ban) != 9:
+            return jsonify({'error': 'ban must be 9 digits'}), 400
         df = get_eip_ids_by_ban(ban)
     else:
+        if not msisdn or (not msisdn.isdigit() or len(msisdn) != 10):
+            return jsonify({'error': 'msisdn must be 10 digits'}), 400
         df = get_eip_ids_by_msisdn(msisdn)
     return jsonify({'rows': df.to_dict(orient='records'), 'count': len(df), 'ban': ban, 'msisdn': msisdn})
 
@@ -202,6 +228,10 @@ def api_pete_aggregate():
     """Aggregate data pull similar to original PETE flow: eip -> promo errors, trade, rate plans, lines."""
     eip_id = request.args.get('eip_id','').strip()
     ban = request.args.get('ban','').strip()
+    if eip_id and (not eip_id.isdigit() or len(eip_id) != 9):
+        return jsonify({'error': 'eip_id must be 9 digits'}), 400
+    if ban and (not ban.isdigit() or len(ban) != 9):
+        return jsonify({'error': 'ban must be 9 digits'}), 400
     promo_code = request.args.get('promo_code','').strip().upper()
     payload = {}
     if eip_id:

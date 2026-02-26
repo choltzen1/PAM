@@ -57,7 +57,7 @@ def test_edit_rdc_get_creates_default(route_app):
 def test_edit_rdc_post_generates_sql(route_app, monkeypatch):
     from promo import builders
     # Provide a deterministic SQL generator
-    monkeypatch.setattr(builders, 'generate_promo_eligibility_sql', lambda d: 'INSERT ...;')
+    monkeypatch.setattr(builders, 'generate_promo_eligibility_sql', lambda d, **kwargs: 'INSERT ...;')
 
     app, dm = route_app
     with app.test_client() as c:
@@ -70,7 +70,7 @@ def test_edit_rdc_post_generates_sql(route_app, monkeypatch):
 def test_rdc_sql_generation_render(route_app, monkeypatch):
     """End-to-end style check: POST generate then GET render includes diagnostics or fallback markers."""
     from promo import builders
-    monkeypatch.setattr(builders, 'generate_promo_eligibility_sql', lambda d: 'SELECT 1;')
+    monkeypatch.setattr(builders, 'generate_promo_eligibility_sql', lambda d, **kwargs: 'SELECT 1;')
     app, dm = route_app
     with app.test_client() as c:
         resp = c.post('/edit_rdc/R249', data={'generate_sql': '1', 'active_tab': 'Details'})
