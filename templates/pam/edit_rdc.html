@@ -846,6 +846,44 @@
                 {% endif %}
               </div>
             </div>
+            <div class="sql-gen-row">
+              <div class="upload-section">
+                <label class="section-label">SQL Target Environment</label>
+                <select class="form-control" name="sql_target_env" id="sqlTargetEnv">
+                  {% set env_value = promo.sql_target_env if promo.sql_target_env else 'PROD' %}
+                  <option value="PROD" {% if env_value == 'PROD' %}selected{% endif %}>PROD</option>
+                  <option value="ZLAB" {% if env_value == 'ZLAB' %}selected{% endif %}>ZLAB</option>
+                </select>
+                <small class="form-text text-muted">Choose where the SQL will be applied.</small>
+              </div>
+              <div class="upload-section" id="sqlProdSchemaSection">
+                <label class="section-label">PROD Schema</label>
+                <div class="form-control" style="background:#f4f4f4;" id="sqlProdSchemaDisplay">
+                  {% set schema_value = promo.sql_prod_schema if promo.sql_prod_schema else (prod_schemas[0] if prod_schemas else '') %}
+                  {{ schema_value }}
+                </div>
+                <input type="hidden" name="sql_prod_schema" id="sqlProdSchema" value="{{ schema_value }}">
+                <small class="form-text text-muted">
+                  Auto-selected from staging reference{% if staging_reference and staging_reference.updated_at %} (updated {{ staging_reference.updated_at }}){% endif %}.
+                </small>
+              </div>
+              <div class="upload-section" id="sqlZlabStatusSection" style="display:none;">
+                <label class="section-label">ZLAB Execution Status</label>
+                {% if promo.oracle_exec_log %}
+                <div class="form-control" style="background:#f4f4f4;">
+                  <div>Status: {{ promo.oracle_exec_log.status }}</div>
+                  {% if promo.oracle_exec_log.executed_at %}
+                  <div class="file-meta">Executed at {{ promo.oracle_exec_log.executed_at }}</div>
+                  {% endif %}
+                  {% if promo.oracle_exec_log.error %}
+                  <div class="file-meta" style="color:#b00020;">{{ promo.oracle_exec_log.error }}</div>
+                  {% endif %}
+                </div>
+                {% else %}
+                <div class="form-control" style="background:#f4f4f4;">No execution log yet.</div>
+                {% endif %}
+              </div>
+            </div>
             <div class="sql-gen-row second-row">
               <div class="upload-section sql-card sql-generation-box full-width">
                 <div class="upload-section-title">Generated SQL Statement</div>
@@ -883,6 +921,7 @@ function deleteUploadedFile(type,code){if(!confirm('Delete file?'))return;fetch(
 function clearTradeData(){fetch(`/clear_trade_data/${'{{ promo.code }}'}`,{method:'POST',headers:{'Content-Type':'application/json'}}).then(r=>r.json()).then(d=>{if(d.success)location.reload();else alert('Error clearing trade data');});}
 function clearTiersData(){fetch(`/clear_tiers_data/${'{{ promo.code }}'}`,{method:'POST',headers:{'Content-Type':'application/json'}}).then(r=>r.json()).then(d=>{if(d.success)location.reload();else alert('Error clearing tiers data');});}
 function clearSegmentData(){fetch(`/clear_segment_data/${'{{ promo.code }}'}`,{method:'POST',headers:{'Content-Type':'application/json'}}).then(r=>r.json()).then(d=>{if(d.success)location.reload();else alert('Error clearing segment data');});}
+function toggleProdSchema(){const envSel=document.getElementById('sqlTargetEnv');const schemaSection=document.getElementById('sqlProdSchemaSection');const zlabSection=document.getElementById('sqlZlabStatusSection');if(!envSel)return;const showProd=envSel.value==='PROD';if(schemaSection)schemaSection.style.display=showProd?'':'none';if(zlabSection)zlabSection.style.display=showProd?'none':'';}
 // Generic inline edit toggle for DCD JIRA auto-filled fields
 function toggleEditField(btn){
   // limit scope to dcd jira form
@@ -923,6 +962,11 @@ function toggleEditField(btn){
 }
 // DCD JIRA collapsible sections (only runs if DCD form present)
 document.addEventListener('DOMContentLoaded',()=>{
+  const envSel=document.getElementById('sqlTargetEnv');
+  if(envSel){
+    envSel.addEventListener('change',toggleProdSchema);
+    toggleProdSchema();
+  }
   // Basic init for DCD JIRA form (no collapsing now)
   const dcdForm=document.querySelector('.dcd-jira-form');
   if(!dcdForm) return;

@@ -131,14 +131,16 @@ html[data-theme='dark'] .pete-light-section .pete-data-header h6 {
 }
 
 /* Light tables inside light sections */
-.pete-light-section .table-wrap { 
+.pete-light-section .table-wrap,
+.pete-search-card .table-wrap { 
   background: linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(253,250,252,0.95) 100%);
   border: 1px solid rgba(226,0,116,0.12);
   box-shadow: 0 2px 8px rgba(0,0,0,0.04);
   border-radius: 8px;
 }
 
-html[data-theme='dark'] .pete-light-section .table-wrap {
+html[data-theme='dark'] .pete-light-section .table-wrap,
+html[data-theme='dark'] .pete-search-card .table-wrap {
   background: rgba(25,10,20,0.4);
   border: 1px solid rgba(226,0,116,0.3);
   box-shadow: 0 3px 16px rgba(0,0,0,0.4), 0 0 12px rgba(226,0,116,0.15);
@@ -182,8 +184,13 @@ html[data-theme='dark'] .pete-search-card:hover {
 }
 
 /* Space between multiple data sections now relies on margin-bottom in .pete-light-section */
-.pete-light-section .table-wrap, .pete-light-section p.small, .pete-light-section .small-note { margin-left:4px; margin-right:4px; }
+.pete-light-section .table-wrap, .pete-search-card .table-wrap, .pete-light-section p.small, .pete-light-section .small-note { margin-left:4px; margin-right:4px; }
 .pete-light-section .table-wrap table { 
+  color: #222;
+  background: linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(253,250,252,0.95) 100%);
+}
+
+.pete-search-card .table-wrap table {
   color: #222;
   background: linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(253,250,252,0.95) 100%);
 }
@@ -193,51 +200,66 @@ html[data-theme='dark'] .pete-light-section .table-wrap table {
   background: rgba(25,10,20,0.4);
 }
 
-.pete-light-section .table-wrap table thead th { 
+html[data-theme='dark'] .pete-search-card .table-wrap table {
+  color: rgba(255,255,255,0.8);
+  background: rgba(25,10,20,0.4);
+}
+
+.pete-light-section .table-wrap table thead th,
+.pete-search-card .table-wrap table thead th { 
   background: linear-gradient(135deg, rgba(226,0,116,0.1) 0%, rgba(226,0,116,0.05) 100%);
   color: #222;
   border-color: rgba(226,0,116,0.15);
   font-weight: 600;
 }
 
-html[data-theme='dark'] .pete-light-section .table-wrap table thead th {
+html[data-theme='dark'] .pete-light-section .table-wrap table thead th,
+html[data-theme='dark'] .pete-search-card .table-wrap table thead th {
   background: rgba(226,0,116,0.2);
   color: #fff;
   border-color: rgba(226,0,116,0.4);
 }
 
-.pete-light-section .table-wrap table tbody td { 
+.pete-light-section .table-wrap table tbody td,
+.pete-search-card .table-wrap table tbody td { 
   border-color: rgba(226,0,116,0.1);
   background: linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(253,250,252,0.95) 100%);
 }
 
-html[data-theme='dark'] .pete-light-section .table-wrap table tbody td {
+html[data-theme='dark'] .pete-light-section .table-wrap table tbody td,
+html[data-theme='dark'] .pete-search-card .table-wrap table tbody td {
   border-color: rgba(226,0,116,0.2);
   background: rgba(25,10,20,0.4);
   color: rgba(255,255,255,0.8);
 }
 
-.pete-light-section .table-wrap table tbody tr:nth-child(odd) { 
+.pete-light-section .table-wrap table tbody tr:nth-child(odd),
+.pete-search-card .table-wrap table tbody tr:nth-child(odd) { 
   background: linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(253,250,252,0.95) 100%);
 }
 
-.pete-light-section .table-wrap table tbody tr:nth-child(even) { 
+.pete-light-section .table-wrap table tbody tr:nth-child(even),
+.pete-search-card .table-wrap table tbody tr:nth-child(even) { 
   background: linear-gradient(135deg, rgba(254,251,253,1) 0%, rgba(255,252,254,1) 100%);
 }
 
-html[data-theme='dark'] .pete-light-section .table-wrap table tbody tr:nth-child(odd) {
+html[data-theme='dark'] .pete-light-section .table-wrap table tbody tr:nth-child(odd),
+html[data-theme='dark'] .pete-search-card .table-wrap table tbody tr:nth-child(odd) {
   background: rgba(25,10,20,0.4);
 }
 
-html[data-theme='dark'] .pete-light-section .table-wrap table tbody tr:nth-child(even) {
+html[data-theme='dark'] .pete-light-section .table-wrap table tbody tr:nth-child(even),
+html[data-theme='dark'] .pete-search-card .table-wrap table tbody tr:nth-child(even) {
   background: rgba(35,15,28,0.6);
 }
 
-.pete-light-section .table-wrap table tbody tr:hover { 
+.pete-light-section .table-wrap table tbody tr:hover,
+.pete-search-card .table-wrap table tbody tr:hover { 
   background: rgba(226,0,116,0.08);
 }
 
-html[data-theme='dark'] .pete-light-section .table-wrap table tbody tr:hover {
+html[data-theme='dark'] .pete-light-section .table-wrap table tbody tr:hover,
+html[data-theme='dark'] .pete-search-card .table-wrap table tbody tr:hover {
   background: rgba(226,0,116,0.15);
 }
 

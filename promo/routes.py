@@ -22,6 +22,9 @@ data_manager: Optional['PromoDataManager'] = None
 def _promo_sql_file_path(promo_code: str) -> str:
     return os.path.join('data','uploads','promotions', promo_code, f"{promo_code}_promo_eligibility_rules.sql")
 
+def _promo_oracle_exec_path(promo_code: str) -> str:
+    return os.path.join('data','uploads','promotions', promo_code, f"{promo_code}_oracle_exec.json")
+
 def init_data_manager(dm):
     """Initialize the data manager from the main app"""
     global data_manager
@@ -1407,6 +1410,8 @@ def _edit_rdc(promo_code):
         from datetime import datetime
         import time
         active_tab = request.form.get('active_tab', 'Details')
+        sql_target_env = None
+        sql_prod_schema = None
         promo_data = dm.get_promo(promo_code)
         if not promo_data:
             promo_data = {
@@ -1508,6 +1513,25 @@ def _edit_rdc(promo_code):
         # 4. Generate SQL only after saving & reloading DB state (source-of-truth requirement)
         if request.form.get('generate_sql'):
             from promo.builders import generate_promo_eligibility_sql
+            from data.schema_reference import load_reference, refresh_staging_reference
+
+            sql_target_env = (request.form.get('sql_target_env') or 'PROD').strip().upper()
+            sql_prod_schema = (request.form.get('sql_prod_schema') or '').strip().upper()
+            allowed_prod_schemas = {'EFPEBATCHPROD01REFA', 'EFPEBATCHPROD01REFB'}
+
+            if sql_target_env == 'PROD':
+                ref = load_reference()
+                if not ref.get('staging_reference'):
+                    try:
+                        ref = refresh_staging_reference()
+                    except Exception:
+                        ref = ref or {}
+                if ref.get('staging_reference'):
+                    sql_prod_schema = str(ref['staging_reference']).strip().upper()
+                if sql_prod_schema not in allowed_prod_schemas:
+                    flash('Staging reference is not available; run the daily refresh to populate the PROD schema.', 'error')
+                    active_tab = 'SQL Generation'
+                    return redirect(url_for('promo.edit_rdc', promo_code=promo_code, tab=active_tab, sql_env=sql_target_env, sql_schema=sql_prod_schema))
             try:
                 # Re-fetch to ensure we only use DB-backed fields (missing ones become NULL in generator)
                 db_snapshot = dm.get_promo(promo_code) or {}
@@ -1535,7 +1559,12 @@ def _edit_rdc(promo_code):
                 print(f"[SQL GEN][DEBUG] Generating for {promo_code} with keys: {sorted(list(db_snapshot.keys()))[:30]} ...")
                 print(f"[SQL GEN][DEBUG] Field snapshot core values: code={db_snapshot.get('code')} orbit_id={db_snapshot.get('orbit_id')} sku_group_id={db_snapshot.get('sku_group_id')} start={db_snapshot.get('promo_start_date')} end={db_snapshot.get('promo_end_date')} operator_id={db_snapshot.get('operator_id')}")
                 start_time = time.time()
-                sql_content = generate_promo_eligibility_sql(db_snapshot, current_user=_get_current_user_name() or 'System')
+                sql_content = generate_promo_eligibility_sql(
+                    db_snapshot,
+                    current_user=_get_current_user_name() or 'System',
+                    target_env=sql_target_env,
+                    schema=sql_prod_schema if sql_target_env == 'PROD' else None
+                )
                 end_time = time.time()
                 generation_time = end_time - start_time
                 if not sql_content or not sql_content.strip():
@@ -1550,6 +1579,8 @@ def _edit_rdc(promo_code):
                 promo_data['sql_generated_at'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                 promo_data['sql_generation_time'] = f"{generation_time:.4f}"
                 promo_data['sql_length'] = len(sql_content)
+                promo_data['sql_target_env'] = sql_target_env
+                promo_data['sql_prod_schema'] = sql_prod_schema
                 # Store in SQLite blob table (separate persistence)
                 try:
                     from data import sql_store
@@ -1565,23 +1596,102 @@ def _edit_rdc(promo_code):
                 except Exception as save_err:
                     print(f"[SQL GEN][WRITE][ERROR] File save failed for {promo_code}: {save_err}")
                     flash(f"SQL file save failed: {save_err}", 'warning')
-                # Record PCR generation in version history
-                try:
-                    next_count = get_next_sql_gen_count(promo_code)
-                    log_version_event(
-                        promo_code=promo_code,
-                        promo_id=promo_code,
-                        orbit_id=db_snapshot.get('orbit_id'),
-                        promo_owner=db_snapshot.get('Owner') or db_snapshot.get('owner'),
-                        promo_type=db_snapshot.get('Desired_Execution'),
-                        event_type='pcr_generated',
-                        actor=_get_current_user_name() or 'System',
-                        source='sql_generation',
-                        version_number=next_count,
-                        sql_gen_count=next_count
-                    )
-                except Exception:
-                    pass
+                # ZLAB execution (optional)
+                if sql_target_env == 'ZLAB':
+                    exec_success = False
+                    exec_error_label = None
+                    try:
+                        from data.oracle_client import execute_oracle_block
+                        try:
+                            exec_path = _promo_oracle_exec_path(promo_code)
+                            os.makedirs(os.path.dirname(exec_path), exist_ok=True)
+                            with open(exec_path, 'w', encoding='utf-8') as fh:
+                                json.dump({
+                                    'status': 'started',
+                                    'executed_at': datetime.utcnow().isoformat(),
+                                    'promo_code': promo_code,
+                                    'sql_length': len(sql_content)
+                                }, fh, indent=2)
+                        except Exception:
+                            pass
+                        exec_meta = execute_oracle_block(sql_content)
+                        promo_data['oracle_exec_status'] = exec_meta.get('status')
+                        exec_success = True
+                        try:
+                            exec_path = _promo_oracle_exec_path(promo_code)
+                            os.makedirs(os.path.dirname(exec_path), exist_ok=True)
+                            with open(exec_path, 'w', encoding='utf-8') as fh:
+                                json.dump({
+                                    'status': exec_meta.get('status'),
+                                    'executed_at': datetime.utcnow().isoformat(),
+                                    'promo_code': promo_code
+                                }, fh, indent=2)
+                        except Exception:
+                            pass
+                        flash('ZLAB insert executed successfully.', 'success')
+                    except Exception as exec_err:
+                        promo_data['oracle_exec_status'] = 'error'
+                        promo_data['oracle_exec_error'] = str(exec_err)
+                        exec_error_label = str(exec_err).replace('\n', ' ').strip()
+                        try:
+                            exec_path = _promo_oracle_exec_path(promo_code)
+                            os.makedirs(os.path.dirname(exec_path), exist_ok=True)
+                            with open(exec_path, 'w', encoding='utf-8') as fh:
+                                json.dump({
+                                    'status': 'error',
+                                    'error': str(exec_err),
+                                    'executed_at': datetime.utcnow().isoformat(),
+                                    'promo_code': promo_code
+                                }, fh, indent=2)
+                        except Exception:
+                            pass
+                        flash(f"ZLAB execution failed: {exec_err}", 'error')
+
+                    try:
+                        from data.version_history import get_next_zlab_gen_count
+                        next_count = get_next_zlab_gen_count(promo_code)
+                        if exec_success:
+                            event_type = 'zlab_inserted'
+                        else:
+                            event_type = 'zlab_insert_failed'
+                        error_payload = None
+                        if exec_error_label:
+                            error_payload = {'oracle_error': exec_error_label[:200]}
+                        log_version_event(
+                            promo_code=promo_code,
+                            promo_id=promo_code,
+                            orbit_id=db_snapshot.get('orbit_id'),
+                            promo_owner=db_snapshot.get('Owner') or db_snapshot.get('owner'),
+                            promo_type=db_snapshot.get('Desired_Execution'),
+                            event_type=event_type,
+                            actor=_get_current_user_name() or 'System',
+                            source='sql_generation',
+                            version_number=next_count,
+                            sql_gen_count=next_count,
+                            changed_fields=error_payload
+                        )
+                    except Exception:
+                        pass
+
+                # Record PCR generation in version history (PROD only)
+                if sql_target_env != 'ZLAB':
+                    try:
+                        next_count = get_next_sql_gen_count(promo_code)
+                        log_version_event(
+                            promo_code=promo_code,
+                            promo_id=promo_code,
+                            orbit_id=db_snapshot.get('orbit_id'),
+                            promo_owner=db_snapshot.get('Owner') or db_snapshot.get('owner'),
+                            promo_type=db_snapshot.get('Desired_Execution'),
+                            event_type='pcr_generated',
+                            actor=_get_current_user_name() or 'System',
+                            source='sql_generation',
+                            version_number=next_count,
+                            sql_gen_count=next_count
+                        )
+                    except Exception:
+                        pass
+
                 # Performance + summary flash
                 flash(f"SQL generated in {generation_time:.2f}s | {len(sql_content):,} chars", 'success')
                 # Force tab to SQL Generation
@@ -1614,12 +1724,17 @@ def _edit_rdc(promo_code):
         inline_sql_snippet = None
         if gen_flag and promo_data.get('generated_sql'):
             inline_sql_snippet = promo_data['generated_sql'][:500]
-        return redirect(url_for('promo.edit_rdc', promo_code=promo_code, tab=active_tab, gen=gen_flag, sql_snip=inline_sql_snippet))
+        return redirect(url_for('promo.edit_rdc', promo_code=promo_code, tab=active_tab, gen=gen_flag, sql_snip=inline_sql_snippet, sql_env=sql_target_env, sql_schema=sql_prod_schema))
     
     # GET request
     tab = request.args.get('tab', 'Details')
     gen_flag = request.args.get('gen')
     inline_sql_snip = request.args.get('sql_snip')
+    sql_env_arg = request.args.get('sql_env')
+    sql_schema_arg = request.args.get('sql_schema')
+    if sql_schema_arg:
+        sql_schema_arg = sql_schema_arg.strip().upper()
+    staging_ref = {}
     
     # Get full promo data with all fields
     promo_data = dm.get_promo(promo_code)
@@ -1699,12 +1814,47 @@ def _edit_rdc(promo_code):
         except Exception as blob_get_err:
             print(f"[SQL GEN][GET][BLOB] Failed to load SQL from store for {promo_code}: {blob_get_err}")
     auto_open_sql_preview = True if (gen_flag and promo_data.get('generated_sql') and tab == 'SQL Generation') else False
+    # Load last ZLAB execution log if present
+    try:
+        exec_path = _promo_oracle_exec_path(promo_code)
+        if os.path.exists(exec_path):
+            with open(exec_path, 'r', encoding='utf-8') as fh:
+                promo_data['oracle_exec_log'] = json.load(fh)
+    except Exception:
+        pass
     # Compute persistent flag: has SQL ever been generated (file or memory)
     try:
         sql_file_exists = os.path.exists(os.path.join('data','uploads','promotions', promo_code, f"{promo_code}_promo_eligibility_rules.sql"))
     except Exception:
         sql_file_exists = False
     has_generated_sql = bool(promo_data.get('generated_sql')) or sql_file_exists
+
+    def _parse_sql_meta(sql_text: str) -> dict:
+        env = None
+        schema = None
+        for line in (sql_text or '').splitlines():
+            raw = line.strip()
+            if raw.upper().startswith('-- TARGET_ENV:'):
+                env = raw.split(':', 1)[1].strip().upper()
+            if raw.upper().startswith('-- PROD_SCHEMA:'):
+                schema = raw.split(':', 1)[1].strip()
+        return {'env': env, 'schema': schema}
+
+    parsed = _parse_sql_meta(promo_data.get('generated_sql', '')) if promo_data.get('generated_sql') else {}
+    promo_data['sql_target_env'] = (sql_env_arg or parsed.get('env') or 'PROD')
+    parsed_schema = parsed.get('schema')
+    promo_data['sql_prod_schema'] = (sql_schema_arg or (parsed_schema.upper() if parsed_schema else '') or '')
+
+    if promo_data['sql_target_env'] == 'PROD':
+        try:
+            from data.schema_reference import load_reference, refresh_staging_reference
+            staging_ref = load_reference()
+            if not staging_ref.get('staging_reference'):
+                staging_ref = refresh_staging_reference()
+            if staging_ref.get('staging_reference'):
+                promo_data['sql_prod_schema'] = str(staging_ref['staging_reference']).strip().upper()
+        except Exception:
+            pass
     # Build field diagnostics for template (only for SQL Generation tab)
     sql_source_fields = {}
     if tab == 'SQL Generation':
@@ -1724,6 +1874,8 @@ def _edit_rdc(promo_code):
                          has_generated_sql=has_generated_sql,
                          sql_source_fields=sql_source_fields,
                          sql_disk_path=disk_sql_path,
+                         prod_schemas=['EFPEBATCHPROD01REFA', 'EFPEBATCHPROD01REFB'],
+                         staging_reference=staging_ref,
                          soc_groupings=dm.get_soc_groupings(),
                          soc_grouping_details=dm.get_soc_grouping_details(),
                          account_types=dm.get_account_types(),

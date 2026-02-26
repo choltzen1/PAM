@@ -1,5 +1,18 @@
 /* Layout allowing natural scrolling at 75% scale */
 html { font-size: 12px; }
+html:not([data-theme='dark']) body {
+  background: #F5F5F5 !important;
+  background-attachment: fixed;
+}
+
+html[data-theme='dark'] body {
+  background: #3A2F3D !important;
+  background-attachment: fixed;
+}
+
+.app-main-scroll {
+  background: transparent !important;
+}
 .layout-container {
   display: flex;
   flex-direction: column;
@@ -27,6 +40,30 @@ html { font-size: 12px; }
   position: relative;
   width: 100%;
   box-sizing: border-box;
+}
+
+html[data-theme='dark'] .layout-container {
+  --input-bg: #ffffff;
+  --input-color: #111111;
+  --input-border: #c5c7c9;
+  --title-color: #f2f3f5;
+}
+
+html[data-theme='dark'] .layout-container .version-controls {
+  background: rgba(45,22,38,0.55);
+  border: 1px solid rgba(226,0,116,0.25);
+  border-radius: 8px;
+  padding: 1rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.35);
+  backdrop-filter: blur(8px);
+}
+
+html[data-theme='dark'] .layout-container .version-controls,
+html[data-theme='dark'] .layout-container .version-controls label,
+html[data-theme='dark'] .layout-container .version-controls span,
+html[data-theme='dark'] .layout-container .version-controls .control-label,
+html[data-theme='dark'] .layout-container .version-controls .control-hint {
+  color: #ffffff !important;
 }
 
 /* All plain text in control groups adapts to theme */
@@ -225,14 +262,23 @@ html { font-size: 12px; }
 /* Main content row */
 .content-row {
   display: flex;
-  background: #f5f5f5;
+  background: var(--bg-soft, #f5f5f5);
   min-height: 150px;
+}
+
+html[data-theme='dark'] .content-row {
+  background: transparent;
+  border-top: none;
 }
 
 .left-content {
   flex: 1;
   padding: 15px;
   border-right: 1px solid #ddd;
+}
+
+html[data-theme='dark'] .left-content {
+  border-right: 1px solid rgba(255,255,255,0.12);
 }
 
 .controls-section {
@@ -255,15 +301,27 @@ html { font-size: 12px; }
 /* Description section */
 .description-section {
   padding: 1rem 2rem;
-  background: #f8f9fa;
+  background: var(--bg-soft, #f8f9fa);
+}
+
+html[data-theme='dark'] .description-section {
+  background: transparent;
+  border-top: none;
 }
 
 .right-content {
-  background: #e8e8e8;
+  background: var(--control-surface, #e8e8e8);
   padding: 1rem;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
   border: 1px solid #dee2e6;
+}
+
+html[data-theme='dark'] .right-content {
+  background: rgba(45,22,38,0.55);
+  border: 1px solid rgba(226,0,116,0.25);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  backdrop-filter: blur(8px);
 }
 
 .description-text {
@@ -272,21 +330,32 @@ html { font-size: 12px; }
   color: #333;
 }
 
+html[data-theme='dark'] .description-text {
+  color: #e9e3ed;
+}
+
 /* Table section with card styling - now underneath description */
 .table-section {
   display: flex;
   gap: 0.75rem;
   padding: 0 1.5rem 0.75rem 1.5rem;
   align-items: stretch;
+  background: transparent;
 }
 
 .panel {
   flex: 1;
   display: flex;
   flex-direction: column;
-  background: white;
+  background: var(--bg-alt, #ffffff);
   border-radius: 6px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+html[data-theme='dark'] .panel {
+  background: var(--card-bg, #d0d2d3);
+  border: 1px solid #b9bbbc;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.35);
 }
 
 .panel-header {
@@ -303,46 +372,90 @@ html { font-size: 12px; }
 
 .panel-content {
   padding: 0.75rem;
-  background: white;
+  background: var(--card-bg, #ffffff);
   border-radius: 0 0 6px 6px;
   flex-grow: 1;
+}
+
+html[data-theme='dark'] .panel-content {
+  background: var(--card-bg, #d0d2d3);
 }
 
 .data-table {
   width: 100%;
   border-collapse: collapse;
   font-size: 0.85rem;
-  background: white;
+  background: var(--bg-alt, #ffffff);
+}
+
+html[data-theme='dark'] .data-table {
+  background: var(--card-bg, #d0d2d3);
+  border: 1px solid #b9bbbc;
 }
 
 .data-table thead th {
   background: #E20074;
   color: white;
   padding: 0.75em 0.6em;
-  text-align: left;
-  font-weight: 600;
+  text-align: center;
+  font-weight: 700;
   font-size: 0.8rem;
   border: none;
 }
 
 .data-table tbody td {
   padding: 0.6em;
-  border-bottom: 1px solid #eee;
+  border: none;
   font-size: 0.8rem;
   vertical-align: top;
   color: #000;
 }
 
+html[data-theme='dark'] .data-table tbody td {
+  border-bottom: 1px solid #b9bbbc;
+  color: #111;
+}
+
 .data-table tbody tr {
   cursor: pointer;
+  border-bottom: 1px solid #c5c7c9;
+}
+
+html[data-theme='dark'] .data-table tbody tr {
+  border-bottom: 1px solid #aaa;
 }
 
 .data-table tbody tr:hover {
   background-color: #f8f9fa;
 }
 
+html[data-theme='dark'] .data-table tbody tr:hover {
+  background-color: #e1e3e5;
+}
+
 .data-table tbody tr.selected {
   background-color: #e3f2fd;
+}
+
+/* RDC-style zebra striping */
+.data-table tbody tr:nth-child(odd) {
+  background: #eceeef;
+}
+
+.data-table tbody tr:nth-child(even) {
+  background: #d8dadb;
+}
+
+html[data-theme='dark'] .data-table tbody tr:nth-child(odd) {
+  background: #d2d4d5;
+}
+
+html[data-theme='dark'] .data-table tbody tr:nth-child(even) {
+  background: #b9bbbc;
+}
+
+html[data-theme='dark'] .data-table tbody tr.selected {
+  background-color: #cfe3f5;
 }
 
 .detail-line {
@@ -352,9 +465,17 @@ html { font-size: 12px; }
   line-height: 1.4;
 }
 
+html[data-theme='dark'] .detail-line {
+  color: #1f1f1f;
+}
+
 .detail-line strong {
   color: #212529;
   font-weight: 600;
+}
+
+html[data-theme='dark'] .detail-line strong {
+  color: #111111;
 }
 
 /* Mode switch (Single vs Prioritize) */
@@ -430,5 +551,27 @@ html { font-size: 12px; }
 .priority-result-box.not-found { background:#fff5f5; border-color:#f5c2c2; color:#c92a2a; }
 .priority-result-box.error { background:#fff5f5; border-color:#f1aeb5; color:#c92a2a; }
 .priority-result-box.searching { background:#f1f3f5; border-color:#d6d8db; color:#555; font-style:italic; }
+html[data-theme='dark'] .priority-result-box {
+  background: var(--card-bg, #d0d2d3);
+  border-color: #b9bbbc;
+  color: #111111;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+}
+html[data-theme='dark'] .priority-result-box.found {
+  background: #d9ecd9;
+  border-color: #a8cfae;
+  color: #111111;
+}
+html[data-theme='dark'] .priority-result-box.not-found,
+html[data-theme='dark'] .priority-result-box.error {
+  background: #f3d9d9;
+  border-color: #e0aaaa;
+  color: #7a1c1c;
+}
+html[data-theme='dark'] .priority-result-box.searching {
+  background: #e3e5e7;
+  border-color: #b9bbbc;
+  color: #333333;
+}
 /* Force hide utility (overrides earlier display flex !important on .apple-dropdown) */
 .hidden-priority { display: none !important; }
