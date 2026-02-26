@@ -175,9 +175,8 @@ def debug_db():
     
     # Test Fabric connection
     try:
-        from data.fabric_database import FabricDatabaseManager
-        fabric = FabricDatabaseManager()
-        conn = fabric._get_connection()
+        from data.fabric_database import fabric_db
+        conn = fabric_db._get_connection()
         if conn:
             cursor = conn.cursor()
             cursor.execute("SELECT TOP 1 cat_billname FROM dbo.ORBIT_Reporting_Table")
@@ -185,12 +184,17 @@ def debug_db():
             results['fabric'] = {
                 'status': 'connected',
                 'sample_record': bool(row),
-                'server': os.getenv('FABRIC_SERVER', '')[:50] + '...' if os.getenv('FABRIC_SERVER') else None
+                'server': os.getenv('FABRIC_SERVER', '')[:50] + '...' if os.getenv('FABRIC_SERVER') else None,
+                'health': fabric_db.get_status(),
             }
             cursor.close()
-            conn.close()
+            # NOTE: do NOT close conn – it's a shared persistent connection
         else:
-            results['fabric'] = {'status': 'failed', 'error': 'Could not establish connection'}
+            results['fabric'] = {
+                'status': 'failed',
+                'error': 'Could not establish connection',
+                'health': fabric_db.get_status(),
+            }
     except Exception as e:
         results['fabric'] = {'status': 'error', 'error': str(e)[:200]}
     
@@ -247,11 +251,11 @@ def debug_fabric():
     }
     
     try:
-        from data.fabric_database import FabricDatabaseManager
-        fabric = FabricDatabaseManager()
+        from data.fabric_database import fabric_db as fabric
         
         # Show driver being used
         debug_info['driver'] = fabric.driver
+        debug_info['health'] = fabric.get_status()
         
         # Test token acquisition
         try:
@@ -286,7 +290,7 @@ def debug_fabric():
                 except Exception as e:
                     debug_info['query_test'] = {'status': 'error', 'error': str(e)[:150]}
                 
-                conn.close()
+                # NOTE: do NOT close conn – it's a shared persistent connection
             else:
                 debug_info['connection_test'] = {'status': 'failed', 'error': 'No connection returned', 'last_error': fabric._last_error}
         except Exception as e:
@@ -399,6 +403,169 @@ def debug_jira():
     debug_info['overall_status'] = 'ok' if all_ok else 'failed'
     
     return jsonify(debug_info)
+
+
+@core_bp.route('/debug/network', endpoint='debug_network')
+def debug_network():
+    """Deep network diagnostic for Fabric connectivity.
+    Tests each layer independently: DNS, TCP, TLS, ODBC, Token, Full connection.
+    Use this to pinpoint exactly where the connection fails on Azure vs local."""
+    from flask import jsonify
+    import os
+    import socket
+    import ssl
+    import time
+
+    server = os.getenv('FABRIC_SERVER', '')
+    port = int(os.getenv('FABRIC_PORT', '1433'))
+
+    results = {
+        'environment': {
+            'is_azure': bool(os.getenv('WEBSITE_INSTANCE_ID')),
+            'hostname': socket.gethostname(),
+            'server_target': server,
+            'port': port,
+        },
+        'tests': {}
+    }
+
+    # 0. Outbound public IP (so we can compare Azure vs local)
+    try:
+        import urllib.request
+        start = time.time()
+        req = urllib.request.Request('https://api.ipify.org?format=json', method='GET')
+        with urllib.request.urlopen(req, timeout=5) as resp:
+            import json as _json
+            ip_data = _json.loads(resp.read().decode())
+        elapsed = round((time.time() - start) * 1000)
+        results['tests']['0_outbound_ip'] = {
+            'status': 'info',
+            'public_ip': ip_data.get('ip', 'unknown'),
+            'ms': elapsed,
+            'note': 'Compare this IP between local and Azure to see if traffic is proxied differently',
+        }
+    except Exception as e:
+        results['tests']['0_outbound_ip'] = {'status': 'info', 'error': str(e)[:200]}
+
+    # 1. DNS Resolution
+    try:
+        start = time.time()
+        ip = socket.gethostbyname(server)
+        elapsed = round((time.time() - start) * 1000)
+        results['tests']['1_dns'] = {'status': 'pass', 'ip': ip, 'ms': elapsed}
+    except Exception as e:
+        results['tests']['1_dns'] = {'status': 'FAIL', 'error': str(e)[:200]}
+
+    # 2. TCP Connect (raw socket, port 1433)
+    try:
+        start = time.time()
+        sock = socket.create_connection((server, port), timeout=10)
+        elapsed = round((time.time() - start) * 1000)
+        # Get the local (outbound) IP the OS chose
+        local_ip = sock.getsockname()[0]
+        sock.close()
+        results['tests']['2_tcp'] = {'status': 'pass', 'ms': elapsed, 'local_ip': local_ip}
+    except Exception as e:
+        results['tests']['2_tcp'] = {'status': 'FAIL', 'error': str(e)[:200]}
+
+    # 3. TDS Pre-login probe (send TDS prelogin + read response)
+    # Port 1433 uses TDS protocol, not raw TLS. We send a minimal
+    # TDS prelogin packet and check if the server responds.
+    try:
+        start = time.time()
+        raw = socket.create_connection((server, port), timeout=10)
+        # TDS prelogin packet (minimal): Header(8) + VERSION option
+        prelogin = (
+            b'\x12'       # Type: Pre-Login
+            b'\x01'       # Status: EOM
+            b'\x00\x2f'   # Length: 47
+            b'\x00\x00'   # SPID
+            b'\x01'       # PacketID
+            b'\x00'       # Window
+            # Options: VERSION(0), ENCRYPTION(1), TERMINATOR(0xff)
+            b'\x00\x00\x15\x00\x06'  # VERSION at offset 21, len 6
+            b'\x01\x00\x1b\x00\x01'  # ENCRYPTION at offset 27, len 1
+            b'\xff'                    # TERMINATOR
+            # VERSION data: 0.0.0.0 + subbuild 0
+            b'\x00\x00\x00\x00\x00\x00'
+            # ENCRYPTION data: 0x01 = ENCRYPT_ON
+            b'\x01'
+        )
+        raw.settimeout(10)
+        raw.sendall(prelogin)
+        resp = raw.recv(128)
+        elapsed = round((time.time() - start) * 1000)
+        raw.close()
+        got_response = len(resp) > 0
+        # Check if response starts with TDS prelogin response type (0x04)
+        resp_type = resp[0] if resp else None
+        results['tests']['3_tds_prelogin'] = {
+            'status': 'pass' if got_response else 'FAIL',
+            'ms': elapsed,
+            'response_bytes': len(resp),
+            'response_type': hex(resp_type) if resp_type is not None else None,
+            'note': 'TDS prelogin response received' if got_response else 'No response',
+        }
+    except Exception as e:
+        results['tests']['3_tds_prelogin'] = {'status': 'FAIL', 'error': str(e)[:200]}
+
+    # 4. OAuth Token
+    try:
+        from data.fabric_database import fabric_db as _fabric
+        start = time.time()
+        token = _fabric._get_access_token()
+        elapsed = round((time.time() - start) * 1000)
+        results['tests']['4_token'] = {
+            'status': 'pass' if token else 'FAIL',
+            'ms': elapsed,
+            'token_bytes': len(token) if token else 0,
+        }
+    except Exception as e:
+        results['tests']['4_token'] = {'status': 'FAIL', 'error': str(e)[:200]}
+
+    # 5. ODBC/pyodbc connect (the actual Fabric connection)
+    try:
+        from data.fabric_database import fabric_db as _fabric2
+        start = time.time()
+        conn = _fabric2._get_connection()
+        elapsed = round((time.time() - start) * 1000)
+        if conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT 1")
+            cursor.close()
+            results['tests']['5_odbc'] = {'status': 'pass', 'ms': elapsed}
+        else:
+            results['tests']['5_odbc'] = {'status': 'FAIL', 'error': _fabric2._last_error, 'ms': elapsed}
+    except Exception as e:
+        results['tests']['5_odbc'] = {'status': 'FAIL', 'error': str(e)[:200]}
+
+    # Summary
+    failed = [k for k, v in results['tests'].items() if v.get('status') == 'FAIL']
+    results['summary'] = {
+        'all_pass': len(failed) == 0,
+        'failed_tests': failed,
+        'diagnosis': _diagnose_failure(failed),
+    }
+
+    return jsonify(results)
+
+
+def _diagnose_failure(failed):
+    """Provide human-readable diagnosis based on which tests failed."""
+    if not failed:
+        return "All tests passed - Fabric connection is working."
+    first = failed[0]
+    if '1_dns' in first:
+        return "DNS resolution failed. FABRIC_SERVER env var may be missing or DNS is blocked."
+    if '2_tcp' in first:
+        return "TCP connection failed. Port 1433 is blocked by firewall/NSG, or the server is unreachable."
+    if '3_tds' in first:
+        return "TDS prelogin failed. TCP connected but the SQL endpoint did not respond to TDS protocol. The server may be actively rejecting non-whitelisted connections at the application layer."
+    if '4_token' in first:
+        return "OAuth token acquisition failed. Check Service Principal credentials (FABRIC_CLIENT_ID, FABRIC_CLIENT_SECRET, FABRIC_TENANT_ID)."
+    if '5_odbc' in first:
+        return "ODBC connection failed but TCP+TLS+Token all passed. This means the Fabric endpoint is rejecting the authenticated ODBC session. This is the Premium capacity SKU limitation - it only accepts connections from corporate-proxied traffic (Zscaler), not direct Azure connections."
+    return f"Unknown failure pattern: {failed}"
 
 
 # Research workspace handled by research blueprint (/research)

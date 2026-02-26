@@ -1071,8 +1071,7 @@ def validate_orbit_data():
     }
     
     try:
-        from data.fabric_database import FabricDatabaseManager
-        fabric = FabricDatabaseManager()
+        from data.fabric_database import fabric_db as fabric
         
         # Test connection
         if not fabric.test_connection():
@@ -1214,8 +1213,7 @@ def orbit_field_coverage():
     Runs aggregate queries to get population % for all fields.
     """
     try:
-        from data.fabric_database import FabricDatabaseManager
-        fabric = FabricDatabaseManager()
+        from data.fabric_database import fabric_db as fabric
         
         if not fabric.test_connection():
             return jsonify({'success': False, 'message': 'Failed to connect to Fabric'}), 500
