@@ -42,6 +42,16 @@
     </div>
    </header>
   <main class="app-main-scroll" style="padding-top:calc(var(--header-height) + var(--header-content-gap));padding-bottom:var(--footer-height);">
+       {% with messages = get_flashed_messages(with_categories=true) %}
+         {% if messages %}
+           <div class="container-fluid" style="max-width: 1100px; margin: 0 auto;">
+             {% for category, message in messages %}
+               {% set bs = 'danger' if category in ['error','danger'] else ('success' if category == 'success' else ('info' if category == 'info' else 'warning')) %}
+               <div class="alert alert-{{ bs }} small" role="alert" style="margin-top:.75rem;">{{ message }}</div>
+             {% endfor %}
+           </div>
+         {% endif %}
+       {% endwith %}
      {% block content %}{% endblock %}
    </main>
   <footer class="footer-nav">
