@@ -130,7 +130,7 @@
             </div>
             <div class="col-12 col-md-5 mode-input pete-hidden" id="input_eip">
               <label class="form-label">EIP_ID</label>
-              <input type="text" class="form-control form-control-sm" name="eip_id" value="" placeholder="Enter 9-digit EIP_ID" inputmode="numeric" pattern="\d{9}" minlength="9" maxlength="9" title="Enter exactly 9 digits">
+              <input type="text" class="form-control form-control-sm" name="eip_id" value="" placeholder="Enter 10-digit EIP_ID" inputmode="numeric" pattern="\d{10}" minlength="10" maxlength="10" title="Enter exactly 10 digits">
             </div>
             <div class="col-12 col-md-5 mode-input pete-hidden" id="input_ban">
               <label class="form-label">BAN</label>
@@ -153,10 +153,10 @@
             {% endif %}
             <form method="post" class="row g-2 align-items-end mt-2 pete-select-form">
               <input type="hidden" name="form_name" value="data_form" />
-              <input type="hidden" name="action" value="run_lookup_from_select" />
+              <input type="hidden" name="pete_action" value="run_lookup_from_select" />
               <div class="col-12 col-md-8">
                 <label class="form-label">Select an EIP_ID</label>
-                <select class="form-select form-select-sm" name="selected_eip">
+                <select class="form-select form-select-sm" name="selected_eip" required>
                   <option value="">-- choose --</option>
                   {% for eid in eip_ids %}
                     <option value="{{ eid }}">{{ eid }}</option>
@@ -271,12 +271,16 @@ document.getElementById('mode_eip').addEventListener('change', toggleMode);
 document.getElementById('mode_ban').addEventListener('change', toggleMode);
 // initial state
 toggleMode();
-// Enforce 9-digit numeric input
-['eip_id', 'ban'].forEach((name) => {
+// Enforce numeric input with exact lengths
+const peteNumericRules = {
+  eip_id: 10,
+  ban: 9,
+};
+Object.entries(peteNumericRules).forEach(([name, maxLen]) => {
   const input = document.querySelector(`input[name="${name}"]`);
   if (!input) return;
   input.addEventListener('input', () => {
-    const digits = input.value.replace(/\D/g, '').slice(0, 9);
+    const digits = input.value.replace(/\D/g, '').slice(0, maxLen);
     if (input.value !== digits) {
       input.value = digits;
     }

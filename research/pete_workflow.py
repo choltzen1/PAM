@@ -47,6 +47,46 @@ def ensure_session_defaults():
     session.setdefault("missing_ban", False)
     session.setdefault("missing_order_ids", False)
 
+
+def clear_pete_query_state(*, keep_chat_history: bool = True, keep_discovery: bool = False) -> None:
+    """Clear prior PETE query outputs from the session.
+
+    PETE uses PRG (POST-redirect-GET) and stores results in the session. When the
+    user runs a new lookup (or selects a different EIP_ID), we want the page to
+    reflect only the latest search.
+
+    Args:
+        keep_chat_history: Preserve chat transcript state.
+        keep_discovery: Preserve BAN discovery list (EIP IDs) + last BAN.
+    """
+    keys_to_clear = [
+        'df_main',
+        'promo_errors',
+        'rate_plans',
+        'aal_lines',
+        'trade_data',
+        'used_ban',
+        'eip_id',
+        'main_fallback_used',
+        'missing_ban',
+        'missing_order_ids',
+    ]
+    if not keep_chat_history:
+        keys_to_clear.append('chat_history')
+    if not keep_discovery:
+        keys_to_clear.extend(['eip_list', 'eip_list_attempted', 'last_ban'])
+
+    for k in keys_to_clear:
+        session.pop(k, None)
+
+    # Normalize a few stateful flags/containers back to safe defaults.
+    session['order_ids'] = []
+    session['trade_query_attempted'] = False
+
+    if not keep_discovery:
+        session.setdefault('eip_list_attempted', False)
+        session.setdefault('last_ban', '')
+
 def _encode_df(df: pd.DataFrame | None) -> str | None:
     if df is None or df.empty:
         return None

@@ -1,3 +1,5 @@
+import re
+
 from flask import Blueprint, jsonify, render_template, request, session, redirect, url_for, flash
 from auth import role_required
 from .services import (
@@ -23,6 +25,7 @@ def index():
 
 from .pete_workflow import (
     ensure_session_defaults,
+    clear_pete_query_state,
     run_eip_lookup,
     run_ban_to_eip_list,
     run_selected_eip,
@@ -54,24 +57,41 @@ def pete():
             return redirect(url_for('research.pete'))
         if form_name == 'data_form':
             mode = request.form.get('has_eip','Yes')  # 'Yes' => EIP_ID, 'No' => BAN discovery
-            if request.form.get('action') == 'run_lookup_from_select':
-                selected = request.form.get('selected_eip','').strip()
-                if selected and (not selected.isdigit() or len(selected) != 9):
-                    flash('EIP_ID must be exactly 9 digits.', 'error')
+            pete_action = request.form.get('pete_action') or request.form.get('action')
+            selected_raw = request.form.get('selected_eip')
+
+            # BAN -> EIP select flow: be resilient to missing/stripped hidden fields.
+            # If the select field is present and non-empty, treat this as the select-submit path.
+            if pete_action == 'run_lookup_from_select' or (selected_raw is not None and selected_raw.strip()):
+                # Re-running a lookup from the dropdown should clear the previous promo results.
+                # Keep the BAN discovery list visible so users can quickly try another EIP.
+                clear_pete_query_state(keep_chat_history=True, keep_discovery=True)
+                selected = (selected_raw or '').strip()
+                if not selected:
+                    flash('Please select an EIP_ID.', 'error')
                     session['pete_just_posted'] = True
                     return redirect(url_for('research.pete'))
-                if selected:
-                    run_selected_eip(selected)
+
+                # Normalize to digits-only, then validate exactly 10 digits.
+                selected_digits = re.sub(r'\D', '', selected)
+                if not selected_digits.isdigit() or len(selected_digits) != 10:
+                    flash('EIP_ID must be exactly 10 digits.', 'error')
+                    session['pete_just_posted'] = True
+                    return redirect(url_for('research.pete'))
+
+                run_selected_eip(selected_digits)
                 session['pete_just_posted'] = True
                 return redirect(url_for('research.pete'))
             session['last_mode'] = mode
             if mode == 'Yes':  # EIP lookup
                 eip_id = request.form.get('eip_id','').strip()
-                if eip_id and (not eip_id.isdigit() or len(eip_id) != 9):
-                    flash('EIP_ID must be exactly 9 digits.', 'error')
+                if eip_id and (not eip_id.isdigit() or len(eip_id) != 10):
+                    flash('EIP_ID must be exactly 10 digits.', 'error')
                     session['pete_just_posted'] = True
                     return redirect(url_for('research.pete'))
                 if eip_id:
+                    # New direct EIP lookup should clear any prior BAN discovery + prior results.
+                    clear_pete_query_state(keep_chat_history=True, keep_discovery=False)
                     run_eip_lookup(eip_id)
             else:  # BAN discovery path
                 ban = request.form.get('ban','').strip()
@@ -79,6 +99,9 @@ def pete():
                     flash('BAN must be exactly 9 digits.', 'error')
                     session['pete_just_posted'] = True
                     return redirect(url_for('research.pete'))
+
+                # New BAN discovery should clear prior results (and prior discovery list).
+                clear_pete_query_state(keep_chat_history=True, keep_discovery=False)
                 session['last_ban'] = ban
                 session['eip_id'] = ''
                 if ban:
@@ -113,8 +136,8 @@ def api_main_data():
     eip_id = request.args.get('eip_id','').strip()
     if not eip_id:
         return jsonify({'error':'eip_id required'}), 400
-    if not eip_id.isdigit() or len(eip_id) != 9:
-        return jsonify({'error':'eip_id must be 9 digits'}), 400
+    if not eip_id.isdigit() or len(eip_id) != 10:
+        return jsonify({'error':'eip_id must be 10 digits'}), 400
     df = get_main_data(eip_id)
     return jsonify({'rows': df.to_dict(orient='records'), 'count': len(df)})
 
@@ -124,8 +147,8 @@ def api_promo_error_reasons():
     eip_id = request.args.get('eip_id','').strip()
     if not eip_id:
         return jsonify({'error':'eip_id required'}), 400
-    if not eip_id.isdigit() or len(eip_id) != 9:
-        return jsonify({'error':'eip_id must be 9 digits'}), 400
+    if not eip_id.isdigit() or len(eip_id) != 10:
+        return jsonify({'error':'eip_id must be 10 digits'}), 400
     df = get_promo_error_reasons(eip_id)
     return jsonify({'rows': df.to_dict(orient='records'), 'count': len(df)})
 
@@ -228,8 +251,8 @@ def api_pete_aggregate():
     """Aggregate data pull similar to original PETE flow: eip -> promo errors, trade, rate plans, lines."""
     eip_id = request.args.get('eip_id','').strip()
     ban = request.args.get('ban','').strip()
-    if eip_id and (not eip_id.isdigit() or len(eip_id) != 9):
-        return jsonify({'error': 'eip_id must be 9 digits'}), 400
+    if eip_id and (not eip_id.isdigit() or len(eip_id) != 10):
+        return jsonify({'error': 'eip_id must be 10 digits'}), 400
     if ban and (not ban.isdigit() or len(ban) != 9):
         return jsonify({'error': 'ban must be 9 digits'}), 400
     promo_code = request.args.get('promo_code','').strip().upper()
