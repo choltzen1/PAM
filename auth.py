@@ -105,10 +105,17 @@ def get_user_from_headers() -> Optional[Dict[str, Any]]:
         }
         
         # Extract Azure App Roles (can be in 'roles' or 'assignedroles' claim)
-        azure_roles = get_claim('roles') or get_claim('assignedroles')
-        if azure_roles:
-            # Could be a single string or comma-separated
-            user_info['azure_roles'] = [r.strip() for r in azure_roles.split(',')] if isinstance(azure_roles, str) else [azure_roles]
+        # NOTE: Azure Easy Auth sends each App Role as a SEPARATE claim entry
+        # with the same typ, so we must collect ALL of them (not just the first).
+        def get_all_claims(claim_type: str) -> list:
+            return [c.get('val') for c in claims if c.get('typ') == claim_type and c.get('val')]
+        
+        all_role_vals = get_all_claims('roles') or get_all_claims('assignedroles')
+        azure_role_list = []
+        for rv in all_role_vals:
+            # Each value could itself be comma-separated
+            azure_role_list.extend([r.strip() for r in rv.split(',')])
+        user_info['azure_roles'] = azure_role_list
         
         # Map Azure roles to internal roles
         user_info['roles'] = get_user_roles_from_azure_roles(user_info['azure_roles'])
