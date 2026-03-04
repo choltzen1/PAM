@@ -397,6 +397,9 @@
 // Modal Management
 function openModal(modalId) {
   document.getElementById(modalId).style.display = 'block';
+  if (modalId === 'deviceGroupingsModal') {
+    reloadGroupings();
+  }
 }
 
 function closeModal(modalId) {
@@ -999,10 +1002,6 @@ function deleteGrouping(gid){
 
 // Auto-load groupings when modal opens
 document.getElementById('deviceGroupingsModal')?.addEventListener('click', (e)=>{ /* placeholder */ });
-function openModal(modalId){
-  document.getElementById(modalId).style.display='block';
-  if(modalId==='deviceGroupingsModal'){ reloadGroupings(); }
-}
 </script>
 
 {% endblock %}

@@ -236,10 +236,81 @@ if (selectForm) {
   });
 }
 // Chat panel logic
+function applyInlineChatBubbleTheme(theme){
+  document.querySelectorAll('#peteChatInline .pmsg .bubble').forEach((bubble) => {
+    const msg = bubble.closest('.pmsg');
+    const role = bubble.querySelector('.role');
+    const text = bubble.querySelector('.text');
+    if (theme === 'dark') {
+      if (msg?.classList.contains('user')) {
+        bubble.style.setProperty('background', '#243447', 'important');
+        bubble.style.setProperty('border-color', '#35536b', 'important');
+      } else if (msg?.classList.contains('assistant')) {
+        bubble.style.setProperty('background', '#252d23', 'important');
+        bubble.style.setProperty('border-color', '#395b33', 'important');
+      } else {
+        bubble.style.setProperty('background', '#26272b', 'important');
+        bubble.style.setProperty('border-color', '#383a3f', 'important');
+      }
+      bubble.style.setProperty('color', 'rgba(255,255,255,0.92)', 'important');
+      if (role) role.style.setProperty('color', 'rgba(255,255,255,0.7)', 'important');
+      if (text) text.style.setProperty('color', 'rgba(255,255,255,0.92)', 'important');
+    } else {
+      if (msg?.classList.contains('user')) {
+        bubble.style.setProperty('background', '#eef4fb', 'important');
+        bubble.style.setProperty('border-color', '#c8d8eb', 'important');
+      } else if (msg?.classList.contains('assistant')) {
+        bubble.style.setProperty('background', '#eef8f1', 'important');
+        bubble.style.setProperty('border-color', '#cfe6d6', 'important');
+      } else {
+        bubble.style.setProperty('background', '#f8f9fb', 'important');
+        bubble.style.setProperty('border-color', '#d8dce2', 'important');
+      }
+      bubble.style.setProperty('color', '#222', 'important');
+      if (role) role.style.setProperty('color', '#666', 'important');
+      if (text) text.style.setProperty('color', '#222', 'important');
+    }
+  });
+}
+
+function applyInlineChatTheme(){
+  const chat = document.getElementById('peteChatInline');
+  const input = chat?.querySelector('.pete-chat-input');
+  if (!chat) return;
+  const theme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+  chat.classList.remove('theme-light', 'theme-dark');
+  chat.classList.add(theme === 'dark' ? 'theme-dark' : 'theme-light');
+  if (theme === 'dark') {
+    chat.style.setProperty('background', 'rgba(25,10,20,0.55)', 'important');
+    chat.style.setProperty('border', '1px solid rgba(226,0,116,0.3)', 'important');
+    chat.style.setProperty('color', 'rgba(255,255,255,0.92)', 'important');
+    if (input) {
+      input.style.setProperty('background', 'var(--control-surface)', 'important');
+      input.style.setProperty('border', '1px solid var(--border-color)', 'important');
+      input.style.setProperty('color', 'var(--text)', 'important');
+      input.style.setProperty('-webkit-text-fill-color', 'var(--text)', 'important');
+      input.style.setProperty('caret-color', 'var(--text)', 'important');
+    }
+  } else {
+    chat.style.setProperty('background', 'rgba(255,255,255,0.92)', 'important');
+    chat.style.setProperty('border', '1px solid rgba(226,0,116,0.14)', 'important');
+    chat.style.setProperty('color', '#222', 'important');
+    if (input) {
+      input.style.setProperty('background', '#ffffff', 'important');
+      input.style.setProperty('border', '1px solid #c3c6ca', 'important');
+      input.style.setProperty('color', '#111', 'important');
+      input.style.setProperty('-webkit-text-fill-color', '#111', 'important');
+      input.style.setProperty('caret-color', '#111', 'important');
+    }
+  }
+  applyInlineChatBubbleTheme(theme);
+}
+
 function toggleInlineChat(){
   const chat = document.getElementById('peteChatInline');
   const btn = document.getElementById('chatToggleBtn');
   const stream = document.getElementById('peteChatStream');
+  applyInlineChatTheme();
   const nowOpen = !chat.classList.contains('open');
   chat.classList.toggle('open', nowOpen);
   chat.setAttribute('aria-hidden', nowOpen ? 'false' : 'true');
@@ -275,6 +346,9 @@ function peteBindCopy(){
   });
 }
 document.addEventListener('DOMContentLoaded', peteBindCopy);
+document.addEventListener('DOMContentLoaded', applyInlineChatTheme);
+const peteThemeObserver = new MutationObserver(() => applyInlineChatTheme());
+peteThemeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
 // Wrap tables in inner horizontal scroller to preserve rounded outer corners
 document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('.table-wrap').forEach(wrap => {
@@ -307,11 +381,13 @@ document.addEventListener('DOMContentLoaded', () => {
       userDiv.innerHTML = '<div class="bubble"><span class="role">USER</span><span class="text"></span></div>';
       userDiv.querySelector('.text').textContent = prompt;
       stream.appendChild(userDiv);
+      applyInlineChatTheme();
       // typing indicator
       const typingDiv = document.createElement('div');
       typingDiv.className = 'pmsg assistant typing';
       typingDiv.innerHTML = '<div class="bubble"><span class="role">ASSISTANT</span><span class="text dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></span></div>';
       stream.appendChild(typingDiv);
+      applyInlineChatTheme();
       stream.scrollTop = stream.scrollHeight;
       sendBtn.disabled = true; sendBtn.innerText='…';
       const originalPrompt = prompt;
@@ -331,6 +407,7 @@ document.addEventListener('DOMContentLoaded', () => {
             div.innerHTML = '<div class="bubble"><span class="role">ASSISTANT</span><span class="text"></span></div>';
             div.querySelector('.text').textContent = m.content;
             stream.appendChild(div);
+            applyInlineChatTheme();
           });
         }
         stream.scrollTop = stream.scrollHeight;

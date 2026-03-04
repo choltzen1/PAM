@@ -596,63 +596,6 @@ function downloadSqlForPromo(promoCode, orbitEndDate) {
   window.location.href = url;
 }
 
-function toggleSqlPreview(promoCode, orbitEndDate) {
-  // Get operator ID from the input field
-  const operatorId = document.getElementById('operatorId').value;
-  
-  // Validate operator ID
-  if (!operatorId || operatorId.length !== 5 || !/^\d{5}$/.test(operatorId)) {
-    alert('Please enter a valid 5-digit operator ID');
-    return;
-  }
-  
-  const container = document.getElementById('sql-preview-container');
-  const content = document.getElementById('sql-preview-content');
-  
-    if (container.classList.contains('hidden')) {
-    // Show preview and load SQL
-      container.classList.remove('hidden');
-    content.innerHTML = '<div class="text-center"><i class="fas fa-spinner fa-spin"></i> Loading SQL...</div>';
-    
-    // Scroll to preview
-    container.scrollIntoView({ behavior: 'smooth' });
-    
-    // Load SQL via AJAX
-    const url = `/preview_sql_for_promo/${promoCode}?operator_id=${operatorId}&orbit_end_date=${encodeURIComponent(orbitEndDate)}`;
-    
-    fetch(url)
-      .then(response => {
-        if (!response.ok) {
-          return response.json().then(err => Promise.reject(err));
-        }
-        return response.json();
-      })
-      .then(data => {
-        content.innerHTML = `
-          <div class="form-group">
-            <label><strong>SQL Statement for ${promoCode}:</strong></label>
-            <textarea class="form-control dm-sql-textarea" rows="6" readonly>${data.sql}</textarea>
-          </div>
-          <div class="text-right">
-            <button class="btn btn-success btn-sm" onclick="copySqlToClipboard(this)">
-              <i class="fas fa-copy"></i> Copy SQL
-            </button>
-          </div>
-        `;
-      })
-      .catch(error => {
-        content.innerHTML = `
-          <div class="alert alert-danger">
-            <strong>Error:</strong> ${error.error || 'Failed to load SQL preview'}
-          </div>
-        `;
-      });
-  } else {
-    // Hide preview
-    hideSqlPreview();
-  }
-}
-
 function hideSqlPreview() {
   document.getElementById('sql-preview-container').classList.add('hidden');
 }
