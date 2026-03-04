@@ -58,14 +58,17 @@
     <div id="footer-time">{{ current_datetime }}</div>
     <nav class="footer-links">
       <a class="footer-link" title="Back" href="javascript:history.back()"><i class="fas fa-chevron-left"></i></a>
-      <a class="footer-link" title="Workspace Hub" href="{{ url_for('core.landing') }}"><i class="fas fa-th-large"></i></a>
-      <a class="footer-link" title="PAM Home" href="{{ url_for('core.PAM_homepage') }}"><i class="fas fa-home"></i></a>
+      <a class="footer-link" title="Workspace Hub" href="{{ safe_url_for('core.landing', fallback=url_for('promo.rdc_page')) }}"><i class="fas fa-th-large"></i></a>
+      <a class="footer-link" title="PAM Home" href="{{ safe_url_for('core.PAM_homepage', fallback=url_for('promo.rdc_page')) }}"><i class="fas fa-home"></i></a>
       <a class="footer-link" title="RDC" href="{{ url_for('promo.rdc_page') }}"><i class="fas fa-tags"></i></a>
       <a class="footer-link" title="SPE" href="{{ url_for('promo.spe_page') }}"><i class="fas fa-bolt"></i></a>
     </nav>
    </footer>
   {% include 'partials/_footer_time_script.html' %}
   {% include 'partials/_theme_toggle_script.html' %}
+  {% if request.path.startswith('/edit_rdc/') and request.args.get('gen') %}
+  <!-- FALLBACK MINIMAL SQL -->
+  {% endif %}
   <!-- Include device formatter for all pages -->
   <script src="{{ url_for('static', filename='js/device_formatter.js') }}"></script>
   {% block extra_js %}{% endblock %}

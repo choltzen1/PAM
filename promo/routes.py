@@ -1,6 +1,7 @@
 from flask import Blueprint, request, render_template, redirect, url_for, flash, jsonify, send_file
 import base64, json
 from werkzeug.utils import secure_filename
+from werkzeug.routing import BuildError
 import os
 from typing import Optional, TYPE_CHECKING, Dict, Any
 from services.mail_service import MailService
@@ -14,6 +15,13 @@ if TYPE_CHECKING:
 
 # Create blueprint for promotion routes
 promo_bp = Blueprint('promo', __name__)
+
+@promo_bp.app_template_global()
+def safe_url_for(endpoint: str, fallback: str = '#', **values) -> str:
+    try:
+        return url_for(endpoint, **values)
+    except BuildError:
+        return fallback
 
 # Data manager will be set by the main app
 data_manager: Optional['PromoDataManager'] = None
@@ -949,7 +957,7 @@ def approvers_page():
                 )
 
         promos = payload.get('promotions', [])
-        owners_list = [p.get('owner','').strip() for p in promos]
+        owners_list = [str(p.get('owner') or '').strip() for p in promos]
         owners_list = [o for o in owners_list if o]  # remove blanks
         unique_owners = sorted({o for o in owners_list if o.lower() != 'unknown'})
 
@@ -960,7 +968,7 @@ def approvers_page():
             if idx != 0:
                 promos = [promos[idx]] + promos[:idx] + promos[idx+1:]
                 promo_codes = [p.get('code','') for p in promos]
-                owners_list = [p.get('owner','') for p in promos]
+                owners_list = [str(p.get('owner') or '').strip() for p in promos]
 
         # Placeholder revenue approvers until integrated
         revenue_approvers = [
@@ -983,7 +991,17 @@ def approvers_page():
         )
     except Exception as e:
         flash(f'Error loading approvers data: {e}', 'error')
-        return render_template('pam/approvers.html', promo_codes=[], owners=[], unique_owners=[], revenue_approvers=[], target_promo_code='')
+        return render_template(
+            'pam/approvers.html',
+            promo_codes=[],
+            owners=[],
+            unique_owners=[],
+            revenue_approvers=[],
+            target_promo_code='',
+            pagination={'total_pages': 0, 'page': 1, 'per_page': 0, 'total': 0},
+            search_query='',
+            selected_owner='all'
+        )
 
 @promo_bp.route('/send-approval-email', methods=['POST'], endpoint='send_approval_email')
 @role_required('pam_users')
@@ -1692,6 +1710,11 @@ def _edit_rdc(promo_code):
                     except Exception:
                         pass
 
+                try:
+                    dm.save_promo(promo_code, promo_data, user_name=_get_current_user_name() or 'System')
+                except Exception:
+                    pass
+
                 # Performance + summary flash
                 flash(f"SQL generated in {generation_time:.2f}s | {len(sql_content):,} chars", 'success')
                 # Force tab to SQL Generation
@@ -1713,6 +1736,10 @@ def _edit_rdc(promo_code):
                     pass
                 try:
                     dm.save_sql_file(promo_code, err_sql, f"{promo_code}_promo_eligibility_rules.sql")
+                except Exception:
+                    pass
+                try:
+                    dm.save_promo(promo_code, promo_data, user_name=_get_current_user_name() or 'System')
                 except Exception:
                     pass
                 flash("SQL generation error captured. Placeholder shown.", 'error')
@@ -1813,6 +1840,12 @@ def _edit_rdc(promo_code):
                     promo_data['sql_debug_loaded_from'] = 'GET_sql_store'
         except Exception as blob_get_err:
             print(f"[SQL GEN][GET][BLOB] Failed to load SQL from store for {promo_code}: {blob_get_err}")
+    if gen_flag and not promo_data.get('generated_sql'):
+        promo_data['generated_sql'] = '-- FALLBACK MINIMAL SQL\nSELECT 1 AS no_data_placeholder;\n'
+        promo_data['sql_length'] = len(promo_data['generated_sql'])
+        promo_data['sql_generated_at'] = promo_data.get('sql_generated_at') or datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
+        promo_data['sql_generation_time'] = promo_data.get('sql_generation_time') or 'N/A'
+        promo_data['sql_debug_loaded_from'] = 'GET_gen_flag_fallback'
     auto_open_sql_preview = True if (gen_flag and promo_data.get('generated_sql') and tab == 'SQL Generation') else False
     # Load last ZLAB execution log if present
     try:

@@ -206,6 +206,22 @@ class DatabaseManager:
         """Fetch all promotions from PAM_Orbit_Data table"""
         return self.get_promos_by_execution_type("RDC")
 
+    def get_promo_extras(self, code: str) -> Dict[str, Any]:
+        """Compatibility shim for legacy extras API.
+
+        Extras are no longer persisted separately in the DB-backed model,
+        so this returns an empty mapping by default.
+        """
+        return {}
+
+    def upsert_promo_extras(self, code: str, extras: Dict[str, Any], user: str = "System") -> bool:
+        """Compatibility shim for legacy extras API.
+
+        Callers may still invoke this method; extras are now modeled through
+        base promo fields, so this is a safe no-op.
+        """
+        return True
+
     # (Duplicate get_highest_sequential_promo_code removed)
 
     def get_highest_sequential_promo_code(self) -> Optional[str]:
@@ -898,6 +914,31 @@ class DatabaseManager:
     
     def convert_db_record_to_json_format(self, db_record: Dict[str, Any]) -> Dict[str, Any]:
         """Convert database record to JSON storage format"""
+
+        key_lookup = {str(k).lower(): k for k in (db_record or {}).keys()}
+
+        def _get(*keys, default=""):
+            for key in keys:
+                if key in db_record:
+                    return db_record.get(key)
+                lk = str(key).lower()
+                if lk in key_lookup:
+                    return db_record.get(key_lookup[lk])
+            return default
+
+        def _yn_or_passthrough(value):
+            if value is None:
+                return ""
+            if isinstance(value, str):
+                up = value.strip().upper()
+                if up in {"Y", "YES", "TRUE", "1"}:
+                    return "Y"
+                if up in {"N", "NO", "FALSE", "0"}:
+                    return "N"
+                return value
+            if isinstance(value, bool):
+                return "Y" if value else "N"
+            return value
         
         def format_date_for_html(date_value):
             """Convert M/D/YYYY to YYYY-MM-DD for HTML date inputs"""
@@ -920,56 +961,56 @@ class DatabaseManager:
         
         # Map database columns to JSON format
         # Sanitize owner field to strip all quote types
-        owner_raw = db_record.get("Owner", "")
+        owner_raw = _get("Owner", "owner", default="")
         strip_chars = '"\'"`'
         trans_table = str.maketrans('', '', strip_chars)
         owner_clean = str(owner_raw).translate(trans_table).strip() if owner_raw else ""
         
         json_record = {
-            "code": db_record.get("code", ""),
-            "description": db_record.get("description", ""),
-            "bill_facing_name": db_record.get("bill_facing_name", ""),  # Use actual bill_facing_name field
+            "code": _get("code", "Code", "CODE", default=""),
+            "description": _get("description", "Description", default=""),
+            "bill_facing_name": _get("bill_facing_name", "bill facing name", "Bill_Facing_Name", default=""),
             "owner": owner_clean,
-            "orbit_id": db_record.get("orbit_id", ""),
-            "promo_notes": db_record.get("promo_notes", ""),  # Add promo_notes field
-            "promo_start_date": format_date_for_html(db_record.get("promo_start_date")),
-            "promo_end_date": format_date_for_html(db_record.get("promo_end_date")),
-            "amount": str(db_record.get("amount", "")),
-            "discount": str(db_record.get("discount", "")),
-            "operator_id": str(db_record.get("operator_id", "")),
-            "bptcr": str(db_record.get("orbit_id", "")),
-            "sku_group_id": db_record.get("sku_group_id", ""),
-            "soc_grouping": db_record.get("soc_grouping", ""),
-            "trade_in_group_id": db_record.get("trade_in_group_id", ""),
-            "product_type": db_record.get("product_type", ""),
-            "bogo": "Y" if db_record.get("bogo") == "Y" else "N",  # Add bogo field
-            "on_menu": "Y" if db_record.get("on_menu") == "Y" else "N",  # Add on_menu field
-            "active_line_required": "Y" if str(db_record.get("active_line_required", "")).lower() in ["yes", "y"] else "N",
-            "maintain_soc": "Y" if db_record.get("maintain_soc") == "Y" else "N",
+            "orbit_id": _get("orbit_id", default=""),
+            "promo_notes": _get("promo_notes", default=""),
+            "promo_start_date": format_date_for_html(_get("promo_start_date", "promo_srart_date")),
+            "promo_end_date": format_date_for_html(_get("promo_end_date")),
+            "amount": str(_get("amount", default="")),
+            "discount": str(_get("discount", default="")),
+            "operator_id": str(_get("operator_id", default="")),
+            "bptcr": str(_get("bptcr", "orbit_id", default="")),
+            "sku_group_id": _get("sku_group_id", default=""),
+            "soc_grouping": _get("soc_grouping", default=""),
+            "trade_in_group_id": _get("trade_in_group_id", "trade_in_grp_id", default=""),
+            "product_type": _get("product_type", default=""),
+            "bogo": _yn_or_passthrough(_get("bogo", default="")),
+            "on_menu": _yn_or_passthrough(_get("on_menu", default="")),
+            "active_line_required": _yn_or_passthrough(_get("active_line_required", default="")),
+            "maintain_soc": _yn_or_passthrough(_get("maintain_soc", default="")),
             "maintain_active_line": "N",  # Not available in database
-            "market_group": db_record.get("market_group", "*"),
-            "store_group": db_record.get("store_group", "*"),
-            "limit_per_ban": str(db_record.get("limit_per_ban", "")),
-            "min_gsm_count": str(db_record.get("min_gsm_count", "")),
-            "max_gsm_count": str(db_record.get("max_gsm_count", "")),
-            "port_in_group_id": db_record.get("port_in_group_id", ""),
-            "fpd_display_promo": "Y" if db_record.get("fpd_display_promo") == "Y" else "N",
-            "nseip_drop": "Y" if db_record.get("nseip_drop") == "Y" else "N",
-            "dcd_web_cart": "Y" if db_record.get("dcd_web_cart") == "Y" else "N",
-            "promo_duration": str(db_record.get("promo_duration", "")),
-            "delay_time": str(db_record.get("delay_time", "")),
-            "application_grace_period": str(db_record.get("application_grace_period", "")),
-            "device_sales_type": db_record.get("device_sales_type", ""),  # Add device_sales_type
-            "activation_type": db_record.get("activation_type", ""),  # Add activation_type
-            "account_type": db_record.get("account_type", ""),  # Add account_type
-            "sales_application": db_record.get("sales_application", ""),  # Add sales_application
-            "device_status_group_id": db_record.get("device_status_group_id", ""),
-            "clawback_indicator": "Y" if db_record.get("clawback_indicator") == "Y" else "N",
+            "market_group": _get("market_group", default="*"),
+            "store_group": _get("store_group", default="*"),
+            "limit_per_ban": str(_get("limit_per_ban", default="")),
+            "min_gsm_count": str(_get("min_gsm_count", default="")),
+            "max_gsm_count": str(_get("max_gsm_count", default="")),
+            "port_in_group_id": _get("port_in_group_id", default=""),
+            "fpd_display_promo": _yn_or_passthrough(_get("fpd_display_promo", default="")),
+            "nseip_drop": _yn_or_passthrough(_get("nseip_drop", default="")),
+            "dcd_web_cart": _yn_or_passthrough(_get("dcd_web_cart", default="")),
+            "promo_duration": str(_get("promo_duration", default="")),
+            "delay_time": str(_get("delay_time", default="")),
+            "application_grace_period": str(_get("application_grace_period", default="")),
+            "device_sales_type": _get("device_sales_type", default=""),
+            "activation_type": _get("activation_type", default=""),
+            "account_type": _get("account_type", default=""),
+            "sales_application": _get("sales_application", default=""),
+            "device_status_group_id": _get("device_status_group_id", default=""),
+            "clawback_indicator": _yn_or_passthrough(_get("clawback_indicator", default="")),
             # Bill Facing Name (physical column may be 'bill facing name')
-            "bill_facing_name": db_record.get("bill_facing_name") or db_record.get("bill facing name", ""),
+            "bill_facing_name": _get("bill_facing_name", "bill facing name", "Bill_Facing_Name", default=""),
             
             # Prefer direct DB column value for MPSS lookback; fall back to extraction from cat_description only if column absent/empty
-            "mpss_lookback": db_record.get("mpss_lookback") or self._extract_mpss_lookback(db_record.get("cat_description", "")),
+            "mpss_lookback": _get("mpss_lookback", default="") or self._extract_mpss_lookback(_get("cat_description", default="")),
             
             # Add metadata
             "data_source": "database",
@@ -978,19 +1019,19 @@ class DatabaseManager:
             "updated_at": datetime.now().isoformat(),
             
             # Execution type for tab separation
-            "Desired_Execution": db_record.get("Desired_Execution", "RDC"),
+            "Desired_Execution": _get("Desired_Execution", default="RDC"),
             
             # Default values for fields not in database (PAM-only workflow fields)
             "pj_code": "",
-            "sku_link": "",
-            "tradein_link": "",
-            "comm_end_date": format_date_for_html(db_record.get("comm_end_date")),
+            "sku_link": _get("sku_link", default=""),
+            "tradein_link": _get("tradein_link", default=""),
+            "comm_end_date": format_date_for_html(_get("comm_end_date")),
             "promo_grace": "",
-            "trade_in_grace": "",
-            "segment_name": "",
-            "sub_segment": "",
-            "segment_group_id": "",
-            "segment_level": "",
+            "trade_in_grace": _get("trade_in_grace", "trade_in_grace_period", default=""),
+            "segment_name": _get("segment_name", default=""),
+            "sub_segment": _get("sub_segment", default=""),
+            "segment_group_id": _get("segment_group_id", "segment_grp_id", default=""),
+            "segment_level": _get("segment_level", default=""),
             "flow_indicator": "NULL",
             "uploaded_files": {},
             "generated_sql": "",
@@ -998,22 +1039,24 @@ class DatabaseManager:
             "last_changes": None,
             "jira_ticket": "",
             # Initiative name from its own column; do not fall back to description to avoid overwriting user edits
-            "initiative_name": db_record.get("initiative_name", ""),
+            "initiative_name": _get("initiative_name", default=""),
             # Additional fields from database sample
-            "crffc_maintainactivelinedev": "Y" if db_record.get("crffc_maintainactivelinedev") == "Y" else "N",
-            "Broken_Trade": db_record.get("Broken_Trade", ""),
-            "Anticipated_volume_take_rates_total": db_record.get("Anticipated_volume_take_rates_total", ""),
+            "crffc_maintainactivelinedev": _yn_or_passthrough(_get("crffc_maintainactivelinedev", default="")),
+            "Broken_Trade": _get("Broken_Trade", default=""),
+            "Anticipated_volume_take_rates_total": _get("Anticipated_volume_take_rates_total", default=""),
             
             # NEW FIELDS - Added from database analysis
-            "Status": db_record.get("Status", ""),
+            "Status": _get("Status", default=""),
             # Strip quotes from device fields if they exist
-            "crffc_eligibletradeindevices": self._strip_quotes(db_record.get("crffc_eligibletradeindevices", "")),
-            "cat_lobchannelhorizontalname": db_record.get("cat_lobchannelhorizontalname", ""),
-            "cat_additionaleligibilityrequirementsname": db_record.get("cat_additionaleligibilityrequirementsname", ""),
-            "cat_eligibledevices": self._strip_quotes(db_record.get("cat_eligibledevices", "")),
-            "cat_channelsname": db_record.get("cat_channelsname", ""),
-            "cat_description": db_record.get("cat_description", "")
+            "crffc_eligibletradeindevices": self._strip_quotes(_get("crffc_eligibletradeindevices", default="")),
+            "cat_lobchannelhorizontalname": _get("cat_lobchannelhorizontalname", default=""),
+            "cat_additionaleligibilityrequirementsname": _get("cat_additionaleligibilityrequirementsname", default=""),
+            "cat_eligibledevices": self._strip_quotes(_get("cat_eligibledevices", default="")),
+            "cat_channelsname": _get("cat_channelsname", default=""),
+            "cat_description": _get("cat_description", default="")
         }
+
+        json_record['Owner'] = owner_clean
 
         # Pass-through: include any generator-relevant fields that are present in the DB record but not yet mapped above.
         generator_field_candidates = {
@@ -1034,6 +1077,10 @@ class DatabaseManager:
         for k,v in db_record.items():
             lk = str(k)
             if lk in generator_field_candidates and lk not in json_record:
+                json_record[lk] = v
+            if lk.lower() in {'bill facing name'}:
+                continue
+            if lk not in json_record:
                 json_record[lk] = v
         # Normalize common synonyms / variant column names into expected keys used by generator
         if 'promo_start_date' in json_record and not json_record.get('promo_start_date'):

@@ -467,11 +467,21 @@ def generate_and_ingest():
             num += 1
         record_issued_code(next_code)
         # Orbit fetch
-        from data.orbit_database import OrbitDatabaseManager
-        odm = OrbitDatabaseManager()
-        orbit_row = odm.get_orbit_record(orbit_id)
-        if not orbit_row or orbit_row.get('_error'):
-            # Fallback to legacy DatabaseManager for test compatibility
+        orbit_row = None
+        orbit_err = None
+        try:
+            from data.orbit_database import OrbitDatabaseManager
+            odm = OrbitDatabaseManager()
+            orbit_row = odm.get_orbit_record(orbit_id)
+            if isinstance(orbit_row, dict) and orbit_row.get('_error'):
+                orbit_err = orbit_row.get('_error')
+                orbit_row = None
+        except Exception as orbit_lookup_err:
+            orbit_err = str(orbit_lookup_err)
+            orbit_row = None
+
+        if not orbit_row:
+            # Fallback to legacy DatabaseManager for compatibility and tests
             try:
                 from data.database import DatabaseManager
                 legacy_dbm = DatabaseManager()
@@ -481,9 +491,7 @@ def generate_and_ingest():
             if legacy_row:
                 orbit_row = legacy_row if isinstance(legacy_row, dict) else dict(legacy_row)
             else:
-                err = orbit_row.get('_error') if isinstance(orbit_row, dict) else 'unknown error'
-                status = 404 if err == 'not found' else 500
-                return jsonify({'success': False, 'error': f'Orbit {orbit_id} not found' if status == 404 else err}), status
+                return jsonify({'success': False, 'error': f'Orbit {orbit_id} not found'}), 404
         converted = {
             'code': next_code,
             'orbit_id': orbit_id,

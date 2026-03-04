@@ -179,7 +179,7 @@ def login_required(f):
     """Decorator to require authentication for a route.
     
     Usage:
-        @app.route('/protected')
+        @route('/protected')
         @login_required
         def protected_route():
             return "This requires authentication"
@@ -209,7 +209,7 @@ def role_required(required_role: str):
         required_role: Role name required (e.g., 'admin', 'power_user')
     
     Usage:
-        @app.route('/admin')
+        @route('/admin')
         @role_required('admin')
         def admin_route():
             return "This requires admin role"

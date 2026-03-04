@@ -62,9 +62,9 @@ def build_row(code: str, field_values: dict):
         phys = canonical_to_physical(canonical)
         row[phys] = value
     # Always include a couple baseline fields
-    row['Owner'] = 'Tester'
-    row['promo_start_date'] = datetime.utcnow().strftime('%Y-%m-%d')
-    row['promo_end_date'] = datetime.utcnow().strftime('%Y-%m-%d')
+    row.setdefault('Owner', 'Tester')
+    row.setdefault('promo_start_date', datetime.utcnow().strftime('%Y-%m-%d'))
+    row.setdefault('promo_end_date', datetime.utcnow().strftime('%Y-%m-%d'))
     return row
 
 

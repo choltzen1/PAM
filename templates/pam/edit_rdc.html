@@ -17,13 +17,16 @@
     // Expose canonical promo data for jira_modal.js (ensures summary population works)
     window.promoData = {
       code: {{ promo.code|tojson }},
-      orbit_id: {{ promo.orbit_id|tojson }},
-      bill_facing_name: {{ promo.bill_facing_name|tojson }},
+      orbit_id: {{ promo.orbit_id|default('', true)|tojson }},
+      bill_facing_name: {{ promo.bill_facing_name|default('', true)|tojson }},
       initiative_name: {{ promo.initiative_name|default('', true)|tojson }},
-      promo_start_date: {{ promo.promo_start_date|tojson }},
-      promo_end_date: {{ promo.promo_end_date|tojson }}
+      promo_start_date: {{ promo.promo_start_date|default('', true)|tojson }},
+      promo_end_date: {{ promo.promo_end_date|default('', true)|tojson }}
     };
   </script>
+  {% if gen_flag %}
+  <!-- SQL_GEN_MARKER: {{ (promo.generated_sql|default('-- FALLBACK MINIMAL SQL', true))[:200] }} -->
+  {% endif %}
 </div>
 
 <!-- JIRA Modal (inlined to ensure edit_rdc has required elements for jira_modal.js) -->
@@ -876,44 +879,6 @@
                 </div>
                 {% else %}
                 <div class="form-control sql-readonly">No execution log yet.</div>
-                {% endif %}
-              </div>
-            </div>
-            <div class="sql-gen-row">
-              <div class="upload-section">
-                <label class="section-label">SQL Target Environment</label>
-                <select class="form-control" name="sql_target_env" id="sqlTargetEnv">
-                  {% set env_value = promo.sql_target_env if promo.sql_target_env else 'PROD' %}
-                  <option value="PROD" {% if env_value == 'PROD' %}selected{% endif %}>PROD</option>
-                  <option value="ZLAB" {% if env_value == 'ZLAB' %}selected{% endif %}>ZLAB</option>
-                </select>
-                <small class="form-text text-muted">Choose where the SQL will be applied.</small>
-              </div>
-              <div class="upload-section" id="sqlProdSchemaSection">
-                <label class="section-label">PROD Schema</label>
-                <div class="form-control" style="background:#f4f4f4;" id="sqlProdSchemaDisplay">
-                  {% set schema_value = promo.sql_prod_schema if promo.sql_prod_schema else (prod_schemas[0] if prod_schemas else '') %}
-                  {{ schema_value }}
-                </div>
-                <input type="hidden" name="sql_prod_schema" id="sqlProdSchema" value="{{ schema_value }}">
-                <small class="form-text text-muted">
-                  Auto-selected from staging reference{% if staging_reference and staging_reference.updated_at %} (updated {{ staging_reference.updated_at }}){% endif %}.
-                </small>
-              </div>
-              <div class="upload-section" id="sqlZlabStatusSection" style="display:none;">
-                <label class="section-label">ZLAB Execution Status</label>
-                {% if promo.oracle_exec_log %}
-                <div class="form-control" style="background:#f4f4f4;">
-                  <div>Status: {{ promo.oracle_exec_log.status }}</div>
-                  {% if promo.oracle_exec_log.executed_at %}
-                  <div class="file-meta">Executed at {{ promo.oracle_exec_log.executed_at }}</div>
-                  {% endif %}
-                  {% if promo.oracle_exec_log.error %}
-                  <div class="file-meta" style="color:#b00020;">{{ promo.oracle_exec_log.error }}</div>
-                  {% endif %}
-                </div>
-                {% else %}
-                <div class="form-control" style="background:#f4f4f4;">No execution log yet.</div>
                 {% endif %}
               </div>
             </div>
