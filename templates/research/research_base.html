@@ -12,42 +12,25 @@
   <!-- Theme switcher styles moved to styles.css -->
   {% block extra_css %}{% endblock %}
   <script defer src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
-  <script>
-    /* Early theme (no-flash) */
-    (function(){
-      try {
-        const stored = localStorage.getItem('pam_theme');
-        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        let apply = 'light';
-        if(stored === 'dark' || stored === 'light') apply = stored; else apply = prefersDark ? 'dark' : 'light';
-        document.documentElement.setAttribute('data-theme', apply);
-      } catch(e) { /* silent */ }
-    })();
-  </script>
+  {% include 'partials/_theme_init.html' %}
   {% block head %}{% endblock %}
   <!-- Header/footer layout styles consolidated into styles.css -->
  </head>
- <body class="body-fixed-header-footer">
+ <body class="body-fixed-header-footer {% block body_class %}{% endblock %}">
    <header class="global-header">
     <div class="global-header-title">{% block header_left %}Research Workspace{% endblock %}</div>
     <div class="global-header-user">
-      <div class="theme-toggle-group">
-        <div class="theme-switch" id="themeSwitch" tabindex="0" role="button" aria-label="Toggle light/dark theme">
-          <span class="icon">L</span>
-          <span class="icon">D</span>
-          <div class="theme-switch-indicator" id="themeIndicator">L</div>
-        </div>
-      </div>
+      {% include 'partials/_theme_toggle.html' %}
       {% block header_right %}{% endblock %}
     </div>
    </header>
-  <main class="app-main-scroll" style="padding-top:calc(var(--header-height) + var(--header-content-gap));padding-bottom:var(--footer-height);">
+  <main class="app-main-scroll">
        {% with messages = get_flashed_messages(with_categories=true) %}
          {% if messages %}
-           <div class="container-fluid" style="max-width: 1100px; margin: 0 auto;">
+           <div class="container-fluid container-narrow">
              {% for category, message in messages %}
                {% set bs = 'danger' if category in ['error','danger'] else ('success' if category == 'success' else ('info' if category == 'info' else 'warning')) %}
-               <div class="alert alert-{{ bs }} small" role="alert" style="margin-top:.75rem;">{{ message }}</div>
+               <div class="alert alert-{{ bs }} small flash-alert" role="alert">{{ message }}</div>
              {% endfor %}
            </div>
          {% endif %}
@@ -56,37 +39,14 @@
    </main>
   <footer class="footer-nav">
     <div id="footer-time">{{ current_datetime }}</div>
-    <nav class="footer-links" style="display:flex;gap:1.5em;align-items:center;">
-      <a title="Back" href="javascript:history.back()" style="color:#fff;text-decoration:none;font-size:1.2em;"><i class="fas fa-chevron-left"></i></a>
-      <a title="Workspace Hub" href="{{ url_for('core.landing') }}" style="color:#fff;text-decoration:none;font-size:1.2em;"><i class="fas fa-th-large"></i></a>
-  <a title="Research Home" href="{{ url_for('research.index') }}" style="color:#fff;text-decoration:none;font-size:1.2em;"><i class="fas fa-home"></i></a>
+    <nav class="footer-links">
+      <a class="footer-link" title="Back" href="javascript:history.back()"><i class="fas fa-chevron-left"></i></a>
+      <a class="footer-link" title="Workspace Hub" href="{{ url_for('core.landing') }}"><i class="fas fa-th-large"></i></a>
+      <a class="footer-link" title="Research Home" href="{{ url_for('research.index') }}"><i class="fas fa-home"></i></a>
     </nav>
    </footer>
-  <script>
-    function updateFooterTime(){const el=document.getElementById('footer-time');if(!el)return;const now=new Date();const opts={weekday:'long',year:'numeric',month:'long',day:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit'};el.textContent=now.toLocaleString('en-US',opts);}setInterval(updateFooterTime,1000);updateFooterTime();
-    (function(){
-      const switchEl = document.getElementById('themeSwitch');
-      const indicator = document.getElementById('themeIndicator');
-      if(!switchEl) return;
-      function apply(mode){
-        const resolved = mode === 'dark' ? 'dark' : 'light';
-        document.documentElement.setAttribute('data-theme', resolved);
-        localStorage.setItem('pam_theme', resolved);
-        fetch('/theme', {method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body:'mode='+encodeURIComponent(resolved)}).catch(()=>{});
-        switchEl.dataset.state = resolved;
-        indicator.textContent = resolved === 'dark' ? 'D' : 'L';
-      }
-      function toggle(){
-        const current = localStorage.getItem('pam_theme') || '{{ server_theme|default("light") }}';
-        const next = current === 'light' ? 'dark' : 'light';
-        apply(next);
-      }
-      switchEl.addEventListener('click', toggle);
-      switchEl.addEventListener('keydown', e=>{ if(e.key==='Enter' || e.key===' ') { e.preventDefault(); toggle(); }});
-      const initialRaw = localStorage.getItem('pam_theme') || '{{ server_theme|default("light") }}';
-      apply(initialRaw === 'dark' ? 'dark' : 'light');
-    })();
-  </script>
+  {% include 'partials/_footer_time_script.html' %}
+  {% include 'partials/_theme_toggle_script.html' %}
   {% block extra_js %}{% endblock %}
   {% block scripts %}{% endblock %}
  </body>

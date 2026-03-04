@@ -99,13 +99,15 @@ function openJiraModal(ticketType = 'bptcr') {
       .catch(() => {/* silent fallback */});
   }
   document.getElementById('jiraDescription').value = description;
-  
-  document.getElementById('jiraModal').style.display = 'flex';
+
+  const jiraModal = document.getElementById('jiraModal');
+  if (jiraModal) jiraModal.classList.remove('is-hidden');
 
   // If core fields were blank, attempt a deferred fill once after a short timeout (for any late-populated window.promoData)
   if(!promoCode || !orbitId || !initiativeName){
     setTimeout(()=>{
-      if(!document.getElementById('jiraModal') || document.getElementById('jiraModal').style.display !== 'flex') return;
+      const m = document.getElementById('jiraModal');
+      if(!m || m.classList.contains('is-hidden')) return;
       const pd = window.promoData || {};
       const p2 = pd.code || promoCode;
       const o2 = pd.orbit_id || orbitId;
@@ -170,7 +172,7 @@ function openJiraModal(ticketType = 'bptcr') {
 
 function closeJiraModal() {
   const m = document.getElementById('jiraModal');
-  if (m) m.style.display = 'none';
+  if (m) m.classList.add('is-hidden');
 }
 
 function createJiraTicket() {
@@ -241,7 +243,6 @@ function createJiraTicket() {
               <strong>${ticketLabel}</strong> 
               <a href="${data.ticket_url}" target="_blank">${data.ticket_key}</a>
             `;
-            statusDiv.style.display = 'block';
           } else {
             // Add the status if it doesn't exist
             statusDiv = document.createElement('div');
@@ -285,19 +286,19 @@ function showJiraSuccessPopup(info){
   if(existing) existing.remove();
   const toast = document.createElement('div');
   toast.id = 'jiraSuccessToast';
-  toast.style.cssText = 'position:fixed; bottom:20px; right:20px; background:#1c1f23; color:#fff; padding:16px 18px; border-radius:8px; box-shadow:0 4px 16px rgba(0,0,0,0.35); font-family:system-ui,Segoe UI,Roboto,sans-serif; max-width:340px; z-index:99999; display:flex; gap:12px; align-items:flex-start;';
+  toast.className = 'jira-success-toast';
   toast.innerHTML = `
-    <div style="flex:1;">
-      <div style="font-weight:600; margin-bottom:4px;">${info.typeLabel ? info.typeLabel+' ' : ''}JIRA Ticket Created</div>
-      <div style="font-size:13px; line-height:1.4;">
-        <a href="${info.url}" target="_blank" style="color:#72d4ff; text-decoration:none; font-weight:600;">${info.key}</a><br>
+    <div class="jira-success-toast__body">
+      <div class="jira-success-toast__title">${info.typeLabel ? info.typeLabel+' ' : ''}JIRA Ticket Created</div>
+      <div class="jira-success-toast__meta">
+        <a href="${info.url}" target="_blank" class="jira-success-toast__link">${info.key}</a><br>
         ${info.message ? `<span>${escapeHtml(info.message)}</span><br>`:''}
-        <span style="opacity:0.75;">Opens in new tab.</span>
+        <span class="jira-success-toast__hint">Opens in new tab.</span>
       </div>
     </div>
-    <button aria-label="Close" style="background:none; border:none; color:#bbb; cursor:pointer; font-size:16px; line-height:1; padding:0 4px;">&times;</button>
+    <button type="button" class="jira-success-toast__close" aria-label="Close">&times;</button>
   `;
-  const closeBtn = toast.querySelector('button');
+  const closeBtn = toast.querySelector('.jira-success-toast__close');
   closeBtn.addEventListener('click', ()=> toast.remove());
   document.body.appendChild(toast);
   setTimeout(()=>{ if(toast.isConnected) toast.remove(); }, 8000);
@@ -335,8 +336,8 @@ function toggleEditField(button) {
   
   if (editInput.classList.contains('hidden')) {
     // Switch to edit mode
-    autoText.style.display = 'none';
-    autoBadge.style.display = 'none';
+    autoText.classList.add('hidden');
+    autoBadge.classList.add('hidden');
     editInput.classList.remove('hidden');
     editInput.focus();
     button.innerHTML = '<i class="fas fa-check"></i>';
@@ -346,8 +347,8 @@ function toggleEditField(button) {
     if (newValue.trim()) {
       autoText.textContent = newValue;
     }
-    autoText.style.display = 'inline';
-    autoBadge.style.display = 'inline';
+    autoText.classList.remove('hidden');
+    autoBadge.classList.remove('hidden');
     editInput.classList.add('hidden');
     button.innerHTML = '<i class="fas fa-edit"></i>';
   }
@@ -514,43 +515,28 @@ function previewDcdTemplate() {
   
   // Create modal for preview
   const modal = document.createElement('div');
-  modal.style.cssText = `
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0,0,0,0.5);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
-  `;
+  modal.className = 'jira-preview-overlay';
   
   const content = document.createElement('div');
-  content.style.cssText = `
-    background: white;
-    border-radius: 8px;
-    padding: 2rem;
-    max-width: 80%;
-    max-height: 80%;
-    overflow-y: auto;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-  `;
+  content.className = 'jira-preview-content';
   
   content.innerHTML = `
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-      <h3 style="margin: 0; color: var(--tmobile-magenta);">DCD JIRA Template Preview</h3>
-      <button onclick="this.closest('div').remove()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer;">&times;</button>
+    <div class="jira-preview-header">
+      <h3 class="jira-preview-title">DCD JIRA Template Preview</h3>
+      <button type="button" class="jira-preview-close" aria-label="Close">&times;</button>
     </div>
-    <pre style="background: #f8f9fa; padding: 1rem; border-radius: 4px; white-space: pre-wrap; font-family: monospace; font-size: 0.9rem;">${description}</pre>
-    <div style="margin-top: 1rem; text-align: right;">
-      <button onclick="this.closest('div').remove()" class="btn btn-secondary">Close</button>
+    <pre class="jira-preview-pre">${escapeHtml(description)}</pre>
+    <div class="jira-preview-footer">
+      <button type="button" class="btn btn-secondary jira-preview-close-btn">Close</button>
     </div>
   `;
   
   modal.appendChild(content);
   document.body.appendChild(modal);
+
+  content.querySelectorAll('.jira-preview-close, .jira-preview-close-btn').forEach(btn => {
+    btn.addEventListener('click', () => modal.remove());
+  });
   
   // Close on backdrop click
   modal.addEventListener('click', function(e) {

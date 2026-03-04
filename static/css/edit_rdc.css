@@ -33,6 +33,20 @@ html { font-size:12px; }
 .sql-preview-area { font-family:monospace; }
 .hidden { display:none; }
 
+/* Edit RDC diagnostics (moved from edit_rdc.html inline <style>) */
+.sql-diag-row { break-inside: avoid; }
+.diag-ok { color:#222; }
+.diag-missing { color:#b71c1c; font-weight:600; }
+
+/* Notes tab layout (replaces inline style on wrapper/textarea) */
+.edit-rdc-notes-wrap { width: 90%; margin: 0 auto; padding: 2rem; }
+.promo-notes-textarea { resize: none; width: 100%; min-height: 300px; cursor: text; }
+
+/* SQL Generation helper styles (replaces inline style attributes) */
+.sql-readonly { background:#f4f4f4; }
+.file-meta.is-error { color:#b00020; }
+.sql-first-time-notice { padding:10px; border:1px dashed #bbb; background:#fafafa; font-size:0.9rem; }
+
 
 /* Trade tab layout */
 .trade-section { display:flex; flex-direction:column; gap:1.35rem; }

@@ -75,11 +75,11 @@
         <a href="?page={{ pagination.next_num }}&per_page={{ pagination.per_page }}&search={{ search_query }}&owner={{ selected_owner }}" class="pagination-btn">Next ›</a>
         <a href="?page={{ pagination.total_pages }}&per_page={{ pagination.per_page }}&search={{ search_query }}&owner={{ selected_owner }}" class="pagination-btn">Last</a>
       {% endif %}
-      <form method="get" class="per-page-select" style="display:inline-flex;align-items:center;gap:6px;margin-left:12px;">
+      <form method="get" class="per-page-select">
         <input type="hidden" name="page" value="1" />
         <input type="hidden" name="search" value="{{ search_query }}" />
         <input type="hidden" name="owner" value="{{ selected_owner }}" />
-        <label for="per_page" style="font-size:.75rem;">Rows:</label>
+        <label for="per_page">Rows:</label>
         <select name="per_page" id="per_page" onchange="this.form.submit()">
           {% for opt in [25,50,100,150,200] %}
             <option value="{{ opt }}" {% if pagination.per_page == opt %}selected{% endif %}>{{ opt }}</option>

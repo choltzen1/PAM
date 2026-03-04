@@ -226,6 +226,54 @@ html { font-size: 12px; }
 }
 .promo-control-group .btn-admin.danger[disabled] { opacity: 0.45; cursor: not-allowed; }
 
+/* ============================================================
+   Source Table Promotions (PAM) page (admin_pam_promotions.html)
+   ============================================================ */
+.admin-dashboard--pam-promotions {
+  padding-top: 10px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.admin-dashboard--pam-promotions .table-responsive.pam-promos-table-container {
+  flex: 0 0 auto;
+  overflow: visible;
+  min-height: 0;
+  max-height: none;
+}
+
+.admin-dashboard--pam-promotions #pamPromosTable th.pam-promos-actions-col { width: 110px; }
+
+.admin-dashboard--pam-promotions .pam-promos-action-btn {
+  font-size: 0.75rem;
+  padding: 4px 8px;
+}
+
+.admin-dashboard--pam-promotions .pam-promos-empty-cell {
+  text-align: center;
+  padding: 30px;
+}
+
+.admin-dashboard--pam-promotions .pagination.pam-promos-pagination {
+  margin-top: 14px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex: 0 0 auto;
+}
+
+.admin-dashboard--pam-promotions .pagination .btn-admin.disabled {
+  opacity: 0.4;
+}
+
+.admin-dashboard--pam-promotions .pam-promos-pagination-total { margin-left: 10px; }
+
+.admin-dashboard--pam-promotions .pam-promos-status {
+  margin-top: 12px;
+  font-size: 0.9rem;
+}
+
 /* Table spacing adjustment when control group present */
 #pamPromosTable { margin: 0; }
 

@@ -1,0 +1,289 @@
+/* PAM placeholder pages (Offers/Research) */
+
+.pam-placeholder {
+  padding: 2.4rem 2.4rem 3rem;
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+.pam-placeholder .placeholder-hero {
+  display: flex;
+  flex-direction: row;
+  gap: 3rem;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 2.5rem;
+}
+
+.pam-placeholder .hero-left { max-width: 560px; }
+
+.pam-placeholder--research .placeholder-hero {
+  position: relative;
+  align-items: flex-start;
+}
+
+.pam-placeholder--research .hero-left { max-width: 680px; }
+
+.pam-placeholder .hero-badge {
+  background: var(--tmobile-magenta);
+  color: #fff;
+  display: inline-block;
+  padding: .4rem .75rem;
+  border-radius: 999px;
+  font-size: .7rem;
+  letter-spacing: .08em;
+  font-weight: 600;
+  margin-bottom: .75rem;
+}
+
+.pam-placeholder .placeholder-title {
+  margin: .2rem 0 1rem;
+  font-weight: 700;
+  letter-spacing: .5px;
+}
+
+.pam-placeholder .placeholder-lead {
+  font-size: 1.05rem;
+  line-height: 1.5;
+  max-width: 560px;
+}
+
+.pam-placeholder .legend {
+  font-size: .65rem;
+  opacity: .65;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  margin-top: -.25rem;
+  margin-bottom: 1.1rem;
+  font-weight: 600;
+}
+
+.pam-placeholder .roadmap {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1.25rem;
+  margin-bottom: 2.5rem;
+}
+
+.pam-placeholder .roadmap-card {
+  background: #fff;
+  border: 1px solid #ececec;
+  border-radius: 14px;
+  padding: 1.1rem 1.1rem 1.25rem;
+  position: relative;
+  box-shadow: 0 2px 4px rgba(0,0,0,.04);
+  transition: .25s;
+}
+
+.pam-placeholder .roadmap-card:hover {
+  box-shadow: 0 6px 18px rgba(0,0,0,.12);
+  transform: translateY(-3px);
+}
+
+.pam-placeholder .roadmap-card h4 {
+  font-size: 1rem;
+  margin: 0 0 .4rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+}
+
+.pam-placeholder .roadmap-card p {
+  font-size: .8rem;
+  line-height: 1.35;
+  margin: 0;
+}
+
+.pam-placeholder .pill {
+  font-size: .55rem;
+  text-transform: uppercase;
+  letter-spacing: .09em;
+  background: #222;
+  color: #fff;
+  padding: .25rem .55rem;
+  border-radius: 999px;
+}
+
+.pam-placeholder .pill.future { background: #6c2b89; }
+.pam-placeholder .pill.now { background: var(--tmobile-magenta); }
+
+.pam-placeholder .placeholder-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2.25rem;
+  margin-top: 1rem;
+}
+
+.pam-placeholder .placeholder-section-title {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0 0 .75rem;
+  letter-spacing: .05em;
+}
+
+.pam-placeholder .timeline {
+  border-left: 3px solid var(--tmobile-magenta);
+  margin: 0;
+  padding: 0 0 0 1.2rem;
+  list-style: none;
+}
+
+.pam-placeholder .timeline li {
+  margin: 0 0 1.25rem;
+  position: relative;
+}
+
+.pam-placeholder .timeline li:before {
+  content: "";
+  width: 14px;
+  height: 14px;
+  background: var(--tmobile-magenta);
+  border: 3px solid #fff;
+  box-shadow: 0 0 0 2px var(--tmobile-magenta);
+  position: absolute;
+  left: -1.75rem;
+  top: 2px;
+  border-radius: 50%;
+}
+
+.pam-placeholder .cta-box {
+  color: #fff;
+  padding: 1.5rem 2rem;
+  border-radius: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: .75rem;
+}
+
+.pam-placeholder .cta-box h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.pam-placeholder .cta-lead {
+  margin: 0;
+  line-height: 1.4;
+  font-size: .9rem;
+}
+
+.pam-placeholder .cta-actions {
+  display: flex;
+  gap: .75rem;
+  flex-wrap: wrap;
+}
+
+.pam-placeholder .cta-actions .btn-magenta { font-weight: 600; }
+
+/* Offers placeholder specifics */
+.pam-placeholder--offers .gradient-ring {
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #ff66b4, #8a0050);
+  position: relative;
+  box-shadow: 0 8px 24px rgba(226,0,116,.35), 0 2px 6px rgba(0,0,0,.15);
+}
+
+.pam-placeholder--offers .gradient-ring:after {
+  content: "🎁";
+  font-size: 90px;
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  text-shadow: 0 4px 10px rgba(0,0,0,.35);
+}
+
+.pam-placeholder--offers .cta-box {
+  background: linear-gradient(135deg, var(--tmobile-magenta), #9b0061);
+  box-shadow: 0 10px 28px -6px rgba(226,0,116,.5);
+}
+
+.pam-placeholder--offers .cta-actions .btn-outline {
+  background: #fff;
+  color: var(--tmobile-magenta);
+  font-weight: 600;
+  border: none;
+}
+
+.pam-placeholder--offers .cta-actions .btn-outline:hover { background: #ffe6f4; }
+
+/* Research placeholder specifics */
+.pam-placeholder--research .gradient-ring {
+  position: absolute;
+  top: -10px;
+  right: 40px;
+  width: 380px;
+  height: 380px;
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: 0 20px 46px -10px rgba(98,0,226,.45), 0 8px 22px rgba(0,0,0,.3);
+}
+
+.pam-placeholder--research .gradient-ring img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.pam-placeholder--research .research-credit {
+  position: absolute;
+  top: 380px;
+  right: 40px;
+  width: 380px;
+  margin-top: .6rem;
+  font-size: .62rem;
+  letter-spacing: .11em;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: #555;
+  background: #f3f3f7;
+  padding: .45rem .85rem;
+  border-radius: 8px;
+  box-shadow: 0 3px 6px rgba(0,0,0,.08);
+  text-align: center;
+}
+
+@media (max-width: 940px) {
+  .pam-placeholder--research .gradient-ring {
+    position: relative;
+    top: 0;
+    right: 0;
+    width: 300px;
+    height: 300px;
+    margin: 1.25rem auto 0;
+    border-radius: 16px;
+  }
+
+  .pam-placeholder--research .hero-left { max-width: 100%; }
+
+  .pam-placeholder--research .research-credit {
+    position: relative;
+    top: 0;
+    right: 0;
+    width: 300px;
+    margin: .6rem auto 0;
+  }
+}
+
+.pam-placeholder--research .cta-box {
+  background: linear-gradient(135deg, var(--tmobile-magenta), #38005b);
+  box-shadow: 0 10px 28px -6px rgba(98,0,226,.5);
+}
+
+.pam-placeholder--research .cta-actions .btn-outline {
+  background: #fff;
+  color: #6c2b89;
+  font-weight: 600;
+  border: none;
+}
+
+.pam-placeholder--research .cta-actions .btn-outline:hover { background: #f5e9ff; }

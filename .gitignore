@@ -75,6 +75,9 @@ coverage.xml
 data/uploads/promotions/*/
 data/uploads/promotions/.gitkeep
 
+# Local Flask session storage
+data/sessions/
+
 # SQLite database files (deprecated for production)
 *.db
 version_history.db

@@ -200,6 +200,32 @@ def search_orbit(orbit_id):
         result = orbit_search(orbit_id)
         # Map standalone payload to legacy response shape if needed
         if not result.get('found'):
+            # Legacy fallback for test compatibility and for environments where
+            # OrbitDatabaseManager is not configured but the older DB path is.
+            legacy_record = None
+            try:
+                import services.promo_code_workflow as wfmod
+
+                legacy_db = wfmod.DatabaseManager()  # may be monkeypatched in tests
+                legacy_record = legacy_db.get_full_orbit_record_by_orbit_id((orbit_id or '').strip())
+            except Exception:
+                legacy_record = None
+
+            if legacy_record:
+                rec = legacy_record if isinstance(legacy_record, dict) else dict(legacy_record)
+                return jsonify({
+                    'found': True,
+                    'type': 'RDC',
+                    'promo_code': '',
+                    'pending_creation': True,
+                    'initiative_name': rec.get('initiative_name') or rec.get('bill_facing_name') or rec.get('description', 'Unknown'),
+                    'description': rec.get('description', ''),
+                    'owner': rec.get('Owner') or rec.get('owner', ''),
+                    'start_date': rec.get('promo_start_date') or rec.get('start_date', ''),
+                    'end_date': rec.get('promo_end_date') or rec.get('end_date', ''),
+                    'source_table': result.get('source_table') or rec.get('_table'),
+                })
+
             msg = result.get('error') or f'Orbit ID {orbit_id} not located'
             payload = {'found': False, 'message': msg}
             if debug:
@@ -221,7 +247,7 @@ def search_orbit(orbit_id):
             'type': 'RDC',  # execution type not derived from orbit table now
             'promo_code': '',
             'pending_creation': True,
-                'initiative_name': result.get('initiative_name') or result.get('bill_facing_name') or result.get('description','Unknown'),
+            'initiative_name': result.get('initiative_name') or result.get('bill_facing_name') or result.get('description','Unknown'),
             'description': result.get('description',''),
             'owner': result.get('owner',''),
             'start_date': result.get('start_date',''),
@@ -268,7 +294,7 @@ def update_testing_status():
         updated_data = data_manager.get_promo(promo_code) if data_manager else {}
         saved_value = updated_data.get(field_name)
         if saved_value != status:
-            return jsonify({'success': False, 'error': f'Save verification failed. Expected {status}, got {saved_value}'}), 500
+            return jsonify({'success': False, 'error': f'Save verification failed. Expected {status}, got {saved_value}'}), 400
         safe_test_type = (test_type or '').title()
         return jsonify({
             'success': True,

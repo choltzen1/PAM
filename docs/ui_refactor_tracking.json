@@ -1,0 +1,246 @@
+{
+  "version": 1,
+  "lastUpdated": "2026-03-04",
+  "items": [
+    {
+      "id": 1,
+      "area": "Offers",
+      "summary": "Remove offers workspace route/templates/role/docs",
+      "status": "Done",
+      "risk": "Low",
+      "owner": "",
+      "pr": "",
+      "notes": "Offers workspace removed. External c2.t-mobile.com/offers links remain." 
+    },
+    {
+      "id": 2,
+      "area": "Guardrails",
+      "summary": "Add inline CSS/JS regression tests (baseline-based)",
+      "status": "Done",
+      "risk": "Medium",
+      "owner": "",
+      "pr": "",
+      "notes": "Baseline-based pytest guardrails added; future PRs must not increase violations."
+    },
+    {
+      "id": 3,
+      "area": "Docs",
+      "summary": "Add frontend standards + how-to + checklist + components",
+      "status": "Done",
+      "risk": "Low",
+      "owner": "",
+      "pr": "",
+      "notes": "Docs are enforceable via CI checks and review checklist."
+    },
+    {
+      "id": 4,
+      "area": "Tracking UI",
+      "summary": "Add admin page rendering tracking JSON",
+      "status": "Done",
+      "risk": "Low",
+      "owner": "",
+      "pr": "",
+      "notes": "Admin route `/admin/ui-refactor` renders the tracking JSON as a table."
+    },
+    {
+      "id": 5,
+      "area": "Landing",
+      "summary": "Remove inline CSS from landing templates; scope styles in landing.css",
+      "status": "Done",
+      "risk": "Medium",
+      "owner": "",
+      "pr": "",
+      "notes": "Moved large inline <style> blocks from landing templates into static/css/landing.css, scoped by body classes (landing--standard / landing--fullscreen) to avoid impacting /research pages. Removed inline disabled-card styles by switching to an is-disabled class."
+    },
+    {
+      "id": 6,
+      "area": "Research",
+      "summary": "Remove inline CSS from research templates; migrate to research.css/pete.css",
+      "status": "Done",
+      "risk": "Medium",
+      "owner": "",
+      "pr": "",
+      "notes": "Removed inline style attributes and <style> blocks from templates/research/*.html. Migrated Research Home CSS into static/css/research.css (scoped to body.research--home) and PETE rules into static/css/pete.css (scoped to body.research--pete). Added small global helper classes to static/css/styles.css for shared layout pieces used in research_base.html."
+    },
+    {
+      "id": 7,
+      "area": "Base templates",
+      "summary": "Create shared partials; dedupe header/footer/theme",
+      "status": "Done",
+      "risk": "High",
+      "owner": "",
+      "pr": "",
+      "notes": "Created shared Jinja partials under templates/partials for theme init, theme toggle UI, theme toggle script, and footer clock. Updated landing_base.html, research_base.html, and pam_base.html to include these partials. Removed inline footer/link styles and inline sortable-table CSS from pam_base.html (moved sortable CSS into static/css/styles.css)."
+    },
+    {
+      "id": 8,
+      "area": "Footer",
+      "summary": "Make footer icons visible in light mode",
+      "status": "Done",
+      "risk": "Low",
+      "owner": "",
+      "pr": "",
+      "notes": "Updated static/css/styles.css footer link color: light mode uses magenta token; dark mode keeps icons white."
+    },
+    {
+      "id": 9,
+      "area": "PAM placeholders",
+      "summary": "Remove inline CSS from PAM placeholder templates; migrate to pam_placeholders.css",
+      "status": "Done",
+      "risk": "Low",
+      "owner": "",
+      "pr": "",
+      "notes": "Removed <style> blocks and inline style attributes from templates/pam/offers_placeholder.html and templates/pam/research_placeholder.html; added static/css/pam_placeholders.css and linked via extra_css."
+    },
+    {
+      "id": 10,
+      "area": "Reviewers",
+      "summary": "Remove inline CSS from reviewers.html; migrate into reviewers.css",
+      "status": "Done",
+      "risk": "Medium",
+      "owner": "",
+      "pr": "",
+      "notes": "Removed inline <style> block and remaining style attributes from templates/pam/reviewers.html. Moved styles to static/css/reviewers.css and replaced inline display/white-space styles with classes."
+    },
+    {
+      "id": 11,
+      "area": "Edit RDC",
+      "summary": "Remove inline CSS from edit_rdc.html; migrate into edit_rdc.css/jira_modal.css",
+      "status": "Done",
+      "risk": "Medium",
+      "owner": "",
+      "pr": "",
+      "notes": "Removed inline <style> block and all style attributes from templates/pam/edit_rdc.html. Moved diagnostic + SQL/Notes styles into static/css/edit_rdc.css and added a class-based default hidden state for the JIRA modal in static/css/jira_modal.css."
+    },
+    {
+      "id": 12,
+      "area": "Edit SPE",
+      "summary": "Remove inline CSS from edit_spe.html; migrate into edit_spe.css",
+      "status": "Done",
+      "risk": "Low",
+      "owner": "",
+      "pr": "",
+      "notes": "Removed the remaining inline style attribute from templates/pam/edit_spe.html (SMS fields container). Added a class-based `display: contents` rule in static/css/edit_spe.css and switched the template JS to toggle the global `hidden` utility class instead of setting style.display."
+    },
+    {
+      "id": 13,
+      "area": "Admin dashboard",
+      "summary": "Remove redundant inline style from admin.html",
+      "status": "Done",
+      "risk": "Low",
+      "owner": "",
+      "pr": "",
+      "notes": "Removed a leftover inline style attribute from templates/pam/admin.html; the `.small-hint` styles already exist in static/css/admin.css."
+    },
+    {
+      "id": 14,
+      "area": "Admin groupings",
+      "summary": "Remove inline CSS from admin_groupings.html; migrate into admin_groupings.css",
+      "status": "Done",
+      "risk": "Medium",
+      "owner": "",
+      "pr": "",
+      "notes": "Removed all inline style attributes from templates/pam/admin_groupings.html. Added class-based replacements in static/css/admin_groupings.css. Updated the embedded JS to toggle the global `hidden` utility class instead of using `.style.display`, and removed an inline style from JS-generated markup by using a CSS class."
+    },
+    {
+      "id": 15,
+      "area": "Admin PAM promotions",
+      "summary": "Remove inline CSS from admin_pam_promotions.html; migrate into admin.css",
+      "status": "Done",
+      "risk": "Medium",
+      "owner": "",
+      "pr": "",
+      "notes": "Removed all inline style attributes from templates/pam/admin_pam_promotions.html. Replaced inline-colored status spans and inline-styled empty-table rows inside the embedded script with class-based equivalents. Added narrowly-scoped replacement CSS rules to static/css/admin.css under the `.admin-dashboard--pam-promotions` wrapper."
+    },
+    {
+      "id": 16,
+      "area": "Get Promo Codes",
+      "summary": "Remove inline CSS from get_promo_codes.html; migrate into get_promo_codes.css",
+      "status": "Done",
+      "risk": "Low",
+      "owner": "",
+      "pr": "",
+      "notes": "Removed inline style attributes from templates/pam/get_promo_codes.html, including an inline style embedded in a JS template string for the Orbit ID input. Added equivalent class-based rules to static/css/get_promo_codes.css (stacked controls layout, full-width inputs container, and max-width for Orbit ID input)."
+    },
+    {
+      "id": 17,
+      "area": "Date mismatch",
+      "summary": "Remove inline CSS from date_mismatch.html; migrate into date_mismatch.css",
+      "status": "Done",
+      "risk": "Medium",
+      "owner": "",
+      "pr": "",
+      "notes": "Removed inline styles from templates/pam/date_mismatch.html for the SQL preview container and the SQL preview textarea inside the embedded JS template string. The SQL preview now uses the existing `hidden` utility class for show/hide, and the monospace textarea styling moved into static/css/date_mismatch.css via `.dm-sql-textarea`."
+    },
+    {
+      "id": 18,
+      "area": "Version history",
+      "summary": "Remove inline CSS from version_history.html; migrate into version_history.css",
+      "status": "Done",
+      "risk": "Low",
+      "owner": "",
+      "pr": "",
+      "notes": "Removed inline styles from templates/pam/version_history.html for the per-page pagination form and label. Added equivalent layout + font sizing rules to static/css/version_history.css under `.pagination-container .per-page-select`."
+    },
+    {
+      "id": 19,
+      "area": "Capacity",
+      "summary": "Remove inline CSS from capacity.html dynamic row-count; keep layout",
+      "status": "Done",
+      "risk": "Low",
+      "owner": "",
+      "pr": "",
+      "notes": "Removed the inline `style=\"--row-count: ...\"` from templates/pam/capacity.html. Preserved the dynamic row-height behavior by moving the value to a `data-row-count` attribute and setting the `--row-count` CSS variable via a small DOMContentLoaded script."
+    },
+    {
+      "id": 20,
+      "area": "Research JS",
+      "summary": "Remove inline styles from research.js; use hidden + CSS classes",
+      "status": "Done",
+      "risk": "Low",
+      "owner": "",
+      "pr": "",
+      "notes": "Refactored static/js/research.js to toggle query console visibility via the global `hidden` utility class instead of `.style.display`. Replaced an inline `style=\"cursor:pointer\"` in JS-generated table rows with a `.research-clickable-row` class and added the cursor rule to static/css/research.css."
+    },
+    {
+      "id": 21,
+      "area": "JIRA modal JS",
+      "summary": "Remove inline styles from jira_modal.js; migrate to jira_modal.css",
+      "status": "Done",
+      "risk": "Medium",
+      "owner": "",
+      "pr": "",
+      "notes": "Refactored static/js/jira_modal.js to avoid `.style.display` and `.style.cssText`; modal visibility now toggles via the existing `is-hidden` class. The success toast and DCD preview overlay now use CSS classes, with styling moved into static/css/jira_modal.css. Removed inline `style=` attributes from runtime-generated markup."
+    },
+    {
+      "id": 22,
+      "area": "PAM base",
+      "summary": "Remove runtime <style> injection from pam_base.html",
+      "status": "Done",
+      "risk": "Low",
+      "owner": "",
+      "pr": "",
+      "notes": "Removed the DOMContentLoaded script in templates/pam/pam_base.html that created and appended a `<style>` tag to force caret-color. The same behavior is already covered by the global caret override rules in static/css/global.css."
+    },
+    {
+      "id": 23,
+      "area": "Legacy cleanup",
+      "summary": "Remove misplaced Streamlit PETE script under templates",
+      "status": "Done",
+      "risk": "Low",
+      "owner": "",
+      "pr": "",
+      "notes": "Deleted templates/research/pete.py (a legacy Streamlit script containing inline `<style>` markup and unrelated to the Flask/Jinja templates). The active PETE page is templates/research/pete.html."
+    },
+    {
+      "id": 24,
+      "area": "Approval email",
+      "summary": "Remove inline style from rejection email body",
+      "status": "Done",
+      "risk": "Low",
+      "owner": "",
+      "pr": "",
+      "notes": "Removed the inline color style from the HTML rejection message in promo/routes.py (rejection_body) to comply with the repo-wide no-inline-style policy."
+    }
+  ]
+}

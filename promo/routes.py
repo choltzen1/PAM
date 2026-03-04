@@ -1256,7 +1256,7 @@ def reject_promo():
 
         rejection_subject = f'RE: {promo_desired_execution} Approval request - {promo_code} - {bill_facing_name} - Version #{version_number}'
         reason_line = f'<br><br><strong>Reason:</strong> {reason}' if reason else ''
-        rejection_body = f'''Hello All,<br><br>I am writing to inform you that {promo_code} - {bill_facing_name} - Version #{version_number} has been <strong style="color:#dc3545;">rejected</strong>.{reason_line}<br><br>Please address the concerns and resubmit for approval.<br><br>Thank you!'''
+        rejection_body = f'''Hello All,<br><br>I am writing to inform you that {promo_code} - {bill_facing_name} - Version #{version_number} has been <strong>rejected</strong>.{reason_line}<br><br>Please address the concerns and resubmit for approval.<br><br>Thank you!'''
 
         mail_service = MailService()
         result = mail_service.send_approval_email(

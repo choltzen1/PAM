@@ -1,0 +1,19 @@
+<script>
+  /* Early theme (no-flash) */
+  (function(){
+    try {
+      const stored = localStorage.getItem('pam_theme');
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      let apply;
+      if (stored === 'light' || stored === 'dark') {
+        apply = stored;
+      } else {
+        // supports legacy 'auto' or unset
+        apply = prefersDark ? 'dark' : 'light';
+      }
+      document.documentElement.setAttribute('data-theme', apply);
+    } catch (e) {
+      /* silent */
+    }
+  })();
+</script>

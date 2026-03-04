@@ -185,7 +185,7 @@
                 {% endfor %}
               </select>
 
-              <div id="sms_fields" style="display: {{ 'contents' if promo.sms_indicator == 'Y' else 'none' }}; grid-column: 1 / -1; display: grid; grid-template-columns: subgrid;">
+              <div id="sms_fields" class="sms-fields {% if promo.sms_indicator != 'Y' %}hidden{% endif %}">
                 <label class="section-label col-span-2">SMS English</label>
                 <label class="section-label col-span-2">SMS Spanish</label>
                 <input class="form-control col-span-2" name="sms_english" value="{{ promo.sms_english or '' }}" placeholder="Enter SMS English text">
@@ -229,7 +229,7 @@
             <script>
               document.getElementById('sms_indicator').addEventListener('change', function() {
                 const smsFields = document.getElementById('sms_fields');
-                smsFields.style.display = this.value === 'Y' ? 'contents' : 'none';
+                smsFields.classList.toggle('hidden', this.value !== 'Y');
               });
             </script>
             <div class="save-footer">

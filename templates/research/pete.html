@@ -1,80 +1,11 @@
 {% extends 'research/research_base.html' %}
 {% block title %}PETE - Promo Escalation Tool{% endblock %}
+{% block body_class %}research--pete{% endblock %}
 {% block head %}
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet" />
-  <style>
-    /* Light theme backgrounds */
-    html:not([data-theme='dark']) body {
-      background: #F5F5F5 !important;
-      background-attachment: fixed;
-    }
-    
-    /* Dark theme backgrounds - neutral plum */
-    html[data-theme='dark'] body {
-      background: #3A2F3D !important;
-      background-attachment: fixed;
-    }
-  </style>
 {% endblock %}
 {% block content %}
 <div id="research-app" class="pete-form-flow pete-theme">
-  <style>
-  /* Full width override for PETE page */
-  #research-app { max-width: 100% !important; }
-  .rs-card { width:100%; }
-
-  /* Loading bar */
-  .pete-loading-bar {
-    display: none;
-    width: 100%;
-    height: 5px;
-    background: rgba(226,0,116,0.12);
-    border-radius: 999px;
-    overflow: hidden;
-    margin-top: 12px;
-  }
-  html[data-theme='dark'] .pete-loading-bar {
-    background: rgba(226,0,116,0.25);
-  }
-  .pete-loading-bar.active {
-    display: block;
-  }
-  .pete-loading-note {
-    display: none;
-    margin-top: 6px;
-    font-size: 0.62rem;
-    letter-spacing: 0.4px;
-    text-transform: uppercase;
-    color: #4a3a44;
-  }
-  .pete-loading-note.active {
-    display: block;
-  }
-  html[data-theme='dark'] .pete-loading-note {
-    color: rgba(255,255,255,0.8);
-  }
-  .pete-loading-fill {
-    width: 0%;
-    height: 100%;
-    background: linear-gradient(90deg, #E20074 0%, #FF2A93 50%, #E20074 100%);
-    background-size: 200% 100%;
-    border-radius: 999px;
-    animation: peteLoadFill 8s cubic-bezier(0.12, 0.45, 0.25, 1) forwards,
-               peteLoadShimmer 1.2s ease-in-out infinite;
-  }
-  @keyframes peteLoadFill {
-    0%   { width: 0%; }
-    15%  { width: 25%; }
-    40%  { width: 50%; }
-    65%  { width: 68%; }
-    85%  { width: 80%; }
-    100% { width: 88%; }
-  }
-  @keyframes peteLoadShimmer {
-    0%   { background-position: 200% 0; }
-    100% { background-position: -200% 0; }
-  }
-  </style>
   <div class="pete-hero-banner">
     <img src="/static/img/p2c2-promo-ops-logo.png" alt="P2C2 Promo Ops Logo">
     <div class="hero-text">
@@ -83,7 +14,7 @@
     </div>
   </div>
   <div class="d-flex justify-content-between align-items-center mb-3">
-    <h2 style="font-size:1.3rem; margin:0;">PETE Troubleshooting</h2>
+    <h2 class="pete-page-title">PETE Troubleshooting</h2>
   </div>
   <div class="mb-3">
     <button type="button" class="btn btn-outline-primary btn-sm" id="chatToggleBtn" aria-expanded="false" aria-controls="peteChatInline" onclick="toggleInlineChat()">💬 PETEbot Chat</button>
@@ -145,7 +76,7 @@
           </div>
           {% if eip_ids %}
             <hr/>
-            <h6 style="font-size:.7rem; letter-spacing:.5px; text-transform:uppercase; color:#222;">🔍 EIP_IDs Found for BAN {{ last_ban }}</h6>
+            <h6 class="pete-section-kicker">🔍 EIP_IDs Found for BAN {{ last_ban }}</h6>
             {% if eip_df_html %}
               <div class="table-wrap">
                 <div class="pete-scroll">{{ eip_df_html | safe }}</div>
@@ -414,9 +345,5 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 </script>
-<style>
-  /* Chat styles moved to static/css/pete.css */
-  .pete-hidden{display:none !important;}
-</style>
 <!-- Removed off-canvas chat panel; using inline chat instead -->
 {% endblock %}

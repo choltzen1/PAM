@@ -1,6 +1,8 @@
 /* Groupings Management Page Styles (75% scaling, extracted from inline and admin.css) */
 html { font-size: 12px; }
 
+.page-intro { margin-bottom: 16px; }
+
 .groupings-layout { max-width:1180px; margin:0 auto; }
 .panel { border:1px solid #d6d6dc; border-radius:8px; background:#fff; box-shadow:0 2px 4px rgba(0,0,0,0.06); display:flex; flex-direction:column; }
 .panel-header { padding:10px 14px; border-bottom:1px solid #eee; font-weight:600; display:flex; flex-wrap:wrap; gap:6px; align-items:center; }
@@ -29,6 +31,23 @@ pill-cluster { margin-top:6px; }
 .view-mode-btn.active { background:#5e0066; color:#fff; }
 .form-inline-grid { display:grid; grid-template-columns: repeat(auto-fit,minmax(210px,1fr)); gap:10px; }
 .panel-footer { padding:10px 16px; background:#f8f8fa; border-top:1px solid #eee; display:flex; justify-content:flex-end; gap:6px; }
+.panel-footer--spaced { justify-content: space-between; }
+.panel-footer-actions { display: flex; gap: 6px; }
+.form-hint { font-size: 11px; color: #555; }
+
+.reference-groupings-list { padding: 16px 18px 4px; }
+.reference-row-main { flex: 1 1 auto; }
+
+.reference-grouping-form {
+	border: 1px solid #d3d3d8;
+	padding: 14px 16px;
+	border-radius: 10px;
+	margin: 14px 0;
+	background: #fcfcfd;
+}
+.reference-grouping-form-title { margin-top: 0; font-size: 15px; }
+
+.grid-full { grid-column: 1 / -1; }
 .inline-edit-code, .inline-edit-input, .inline-edit-textarea { width:100%; padding:6px 8px; border:1px solid #cbd5e1; border-radius:6px; font-size:11px; background:#fff; }
 .inline-edit-textarea { resize:vertical; }
 .inline-edit-code:focus, .inline-edit-input:focus, .inline-edit-textarea:focus { outline:2px solid #5e0066; outline-offset:1px; }

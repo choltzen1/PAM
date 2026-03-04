@@ -4,11 +4,6 @@
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/jira_modal.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/edit_rdc.css') }}">
-<style>
-  .sql-diag-row { break-inside: avoid; }
-  .diag-ok { color:#222; }
-  .diag-missing { color:#b71c1c; font-weight:600; }
-</style>
 {% endblock %}
 
 {% block header_left %}
@@ -32,7 +27,7 @@
 </div>
 
 <!-- JIRA Modal (inlined to ensure edit_rdc has required elements for jira_modal.js) -->
-<div id="jiraModal" class="jira-modal" style="display:none;">
+<div id="jiraModal" class="jira-modal is-hidden">
   <div class="jira-modal-content">
     <div class="modal-header">
       <h3>Create JIRA Ticket</h3>
@@ -325,7 +320,7 @@
                 </div>
                 <div class="trade-box">
                   <div class="trade-box-label">Broken trade</div>
-                  <div class="trade-box-input" style="width:100%">
+                  <div class="trade-box-input">
                     <select class="form-select" name="broken_trade">
                       <option value="Y" {% if promo.broken_trade == 'Y' %}selected{% endif %}>Y</option>
                       <option value="N" {% if promo.broken_trade == 'N' %}selected{% endif %}>N</option>
@@ -821,9 +816,9 @@
               {% endif %}
             </div>
           {% elif active_tab == 'Notes' %}
-            <div style="width: 90%; margin: 0 auto; padding: 2rem;">
+            <div class="edit-rdc-notes-wrap">
               <label class="section-label">Notes</label>
-              <textarea class="form-control" name="promo_notes" rows="12" style="resize: none; width: 100%; min-height: 300px; cursor: text; caret-color: #000 !important;">{{ promo.promo_notes or '' }}</textarea>
+              <textarea class="form-control promo-notes-textarea" name="promo_notes" rows="12">{{ promo.promo_notes or '' }}</textarea>
               <small class="form-text text-muted">Add any additional notes, observations, or documentation.</small>
             </div>
             <div class="save-footer"><button type="submit" class="btn btn-primary">Save Notes</button></div>
@@ -858,7 +853,7 @@
               </div>
               <div class="upload-section" id="sqlProdSchemaSection">
                 <label class="section-label">PROD Schema</label>
-                <div class="form-control" style="background:#f4f4f4;" id="sqlProdSchemaDisplay">
+                <div class="form-control sql-readonly" id="sqlProdSchemaDisplay">
                   {% set schema_value = promo.sql_prod_schema if promo.sql_prod_schema else (prod_schemas[0] if prod_schemas else '') %}
                   {{ schema_value }}
                 </div>
@@ -867,20 +862,20 @@
                   Auto-selected from staging reference{% if staging_reference and staging_reference.updated_at %} (updated {{ staging_reference.updated_at }}){% endif %}.
                 </small>
               </div>
-              <div class="upload-section" id="sqlZlabStatusSection" style="display:none;">
+              <div class="upload-section hidden" id="sqlZlabStatusSection">
                 <label class="section-label">ZLAB Execution Status</label>
                 {% if promo.oracle_exec_log %}
-                <div class="form-control" style="background:#f4f4f4;">
+                <div class="form-control sql-readonly">
                   <div>Status: {{ promo.oracle_exec_log.status }}</div>
                   {% if promo.oracle_exec_log.executed_at %}
                   <div class="file-meta">Executed at {{ promo.oracle_exec_log.executed_at }}</div>
                   {% endif %}
                   {% if promo.oracle_exec_log.error %}
-                  <div class="file-meta" style="color:#b00020;">{{ promo.oracle_exec_log.error }}</div>
+                  <div class="file-meta is-error">{{ promo.oracle_exec_log.error }}</div>
                   {% endif %}
                 </div>
                 {% else %}
-                <div class="form-control" style="background:#f4f4f4;">No execution log yet.</div>
+                <div class="form-control sql-readonly">No execution log yet.</div>
                 {% endif %}
               </div>
             </div>
@@ -894,16 +889,16 @@
                   </div>
                 </div>
                 <div class="file-actions">
-                  <a href="{{ url_for('promo.download_sql', promo_code=promo.code) }}" class="btn btn-sm btn-outline" id="downloadSqlBtn" {% if not promo.generated_sql %}style="display:none;"{% endif %}><i class="fas fa-download"></i> Download SQL</a>
-                  <button type="button" onclick="toggleSqlPreview()" id="sqlPreviewBtn" class="btn btn-sm btn-outline ml-sm" {% if not promo.generated_sql %}style="display:none;"{% endif %}><i class="fas fa-eye"></i> Preview</button>
+                  <a href="{{ url_for('promo.download_sql', promo_code=promo.code) }}" class="btn btn-sm btn-outline{% if not promo.generated_sql %} hidden{% endif %}" id="downloadSqlBtn"><i class="fas fa-download"></i> Download SQL</a>
+                  <button type="button" onclick="toggleSqlPreview()" id="sqlPreviewBtn" class="btn btn-sm btn-outline ml-sm{% if not promo.generated_sql %} hidden{% endif %}"><i class="fas fa-eye"></i> Preview</button>
                 </div>
-                <div id="sqlPreviewContainer" class="hidden sql-preview-wrapper" style="display:none; width:100%;">
+                <div id="sqlPreviewContainer" class="hidden sql-preview-wrapper">
                   <div class="sql-preview-header"><span>SQL Preview (first 1000 characters)</span><button type="button" onclick="loadFullSql()" id="loadFullBtn" class="btn btn-sm btn-link">Load Full SQL</button></div>
                   <textarea class="form-control sql-preview-area" id="sqlPreviewArea" rows="15" readonly>{% if promo.generated_sql %}{% if promo.generated_sql|length > 1000 %}{{ promo.generated_sql[:1000] }}...\n\n[SQL truncated for performance - use "Load Full SQL" button or download to see complete statement]{% else %}{{ promo.generated_sql }}{% endif %}{% endif %}</textarea>
                 </div>
               </div>
             </div>
-            {% if not has_generated_sql %}<div class="mt-2" id="sqlFirstTimeNotice" style="padding:10px;border:1px dashed #bbb;background:#fafafa;font-size:0.9rem;">No SQL generated yet. Click <strong>Generate SQL</strong>. After the first generation this section will appear automatically.</div>{% endif %}
+            {% if not has_generated_sql %}<div class="mt-2 sql-first-time-notice" id="sqlFirstTimeNotice">No SQL generated yet. Click <strong>Generate SQL</strong>. After the first generation this section will appear automatically.</div>{% endif %}
             <div class="save-footer"><button type="submit" class="btn btn-primary">Save SQL Generation</button><button type="submit" name="generate_sql" value="1" class="btn btn-secondary ml"><i class="fas fa-cog"></i> Generate SQL</button></div>
           {% endif %}
         </form>

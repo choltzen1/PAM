@@ -566,6 +566,7 @@ html[data-theme='dark'] .date-mismatch-table tbody tr { border-bottom: 1px solid
 #sql-preview-container { border:1px solid #17a2b8; }
 #sql-preview-container .card-header { background:linear-gradient(135deg,#17a2b8,#138496); }
 #sql-preview-content textarea { border:1px solid #dee2e6; background:#f8f9fa; }
+.dm-sql-textarea { font-family: monospace; font-size: 12px; }
 .operator-id-section { background:#f8f9fa; border:1px solid #dee2e6; border-radius:8px; padding:1rem; }
 .operator-id-section .form-label { font-weight:600; color:#333; margin-bottom:0.5rem; }
 .operator-id-section .form-label i { color:#e20074; margin-right:0.5rem; }

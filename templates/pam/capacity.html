@@ -63,7 +63,7 @@
             </select>
           </div>
         </div>
-        <div class="workload-table-container" style="--row-count: {{ owner_workload|length }};">
+          <div class="workload-table-container" data-row-count="{{ owner_workload|length }}">
           <table class="workload-table">
             <thead>
               <tr>
@@ -149,6 +149,17 @@
   </div>
 </div>
 
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      document.querySelectorAll('.workload-table-container[data-row-count]').forEach((el) => {
+        const raw = el.getAttribute('data-row-count');
+        const count = Number.parseInt(raw || '', 10);
+        if (Number.isFinite(count) && count > 0) {
+          el.style.setProperty('--row-count', String(count));
+        }
+      });
+    });
+  </script>
 <script>
 function filterByWeek() {
   const weekFilter = document.getElementById('week-filter');

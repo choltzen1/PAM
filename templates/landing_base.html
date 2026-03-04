@@ -13,33 +13,15 @@
     <!-- Theme switcher styles moved to styles.css -->
   {% block extra_css %}{% endblock %}
   <script defer src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
-  <script>
-    // Early theme application (no-flash) - executes before body render
-    (function(){
-      try {
-        const stored = localStorage.getItem('pam_theme');
-        const preferDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        let toApply;
-        if(stored === 'light' || stored === 'dark') { toApply = stored; }
-        else if(stored === 'auto' || !stored) { toApply = preferDark ? 'dark' : 'light'; }
-        document.documentElement.setAttribute('data-theme', toApply);
-      } catch(e) { /* fail silent */ }
-    })();
-  </script>
+  {% include 'partials/_theme_init.html' %}
   {% block head %}{% endblock %}
   <!-- Layout styles (header/footer/hub-main) consolidated into styles.css -->
 </head>
-<body class="body-fixed-header-footer">
+<body class="body-fixed-header-footer {% block body_class %}{% endblock %}">
   <header class="global-header">
     <div class="global-header-title">{% block header_left %}Workspace Hub{% endblock %}</div>
-    <div class="global-header-user" style="display:flex;align-items:center;gap:1.2rem;">
-      <div class="theme-toggle-group">
-        <div class="theme-switch" id="themeSwitch" tabindex="0" role="button" aria-label="Toggle light/dark theme">
-          <span class="icon">L</span>
-          <span class="icon">D</span>
-          <div class="theme-switch-indicator" id="themeIndicator">L</div>
-        </div>
-      </div>
+    <div class="global-header-user">
+      {% include 'partials/_theme_toggle.html' %}
       {% block header_right %}{{ user_name or 'Coming Soon' }}{% endblock %}
     </div>
   </header>
@@ -48,35 +30,10 @@
   </main>
   <footer class="footer-bar">
     <div id="footer-time">{{ current_datetime }}</div>
-    <div style="flex:1;text-align:right;font-size:.7rem;opacity:.85;">&copy; 2025 Internal</div>
+    <div class="footer-bar-aux">&copy; 2025 Internal</div>
   </footer>
-  <script>
-    function updateFooterTime(){const el=document.getElementById('footer-time');if(!el)return;const now=new Date();const opts={weekday:'long',year:'numeric',month:'long',day:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit'};el.textContent=now.toLocaleString('en-US',opts);}setInterval(updateFooterTime,1000);updateFooterTime();
-
-    // Theme toggle logic
-    (function(){
-      const switchEl = document.getElementById('themeSwitch');
-      const indicator = document.getElementById('themeIndicator');
-      if(!switchEl) return;
-      function apply(mode){
-        const resolved = mode === 'dark' ? 'dark' : 'light';
-        document.documentElement.setAttribute('data-theme', resolved);
-        localStorage.setItem('pam_theme', resolved);
-        fetch('/theme', {method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body:'mode='+encodeURIComponent(resolved)}).catch(()=>{});
-        switchEl.dataset.state = resolved;
-        indicator.textContent = resolved === 'dark' ? 'D' : 'L';
-      }
-      function toggle(){
-        const current = localStorage.getItem('pam_theme') || '{{ server_theme|default("light") }}';
-        const next = current === 'light' ? 'dark' : 'light';
-        apply(next);
-      }
-      switchEl.addEventListener('click', toggle);
-      switchEl.addEventListener('keydown', e=>{ if(e.key==='Enter' || e.key===' ') { e.preventDefault(); toggle(); }});
-      const initialRaw = localStorage.getItem('pam_theme') || '{{ server_theme|default("light") }}';
-      apply(initialRaw === 'dark' ? 'dark' : 'light');
-    })();
-  </script>
+  {% include 'partials/_footer_time_script.html' %}
+  {% include 'partials/_theme_toggle_script.html' %}
   {% block extra_js %}{% endblock %}
   {% block scripts %}{% endblock %}
   <!-- Removed custom overlay scrollbar scripts; using native scrollbar with hidden arrows -->

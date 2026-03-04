@@ -82,6 +82,17 @@ html[data-theme='dark'] .layout-container .version-controls .control-hint {
   width: auto;
 }
 
+/* Get Promo Codes: stacked controls layout (replaces inline styles in template) */
+.left-side-controls--stacked {
+  flex: 1;
+  align-items: flex-start;
+  flex-direction: column;
+  width: 100%;
+}
+
+.priority-inputs { width: 100%; }
+.priority-orbit-input { max-width: 140px; }
+
 .search-section {
   display: flex;
   align-items: center;

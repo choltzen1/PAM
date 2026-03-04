@@ -53,11 +53,6 @@ def set_theme():
     resp.set_cookie('theme', mode, max_age=60*60*24*365, samesite='Lax')
     return resp
 
-@core_bp.route('/offers', endpoint='offers_workspace')
-def offers_workspace():
-    # Updated to new offers workspace hub layout (similar to research workspace)
-    return render_template('offers/placeholder.html')
-
 @core_bp.route('/debug/me', endpoint='debug_user')
 def debug_user():
     """Debug endpoint to inspect Azure Easy Auth headers and user identity.

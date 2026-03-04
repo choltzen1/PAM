@@ -15,7 +15,6 @@ PAM implements Role-Based Access Control (RBAC) using Azure AD groups integrated
 | `pam_approvers` | View-only + approval actions (device finance, revenue accounting) | Finance approvers |
 | `pam_viewonly` | Read-only access to PAM homepage and reviewers tab | Auditors, reviewers |
 | `pam_research` | Access to research workspace only | Research analysts |
-| `pam_offers` | Access to offers workspace only | Offers operations team |
 
 ---
 
@@ -30,8 +29,7 @@ pam_admin
 │   ├── pam_viewonly
 │   └── pam_research
 ├── pam_viewonly
-├── pam_research
-└── pam_offers
+└── pam_research
 
 pam_approvers
 └── pam_viewonly
@@ -43,20 +41,17 @@ pam_users
 pam_viewonly (no inheritance)
 
 pam_research (isolated - no inheritance)
-
-pam_offers (isolated - no inheritance)
 ```
 
 ### Hierarchy Matrix
 
 | User's Role | Can Access Routes Protected By |
 |-------------|-------------------------------|
-| `pam_admin` | `pam_admin`, `pam_approvers`, `pam_users`, `pam_viewonly`, `pam_research`, `pam_offers` |
+| `pam_admin` | `pam_admin`, `pam_approvers`, `pam_users`, `pam_viewonly`, `pam_research` |
 | `pam_users` | `pam_users`, `pam_viewonly`, `pam_research` |
 | `pam_approvers` | `pam_approvers`, `pam_viewonly` |
 | `pam_viewonly` | `pam_viewonly` only |
 | `pam_research` | `pam_research` only |
-| `pam_offers` | `pam_offers` only |
 
 ---
 
@@ -130,12 +125,11 @@ pam_offers (isolated - no inheritance)
 | `/` | None | Redirects to landing |
 | `/landing` | None | Main landing page |
 | `/PAM_homepage` | `pam_viewonly` | PAM workspace home |
-| `/offers` | None* | Offers workspace |
 | `/health` | None | Health check endpoint |
 | `/theme` | None | Theme preference setter |
 | `/debug/*` | None* | Debug endpoints |
 
-*Consider adding role protection to `/offers` and `/debug/*` routes.
+*Consider adding role protection to `/debug/*` routes.
 
 ---
 
@@ -151,7 +145,6 @@ ENTRA_GROUP_PAM_ADMIN=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
 ENTRA_GROUP_PAM_USERS=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
 ENTRA_GROUP_PAM_VIEWONLY=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
 ENTRA_GROUP_PAM_RESEARCH=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-ENTRA_GROUP_PAM_OFFERS=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
 ENTRA_GROUP_PAM_APPROVERS=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
 ```
 
@@ -174,7 +167,7 @@ For local development without Azure Easy Auth:
 ```bash
 # .env file
 DEV_MODE=true
-DEV_USER_ROLE=pam_admin  # Options: pam_admin, pam_users, pam_viewonly, pam_research, pam_offers, pam_approvers
+DEV_USER_ROLE=pam_admin  # Options: pam_admin, pam_users, pam_viewonly, pam_research, pam_approvers
 DEV_USER_NAME=Dev User
 ```
 
@@ -222,12 +215,11 @@ def protected_route():
 ```python
 # auth.py
 ROLE_HIERARCHY = {
-    'pam_admin': ['pam_admin', 'pam_approvers', 'pam_users', 'pam_viewonly', 'pam_research', 'pam_offers'],
+    'pam_admin': ['pam_admin', 'pam_approvers', 'pam_users', 'pam_viewonly', 'pam_research'],
     'pam_approvers': ['pam_approvers', 'pam_viewonly'],
     'pam_users': ['pam_users', 'pam_viewonly', 'pam_research'],
     'pam_viewonly': ['pam_viewonly'],
     'pam_research': ['pam_research'],
-    'pam_offers': ['pam_offers'],
 }
 
 def has_role(user_role: str, required_role: str) -> bool:
@@ -275,12 +267,7 @@ def debug_user():
 
 ### 2. Lock Offers Workspace
 
-```python
-@core_bp.route('/offers', endpoint='offers_workspace')
-@role_required('pam_offers')
-def offers_workspace():
-    ...
-```
+(Offers workspace has been removed.)
 
 ### 3. UI-Level Permission Controls
 

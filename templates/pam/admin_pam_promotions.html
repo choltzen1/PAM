@@ -11,7 +11,7 @@
 {% endblock %}
 {% block head %}<link rel="stylesheet" href="/static/css/admin.css">{% endblock %}
 {% block content %}
-<div class="admin-dashboard" style="padding-top:10px;display:flex;flex-direction:column;min-height:0;">
+<div class="admin-dashboard admin-dashboard--pam-promotions">
   <!-- Consolidated sticky control group -->
   <div class="promo-control-group control-bar">
     <form method="get">
@@ -30,7 +30,7 @@
     </div>
   </div>
 
-  <div id="tableContainer" class="table-responsive" style="flex:0 0 auto;overflow:visible;min-height:0;max-height:none;">
+  <div id="tableContainer" class="table-responsive pam-promos-table-container">
     <table class="admin-table" id="pamPromosTable">
       <thead>
         <tr>
@@ -40,7 +40,7 @@
           <th>Owner</th>
           <th>Start</th>
           <th>End</th>
-          <th style="width:110px;">Actions</th>
+          <th class="pam-promos-actions-col">Actions</th>
         </tr>
       </thead>
       <tbody>
@@ -53,28 +53,28 @@
           <td>{{ p.promo_start_date }}</td>
           <td>{{ p.promo_end_date }}</td>
           <td>
-            <button class="btn-admin danger" style="padding:4px 8px;font-size:0.75rem;" onclick="deleteSingle('{{ p.code }}')"><i class="fas fa-trash"></i></button>
-            <a class="btn-admin secondary" style="padding:4px 8px;font-size:0.75rem;" href="/edit_rdc/{{ p.code }}"><i class="fas fa-edit"></i></a>
+            <button class="btn-admin danger pam-promos-action-btn" onclick="deleteSingle('{{ p.code }}')"><i class="fas fa-trash"></i></button>
+            <a class="btn-admin secondary pam-promos-action-btn" href="/edit_rdc/{{ p.code }}"><i class="fas fa-edit"></i></a>
           </td>
         </tr>
         {% endfor %}
         {% if promotions|length == 0 %}
-        <tr><td colspan="7" style="text-align:center;padding:30px;">No promotions found.</td></tr>
+        <tr><td colspan="7" class="pam-promos-empty-cell">No promotions found.</td></tr>
         {% endif %}
       </tbody>
     </table>
   </div>
 
   <!-- Pagination -->
-  <div class="pagination" style="margin-top:14px;display:flex;gap:8px;align-items:center;flex:0 0 auto;">
+  <div class="pagination pam-promos-pagination">
     {% set pg = pagination %}
-    {% if pg.has_prev %}<a class="btn-admin secondary" href="?page={{ pg.prev_num }}&per_page={{ pg.per_page }}&search={{ search_query }}&owner={{ selected_owner }}">Prev</a>{% else %}<span class="btn-admin disabled" style="opacity:0.4;">Prev</span>{% endif %}
+    {% if pg.has_prev %}<a class="btn-admin secondary" href="?page={{ pg.prev_num }}&per_page={{ pg.per_page }}&search={{ search_query }}&owner={{ selected_owner }}">Prev</a>{% else %}<span class="btn-admin disabled">Prev</span>{% endif %}
     <span>Page {{ pg.page }} / {{ pg.total_pages or 1 }}</span>
-    {% if pg.has_next %}<a class="btn-admin secondary" href="?page={{ pg.next_num }}&per_page={{ pg.per_page }}&search={{ search_query }}&owner={{ selected_owner }}">Next</a>{% else %}<span class="btn-admin disabled" style="opacity:0.4;">Next</span>{% endif %}
-    <span style="margin-left:10px;">Total: {{ pg.total_items }}</span>
+    {% if pg.has_next %}<a class="btn-admin secondary" href="?page={{ pg.next_num }}&per_page={{ pg.per_page }}&search={{ search_query }}&owner={{ selected_owner }}">Next</a>{% else %}<span class="btn-admin disabled">Next</span>{% endif %}
+    <span class="pam-promos-pagination-total">Total: {{ pg.total_items }}</span>
   </div>
 
-  <div id="statusArea" style="margin-top:12px;font-size:0.9rem;"></div>
+  <div id="statusArea" class="pam-promos-status"></div>
 </div>
 
 <script>
@@ -113,7 +113,7 @@ async function performDelete(codes){
      });
      const js = await res.json();
      if(res.ok && js.success){
-        status.innerHTML = '<span style="color:green;">'+js.message+'</span>';
+        status.innerHTML = '<span class="text-success">'+js.message+'</span>';
         // Remove deleted rows from table
         js.deleted.forEach(c=>{
           const row = document.querySelector('tr[data-code="'+c+'"]');
@@ -122,13 +122,13 @@ async function performDelete(codes){
         updateBulkState();
         if(document.querySelectorAll('#pamPromosTable tbody tr').length===0){
            const tbody = document.querySelector('#pamPromosTable tbody');
-           tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:30px;">No promotions remaining on this page.</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="7" class="pam-promos-empty-cell">No promotions remaining on this page.</td></tr>';
         }
      } else {
-        status.innerHTML = '<span style="color:#d33;">'+(js.message||'Delete failed')+'</span>';
+        status.innerHTML = '<span class="text-error">'+(js.message||'Delete failed')+'</span>';
      }
   } catch(e){
-     status.innerHTML = '<span style="color:#d33;">Error: '+e+'</span>';
+      status.innerHTML = '<span class="text-error">Error: '+e+'</span>';
   }
 }
 </script>

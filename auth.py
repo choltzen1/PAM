@@ -28,7 +28,6 @@ AZURE_ROLE_MAPPING = {
     'User': 'pam_users',  # Promo owners - full edit access
     'ViewOnly': 'pam_viewonly',  # Review and audit only
     'Research': 'pam_research',  # Research tools access
-    'Offers': 'pam_offers',  # Offers workspace access
 }
 
 # Role hierarchy and permissions
@@ -37,14 +36,12 @@ AZURE_ROLE_MAPPING = {
 # PAM_Users: Full edit access - promo owners to configure promotions + research access
 # PAM_ViewOnly: Reviewers and audit - read only (PAM homepage + reviewers tab only)
 # PAM_Research: Only access to research workspaces (analysts and issues research)
-# PAM_Offers: Only access to offers workspace (offers owners / offers ops team)
 ROLE_HIERARCHY = {
-    'pam_admin': ['pam_admin', 'pam_approvers', 'pam_users', 'pam_viewonly', 'pam_research', 'pam_offers'],
+    'pam_admin': ['pam_admin', 'pam_approvers', 'pam_users', 'pam_viewonly', 'pam_research'],
     'pam_approvers': ['pam_approvers', 'pam_viewonly'],
     'pam_users': ['pam_users', 'pam_viewonly', 'pam_research'],
     'pam_viewonly': ['pam_viewonly'],
     'pam_research': ['pam_research'],
-    'pam_offers': ['pam_offers'],
 }
 
 
@@ -69,7 +66,7 @@ def get_user_from_headers() -> Optional[Dict[str, Any]]:
         # Return a default dev user if configured
         if os.getenv('DEV_MODE') == 'true':
             logger.info("Dev mode: Using default dev user")
-            # DEV_USER_ROLE can be: pam_admin, pam_users, pam_viewonly, pam_research, pam_offers
+            # DEV_USER_ROLE can be: pam_admin, pam_users, pam_viewonly, pam_research
             dev_role = os.getenv('DEV_USER_ROLE', 'pam_admin')
             return {
                 'name': os.getenv('DEV_USER_NAME', 'Dev User'),
@@ -287,12 +284,6 @@ def has_research_access() -> bool:
     """Check if current user has PAM_Research role or admin."""
     user = get_current_user()
     return has_role(user, 'pam_research') or has_role(user, 'pam_admin')
-
-
-def has_offers_access() -> bool:
-    """Check if current user has PAM_Offers role or admin."""
-    user = get_current_user()
-    return has_role(user, 'pam_offers') or has_role(user, 'pam_admin')
 
 
 def can_edit_promo(promo_owner: str = None) -> bool:

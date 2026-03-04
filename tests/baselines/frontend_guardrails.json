@@ -1,0 +1,60 @@
+{
+  "generatedAt": "2026-03-03T22:08:49.840359+00:00",
+  "rules": {
+    "template_style_attr": {
+      "description": "Count of style= attributes in templates"
+    },
+    "template_style_tag": {
+      "description": "Count of <style>...</style> blocks in templates"
+    },
+    "js_style_api": {
+      "description": "Count of '.style' usages in static JS files"
+    }
+  },
+  "counts": {
+    "template_style_attr": {
+      "templates/landing.html": 1,
+      "templates/landing_base.html": 2,
+      "templates/landing_fullscreen.html": 1,
+      "templates/pam/PAM_homepage.html": 1,
+      "templates/pam/admin.html": 1,
+      "templates/pam/admin_groupings.html": 9,
+      "templates/pam/admin_pam_promotions.html": 15,
+      "templates/pam/capacity.html": 1,
+      "templates/pam/date_mismatch.html": 2,
+      "templates/pam/edit_rdc.html": 13,
+      "templates/pam/edit_spe.html": 1,
+      "templates/pam/get_promo_codes.html": 2,
+      "templates/pam/offers_placeholder.html": 11,
+      "templates/pam/pam_base.html": 8,
+      "templates/pam/research_placeholder.html": 11,
+      "templates/pam/reviewers.html": 4,
+      "templates/pam/version_history.html": 2,
+      "templates/research/_query_console.html": 1,
+      "templates/research/pete.html": 2,
+      "templates/research/placeholder.html": 1,
+      "templates/research/research_base.html": 7,
+      "templates/research/research_home.html": 2
+    },
+    "template_style_tag": {
+      "templates/landing.html": 1,
+      "templates/landing_fullscreen.html": 1,
+      "templates/pam/edit_rdc.html": 1,
+      "templates/pam/offers_placeholder.html": 1,
+      "templates/pam/pam_base.html": 1,
+      "templates/pam/research_placeholder.html": 1,
+      "templates/pam/reviewers.html": 1,
+      "templates/research/pete.html": 3,
+      "templates/research/research_home.html": 1
+    },
+    "js_style_api": {
+      "static/js/jira_modal.js": 11,
+      "static/js/research.js": 2
+    }
+  },
+  "totals": {
+    "template_style_attr": 98,
+    "template_style_tag": 11,
+    "js_style_api": 13
+  }
+}

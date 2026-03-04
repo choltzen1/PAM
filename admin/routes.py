@@ -299,6 +299,22 @@ def admin_groupings_page():
     """Dedicated management page for device & reference groupings."""
     return render_template('pam/admin_groupings.html')
 
+
+@admin_bp.route('/admin/ui-refactor')
+@role_required('pam_admin')
+def admin_ui_refactor_page():
+    """Admin-only status page for the ongoing HTML/CSS refactor."""
+    repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+    tracker_path = os.path.join(repo_root, 'docs', 'ui_refactor_tracking.json')
+    tracker = None
+    error = None
+    try:
+        with open(tracker_path, 'r', encoding='utf-8') as f:
+            tracker = json.load(f)
+    except Exception as e:
+        error = f'Failed to load tracking file: {e}'
+    return render_template('pam/admin_ui_refactor.html', tracker=tracker, tracker_path=tracker_path, error=error)
+
 # Version history page removed
 
 # --- Admin actions ---

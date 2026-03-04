@@ -442,6 +442,74 @@ html[data-theme='dark'] .pete-hero-banner .pete-sub { color:#ffd9ef; }
   box-shadow:0 0 0 2px rgba(226,0,116,.35);
   outline:none;
 }
+
+/* ===============================
+  PETE page (no inline CSS)
+  IMPORTANT: Scoped to research--pete body class.
+  =============================== */
+
+body.research--pete .pete-hidden {
+  display: none !important;
+}
+
+/* Page title / section kicker (migrated from inline styles) */
+body.research--pete .pete-page-title {
+  font-size: 1.75em;
+  font-weight: bold;
+  margin-bottom: 1rem;
+}
+
+body.research--pete .pete-section-kicker {
+  color: #E20074;
+  font-size: 1em;
+  margin-bottom: 1em;
+}
+
+/* Loading bars (main + select) */
+body.research--pete .pete-loading-bar {
+  width: 100%;
+  height: 10px;
+  background-color: rgba(0,0,0,0.08);
+  border: 1px solid rgba(0,0,0,0.15);
+  border-radius: 999px;
+  overflow: hidden;
+  display: none;
+}
+
+body.research--pete .pete-loading-bar.active {
+  display: block;
+}
+
+body.research--pete .pete-loading-fill {
+  width: 0;
+  height: 100%;
+  background-color: var(--pete-accent);
+}
+
+body.research--pete .pete-loading-bar.active .pete-loading-fill {
+  animation: pete-loading 2s infinite linear;
+}
+
+body.research--pete .pete-loading-note {
+  display: none;
+  margin-top: 8px;
+  font-size: 0.85rem;
+  color: rgba(0,0,0,0.65);
+}
+
+html[data-theme='dark'] body.research--pete .pete-loading-note {
+  color: rgba(255,255,255,0.7);
+}
+
+body.research--pete .pete-loading-note.active {
+  display: block;
+}
+
+@keyframes pete-loading {
+  0% { width: 0%; }
+  50% { width: 50%; }
+  100% { width: 100%; }
+}
 #research-app.pete-theme input.form-control:-webkit-autofill,
 #research-app.pete-theme input.form-control:-webkit-autofill:focus {
   -webkit-box-shadow:0 0 0px 1000px var(--pete-panel-bg-alt) inset !important;

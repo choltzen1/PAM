@@ -1,0 +1,67 @@
+{% extends "pam/base_pam.html" %}
+{% block title %}UI Refactor Tracking - PAM{% endblock %}
+
+{% block header_left %}
+<div class="global-header-promotions">
+  <i class="fas fa-list-check header-icon"></i>
+  <div class="header-text">
+    <h2>UI Refactor Tracking</h2>
+    <p>Progress and checklist for the HTML/CSS standardization work</p>
+  </div>
+</div>
+{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="/static/css/admin.css">
+{% endblock %}
+
+{% block content %}
+<div class="admin-dashboard">
+  <div class="admin-card">
+    <div class="card-header">
+      <div class="card-icon"><i class="fas fa-file-lines"></i></div>
+      <div class="card-title">Tracker</div>
+    </div>
+    <div class="card-content">
+      <div class="text-muted">Source: {{ tracker_path }}</div>
+      {% if error %}
+        <div class="alert alert-error" role="alert">{{ error }}</div>
+      {% elif not tracker %}
+        <div class="alert alert-error" role="alert">No tracker data loaded.</div>
+      {% else %}
+        <div class="table-responsive">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Area</th>
+                <th>Summary</th>
+                <th>Status</th>
+                <th>Risk</th>
+                <th>Owner</th>
+                <th>PR</th>
+              </tr>
+            </thead>
+            <tbody>
+                  {% for item in tracker.get('items', []) %}
+                <tr>
+                  <td>{{ item.id }}</td>
+                  <td>{{ item.area }}</td>
+                  <td>
+                    <div><strong>{{ item.summary }}</strong></div>
+                    {% if item.notes %}<div class="text-muted">{{ item.notes }}</div>{% endif %}
+                  </td>
+                  <td>{{ item.status }}</td>
+                  <td>{{ item.risk }}</td>
+                  <td>{{ item.owner }}</td>
+                  <td>{{ item.pr }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,38 @@
+<script>
+  // Theme toggle logic (shared)
+  (function(){
+    const switchEl = document.getElementById('themeSwitch');
+    const indicator = document.getElementById('themeIndicator');
+    if(!switchEl) return;
+
+    function apply(mode){
+      const resolved = mode === 'dark' ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', resolved);
+      localStorage.setItem('pam_theme', resolved);
+      fetch('/theme', {
+        method:'POST',
+        headers:{'Content-Type':'application/x-www-form-urlencoded'},
+        body:'mode='+encodeURIComponent(resolved)
+      }).catch(()=>{});
+      switchEl.dataset.state = resolved;
+      if (indicator) indicator.textContent = resolved === 'dark' ? 'D' : 'L';
+    }
+
+    function toggle(){
+      const current = localStorage.getItem('pam_theme') || '{{ server_theme|default("light") }}';
+      const next = current === 'light' ? 'dark' : 'light';
+      apply(next);
+    }
+
+    switchEl.addEventListener('click', toggle);
+    switchEl.addEventListener('keydown', e=>{
+      if(e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        toggle();
+      }
+    });
+
+    const initialRaw = localStorage.getItem('pam_theme') || '{{ server_theme|default("light") }}';
+    apply(initialRaw === 'dark' ? 'dark' : 'light');
+  })();
+</script>

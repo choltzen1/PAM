@@ -93,15 +93,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const btn = document.getElementById('toggle-console');
     const consoleSection = document.getElementById('query-console');
     if (!btn || !consoleSection) return;
-    const open = btn.getAttribute('data-open') === 'true';
-    if (open) {
-      consoleSection.style.display = 'none';
+    const isOpen = !consoleSection.classList.contains('hidden');
+    if (isOpen) {
+      consoleSection.classList.add('hidden');
       btn.textContent = 'Show Query Console';
-      btn.setAttribute('data-open','false');
+      btn.setAttribute('data-open', 'false');
     } else {
-      consoleSection.style.display = '';
+      consoleSection.classList.remove('hidden');
       btn.textContent = 'Hide Query Console';
-      btn.setAttribute('data-open','true');
+      btn.setAttribute('data-open', 'true');
     }
   });
 
@@ -127,7 +127,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!data.rows.length) { mount.innerHTML = '<em>No EIP accounts found</em>'; return; }
     let html = '<div class="table-responsive"><table class="table table-sm table-hover"><thead><tr><th>Select</th><th>EQUIP_ID</th><th>BAN</th><th>MSISDN</th><th>SKU</th><th>Status</th><th>Created</th></tr></thead><tbody>';
     data.rows.forEach(r => {
-      html += `<tr data-eip="${r.EQUIP_ID || ''}" style="cursor:pointer"><td><button type="button" class="btn btn-outline-primary btn-xs select-eip" data-eip="${r.EQUIP_ID || ''}" data-ban="${r.BAN || ''}">Use</button></td><td>${r.EQUIP_ID||''}</td><td>${r.BAN||''}</td><td>${r.MSISDN||''}</td><td>${r.EQUIP_SKU||''}</td><td>${r.EQUIP_STATUS||''}</td><td>${r.EQUIP_CREATED_AT||''}</td></tr>`;
+      html += `<tr data-eip="${r.EQUIP_ID || ''}" class="research-clickable-row"><td><button type="button" class="btn btn-outline-primary btn-xs select-eip" data-eip="${r.EQUIP_ID || ''}" data-ban="${r.BAN || ''}">Use</button></td><td>${r.EQUIP_ID||''}</td><td>${r.BAN||''}</td><td>${r.MSISDN||''}</td><td>${r.EQUIP_SKU||''}</td><td>${r.EQUIP_STATUS||''}</td><td>${r.EQUIP_CREATED_AT||''}</td></tr>`;
     });
     html += '</tbody></table></div>';
     html += '<div class="text-muted">Click Use to populate EIP & BAN into other forms and trigger aggregate pull.</div>';

@@ -701,5 +701,7 @@ html[data-theme='dark'] .version-table td {
 .pagination-btn:hover, .pagination-btn.active { background:var(--tmobile-magenta,#E20074); color:#fff; border-color:var(--tmobile-magenta,#E20074); }
 html[data-theme='dark'] .version-history-page .pagination-container { background: rgba(45,22,38,0.55); border-color: rgba(226,0,116,0.25); box-shadow: 0 2px 8px rgba(0,0,0,0.3); backdrop-filter: blur(8px); }
 html[data-theme='dark'] .version-history-page .pagination-info { color:#ffffff; }
+.pagination-container .per-page-select { display:inline-flex; align-items:center; gap:6px; margin-left:12px; }
+.pagination-container .per-page-select label { font-size:.75rem; }
 .pagination-container .per-page-select select { padding:4px 6px; border:1px solid #c5c7c9; border-radius:4px; background:#fff; font-size:.75rem; }
 html[data-theme='dark'] .pagination-container .per-page-select select { background:#fff; color:#000; border-color:#a8aaab; }
