@@ -487,7 +487,12 @@ body.research--pete .pete-loading-fill {
 }
 
 body.research--pete .pete-loading-bar.active .pete-loading-fill {
-  animation: pete-loading 2s infinite linear;
+  animation: pete-loading-once 1.9s ease forwards;
+}
+
+@keyframes pete-loading-once {
+  0% { width: 0%; }
+  100% { width: 92%; }
 }
 
 body.research--pete .pete-loading-note {
@@ -505,11 +510,6 @@ body.research--pete .pete-loading-note.active {
   display: block;
 }
 
-@keyframes pete-loading {
-  0% { width: 0%; }
-  50% { width: 50%; }
-  100% { width: 100%; }
-}
 #research-app.pete-theme input.form-control:-webkit-autofill,
 #research-app.pete-theme input.form-control:-webkit-autofill:focus {
   -webkit-box-shadow:0 0 0px 1000px var(--pete-panel-bg-alt) inset !important;

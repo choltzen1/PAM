@@ -71,12 +71,13 @@ coverage.xml
 .coverage
 
 
-# User data (keep structure but ignore actual data)
-data/uploads/promotions/*/
-data/uploads/promotions/.gitkeep
+# User data/runtime artifacts (keep folder structure only)
+data/uploads/promotions/**
+!data/uploads/promotions/.gitkeep
 
-# Local Flask session storage
-data/sessions/
+# Local Flask session storage (keep placeholder only)
+data/sessions/**
+!data/sessions/.gitkeep
 
 # SQLite database files (deprecated for production)
 *.db
@@ -91,5 +92,4 @@ data/__pycache__/storage.cpython-313.pyc
 
 # Refactor audit documentation (local-only)
 REFACTOR_AUDIT.md
-AZURE_DEPLOYMENT_GUIDE.md
 AZURE_DEPLOYMENT_GUIDE.md

@@ -131,3 +131,19 @@ def test_skip_nonexistent_field_does_not_error():
     assert raw is not None
     converted = dbm.convert_db_record_to_json_format(raw)
     assert converted.get('discount') == '2%'
+
+
+def test_round_trip_regression_promo_grace_and_maintain_active_line():
+    field_values = {
+        'promo_grace': '45',
+        'maintain_active_line': 'Y',
+    }
+    row = build_row('RT4', field_values)
+    dbm, recorder = make_db_manager(row)
+
+    raw = dbm.get_promo_by_code('RT4')
+    assert raw, 'Raw DB fetch failed'
+    converted = dbm.convert_db_record_to_json_format(raw)
+
+    assert converted.get('promo_grace') == '45'
+    assert converted.get('maintain_active_line') == 'Y'

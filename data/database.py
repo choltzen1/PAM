@@ -987,7 +987,7 @@ class DatabaseManager:
             "on_menu": _yn_or_passthrough(_get("on_menu", default="")),
             "active_line_required": _yn_or_passthrough(_get("active_line_required", default="")),
             "maintain_soc": _yn_or_passthrough(_get("maintain_soc", default="")),
-            "maintain_active_line": "N",  # Not available in database
+            "maintain_active_line": _yn_or_passthrough(_get("maintain_active_line", "crffc_maintainactivelinedev", default="")),
             "market_group": _get("market_group", default="*"),
             "store_group": _get("store_group", default="*"),
             "limit_per_ban": str(_get("limit_per_ban", default="")),
@@ -1026,7 +1026,7 @@ class DatabaseManager:
             "sku_link": _get("sku_link", default=""),
             "tradein_link": _get("tradein_link", default=""),
             "comm_end_date": format_date_for_html(_get("comm_end_date")),
-            "promo_grace": "",
+            "promo_grace": _get("promo_grace", "promo_grace_period", default=""),
             "trade_in_grace": _get("trade_in_grace", "trade_in_grace_period", default=""),
             "segment_name": _get("segment_name", default=""),
             "sub_segment": _get("sub_segment", default=""),
