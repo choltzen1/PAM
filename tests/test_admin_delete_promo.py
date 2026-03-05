@@ -1,9 +1,36 @@
 import pytest
 import factory
 
+pytestmark = pytest.mark.no_external_writes
+
+
+_PROMO_STORE = {}
+
+
+def _fake_get_promo(code):
+    row = _PROMO_STORE.get(code)
+    return dict(row) if row else {}
+
+
+def _fake_save_promo(code, data, user_name='Test'):
+    payload = dict(data or {})
+    payload['code'] = code
+    _PROMO_STORE[code] = payload
+
+
+def _fake_delete_promo(code):
+    _PROMO_STORE.pop(code, None)
+
 @pytest.fixture()
-def client():
+def client(monkeypatch):
     app = factory.create_app({'TESTING': True})
+    _PROMO_STORE.clear()
+    dm = factory.data_manager
+    monkeypatch.setattr(dm, 'get_promo', _fake_get_promo)
+    monkeypatch.setattr(dm, 'save_promo', _fake_save_promo)
+    monkeypatch.setattr(dm, 'delete_promo', _fake_delete_promo)
+    if hasattr(dm, 'force_refresh'):
+        monkeypatch.setattr(dm, 'force_refresh', lambda: None)
     with app.test_client() as c:
         # Save reference to the app's data manager for test access
         c.application.data_manager = factory.data_manager

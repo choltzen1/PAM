@@ -1,7 +1,23 @@
 from flask import Blueprint, render_template, redirect, url_for
+import os
+from functools import wraps
 from auth import role_required
 
 core_bp = Blueprint('core', __name__)
+
+
+def _local_debug_enabled() -> bool:
+    return os.getenv('DEV_MODE') == 'true' and not bool(os.getenv('WEBSITE_INSTANCE_ID'))
+
+
+def local_debug_only(f):
+    @wraps(f)
+    def _wrapped(*args, **kwargs):
+        from flask import jsonify
+        if not _local_debug_enabled():
+            return jsonify({'error': 'Not found'}), 404
+        return f(*args, **kwargs)
+    return _wrapped
 
 @core_bp.route('/', endpoint='home')
 def home_page():
@@ -54,6 +70,7 @@ def set_theme():
     return resp
 
 @core_bp.route('/debug/me', endpoint='debug_user')
+@local_debug_only
 def debug_user():
     """Debug endpoint to inspect Azure Easy Auth headers and user identity.
     
@@ -113,6 +130,7 @@ def health_check():
 
 
 @core_bp.route('/debug/env', endpoint='debug_env')
+@local_debug_only
 def debug_env():
     """Debug endpoint to check which environment variables are set (not values, just presence)."""
     import os
@@ -158,6 +176,7 @@ def debug_env():
 
 
 @core_bp.route('/debug/db', endpoint='debug_db')
+@local_debug_only
 def debug_db():
     """Debug endpoint to test database connectivity."""
     from flask import jsonify
@@ -223,6 +242,7 @@ def debug_db():
 
 
 @core_bp.route('/debug/fabric', endpoint='debug_fabric')
+@local_debug_only
 def debug_fabric():
     """Debug endpoint specifically for Fabric/ORBIT connection issues."""
     from flask import jsonify
@@ -299,6 +319,7 @@ def debug_fabric():
 
 
 @core_bp.route('/debug/jira', endpoint='debug_jira')
+@local_debug_only
 def debug_jira():
     """Debug endpoint to test JIRA connectivity from Azure."""
     from flask import jsonify
@@ -401,6 +422,7 @@ def debug_jira():
 
 
 @core_bp.route('/debug/network', endpoint='debug_network')
+@local_debug_only
 def debug_network():
     """Deep network diagnostic for Fabric connectivity.
     Tests each layer independently: DNS, TCP, TLS, ODBC, Token, Full connection.

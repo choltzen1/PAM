@@ -105,25 +105,25 @@ html[data-theme='dark'] .layout-container .version-controls .control-hint {
 }
 
 .version-controls .search-input {
-  padding: 0.5rem !important;
+  padding: 0 var(--control-item-px, 0.6rem) !important;
   border: 1px solid var(--input-border, #ced4da) !important;
   border-radius: 4px !important;
   background: var(--input-bg, white) !important;
   color: var(--input-color, #212529) !important;
   font-size: 0.85rem !important;
-  height: 34px !important;
+  height: var(--control-item-height, 38px) !important;
   min-width: 150px !important;
   box-sizing: border-box !important;
   display: flex !important;
   align-items: center !important;
-  line-height: 1 !important;
+  line-height: normal !important;
   vertical-align: middle !important;
 }
 
 .promo-info {
   display: flex;
   align-items: center;
-  height: 34px;
+  height: var(--control-item-height, 38px);
   box-sizing: border-box;
 }
 
@@ -131,8 +131,8 @@ html[data-theme='dark'] .layout-container .version-controls .control-hint {
   font-size: 0.95rem !important;
   font-weight: 600 !important;
   color: var(--title-color, #495057) !important;
-  height: 34px !important;
-  line-height: 34px !important;
+  height: var(--control-item-height, 38px) !important;
+  line-height: var(--control-item-height, 38px) !important;
   display: flex !important;
   align-items: center !important;
   margin: 0 !important;
@@ -146,17 +146,17 @@ html[data-theme='dark'] .layout-container .version-controls .control-hint {
 }
 
 .version-controls .apple-dropdown {
-  padding: 0.45rem !important;
+  padding: 0 var(--control-item-px, 0.6rem) !important;
   border: 1px solid var(--input-border, #ced4da) !important;
   border-radius: 4px !important;
   background: var(--select-bg, #E20074) !important;
   color: white !important;
   font-size: 0.85rem !important;
-  height: 34px !important;
+  height: var(--control-item-height, 38px) !important;
   box-sizing: border-box !important;
   display: flex !important;
   align-items: center !important;
-  line-height: 1 !important;
+  line-height: normal !important;
   vertical-align: middle !important;
   cursor: pointer !important;
 }
@@ -166,7 +166,7 @@ html[data-theme='dark'] .layout-container .version-controls .control-hint {
   align-items: center !important;
   justify-content: center !important;
   gap: 0.4rem !important;
-  padding: 0.4rem 0.8rem !important;
+  padding: 0 0.8rem !important;
   background: var(--button-bg, #E20074) !important;
   color: var(--button-color, white) !important;
   border: none !important;
@@ -175,9 +175,9 @@ html[data-theme='dark'] .layout-container .version-controls .control-hint {
   cursor: pointer !important;
   text-decoration: none !important;
   transition: filter 0.12s !important;
-  height: 34px !important;
+  height: var(--control-item-height, 38px) !important;
   box-sizing: border-box !important;
-  line-height: 1 !important;
+  line-height: normal !important;
   vertical-align: middle !important;
 }
 

@@ -8,6 +8,8 @@ if PROJECT_ROOT not in sys.path:
 import factory  # ensures create_app & data_manager loaded
 from data.database import DatabaseManager
 
+pytestmark = pytest.mark.integration
+
 
 def _db_available() -> bool:
     try:
@@ -17,14 +19,16 @@ def _db_available() -> bool:
         return False
 
 
-@pytest.mark.skipif(not _db_available(), reason="Database not reachable in test environment")
 def test_engine_connects():
+    if not _db_available():
+        pytest.skip("Database not reachable in test environment")
     dm = DatabaseManager()
     assert dm.test_connection() is True
 
 
-@pytest.mark.skipif(not _db_available(), reason="Database not reachable in test environment")
 def test_fetch_single_promo_roundtrip(monkeypatch):
+    if not _db_available():
+        pytest.skip("Database not reachable in test environment")
     dm = DatabaseManager()
     # Attempt to pull top 1 code to validate conversion function does not crash
     import sqlalchemy
@@ -47,8 +51,9 @@ def test_fetch_single_promo_roundtrip(monkeypatch):
     assert 'bill_facing_name' in converted
 
 
-@pytest.mark.skipif(not _db_available(), reason="Database not reachable in test environment")
 def test_paginated_query_performance_smoke(monkeypatch):
+    if not _db_available():
+        pytest.skip("Database not reachable in test environment")
     dm = DatabaseManager()
     # Simple timing budget (very loose) for pulling a small page
     import time, sqlalchemy

@@ -310,6 +310,22 @@ function getSelectedPromoCodes() {
   return Array.from(selectedCheckboxes).map(checkbox => checkbox.value);
 }
 
+function bindMismatchRowClickSelection() {
+  const rows = document.querySelectorAll('.mismatch-row');
+  rows.forEach(row => {
+    if (row.dataset.rowClickBound === 'true') return;
+    row.dataset.rowClickBound = 'true';
+
+    row.addEventListener('click', function(event) {
+      if (event.target.closest('input,button,a,label,select,textarea')) return;
+      const checkbox = row.querySelector('.row-checkbox');
+      if (!checkbox) return;
+      checkbox.checked = !checkbox.checked;
+      updateBatchActions();
+    });
+  });
+}
+
 function batchUpdatePam() {
   const selectedCodes = getSelectedPromoCodes();
   
@@ -749,6 +765,9 @@ document.getElementById('search-input').addEventListener('input', function() {
   // Update batch actions and select all state after searching
   updateBatchActions();
 });
+
+bindMismatchRowClickSelection();
+updateBatchActions();
 </script>
 
 {% endblock %}

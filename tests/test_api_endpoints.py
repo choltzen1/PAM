@@ -15,6 +15,10 @@ os.environ.setdefault('PAM_VALIDATION_MODE','1')
 import factory
 from factory import create_app
 
+# Convention: this module may read external DB in selected tests, but all promo persistence
+# writes must remain in-memory/mocked to avoid touching production data.
+pytestmark = pytest.mark.no_external_writes
+
 @pytest.fixture()
 def client():
     app = create_app({'TESTING': True})
@@ -29,26 +33,24 @@ def test_get_promo_details_not_found(client):
     assert js['found'] is False
 
 
-def test_get_promo_details_after_insert(client):
-    # This test now depends on a real DB update succeeding. If DB is unreachable, skip.
-    from data.database import DatabaseManager
-    dm = DatabaseManager()
-    try:
-        if not dm.test_connection():
-            import pytest; pytest.skip('DB not reachable; skipping DB-dependent insert test')
-    except Exception:
-        import pytest; pytest.skip('DB connection error; skipping')
+def test_get_promo_details_after_insert(client, monkeypatch):
     promo_code = 'API999'
-    # Attempt update (will no-op if code absent depending on schema constraints)
-    factory.data_manager.save_promo(promo_code, {
-        'owner':'Unit','description':'Unit Test','bill_facing_name':'UT','orbit_id':'ORBIT-UNIT'
-    }, user_name='Test')
+    fake_core = {
+        'owner': 'Unit',
+        'description': 'Unit Test',
+        'bill_facing_name': 'UT',
+        'orbit_id': 'ORBIT-UNIT',
+    }
+    monkeypatch.setattr(
+        factory.data_manager,
+        'get_promo_core_by_code',
+        lambda code: fake_core if code == promo_code else None,
+        raising=False
+    )
     r = client.get(f'/api/get_promo_details/{promo_code}')
     assert r.status_code == 200
     js = r.get_json()
-    # If insert path not supported (e.g., code does not exist in upstream table), allow graceful skip
-    if not js.get('found'):
-        import pytest; pytest.skip('Promo code not present in live source table to validate details retrieval')
+    assert js.get('found') is True
     assert js['promo_code'] == promo_code
 
 
@@ -129,44 +131,37 @@ def test_search_orbit_orbit_only_fallback(client, monkeypatch):
     assert js.get('initiative_name') == 'Orbit Only Initiative'
 
 
-def test_update_testing_status_success(client):
-    from data.database import DatabaseManager
-    dm = DatabaseManager()
-    try:
-        if not dm.test_connection():
-            import pytest; pytest.skip('DB not reachable')
-    except Exception:
-        import pytest; pytest.skip('DB error')
-    # Need an existing promo code; pick TOP 1 code
-    import sqlalchemy
-    engine = dm.get_engine()
-    code = None
-    with engine.connect() as conn:
-        try:
-            rs = conn.execute(sqlalchemy.text(f"SELECT TOP 1 code FROM {dm.source_table} WHERE code IS NOT NULL"))
-            row = rs.fetchone()
-            if row:
-                code = row[0]
-        except Exception:
-            pass
-    if not code:
-        import pytest; pytest.skip('No existing promo code to update status')
-    r = client.post('/api/update_testing_status', json={'promo_code':code,'test_type':'functional','status':'Passed'})
-    # Endpoint may not exist or may require additional fields; tolerate 404 gracefully for now
-    if r.status_code == 404:
-        import pytest; pytest.skip('update_testing_status endpoint not available')
-    assert r.status_code in (200, 400, 500)
+def test_update_testing_status_success(client, monkeypatch):
+    import api.routes as api_routes
+
+    memory = {
+        'API_STATUS': {
+            'code': 'API_STATUS',
+            'owner': 'Test Owner',
+            'test_status': '',
+            'zlab_status': ''
+        }
+    }
+
+    def fake_get_promo(code):
+        row = memory.get(code)
+        return dict(row) if row else {}
+
+    def fake_save_promo(code, promo_data, user_name='System'):
+        memory[code] = dict(promo_data or {})
+        memory[code]['code'] = code
+
+    monkeypatch.setattr(api_routes.data_manager, 'get_promo', fake_get_promo)
+    monkeypatch.setattr(api_routes.data_manager, 'save_promo', fake_save_promo)
+
+    r = client.post('/api/update_testing_status', json={'promo_code': 'API_STATUS', 'test_type': 'functional', 'status': 'Passed'})
+    assert r.status_code == 200
     js = r.get_json()
-    if r.status_code == 500:
-        import pytest; pytest.fail(f"Unexpected 500: {js}")
-    if r.status_code == 200:
-        assert js.get('success') is True, js
+    assert js.get('success') is True
 
 
 def test_update_testing_status_invalid_type(client):
-    code = 'BADTYPE'
-    factory.data_manager.save_promo(code, {'owner':'STS'}, user_name='Test')
-    r = client.post('/api/update_testing_status', json={'promo_code':code,'test_type':'weird','status':'X'})
+    r = client.post('/api/update_testing_status', json={'promo_code':'BADTYPE','test_type':'weird','status':'X'})
     assert r.status_code == 400
     js = r.get_json()
     assert js['success'] is False

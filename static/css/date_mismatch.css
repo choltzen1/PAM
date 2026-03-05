@@ -60,7 +60,7 @@ html[data-theme='dark'] body {
 .filters-section {
   display: flex;
   gap: 1rem;
-  align-items: end;
+  align-items: center;
   flex-wrap: wrap;
 }
 

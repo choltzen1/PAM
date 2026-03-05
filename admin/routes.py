@@ -329,8 +329,6 @@ def admin_backup():
         # legacy SQLite DB intentionally not preserved here
         if os.path.exists('data/uploads'):
             shutil.copytree('data/uploads', os.path.join(backup_dir,'uploads'))
-        if os.path.exists('data/uploads'):
-            shutil.copytree('data/uploads', os.path.join(backup_dir,'uploads'))
         return jsonify({'success': True, 'message': f'Backup created in {backup_dir} (Promotions reside in SQL Server)'})
     except Exception as e:
         return jsonify({'success': False, 'message': f'Backup failed: {e}'})
@@ -364,14 +362,16 @@ def admin_stats():
     except Exception as e:
         return jsonify({'success': False, 'message': f'Failed to get stats: {e}'})
 
-    @admin_bp.route('/admin/phase-recompute', methods=['POST','GET'])
-    def admin_phase_recompute():
-        dm = _ensure_dm()
-        try:
-            result = dm.sweep_phases(user='Admin Phase Sweep')
-            return jsonify({'success': True, 'result': result})
-        except Exception as e:
-            return jsonify({'success': False, 'message': f'Phase sweep failed: {e}'})
+
+@admin_bp.route('/admin/phase-recompute', methods=['POST','GET'])
+@role_required('pam_admin')
+def admin_phase_recompute():
+    dm = _ensure_dm()
+    try:
+        result = dm.sweep_phases(user='Admin Phase Sweep')
+        return jsonify({'success': True, 'result': result})
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'Phase sweep failed: {e}'})
 
 @admin_bp.route('/admin/dashboard-summary')
 @role_required('pam_admin')

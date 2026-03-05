@@ -53,12 +53,10 @@ html[data-theme='dark'] body {
 }
 
 .filter-group select {
-  padding: 0.45rem;
   border: 1px solid #ced4da;
   border-radius: 4px;
   background: white;
   font-size: 0.85rem;
-  height: 34px;
   min-width: 140px;
 }
 
@@ -72,11 +70,9 @@ html[data-theme='dark'] body {
 
 .search-group input {
   width: 100%;
-  padding: 0.45rem;
   border: 1px solid #ced4da;
   border-radius: 4px;
   font-size: 0.85rem;
-  height: 34px; /* Consistent reduced height */
 }
 
 /* Remove all the dropdown constraint overrides */

@@ -34,12 +34,19 @@
     <table class="admin-table" id="pamPromosTable">
       <thead>
         <tr>
-          <th><input type="checkbox" id="selectAll" onclick="toggleAll(this)"></th>
-          <th>Code</th>
-          <th>Bill Facing Name</th>
-          <th>Owner</th>
-          <th>Start</th>
-          <th>End</th>
+          <th>
+            <div class="pam-promos-select-head">
+              <input type="checkbox" id="selectAll" onclick="toggleAll(this)">
+              <button type="button" class="btn-admin secondary xs pam-promos-reset-sort" onclick="resetSorting()" title="Reset table sort">
+                <i class="fas fa-undo"></i>
+              </button>
+            </div>
+          </th>
+          <th class="pam-promos-sortable" data-sort-index="1" data-sort-type="text" data-sort-dir="none" onclick="sortByHeader(this)">Code</th>
+          <th class="pam-promos-sortable" data-sort-index="2" data-sort-type="text" data-sort-dir="none" onclick="sortByHeader(this)">Bill Facing Name</th>
+          <th class="pam-promos-sortable" data-sort-index="3" data-sort-type="text" data-sort-dir="none" onclick="sortByHeader(this)">Owner</th>
+          <th class="pam-promos-sortable" data-sort-index="4" data-sort-type="date" data-sort-dir="none" onclick="sortByHeader(this)">Start</th>
+          <th class="pam-promos-sortable" data-sort-index="5" data-sort-type="date" data-sort-dir="none" onclick="sortByHeader(this)">End</th>
           <th class="pam-promos-actions-col">Actions</th>
         </tr>
       </thead>
@@ -80,17 +87,148 @@
 <script>
 // Dynamically ensure table container never overlaps footer by recalculating available height.
 // Removed dynamic height logic to eliminate inner scrollbar; page scrolls normally.
+const pamPromosSortState = { index: null, dir: 'none', type: 'text' };
+
+function getDataRows(){
+  return Array.from(document.querySelectorAll('#pamPromosTable tbody tr')).filter(r => r.hasAttribute('data-code'));
+}
+
+function getOriginalIndex(row){
+  const v = row.getAttribute('data-original-index');
+  return v ? parseInt(v, 10) : 0;
+}
+
+function syncHeaderSortState(activeHeader, direction){
+  document.querySelectorAll('#pamPromosTable thead th.pam-promos-sortable').forEach(th => {
+    const isActive = th === activeHeader && direction !== 'none';
+    th.setAttribute('data-sort-dir', isActive ? direction : 'none');
+    th.classList.toggle('pam-promos-sort-active', isActive);
+    if(isActive){
+      th.setAttribute('aria-sort', direction === 'asc' ? 'ascending' : 'descending');
+    } else {
+      th.setAttribute('aria-sort', 'none');
+    }
+  });
+}
+
+function parseDateValue(value){
+  if(!value) return Number.NEGATIVE_INFINITY;
+  const t = Date.parse(value);
+  return Number.isNaN(t) ? Number.NEGATIVE_INFINITY : t;
+}
+
+function applySort(index, direction, type){
+  if(index === null || direction === 'none'){
+    resetSorting();
+    return;
+  }
+
+  pamPromosSortState.index = index;
+  pamPromosSortState.dir = direction;
+  pamPromosSortState.type = type || 'text';
+
+  const rows = getDataRows();
+  rows.sort((a,b) => {
+    const aRaw = (a.cells[index]?.textContent || '').trim();
+    const bRaw = (b.cells[index]?.textContent || '').trim();
+
+    let cmp = 0;
+    if((type || 'text') === 'date'){
+      cmp = parseDateValue(aRaw) - parseDateValue(bRaw);
+    } else {
+      cmp = aRaw.localeCompare(bRaw, undefined, { numeric: true, sensitivity: 'base' });
+    }
+
+    if(cmp === 0){
+      return getOriginalIndex(a) - getOriginalIndex(b);
+    }
+    return direction === 'asc' ? cmp : -cmp;
+  });
+
+  const tbody = document.querySelector('#pamPromosTable tbody');
+  rows.forEach(r => tbody.appendChild(r));
+
+  const activeHeader = document.querySelector('#pamPromosTable thead th.pam-promos-sortable[data-sort-index="'+index+'"]');
+  syncHeaderSortState(activeHeader, direction);
+  updateBulkState();
+}
+
+function sortByHeader(header){
+  const index = parseInt(header.getAttribute('data-sort-index'), 10);
+  const type = header.getAttribute('data-sort-type') || 'text';
+  let nextDir = 'asc';
+  if(pamPromosSortState.index === index){
+    if(pamPromosSortState.dir === 'asc') nextDir = 'desc';
+    else if(pamPromosSortState.dir === 'desc') nextDir = 'none';
+  }
+
+  if(nextDir === 'none'){
+    resetSorting();
+    return;
+  }
+
+  applySort(index, nextDir, type);
+}
+
+function resetSorting(){
+  pamPromosSortState.index = null;
+  pamPromosSortState.dir = 'none';
+  pamPromosSortState.type = 'text';
+
+  const rows = getDataRows().sort((a,b) => getOriginalIndex(a) - getOriginalIndex(b));
+  const tbody = document.querySelector('#pamPromosTable tbody');
+  rows.forEach(r => tbody.appendChild(r));
+  syncHeaderSortState(null, 'none');
+  updateBulkState();
+}
+
+function bindRowClickSelection(){
+  getDataRows().forEach(row => {
+    if(row.getAttribute('data-row-click-bound') === 'true') return;
+    row.setAttribute('data-row-click-bound', 'true');
+    row.addEventListener('click', (event) => {
+      if(event.target.closest('input,button,a,label,select,textarea')) return;
+      const checkbox = row.querySelector('.rowChk');
+      if(!checkbox) return;
+      checkbox.checked = !checkbox.checked;
+      updateBulkState();
+    });
+  });
+}
+
 function toggleAll(cb){
   document.querySelectorAll('.rowChk').forEach(ch=>{ ch.checked = cb.checked; });
   updateBulkState();
 }
 function selectedCodes(){
-  return Array.from(document.querySelectorAll('#pamPromosTable tbody tr')).filter(r=>r.querySelector('.rowChk').checked).map(r=>r.getAttribute('data-code'));
+  return getDataRows()
+    .filter(r => {
+      const checkbox = r.querySelector('.rowChk');
+      return checkbox && checkbox.checked;
+    })
+    .map(r => r.getAttribute('data-code'));
 }
 function updateBulkState(){
   const btn = document.getElementById('bulkDeleteBtn');
+  const selectAll = document.getElementById('selectAll');
+  const checkboxes = document.querySelectorAll('.rowChk');
+  const checked = document.querySelectorAll('.rowChk:checked');
   const any = selectedCodes().length>0;
   btn.disabled = !any;
+  if(selectAll){
+    if(checkboxes.length === 0){
+      selectAll.checked = false;
+      selectAll.indeterminate = false;
+    } else {
+      selectAll.checked = checked.length === checkboxes.length;
+      selectAll.indeterminate = checked.length > 0 && checked.length < checkboxes.length;
+    }
+  }
+  getDataRows().forEach(row => {
+    const checkbox = row.querySelector('.rowChk');
+    const isSelected = !!(checkbox && checkbox.checked);
+    row.classList.toggle('pam-promos-row-selected', isSelected);
+  });
 }
 async function deleteSingle(code){
   if(!confirm('Delete promo '+code+'? This cannot be undone.')) return;
@@ -119,8 +257,11 @@ async function performDelete(codes){
           const row = document.querySelector('tr[data-code="'+c+'"]');
           if(row) row.remove();
         });
+        if(pamPromosSortState.index !== null && pamPromosSortState.dir !== 'none'){
+          applySort(pamPromosSortState.index, pamPromosSortState.dir, pamPromosSortState.type);
+        }
         updateBulkState();
-        if(document.querySelectorAll('#pamPromosTable tbody tr').length===0){
+        if(getDataRows().length===0){
            const tbody = document.querySelector('#pamPromosTable tbody');
           tbody.innerHTML = '<tr><td colspan="7" class="pam-promos-empty-cell">No promotions remaining on this page.</td></tr>';
         }
@@ -131,5 +272,11 @@ async function performDelete(codes){
       status.innerHTML = '<span class="text-error">Error: '+e+'</span>';
   }
 }
+
+document.addEventListener('DOMContentLoaded', () => {
+  getDataRows().forEach((row, idx) => row.setAttribute('data-original-index', String(idx)));
+  bindRowClickSelection();
+  updateBulkState();
+});
 </script>
 {% endblock %}

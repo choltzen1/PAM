@@ -20,6 +20,10 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
+def _is_local_dev_mode() -> bool:
+    return os.getenv('DEV_MODE') == 'true' and not bool(os.getenv('WEBSITE_INSTANCE_ID'))
+
 # Map Azure App Roles to internal role names
 # These come from Enterprise Application > Users and groups > Assigned roles
 AZURE_ROLE_MAPPING = {
@@ -64,7 +68,7 @@ def get_user_from_headers() -> Optional[Dict[str, Any]]:
     if not principal_header:
         # Not running with Easy Auth (local dev)
         # Return a default dev user if configured
-        if os.getenv('DEV_MODE') == 'true':
+        if _is_local_dev_mode():
             logger.info("Dev mode: Using default dev user")
             # DEV_USER_ROLE can be: pam_admin, pam_users, pam_viewonly, pam_research
             dev_role = os.getenv('DEV_USER_ROLE', 'pam_admin')

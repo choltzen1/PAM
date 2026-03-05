@@ -2,6 +2,8 @@ import os, sys, importlib.util
 import json
 import pytest
 
+pytestmark = pytest.mark.no_external_writes
+
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
@@ -14,6 +16,19 @@ module = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(module)  # type: ignore
 app = module.app
 
+_PROMO_STORE = {}
+
+
+def _fake_get_promo(code):
+    row = _PROMO_STORE.get(code)
+    return dict(row) if row else {}
+
+
+def _fake_save_promo(code, data, user_name='Test'):
+    payload = dict(data or {})
+    payload['code'] = code
+    _PROMO_STORE[code] = payload
+
 def seed_promo(client, code='TEST123'):
     dm = getattr(module, 'data_manager', None)
     if dm is None:
@@ -24,8 +39,16 @@ def seed_promo(client, code='TEST123'):
     return code
 
 @pytest.fixture()
-def client():
+def client(monkeypatch):
     app.config['TESTING'] = True
+    _PROMO_STORE.clear()
+    dm = getattr(module, 'data_manager', None)
+    if dm is None:
+        import factory as f
+        dm = getattr(f, 'data_manager', None)
+    assert dm is not None, 'data_manager not initialized'
+    monkeypatch.setattr(dm, 'get_promo', _fake_get_promo)
+    monkeypatch.setattr(dm, 'save_promo', _fake_save_promo)
     with app.test_client() as c:
         yield c
 

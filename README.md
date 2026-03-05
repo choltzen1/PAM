@@ -90,12 +90,16 @@ Legacy JSON files (`promotions.json`, `spe_promotions.json`, `rebates.json`) wer
 
 ### Configuration
 
-1. **Environment Variables** (optional):
-   Create a `.env` file for environment-specific settings:
-   ```env
-   FLASK_DEBUG=True
-   FLASK_ENV=development
+1. **Environment Variables**:
+   Copy `.env.example` to `.env` and set local secrets/connection values.
+   ```bash
+   copy .env.example .env   # Windows
+   cp .env.example .env     # macOS/Linux
    ```
+   Notes:
+   - Never commit real credentials; `.env` is ignored by git.
+   - Set `FLASK_SECRET_KEY` in `.env` for shared/non-local environments.
+   - `DEV_MODE=true` is for local only and is blocked in Azure-hosted environments.
 
 2. **Data Initialization**:
    Ensure SQL Server connectivity. Core promotion data is fetched live from SQL Server; ensure connectivity/env credentials.

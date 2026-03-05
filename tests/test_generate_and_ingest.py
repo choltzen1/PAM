@@ -1,6 +1,12 @@
 import pytest
 import factory
 import os
+import api.routes as api_routes
+
+pytestmark = pytest.mark.no_external_writes
+
+_PROMO_STORE = {}
+_ISSUED_CODES = []
 
 class DummyDB:
     def __init__(self, record=None):
@@ -36,6 +42,29 @@ def client(monkeypatch):
     from data import database
     monkeypatch.setattr(database, 'DatabaseManager', lambda: DummyDB())
     app = factory.create_app({'TESTING': True})
+    _PROMO_STORE.clear()
+    _ISSUED_CODES.clear()
+
+    def fake_get_all_promos():
+        return {k: dict(v) for k, v in _PROMO_STORE.items()}
+
+    def fake_save_promo(code, data, user_name='System'):
+        payload = dict(data or {})
+        payload['code'] = code
+        _PROMO_STORE[code] = payload
+
+    def fake_get_promo(code):
+        row = _PROMO_STORE.get(code)
+        return dict(row) if row else {}
+
+    monkeypatch.setattr(api_routes.data_manager, 'get_all_promos', fake_get_all_promos)
+    monkeypatch.setattr(api_routes.data_manager, 'save_promo', fake_save_promo)
+    monkeypatch.setattr(api_routes.data_manager, 'get_promo', fake_get_promo)
+
+    import data.code_tracking as ct
+    monkeypatch.setattr(ct, 'load_issued_codes', lambda: list(_ISSUED_CODES))
+    monkeypatch.setattr(ct, 'record_issued_code', lambda code: _ISSUED_CODES.append(code))
+
     with app.test_client() as c:
         yield c
 
@@ -62,6 +91,29 @@ def client_not_found(monkeypatch):
             return None
     monkeypatch.setattr(database, 'DatabaseManager', NF)
     app = factory.create_app({'TESTING': True})
+    _PROMO_STORE.clear()
+    _ISSUED_CODES.clear()
+
+    def fake_get_all_promos():
+        return {k: dict(v) for k, v in _PROMO_STORE.items()}
+
+    def fake_save_promo(code, data, user_name='System'):
+        payload = dict(data or {})
+        payload['code'] = code
+        _PROMO_STORE[code] = payload
+
+    def fake_get_promo(code):
+        row = _PROMO_STORE.get(code)
+        return dict(row) if row else {}
+
+    monkeypatch.setattr(api_routes.data_manager, 'get_all_promos', fake_get_all_promos)
+    monkeypatch.setattr(api_routes.data_manager, 'save_promo', fake_save_promo)
+    monkeypatch.setattr(api_routes.data_manager, 'get_promo', fake_get_promo)
+
+    import data.code_tracking as ct
+    monkeypatch.setattr(ct, 'load_issued_codes', lambda: list(_ISSUED_CODES))
+    monkeypatch.setattr(ct, 'record_issued_code', lambda code: _ISSUED_CODES.append(code))
+
     with app.test_client() as c:
         yield c
 

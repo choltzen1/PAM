@@ -1,25 +1,23 @@
 import pytest
 
+pytestmark = pytest.mark.no_external_writes
+
 @pytest.mark.usefixtures('client')
 def test_generate_next_with_orbit_monkeypatched(client, monkeypatch):
-    # Monkeypatch legacy orbit fetch to return minimal record
-    from data import database as dbmod
-    dummy = {
-        'orbit_id': '26684',
-        'bill_facing_name': 'Edge On US Offer',
-        'description': 'Sample Description',
-        'Owner': 'OwnerName',
-        'promo_start_date': '2025-09-25',
-        'promo_end_date': '2025-10-08'
-    }
-    monkeypatch.setattr(dbmod.DatabaseManager, 'get_full_orbit_record_by_orbit_id', lambda self, oid: dummy if oid == '26684' else None)
+    from services.promo_code_workflow import PromoCodeWorkflow
+    monkeypatch.setattr(
+        PromoCodeWorkflow,
+        'create_from_orbit',
+        lambda self, orbit_id, execution_type='RDC', user='System', config='': {
+            'success': True,
+            'code': 'R902',
+            'orbit_id': orbit_id,
+            'rolled': False,
+        }
+    )
     r = client.get('/api/generate_next_promo_code?orbit_id=26684')
-    # Accept 200, 400 (missing preconditions), or 409 (already exists)
-    assert r.status_code in (200, 400, 409)
-    if r.status_code == 200:
-        js = r.get_json()
-        assert js.get('success') is True
-        # API returns 'code' or 'promo_code', not 'next_code'
-        assert js.get('code') or js.get('promo_code')
-        # Should include orbit_id echo
-        assert js.get('orbit_id') == '26684'
+    assert r.status_code == 200
+    js = r.get_json()
+    assert js.get('success') is True
+    assert js.get('promo_code') == 'R902'
+    assert js.get('orbit_id') == '26684'

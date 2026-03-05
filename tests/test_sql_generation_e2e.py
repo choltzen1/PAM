@@ -1,11 +1,40 @@
 import os
 import pytest
 from app import app as flask_app
+import app as app_module
+
+pytestmark = pytest.mark.no_external_writes
+
+_PROMO_STORE = {}
+
+
+def _fake_save_promo(code, data, user_name='System'):
+    payload = dict(data or {})
+    payload['code'] = code
+    _PROMO_STORE[code] = payload
+
+
+def _fake_get_promo(code):
+    row = _PROMO_STORE.get(code)
+    if row:
+        return dict(row)
+    return {
+        'code': code,
+        'bill_facing_name': '',
+        'promo_start_date': '',
+        'promo_end_date': '',
+        'description': '',
+    }
 
 
 @pytest.fixture
-def client():
+def client(monkeypatch):
     flask_app.config['TESTING'] = True
+    _PROMO_STORE.clear()
+    dm = getattr(app_module, 'data_manager', None)
+    assert dm is not None
+    monkeypatch.setattr(dm, 'save_promo', _fake_save_promo)
+    monkeypatch.setattr(dm, 'get_promo', _fake_get_promo)
     with flask_app.test_client() as c:
         yield c
 

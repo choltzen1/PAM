@@ -30,8 +30,8 @@ class OrbitDatabaseManager:
 
     def get_orbit_record(self, orbit_id: str) -> Optional[Dict[str, Any]]:
         """Get orbit record from SQL Server by orbit_id."""
-        oid = (orbit_id or '').strip()
-        if not oid:
+        oid = str(orbit_id or '').strip()
+        if not oid or oid.lower() in {'null', 'none', 'nan'}:
             return {'_error': 'orbit_id required'}
 
         # Legacy cursor path (supports monkeypatching _connect in tests)
@@ -73,12 +73,10 @@ class OrbitDatabaseManager:
         if not engine:
             return {'_error': 'db connection failed'}
 
-        sql = text(f"SELECT TOP 1 * FROM {self.table} WHERE orbit_id = :oid")
+        sql = text(f"SELECT TOP 1 * FROM {self.table} WHERE CAST(orbit_id AS NVARCHAR(255)) = :oid")
         row = None
         with engine.connect() as conn:
             row = conn.execute(sql, {'oid': oid}).mappings().first()
-            if not row and oid.isdigit():
-                row = conn.execute(sql, {'oid': int(oid)}).mappings().first()
 
         if not row:
             return {'_error': 'not found'}
@@ -125,6 +123,67 @@ class OrbitDatabaseManager:
             **raw
         }
         return {k: v for k, v in mapped.items() if v is not None}
+
+    def get_orbit_dates_map(self, orbit_ids: List[str]) -> Dict[str, Dict[str, Any]]:
+        """Bulk fetch orbit start/end dates keyed by orbit_id.
+
+        Uses chunked IN queries to avoid one-query-per-orbit bottlenecks.
+        """
+        cleaned_ids: List[str] = []
+        seen = set()
+        for orbit_id in orbit_ids or []:
+            oid = str(orbit_id or '').strip()
+            if not oid or oid.lower() in {'null', 'none', 'nan'}:
+                continue
+            if oid in seen:
+                continue
+            seen.add(oid)
+            cleaned_ids.append(oid)
+
+        if not cleaned_ids:
+            return {}
+
+        engine = self._db.get_engine()
+        if not engine:
+            return {}
+
+        out: Dict[str, Dict[str, Any]] = {}
+        chunk_size = 500
+
+        def _fetch_chunk(conn, ids_chunk: List[str], start_col_expr: str):
+            params = {f'oid{i}': oid for i, oid in enumerate(ids_chunk)}
+            placeholders = ', '.join(f":oid{i}" for i in range(len(ids_chunk)))
+            sql = text(
+                f"SELECT CAST(orbit_id AS NVARCHAR(255)) AS orbit_id, "
+                f"{start_col_expr} AS promo_start_date, "
+                f"promo_end_date "
+                f"FROM {self.table} "
+                f"WHERE CAST(orbit_id AS NVARCHAR(255)) IN ({placeholders})"
+            )
+            return conn.execute(sql, params).mappings().all()
+
+        with engine.connect() as conn:
+            for i in range(0, len(cleaned_ids), chunk_size):
+                chunk = cleaned_ids[i:i + chunk_size]
+                rows = []
+                try:
+                    rows = _fetch_chunk(conn, chunk, 'promo_srart_date')
+                except Exception:
+                    try:
+                        rows = _fetch_chunk(conn, chunk, 'promo_start_date')
+                    except Exception:
+                        continue
+
+                for row in rows:
+                    oid = str(row.get('orbit_id') or '').strip()
+                    if not oid:
+                        continue
+                    out[oid] = {
+                        'orbit_start_date': row.get('promo_start_date', '') or '',
+                        'orbit_end_date': row.get('promo_end_date', '') or ''
+                    }
+
+        return out
 
     def list_orbit_ids(self, limit: int = 10) -> List[str]:
         """List orbit IDs from SQL Server."""

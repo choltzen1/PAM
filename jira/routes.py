@@ -2,6 +2,7 @@ from flask import Blueprint, request, jsonify
 import os
 import requests
 from functools import lru_cache
+from auth import role_required
 
 jira_bp = Blueprint('jira_bp', __name__)
 
@@ -46,10 +47,11 @@ def _build_config(ticket_type: str):
         'labels': os.environ.get('JIRA_LABELS', 'PAM,Promotion,BPTCR').split(','),
         'components': os.environ.get('JIRA_COMPONENTS', 'Promotion Management').split(','),
         'timeout': int(os.environ.get('JIRA_TIMEOUT', '30')),
-        'verify_ssl': os.environ.get('JIRA_VERIFY_SSL', 'false').lower() == 'true'
+        'verify_ssl': os.environ.get('JIRA_VERIFY_SSL', 'true').lower() == 'true'
     }
 
 @jira_bp.route('/create_jira_ticket', methods=['POST'])
+@role_required('pam_admin')
 def create_jira_ticket():
     data = request.get_json() if request.is_json else request.form
     summary = data.get('summary', '')
@@ -294,6 +296,7 @@ def create_jira_ticket():
         return jsonify({'success': False, 'error': f'Unexpected error: {e}'})
 
 @jira_bp.route('/jira/parent_status', methods=['GET'])
+@role_required('pam_admin')
 def jira_parent_status():
     """Diagnostic endpoint to inspect current DCD parent issue status & transitions.
 
@@ -335,6 +338,7 @@ def jira_parent_status():
         return jsonify({'success': False, 'error': f'Unexpected error: {e}'})
 
 @jira_bp.route('/jira/fields', methods=['GET'])
+@role_required('pam_admin')
 def jira_fields():
     """List all Jira fields or filter for names containing a substring (?q=epic)."""
     cfg = _build_config('dcd')
@@ -351,6 +355,7 @@ def jira_fields():
     return jsonify({'success': True, 'count': len(slim), 'fields': slim})
 
 @jira_bp.route('/jira/epic_link_diagnose', methods=['GET'])
+@role_required('pam_admin')
 def jira_epic_link_diagnose():
     """Diagnose Epic Link usability differences between default and DCD project.
 

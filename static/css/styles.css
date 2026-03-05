@@ -21,6 +21,10 @@
   --control-surface: #ffffff;
   --control-hover: #f0f0f0;
   --focus-ring: rgba(226,0,116,0.35);
+  --control-item-height: 38px;
+  --control-item-radius: 6px;
+  --control-item-font-size: 0.85rem;
+  --control-item-px: 0.6rem;
   /* Unified card/panel surface (light) */
   --card-bg: #ffffff;
 }
@@ -321,7 +325,7 @@ html[data-theme='dark'] .promo-control-group {
   background: var(--control-surface);
   border: 1px solid var(--border-color);
   box-shadow: 0 2px 4px var(--shadow-color);
-  color: #000; /* dark theme control groups also use black text per spec */
+  color: #fff;
 }
 
 /* Ensure flex layout utilities persist */
@@ -333,6 +337,14 @@ html[data-theme='dark'] .promo-control-group {
 .promo-control-group,
 .control-bar { display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-end; }
 
+.control-bar > * {
+  align-self: flex-end;
+}
+
+.control-bar :is(label, .info-label, .info-value, .promotions-user-label, .updates-user-label) {
+  color: inherit !important;
+}
+
 /* Filter/Search subgroup styling */
 .filter-group, .search-group, .spe-filter-group, .spe-search-group {
   display: flex;
@@ -340,24 +352,38 @@ html[data-theme='dark'] .promo-control-group {
   gap: 0.4rem;
 }
 .filter-group label, .search-group label,
-.spe-filter-group label, .spe-search-group label { font-weight: 600; font-size: 0.75rem; letter-spacing: .5px; color:#444; text-transform: uppercase; }
+.spe-filter-group label, .spe-search-group label { font-weight: 600; font-size: 0.75rem; letter-spacing: .5px; color: inherit; text-transform: uppercase; }
 
-filter-group select, .search-group input,
+.filter-group select, .search-group input,
 .spe-filter-group select, .spe-search-group input {
   min-width: 180px;
-  padding: 0.5rem .6rem;
+  height: var(--control-item-height);
+  min-height: var(--control-item-height);
+  padding: 0 var(--control-item-px);
   border: 1px solid var(--border-color);
-  border-radius: 6px;
+  border-radius: var(--control-item-radius);
   background: var(--bg-alt);
-  font-size: .8rem;
+  font-size: var(--control-item-font-size);
   color: var(--text);
   transition: border-color .15s, box-shadow .15s, background .15s, color .25s;
 }
-filter-group select:focus, .search-group input:focus,
+.filter-group select:focus, .search-group input:focus,
 .spe-filter-group select:focus, .spe-search-group input:focus {
   outline: none;
   border-color: var(--tmobile-magenta);
   box-shadow: 0 0 0 2px var(--focus-ring);
+}
+
+.control-bar :is(.btn, .btn-admin, button, a.btn, a.btn-admin) {
+  min-height: var(--control-item-height);
+  height: var(--control-item-height);
+  border-radius: var(--control-item-radius);
+  font-size: var(--control-item-font-size);
+  padding-top: 0;
+  padding-bottom: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* =============================

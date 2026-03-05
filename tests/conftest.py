@@ -2,6 +2,7 @@ import os
 import sys
 import importlib.util
 import pytest
+from sqlalchemy.engine import Connection
 
 # Dynamic import for app to handle path issues during pytest
 if 'app' in sys.modules:
@@ -31,3 +32,51 @@ def app():
 def client(app):
     with app.test_client() as c:
         yield c
+
+
+def pytest_addoption(parser):
+    parser.addoption(
+        "--run-integration",
+        action="store_true",
+        default=False,
+        help="Run tests marked as integration (may touch real external services/databases).",
+    )
+
+
+def pytest_collection_modifyitems(config, items):
+    if config.getoption("--run-integration"):
+        return
+    skip_integration = pytest.mark.skip(reason="integration test skipped by default; use --run-integration")
+    for item in items:
+        if "integration" in item.keywords:
+            item.add_marker(skip_integration)
+
+
+@pytest.fixture(autouse=True)
+def block_db_writes(monkeypatch, request):
+    """Block SQL writes in normal test runs to prevent accidental prod mutations."""
+    if "integration" in request.keywords and request.config.getoption("--run-integration"):
+        return
+
+    original_execute = Connection.execute
+
+    def guarded_execute(self, statement, *args, **kwargs):
+        sql_text = str(getattr(statement, "text", statement)).lstrip().lower()
+        blocked_prefixes = (
+            "insert",
+            "update",
+            "delete",
+            "merge",
+            "create",
+            "alter",
+            "drop",
+            "truncate",
+        )
+        if sql_text.startswith(blocked_prefixes):
+            raise AssertionError(
+                "Blocked database write during test run. "
+                "Use mocks, or mark as @pytest.mark.integration and run with --run-integration."
+            )
+        return original_execute(self, statement, *args, **kwargs)
+
+    monkeypatch.setattr(Connection, "execute", guarded_execute)

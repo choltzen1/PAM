@@ -821,12 +821,15 @@ class DatabaseManager:
         """
         from .orbit_database import OrbitDatabaseManager
         orbit_mgr = OrbitDatabaseManager()
-        
-        out: Dict[str, Dict[str, Any]] = {}
         if not orbit_ids:
-            return out
-        
-        # Fetch each orbit record individually (Fabric doesn't support batch queries yet)
+            return {}
+
+        try:
+            return orbit_mgr.get_orbit_dates_map(orbit_ids)
+        except Exception as e:
+            logger.warning(f"Bulk orbit date fetch failed, falling back to per-record lookup: {e}")
+
+        out: Dict[str, Dict[str, Any]] = {}
         for oid in orbit_ids:
             if not oid:
                 continue
@@ -840,7 +843,7 @@ class DatabaseManager:
             except Exception as e:
                 logger.warning(f"Failed to fetch orbit dates for {oid}: {e}")
                 continue
-        
+
         return out
 
     def get_full_orbit_record_by_orbit_id(self, orbit_id: str) -> Optional[Dict[str, Any]]:

@@ -183,7 +183,7 @@ html { font-size: 12px; }
 .promo-control-group {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-start;
+  align-items: center;
   gap: 14px;
   padding: 14px 16px;
   margin: 0 0 18px 0;
@@ -206,7 +206,9 @@ html { font-size: 12px; }
 }
 .promo-control-group input[type='text'],
 .promo-control-group select {
-  padding: 8px 12px;
+  height: var(--control-item-height, 38px);
+  min-height: var(--control-item-height, 38px);
+  padding: 0 var(--control-item-px, 0.6rem);
   font-size: 0.9rem;
   border: 1px solid #cbd5e1;
   border-radius: 6px;
@@ -243,11 +245,113 @@ html { font-size: 12px; }
   max-height: none;
 }
 
+.admin-dashboard--pam-promotions .pam-promos-select-head {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.admin-dashboard--pam-promotions .pam-promos-reset-sort {
+  padding: 4px 8px;
+}
+
+.admin-dashboard--pam-promotions #pamPromosTable thead th {
+  cursor: default;
+  user-select: none;
+}
+
+.admin-dashboard--pam-promotions #pamPromosTable thead th.pam-promos-sortable {
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.admin-dashboard--pam-promotions #pamPromosTable thead th.pam-promos-sortable:hover {
+  background: #eef2f7;
+}
+
+.admin-dashboard--pam-promotions #pamPromosTable thead th.pam-promos-sortable::after {
+  content: ' ⇅';
+  font-size: 0.82em;
+  opacity: 0.55;
+  margin-left: 4px;
+}
+
+.admin-dashboard--pam-promotions #pamPromosTable thead th.pam-promos-sortable[data-sort-dir='asc']::after {
+  content: ' ▲';
+  opacity: 1;
+}
+
+.admin-dashboard--pam-promotions #pamPromosTable thead th.pam-promos-sortable[data-sort-dir='desc']::after {
+  content: ' ▼';
+  opacity: 1;
+}
+
+.admin-dashboard--pam-promotions #pamPromosTable thead th.pam-promos-sortable.pam-promos-sort-active {
+  color: #0f172a;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.admin-dashboard--pam-promotions #pamPromosTable thead th .pam-promos-select-head,
+.admin-dashboard--pam-promotions #pamPromosTable thead th .pam-promos-select-head * {
+  cursor: pointer;
+}
+
 .admin-dashboard--pam-promotions #pamPromosTable th.pam-promos-actions-col { width: 110px; }
 
+.admin-dashboard--pam-promotions #pamPromosTable tbody tr[data-code] {
+  cursor: pointer;
+}
+
+.admin-dashboard--pam-promotions #pamPromosTable tbody tr[data-code].pam-promos-row-selected {
+  outline: 1px solid #cbd5e1;
+}
+
+.admin-dashboard--pam-promotions #pamPromosTable tbody td:last-child {
+  padding-top: 6px;
+  padding-bottom: 6px;
+  white-space: nowrap;
+}
+
 .admin-dashboard--pam-promotions .pam-promos-action-btn {
-  font-size: 0.75rem;
-  padding: 4px 8px;
+  font-size: 0.82rem;
+  min-height: 34px;
+  padding: 0 10px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  background: rgba(255,255,255,0.72);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+.admin-dashboard--pam-promotions .pam-promos-action-btn.danger {
+  color: #b91c1c;
+  border-color: #fca5a5;
+  background: rgba(254,242,242,0.9);
+}
+
+.admin-dashboard--pam-promotions .pam-promos-action-btn.danger:hover {
+  color: #991b1b;
+  background: rgba(254,226,226,0.95);
+}
+
+.admin-dashboard--pam-promotions .pam-promos-action-btn.secondary {
+  color: #475569;
+  border-color: #cbd5e1;
+  background: rgba(248,250,252,0.9);
+}
+
+.admin-dashboard--pam-promotions .pam-promos-action-btn.secondary:hover {
+  color: #334155;
+  background: rgba(241,245,249,0.95);
+}
+
+.admin-dashboard--pam-promotions .pam-promos-action-btn + .pam-promos-action-btn { margin-left: 6px; }
+
+[data-theme='dark'] .admin-dashboard--pam-promotions .pam-promos-action-btn {
+  background: rgba(255,255,255,0.66);
 }
 
 .admin-dashboard--pam-promotions .pam-promos-empty-cell {

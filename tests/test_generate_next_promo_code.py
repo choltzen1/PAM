@@ -1,36 +1,41 @@
 import pytest
 
-def _db_ready():
-    try:
-        from data.database import DatabaseManager
-        dm = DatabaseManager()
-        return dm.test_connection()
-    except Exception:
-        return False
+pytestmark = pytest.mark.no_external_writes
 
-
-@pytest.mark.skipif(not _db_ready(), reason='DB not reachable')
 def test_generate_next_simple_increment(client, monkeypatch):
-    # Behavior may return 400 if endpoint validation not satisfied; accept skip
-    r = client.get('/api/generate_next_promo_code')
-    if r.status_code == 400:
-        pytest.skip('Generation endpoint returned 400 (not ready)')
+    from services.promo_code_workflow import PromoCodeWorkflow
+    monkeypatch.setattr(
+        PromoCodeWorkflow,
+        'create_from_orbit',
+        lambda self, orbit_id, execution_type='RDC', user='System', config='': {
+            'success': True,
+            'code': 'R901',
+            'orbit_id': orbit_id,
+            'rolled': False,
+        }
+    )
+    r = client.get('/api/generate_next_promo_code?orbit_id=26684')
     assert r.status_code == 200
     js = r.get_json()
     assert js.get('success') is True
-    assert isinstance(js.get('next_code'), str)
+    assert js.get('promo_code') == 'R901'
 
 
-@pytest.mark.skipif(not _db_ready(), reason='DB not reachable')
 def test_generate_next_letter_rollover(client, monkeypatch):
-    # We cannot force rollover deterministically without patching DB call; retain patch for controlled value
-    from data import database as dbmod
-    monkeypatch.setattr(dbmod.DatabaseManager, 'get_highest_sequential_promo_code', lambda self: 'R9999')
-    r = client.get('/api/generate_next_promo_code')
-    if r.status_code == 400:
-        pytest.skip('Generation endpoint returned 400 (not ready)')
+    from services.promo_code_workflow import PromoCodeWorkflow
+    monkeypatch.setattr(
+        PromoCodeWorkflow,
+        'create_from_orbit',
+        lambda self, orbit_id, execution_type='RDC', user='System', config='': {
+            'success': True,
+            'code': 'S001',
+            'orbit_id': orbit_id,
+            'rolled': True,
+        }
+    )
+    r = client.get('/api/generate_next_promo_code?orbit_id=26684')
+    assert r.status_code == 200
     js = r.get_json()
     assert js.get('success') is True
-    # Expect letter advancement or numeric reset pattern
-    assert js.get('next_code', '').startswith(('S','R'))
+    assert js.get('promo_code', '').startswith('S')
     assert js['rolled'] is True

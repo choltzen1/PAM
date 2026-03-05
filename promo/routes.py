@@ -33,6 +33,16 @@ def _promo_sql_file_path(promo_code: str) -> str:
 def _promo_oracle_exec_path(promo_code: str) -> str:
     return os.path.join('data','uploads','promotions', promo_code, f"{promo_code}_oracle_exec.json")
 
+def _persist_sql_file(dm, promo_code: str, sql_content: str, filename: str) -> str:
+    save_fn = getattr(dm, 'save_sql_file', None)
+    if callable(save_fn):
+        return save_fn(promo_code, sql_content, filename)
+    path = _promo_sql_file_path(promo_code)
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, 'w', encoding='utf-8') as f:
+        f.write(sql_content)
+    return path
+
 def init_data_manager(dm):
     """Initialize the data manager from the main app"""
     global data_manager
@@ -1609,7 +1619,7 @@ def _edit_rdc(promo_code):
                 # Persist physical file (durable across reloads)
                 saved_path = None
                 try:
-                    saved_path = dm.save_sql_file(promo_code, sql_content, f"{promo_code}_promo_eligibility_rules.sql")
+                    saved_path = _persist_sql_file(dm, promo_code, sql_content, f"{promo_code}_promo_eligibility_rules.sql")
                     print(f"[SQL GEN][WRITE] Saved SQL file for {promo_code} at {saved_path} ({len(sql_content)} bytes)")
                 except Exception as save_err:
                     print(f"[SQL GEN][WRITE][ERROR] File save failed for {promo_code}: {save_err}")
@@ -1735,7 +1745,7 @@ def _edit_rdc(promo_code):
                 except Exception:
                     pass
                 try:
-                    dm.save_sql_file(promo_code, err_sql, f"{promo_code}_promo_eligibility_rules.sql")
+                    _persist_sql_file(dm, promo_code, err_sql, f"{promo_code}_promo_eligibility_rules.sql")
                 except Exception:
                     pass
                 try:

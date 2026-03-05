@@ -1,85 +1,81 @@
-import os
-import uuid
-
-import pytest
-from dotenv import load_dotenv
-from sqlalchemy import text
-
-from data.database import DatabaseManager
-from data.version_history import get_next_zlab_gen_count, log_version_event
+import data.version_history as vh
 
 
-load_dotenv()
+class DummyResult:
+    def __init__(self, row):
+        self._row = row
+
+    def fetchone(self):
+        return self._row
 
 
-def _require_pam_db() -> None:
-    if not os.getenv('PAM_DB_SERVER'):
-        pytest.skip('PAM_DB_SERVER not set')
+class DummyConn:
+    def __init__(self, recorder, row):
+        self.recorder = recorder
+        self.row = row
+
+    def execute(self, clause, params=None):
+        self.recorder.append({
+            'sql': getattr(clause, 'text', str(clause)),
+            'params': params or {}
+        })
+        return DummyResult(self.row)
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc, tb):
+        return False
 
 
-def _cleanup(conn, promo_code: str) -> None:
-    conn.execute(
-        text("DELETE FROM PAM.Version_History WHERE promo_code = :promo_code"),
-        {'promo_code': promo_code}
+class DummyEngine:
+    def __init__(self, recorder, row=(0,)):
+        self.recorder = recorder
+        self.row = row
+
+    def connect(self):
+        return DummyConn(self.recorder, self.row)
+
+    def begin(self):
+        return DummyConn(self.recorder, self.row)
+
+
+class DummyDB:
+    def __init__(self, engine):
+        self._engine = engine
+
+    def get_engine(self):
+        return self._engine
+
+
+def test_log_version_event_uses_insert_sql(monkeypatch):
+    calls = []
+    engine = DummyEngine(calls)
+    monkeypatch.setattr(vh, 'DatabaseManager', lambda: DummyDB(engine))
+
+    ok = vh.log_version_event(
+        promo_code='UT_ZLAB_0001',
+        promo_id='UT_ZLAB_0001',
+        event_type='zlab_inserted',
+        actor='pytest',
+        source='unit_test'
     )
 
-
-def test_log_version_event_inserts_row():
-    _require_pam_db()
-    dm = DatabaseManager()
-    engine = dm.get_engine()
-    promo_code = f"UT_ZLAB_{uuid.uuid4().hex[:8]}"
-
-    with engine.begin() as conn:
-        _cleanup(conn, promo_code)
-        ok = log_version_event(
-            promo_code=promo_code,
-            promo_id=promo_code,
-            event_type='zlab_inserted',
-            actor='pytest',
-            source='unit_test'
-        )
-        assert ok is True
-
-        row = conn.execute(
-            text(
-                "SELECT event_type, actor, source FROM PAM.Version_History "
-                "WHERE promo_code = :promo_code"
-            ),
-            {'promo_code': promo_code}
-        ).fetchone()
-        assert row is not None
-        assert (row[0] or '').lower() == 'zlab_inserted'
-        assert row[1] == 'pytest'
-        assert row[2] == 'unit_test'
-
-        _cleanup(conn, promo_code)
+    assert ok is True
+    assert calls, 'Expected SQL execute call'
+    assert 'INSERT INTO PAM.Version_History' in calls[0]['sql']
+    assert calls[0]['params']['promo_code'] == 'UT_ZLAB_0001'
+    assert calls[0]['params']['event_type'] == 'zlab_inserted'
 
 
-def test_get_next_zlab_gen_count_increments():
-    _require_pam_db()
-    dm = DatabaseManager()
-    engine = dm.get_engine()
-    promo_code = f"UT_ZLAB_{uuid.uuid4().hex[:8]}"
+def test_get_next_zlab_gen_count_increments_from_count(monkeypatch):
+    calls = []
+    engine = DummyEngine(calls, row=(2,))
+    monkeypatch.setattr(vh, 'DatabaseManager', lambda: DummyDB(engine))
 
-    with engine.begin() as conn:
-        _cleanup(conn, promo_code)
-        log_version_event(
-            promo_code=promo_code,
-            promo_id=promo_code,
-            event_type='zlab_inserted',
-            actor='pytest',
-            source='unit_test'
-        )
-        log_version_event(
-            promo_code=promo_code,
-            promo_id=promo_code,
-            event_type='zlab_insert_failed',
-            actor='pytest',
-            source='unit_test'
-        )
+    next_count = vh.get_next_zlab_gen_count('UT_ZLAB_0002')
 
-        next_count = get_next_zlab_gen_count(promo_code)
-        assert next_count == 3
-
-        _cleanup(conn, promo_code)
+    assert next_count == 3
+    assert calls, 'Expected SQL execute call'
+    assert 'SELECT COUNT(1) AS cnt FROM PAM.Version_History' in calls[0]['sql']
+    assert calls[0]['params']['promo_code'] == 'UT_ZLAB_0002'

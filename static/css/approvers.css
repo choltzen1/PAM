@@ -62,7 +62,7 @@ html[data-theme='dark'] .search-group label {
   box-sizing: border-box;
 }
 
-.filters-section { display:flex; gap: 1.5rem; align-items:end; flex-wrap:wrap; }
+.filters-section { display:flex; gap: 1.5rem; align-items:center; flex-wrap:wrap; }
 
 .filter-group, .search-group {
   display: flex;

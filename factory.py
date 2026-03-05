@@ -20,11 +20,73 @@ _loaded_env = load_dotenv()
 print(f"[startup] .env loaded={_loaded_env} ORBIT_DB_SERVER={os.getenv('ORBIT_DB_SERVER')} ORBIT_DB_DATABASE={os.getenv('ORBIT_DB_DATABASE')} PAM_DB_SERVER={os.getenv('PAM_DB_SERVER')} PAM_DB_DATABASE={os.getenv('PAM_DB_DATABASE')}")
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
+
+def _warn_if_env_has_likely_real_secrets() -> None:
+    env_path = os.path.join(os.getcwd(), '.env')
+    if not os.path.exists(env_path):
+        return
+
+    def _is_placeholder(value: str) -> bool:
+        v = (value or '').strip().strip('"\'').lower()
+        if not v:
+            return True
+        placeholder_tokens = (
+            'your_',
+            'change_me',
+            'example',
+            'localhost',
+            '127.0.0.1',
+            'dev_only',
+            '<',
+            'placeholder',
+            'replace_me',
+        )
+        if v in {'true', 'false', 'none', 'null'}:
+            return True
+        return any(token in v for token in placeholder_tokens)
+
+    sensitive_markers = ('password', 'secret', 'token', 'api_key', 'client_secret', 'private_key')
+    safe_key_exceptions = {'PAM_SECRET_KEY'}
+    flagged_keys: list[str] = []
+
+    try:
+        with open(env_path, 'r', encoding='utf-8') as f:
+            for raw_line in f:
+                line = raw_line.strip()
+                if not line or line.startswith('#') or '=' not in line:
+                    continue
+                key, value = line.split('=', 1)
+                key = key.strip()
+                if key in safe_key_exceptions:
+                    continue
+                key_lower = key.lower()
+                if any(marker in key_lower for marker in sensitive_markers) and not _is_placeholder(value):
+                    flagged_keys.append(key)
+    except Exception:
+        return
+
+    if flagged_keys:
+        shown = ', '.join(sorted(set(flagged_keys))[:8])
+        extra = ''
+        if len(set(flagged_keys)) > 8:
+            extra = f" (+{len(set(flagged_keys)) - 8} more)"
+        print(f"[startup][SECURITY] WARNING: .env appears to contain real secret values for: {shown}{extra}. Keep .env local only and rotate exposed credentials.")
+
+
+_warn_if_env_has_likely_real_secrets()
+
 data_manager = None  # will be initialized in create_app
 
 def create_app(config: dict | None = None) -> Flask:
     app = Flask(__name__)
-    app.secret_key = 'your-secret-key-here'
+    secret_key = os.getenv('FLASK_SECRET_KEY') or os.getenv('SECRET_KEY')
+    if not secret_key:
+        if os.getenv('DEV_MODE') == 'true' or os.getenv('PAM_VALIDATION_MODE') == '1':
+            secret_key = 'dev-only-secret-key-change-me'
+            print('[startup] WARNING: using development fallback secret key; set FLASK_SECRET_KEY for shared environments')
+        else:
+            raise RuntimeError('Missing FLASK_SECRET_KEY/SECRET_KEY. Refusing to start without an application secret key.')
+    app.secret_key = secret_key
 
     app.config.update(
         SESSION_TYPE='filesystem',

@@ -95,24 +95,20 @@ html[data-theme='dark'] .version-history-page .version-controls {
 }
 
 .filter-group select {
-  padding: 0.5rem;
   border: 1px solid #ced4da;
   border-radius: 4px;
   background: white;
   font-size: 0.9rem;
-  height: 38px;
   min-width: 150px;
 }
 
-.search-group { flex:1; max-width:320px; display:flex; align-items:flex-end; }
+.search-group { flex:1; max-width:320px; display:flex; align-items:center; }
 
 .search-group input {
   width: 100%;
-  padding: 0.5rem;
   border: 1px solid #ced4da;
   border-radius: 4px;
   font-size: 0.9rem;
-  height: 38px; /* Consistent height */
   background:#ffffff; /* always light */
   color:#111;
 }
@@ -139,7 +135,6 @@ html[data-theme='dark'] .version-history-page .search-group input { background:#
 }
 
 .version-history-page .action-buttons .btn {
-  height: 38px; /* align with filter/input height */
   justify-content: center;
   text-align: center;
   min-width: 120px;
