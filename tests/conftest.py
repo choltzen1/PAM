@@ -3,6 +3,7 @@ import sys
 import importlib.util
 import pytest
 from sqlalchemy.engine import Connection
+import requests
 
 # Dynamic import for app to handle path issues during pytest
 if 'app' in sys.modules:
@@ -43,6 +44,26 @@ def pytest_addoption(parser):
     )
 
 
+def pytest_sessionstart(session):
+    if session.config.getoption("--run-integration"):
+        return
+    if os.getenv("PYTEST_ALLOW_PROD_DB") == "1":
+        return
+
+    server = (os.getenv("PAM_DB_SERVER") or "").strip().lower()
+    if not server:
+        return
+
+    prod_like_markers = ("prod", "prd", "production")
+    local_markers = ("localhost", "127.0.0.1", ".local")
+    if any(m in server for m in prod_like_markers) and not any(m in server for m in local_markers):
+        raise pytest.UsageError(
+            "Refusing to run default tests with prod-like PAM_DB_SERVER. "
+            "Use a non-prod DB, or set PYTEST_ALLOW_PROD_DB=1 explicitly, "
+            "or run only marked integration tests with --run-integration."
+        )
+
+
 def pytest_collection_modifyitems(config, items):
     if config.getoption("--run-integration"):
         return
@@ -80,3 +101,30 @@ def block_db_writes(monkeypatch, request):
         return original_execute(self, statement, *args, **kwargs)
 
     monkeypatch.setattr(Connection, "execute", guarded_execute)
+
+
+@pytest.fixture(autouse=True)
+def block_external_http(monkeypatch, request):
+    """Block outbound HTTP(S) in normal test runs to prevent external side effects."""
+    if "integration" in request.keywords and request.config.getoption("--run-integration"):
+        return
+
+    original_request = requests.sessions.Session.request
+
+    def guarded_request(self, method, url, *args, **kwargs):
+        url_text = str(url or "")
+        lowered = url_text.lower()
+        allowed_prefixes = (
+            "http://127.0.0.1",
+            "http://localhost",
+            "https://127.0.0.1",
+            "https://localhost",
+        )
+        if lowered.startswith(("http://", "https://")) and not lowered.startswith(allowed_prefixes):
+            raise AssertionError(
+                f"Blocked outbound HTTP during test run: {url_text}. "
+                "Mock network calls, or mark test @pytest.mark.integration and run with --run-integration."
+            )
+        return original_request(self, method, url, *args, **kwargs)
+
+    monkeypatch.setattr(requests.sessions.Session, "request", guarded_request)

@@ -54,6 +54,7 @@ def test_get_promo_details_after_insert(client, monkeypatch):
     assert js['promo_code'] == promo_code
 
 
+@pytest.mark.integration
 def test_search_orbit_found(client):
     from data.database import DatabaseManager
     dm = DatabaseManager()
@@ -111,7 +112,7 @@ def test_search_orbit_orbit_only_fallback(client, monkeypatch):
             return None
         def get_all_promotions_unified(self):  # ensure no existing mapping
             return []
-        def get_dataframe(self, sql, params=None):  # Return empty DataFrame for duplicate check
+        def get_dataframe(self, sql, params=None, retry_on_failure=True):  # Return empty DataFrame for duplicate check
             import pandas as pd
             return pd.DataFrame()
 

@@ -290,7 +290,7 @@ def has_research_access() -> bool:
     return has_role(user, 'pam_research') or has_role(user, 'pam_admin')
 
 
-def can_edit_promo(promo_owner: str = None) -> bool:
+def can_edit_promo(promo_owner: Optional[str] = None) -> bool:
     """Check if current user can edit a promo.
     
     Args:
@@ -300,7 +300,7 @@ def can_edit_promo(promo_owner: str = None) -> bool:
         True if user is admin, PAM_Users, or owns this specific promo
     """
     user = get_current_user()
-    
+
     if not user:
         return False
     

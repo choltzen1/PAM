@@ -1099,6 +1099,12 @@ def validate_orbit_data():
         
         # Query sample data
         conn = fabric._get_connection()
+        if conn is None:
+            return jsonify({
+                'success': False,
+                'message': 'Failed to obtain Fabric connection',
+                'last_error': getattr(fabric, '_last_error', 'Unknown error')
+            }), 500
         cursor = conn.cursor()
         
         # Get 100 recent active records for analysis
@@ -1235,6 +1241,8 @@ def orbit_field_coverage():
             return jsonify({'success': False, 'message': 'Failed to connect to Fabric'}), 500
         
         conn = fabric._get_connection()
+        if conn is None:
+            return jsonify({'success': False, 'message': 'Failed to obtain Fabric connection'}), 500
         cursor = conn.cursor()
         
         # Query field population percentages

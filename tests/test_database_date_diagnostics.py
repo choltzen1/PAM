@@ -1,6 +1,9 @@
 import types
 import pandas as pd
+import pytest
 from data.database import DatabaseManager
+
+pytestmark = pytest.mark.no_external_writes
 
 class FakeEngine:
     def connect(self):

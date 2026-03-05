@@ -1,7 +1,10 @@
 import types
 from datetime import datetime
+import pytest
 from data.field_map import EDITABLE_CANONICAL_FIELDS, canonical_to_physical
 from data.database import DatabaseManager
+
+pytestmark = pytest.mark.no_external_writes
 
 class StubConn:
     def __init__(self, recorder, row_source):

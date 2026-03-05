@@ -11,29 +11,29 @@ def validate_blueprint_only() -> int:
     legacy_files = []
     failures: List[str] = []
 
-    for dp, dns, fns in os.walk(REPO_ROOT):
-        dns[:] = [d for d in dns if d not in {".git", "venv", "__pycache__", ".pytest_cache"}]
-        for fn in fns:
-            if not fn.endswith(".py"):
+    for dirpath, dirnames, filenames in os.walk(REPO_ROOT):
+        dirnames[:] = [d for d in dirnames if d not in {".git", "venv", "__pycache__", ".pytest_cache"}]
+        for filename in filenames:
+            if not filename.endswith(".py"):
                 continue
-            fp = os.path.join(dp, fn)
-            rel = os.path.relpath(fp, REPO_ROOT)
-            if rel.startswith("tests"):
+            filepath = os.path.join(dirpath, filename)
+            relative_path = os.path.relpath(filepath, REPO_ROOT)
+            if relative_path.startswith("tests"):
                 continue
 
             try:
-                with open(fp, "r", encoding="utf-8", errors="ignore") as f:
+                with open(filepath, "r", encoding="utf-8", errors="ignore") as f:
                     content = f.read()
             except OSError as exc:
-                failures.append(f"Unable to read {rel}: {exc}")
+                failures.append(f"Unable to read {relative_path}: {exc}")
                 continue
 
             if route_pattern.search(content):
-                legacy_files.append(rel)
+                legacy_files.append(relative_path)
 
     if legacy_files:
-        for rel in sorted(legacy_files):
-            failures.append(f"Legacy @app.route decorator found in {rel}")
+        for relative_path in sorted(legacy_files):
+            failures.append(f"Legacy @app.route decorator found in {relative_path}")
 
     if failures:
         print("Endpoint validator failed:\n")

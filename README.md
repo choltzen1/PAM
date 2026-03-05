@@ -238,6 +238,25 @@ Current enforced pipeline (legacy shims removed):
 2. Run pytest (with `PAM_VALIDATION_MODE=1`)
 3. Run endpoint validator in blueprint mode (fails build if any legacy endpoints reappear)
 
+### Test Safety Modes (Important)
+- Default test runs are **safe mode**: integration tests are excluded (`-m "not integration"`).
+- DB writes are blocked in tests by default.
+- Outbound HTTP(S) is blocked in tests by default (except localhost).
+- If `PAM_DB_SERVER` appears production-like, pytest aborts by default to prevent accidental prod access.
+
+Run commands:
+```bash
+# Safe/default run (no external writes/network)
+python -m pytest
+
+# Explicit integration run (may touch real DB/services)
+python -m pytest --run-integration -m integration
+
+# Override prod-like DB guard only when intentionally required
+set PYTEST_ALLOW_PROD_DB=1
+python -m pytest --run-integration -m integration
+```
+
 Deprecation Status: Complete. Legacy shim routes removed; validator enforces blueprint-only mode. `PAM_BLOCK_LEGACY_ROUTES` flag retired.
 
 

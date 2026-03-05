@@ -71,7 +71,7 @@ class DatabaseManager:
         """
         if self._engine is None:
             import time
-            last_error = None
+            last_error: Optional[Exception] = None
             
             for attempt in range(1, retry_count + 1):
                 try:
@@ -151,7 +151,9 @@ class DatabaseManager:
             # All retries exhausted
             logger.error("Troubleshooting tips: 1) Verify server/port reachable (ping / Test-NetConnection) 2) Confirm ODBC driver installed 3) Check firewall/VPN 4) Validate credentials.")
             logger.error("For Azure App Service: Check Hybrid Connection Manager status in Azure Portal > Networking")
-            raise last_error
+            if last_error is not None:
+                raise last_error
+            raise ConnectionError("Failed to connect to database: no exception details were captured during retries.")
         
         return self._engine
     
@@ -1013,7 +1015,7 @@ class DatabaseManager:
             "bill_facing_name": _get("bill_facing_name", "bill facing name", "Bill_Facing_Name", default=""),
             
             # Prefer direct DB column value for MPSS lookback; fall back to extraction from cat_description only if column absent/empty
-            "mpss_lookback": _get("mpss_lookback", default="") or self._extract_mpss_lookback(_get("cat_description", default="")),
+            "mpss_lookback": _get("mpss_lookback", default="") or self._extract_mpss_lookback(str(_get("cat_description", default="") or "")),
             
             # Add metadata
             "data_source": "database",
@@ -1051,10 +1053,10 @@ class DatabaseManager:
             # NEW FIELDS - Added from database analysis
             "Status": _get("Status", default=""),
             # Strip quotes from device fields if they exist
-            "crffc_eligibletradeindevices": self._strip_quotes(_get("crffc_eligibletradeindevices", default="")),
+            "crffc_eligibletradeindevices": self._strip_quotes(str(_get("crffc_eligibletradeindevices", default="") or "")),
             "cat_lobchannelhorizontalname": _get("cat_lobchannelhorizontalname", default=""),
             "cat_additionaleligibilityrequirementsname": _get("cat_additionaleligibilityrequirementsname", default=""),
-            "cat_eligibledevices": self._strip_quotes(_get("cat_eligibledevices", default="")),
+            "cat_eligibledevices": self._strip_quotes(str(_get("cat_eligibledevices", default="") or "")),
             "cat_channelsname": _get("cat_channelsname", default=""),
             "cat_description": _get("cat_description", default="")
         }

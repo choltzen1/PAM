@@ -1,4 +1,7 @@
 import data.version_history as vh
+import pytest
+
+pytestmark = pytest.mark.no_external_writes
 
 
 class DummyResult:

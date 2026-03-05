@@ -1,6 +1,9 @@
 import types
+import pytest
 from data.field_map import FIELD_DB_MAP, READ_ONLY_FIELDS, EDITABLE_CANONICAL_FIELDS, canonical_to_physical, quote_identifier
 from data.database import DatabaseManager
+
+pytestmark = pytest.mark.no_external_writes
 
 
 class StubConn:
