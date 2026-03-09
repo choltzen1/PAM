@@ -55,6 +55,7 @@ if __name__ == "__main__":
     parser.add_argument('--port', type=int, default=5000, help='Port to run the application on')
     args = parser.parse_args()
     
-    # Run the app on the specified port
-    app.run(debug=True, port=args.port)
+    # Run the app on the specified port (threaded=True so Fabric queries
+    # don't block other requests on the single-process dev server)
+    app.run(debug=True, port=args.port, threaded=True)
 
