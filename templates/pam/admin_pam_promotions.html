@@ -26,7 +26,7 @@
       <a class="btn-admin secondary" href="?"><i class="fas fa-undo"></i> Reset</a>
     </form>
     <div class="bulk-actions">
-      <button class="btn-admin danger" id="bulkDeleteBtn" disabled onclick="bulkDelete()"><i class="fas fa-trash"></i> Bulk Delete</button>
+      <button class="btn-admin danger" id="bulkDeleteBtn" disabled><i class="fas fa-trash"></i> Bulk Delete</button>
     </div>
   </div>
 
@@ -36,31 +36,31 @@
         <tr>
           <th>
             <div class="pam-promos-select-head">
-              <input type="checkbox" id="selectAll" onclick="toggleAll(this)">
-              <button type="button" class="btn-admin secondary xs pam-promos-reset-sort" onclick="resetSorting()" title="Reset table sort">
+              <input type="checkbox" id="selectAll">
+              <button type="button" class="btn-admin secondary xs pam-promos-reset-sort" title="Reset table sort">
                 <i class="fas fa-undo"></i>
               </button>
             </div>
           </th>
-          <th class="pam-promos-sortable" data-sort-index="1" data-sort-type="text" data-sort-dir="none" onclick="sortByHeader(this)">Code</th>
-          <th class="pam-promos-sortable" data-sort-index="2" data-sort-type="text" data-sort-dir="none" onclick="sortByHeader(this)">Bill Facing Name</th>
-          <th class="pam-promos-sortable" data-sort-index="3" data-sort-type="text" data-sort-dir="none" onclick="sortByHeader(this)">Owner</th>
-          <th class="pam-promos-sortable" data-sort-index="4" data-sort-type="date" data-sort-dir="none" onclick="sortByHeader(this)">Start</th>
-          <th class="pam-promos-sortable" data-sort-index="5" data-sort-type="date" data-sort-dir="none" onclick="sortByHeader(this)">End</th>
+          <th class="pam-promos-sortable" data-sort-index="1" data-sort-type="text" data-sort-dir="none">Code</th>
+          <th class="pam-promos-sortable" data-sort-index="2" data-sort-type="text" data-sort-dir="none">Bill Facing Name</th>
+          <th class="pam-promos-sortable" data-sort-index="3" data-sort-type="text" data-sort-dir="none">Owner</th>
+          <th class="pam-promos-sortable" data-sort-index="4" data-sort-type="date" data-sort-dir="none">Start</th>
+          <th class="pam-promos-sortable" data-sort-index="5" data-sort-type="date" data-sort-dir="none">End</th>
           <th class="pam-promos-actions-col">Actions</th>
         </tr>
       </thead>
       <tbody>
         {% for p in promotions %}
         <tr data-code="{{ p.code }}">
-          <td><input type="checkbox" class="rowChk" onchange="updateBulkState()"></td>
+          <td><input type="checkbox" class="rowChk"></td>
           <td>{{ p.code }}</td>
           <td>{{ p.bill_facing_name or p.description }}</td>
           <td>{{ p.owner }}</td>
           <td>{{ p.promo_start_date }}</td>
           <td>{{ p.promo_end_date }}</td>
           <td>
-            <button class="btn-admin danger pam-promos-action-btn" onclick="deleteSingle('{{ p.code }}')"><i class="fas fa-trash"></i></button>
+            <button class="btn-admin danger pam-promos-action-btn" data-delete-code="{{ p.code }}"><i class="fas fa-trash"></i></button>
             <a class="btn-admin secondary pam-promos-action-btn" href="/edit_rdc/{{ p.code }}"><i class="fas fa-edit"></i></a>
           </td>
         </tr>
@@ -240,13 +240,17 @@ async function bulkDelete(){
   if(!confirm('Delete '+codes.length+' promotions? This cannot be undone.')) return;
   await performDelete(codes);
 }
+function getCsrfToken() {
+  return document.querySelector('meta[name="csrf-token"]')?.content || '';
+}
+
 async function performDelete(codes){
   const status = document.getElementById('statusArea');
   status.textContent = 'Deleting '+codes.length+' promotion(s)...';
   try{
      const res = await fetch('/admin/delete-promos', {
        method:'POST',
-       headers:{'Content-Type':'application/json'},
+       headers:{'Content-Type':'application/json', 'X-CSRFToken': getCsrfToken()},
        body: JSON.stringify({codes})
      });
      const js = await res.json();
@@ -277,6 +281,32 @@ document.addEventListener('DOMContentLoaded', () => {
   getDataRows().forEach((row, idx) => row.setAttribute('data-original-index', String(idx)));
   bindRowClickSelection();
   updateBulkState();
+
+  // Bulk delete button
+  document.getElementById('bulkDeleteBtn')?.addEventListener('click', bulkDelete);
+
+  // Select all checkbox
+  document.getElementById('selectAll')?.addEventListener('click', function() { toggleAll(this); });
+
+  // Reset sort button (event delegation for class match)
+  document.querySelector('.pam-promos-reset-sort')?.addEventListener('click', resetSorting);
+
+  // Sortable table headers (event delegation)
+  document.querySelector('#pamPromosTable thead')?.addEventListener('click', (e) => {
+    const th = e.target.closest('th.pam-promos-sortable');
+    if (th) sortByHeader(th);
+  });
+
+  // Row checkboxes (event delegation)
+  document.querySelector('#pamPromosTable tbody')?.addEventListener('change', (e) => {
+    if (e.target.classList.contains('rowChk')) updateBulkState();
+  });
+
+  // Delete single buttons (event delegation)
+  document.querySelector('#pamPromosTable tbody')?.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-delete-code]');
+    if (btn) deleteSingle(btn.getAttribute('data-delete-code'));
+  });
 });
 </script>
 {% endblock %}

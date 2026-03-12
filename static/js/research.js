@@ -2,17 +2,29 @@
 // Wrap in DOMContentLoaded to avoid global leakage and ensure elements exist.
 
 document.addEventListener('DOMContentLoaded', () => {
+  function escapeHtml(str) {
+    return String(str ?? '').replace(/[&<>"']/g, s => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[s]));
+  }
+
   function renderTable(rows, mountEl) {
     if (!rows || !rows.length) { mountEl.innerHTML = '<em>No data</em>'; return; }
     const cols = Object.keys(rows[0]);
-    let html = '<div class="table-responsive"><table class="table table-sm table-striped table-bordered"><thead><tr>' + cols.map(c => `<th>${c}</th>`).join('') + '</tr></thead><tbody>';
-    html += rows.map(r => '<tr>' + cols.map(c => `<td>${c in r ? (r[c] ?? '') : ''}</td>`).join('') + '</tr>').join('');
+    let html = '<div class="table-responsive"><table class="table table-sm table-striped table-bordered"><thead><tr>' + cols.map(c => `<th>${escapeHtml(c)}</th>`).join('') + '</tr></thead><tbody>';
+    html += rows.map(r => '<tr>' + cols.map(c => `<td>${escapeHtml(c in r ? (r[c] ?? '') : '')}</td>`).join('') + '</tr>').join('');
     html += '</tbody></table></div><div class="text-muted">' + rows.length + ' rows</div>';
     mountEl.innerHTML = html;
   }
 
+  function getCsrfToken() {
+    return document.querySelector('meta[name="csrf-token"]')?.content || '';
+  }
+
   async function fetchJson(url, opts) {
-    const r = await fetch(url, opts);
+    const options = opts ? { ...opts } : {};
+    if (options.method && options.method.toUpperCase() !== 'GET') {
+      options.headers = { 'X-CSRFToken': getCsrfToken(), ...(options.headers || {}) };
+    }
+    const r = await fetch(url, options);
     if (!r.ok) throw new Error('Request failed ' + r.status);
     return r.json();
   }
@@ -127,7 +139,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!data.rows.length) { mount.innerHTML = '<em>No EIP accounts found</em>'; return; }
     let html = '<div class="table-responsive"><table class="table table-sm table-hover"><thead><tr><th>Select</th><th>EQUIP_ID</th><th>BAN</th><th>MSISDN</th><th>SKU</th><th>Status</th><th>Created</th></tr></thead><tbody>';
     data.rows.forEach(r => {
-      html += `<tr data-eip="${r.EQUIP_ID || ''}" class="research-clickable-row"><td><button type="button" class="btn btn-outline-primary btn-xs select-eip" data-eip="${r.EQUIP_ID || ''}" data-ban="${r.BAN || ''}">Use</button></td><td>${r.EQUIP_ID||''}</td><td>${r.BAN||''}</td><td>${r.MSISDN||''}</td><td>${r.EQUIP_SKU||''}</td><td>${r.EQUIP_STATUS||''}</td><td>${r.EQUIP_CREATED_AT||''}</td></tr>`;
+      const eipE = escapeHtml(r.EQUIP_ID || '');
+      const banE = escapeHtml(r.BAN || '');
+      html += `<tr data-eip="${eipE}" class="research-clickable-row"><td><button type="button" class="btn btn-outline-primary btn-xs select-eip" data-eip="${eipE}" data-ban="${banE}">Use</button></td><td>${eipE}</td><td>${banE}</td><td>${escapeHtml(r.MSISDN||'')}</td><td>${escapeHtml(r.EQUIP_SKU||'')}</td><td>${escapeHtml(r.EQUIP_STATUS||'')}</td><td>${escapeHtml(r.EQUIP_CREATED_AT||'')}</td></tr>`;
     });
     html += '</tbody></table></div>';
     html += '<div class="text-muted">Click Use to populate EIP & BAN into other forms and trigger aggregate pull.</div>';

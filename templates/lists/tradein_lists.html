@@ -1,0 +1,40 @@
+{% extends 'lists/lists_base.html' %}
+{% block title %}Trade-In Lists · Lists Workspace{% endblock %}
+{% block body_class %}lists--tradein{% endblock %}
+{% block header_left %}Trade-In Lists{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/lists.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="lists-page-wrapper">
+
+  <div class="lists-page-hero">
+    <div class="lists-page-hero__icon">
+      <i class="bi bi-phone-flip"></i>
+    </div>
+    <div class="lists-page-hero__content">
+      <h1>Trade-In Lists</h1>
+      <p>Upload a trade-in device eligibility Excel file to map tiers and generate SQL INSERT statements for <code>PROMO_MK_MDL_GROUPS</code>.</p>
+    </div>
+    <span class="status-badge status-alpha">Alpha</span>
+  </div>
+
+  <div class="tradein-tier-grid">
+    <div class="tradein-tier-col">
+      <label class="tradein-tier-label" for="tier1Input">Tier 1</label>
+      <textarea id="tier1Input" class="tradein-tier-textarea" placeholder="Enter devices, one per line…" spellcheck="false"></textarea>
+    </div>
+    <div class="tradein-tier-col">
+      <label class="tradein-tier-label" for="tier2Input">Tier 2</label>
+      <textarea id="tier2Input" class="tradein-tier-textarea" placeholder="Enter devices, one per line…" spellcheck="false"></textarea>
+    </div>
+    <div class="tradein-tier-col">
+      <label class="tradein-tier-label" for="tier3Input">Tier 3</label>
+      <textarea id="tier3Input" class="tradein-tier-textarea" placeholder="Enter devices, one per line…" spellcheck="false"></textarea>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

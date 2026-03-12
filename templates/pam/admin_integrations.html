@@ -9,14 +9,19 @@
   </div>
   <p class="subpage-intro">Run connection tests and verify integration points.</p>
   <div class="admin-subgrid">
-    <button class="btn-admin" onclick="testConnections()"><i class="fas fa-plug"></i> Test Core Connections</button>
-    <button class="btn-admin" onclick="testIntegrations()"><i class="fas fa-check-circle"></i> Test All Integrations</button>
+    <button class="btn-admin" id="testConnectionsBtn"><i class="fas fa-plug"></i> Test Core Connections</button>
+    <button class="btn-admin" id="testIntegrationsBtn"><i class="fas fa-check-circle"></i> Test All Integrations</button>
   </div>
   <div id="int-output" class="admin-output"></div>
 </div>
 <script>
+function getCsrfToken() { return document.querySelector('meta[name="csrf-token"]')?.content || ''; }
 function showOutput(t){document.getElementById('int-output').textContent=t;}
-function testConnections(){fetch('/admin/test-connections',{method:'POST'}).then(r=>r.json()).then(d=>showOutput(JSON.stringify(d,null,2)));}
-function testIntegrations(){fetch('/admin/test-connections',{method:'POST'}).then(r=>r.json()).then(d=>showOutput(JSON.stringify(d,null,2)));}
+function testConnections(){fetch('/admin/test-connections',{method:'POST',headers:{'X-CSRFToken':getCsrfToken()}}).then(r=>r.json()).then(d=>showOutput(JSON.stringify(d,null,2)));}
+function testIntegrations(){fetch('/admin/test-connections',{method:'POST',headers:{'X-CSRFToken':getCsrfToken()}}).then(r=>r.json()).then(d=>showOutput(JSON.stringify(d,null,2)));}
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('testConnectionsBtn')?.addEventListener('click', testConnections);
+  document.getElementById('testIntegrationsBtn')?.addEventListener('click', testIntegrations);
+});
 </script>
 {% endblock %}

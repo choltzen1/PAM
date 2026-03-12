@@ -24,12 +24,13 @@ def _ensure_dm():
     return data_manager
 
 # --- Helper persistence functions (mirroring legacy) ---
-USER_DATA_FILE = os.path.join('data', 'users.json')
-USER_GROUPS_FILE = os.path.join('data', 'user_groups.json')
+_BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+USER_DATA_FILE = os.path.join(_BASE_DIR, 'data', 'users.json')
+USER_GROUPS_FILE = os.path.join(_BASE_DIR, 'data', 'user_groups.json')
 REFERENCE_GROUPINGS_FILES = {
-    'soc': os.path.join('static', 'soc_grouping.txt'),
-    'account': os.path.join('static', 'account_types.txt'),
-    'sales': os.path.join('static', 'sales_apps.txt')
+    'soc': os.path.join(_BASE_DIR, 'static', 'soc_grouping.txt'),
+    'account': os.path.join(_BASE_DIR, 'static', 'account_types.txt'),
+    'sales': os.path.join(_BASE_DIR, 'static', 'sales_apps.txt')
 }
 
 def get_user_groups():

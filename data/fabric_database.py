@@ -100,9 +100,11 @@ class FabricDatabaseManager:
         self.database = os.getenv('FABRIC_DATABASE')
         self.port = '1433'
         self.driver = 'ODBC Driver 18 for SQL Server'
+        self.ssl_verify = (os.getenv('FABRIC_SSL_VERIFY') or 'false').strip().lower() in {'1', 'true', 'yes'}
         
         # ORBIT table name in Fabric
         self.table = 'dbo.ORBIT_Reporting_Table'
+        self.auth_mode = (os.getenv('FABRIC_AUTH_MODE') or 'auto').strip().lower()
         
         # Error tracking
         self._last_error = None
@@ -148,39 +150,57 @@ class FabricDatabaseManager:
                 
                 # Check if running on Azure (WEBSITE_INSTANCE_ID is set on Azure App Service)
                 is_azure = os.getenv('WEBSITE_INSTANCE_ID') is not None
-                
-                # Option 1: Use Managed Identity on Azure App Service (most reliable)
-                if is_azure:
-                    try:
-                        logger.info("Detected Azure environment, trying Managed Identity...")
-                        credential = ManagedIdentityCredential()
-                        # Test the credential
-                        credential.get_token("https://database.windows.net/.default")
-                        auth_method = "Managed Identity"
-                        logger.info("✅ Using Managed Identity authentication")
-                    except Exception as mi_err:
-                        logger.warning(f"Managed Identity failed: {mi_err}, falling back to Service Principal")
-                        credential = None
-                
-                # Option 2: Use Service Principal if Managed Identity failed or not on Azure
-                if credential is None and self.client_id and self.client_secret:
-                    logger.info("Authenticating with Fabric using Service Principal...")
+
+                # Mode: default -> mimic C# pattern (DefaultAzureCredential first)
+                if self.auth_mode == 'default':
+                    logger.info("Authenticating with Fabric using DefaultAzureCredential (FABRIC_AUTH_MODE=default)")
+                    credential = DefaultAzureCredential(connection_verify=self.ssl_verify)
+                    auth_method = "DefaultAzureCredential"
+
+                # Mode: managed_identity -> force MI
+                elif self.auth_mode == 'managed_identity':
+                    logger.info("Authenticating with Fabric using Managed Identity (FABRIC_AUTH_MODE=managed_identity)")
+                    credential = ManagedIdentityCredential(connection_verify=self.ssl_verify)
+                    auth_method = "Managed Identity"
+
+                # Mode: service_principal -> force client secret flow
+                elif self.auth_mode == 'service_principal':
+                    logger.info("Authenticating with Fabric using Service Principal (FABRIC_AUTH_MODE=service_principal)")
                     credential = ClientSecretCredential(
                         tenant_id=self.tenant_id,
                         client_id=self.client_id,
                         client_secret=self.client_secret,
-                        connection_verify=False
+                        connection_verify=self.ssl_verify,
                     )
                     auth_method = "Service Principal"
-                
-                # Option 3: Try DefaultAzureCredential as last resort
-                if credential is None:
-                    logger.info("Trying DefaultAzureCredential...")
-                    credential = DefaultAzureCredential(
-                        exclude_interactive_browser_credential=True,
-                        connection_verify=False
-                    )
-                    auth_method = "DefaultAzureCredential"
+
+                # Mode: auto (default) -> MI on Azure, then SP, then DAC
+                else:
+                    if is_azure:
+                        try:
+                            logger.info("Detected Azure environment, trying Managed Identity...")
+                            credential = ManagedIdentityCredential(connection_verify=self.ssl_verify)
+                            credential.get_token("https://database.windows.net/.default")
+                            auth_method = "Managed Identity"
+                            logger.info("✅ Using Managed Identity authentication")
+                        except Exception as mi_err:
+                            logger.warning(f"Managed Identity failed: {mi_err}, falling back to Service Principal")
+                            credential = None
+
+                    if credential is None and self.client_id and self.client_secret:
+                        logger.info("Authenticating with Fabric using Service Principal...")
+                        credential = ClientSecretCredential(
+                            tenant_id=self.tenant_id,
+                            client_id=self.client_id,
+                            client_secret=self.client_secret,
+                            connection_verify=self.ssl_verify,
+                        )
+                        auth_method = "Service Principal"
+
+                    if credential is None:
+                        logger.info("Trying DefaultAzureCredential...")
+                        credential = DefaultAzureCredential(connection_verify=self.ssl_verify)
+                        auth_method = "DefaultAzureCredential"
                 
                 # Get token for SQL Database scope
                 token = credential.get_token("https://database.windows.net/.default")
@@ -309,6 +329,40 @@ class FabricDatabaseManager:
         
         logger.error(f"Failed to connect to Fabric after {MAX_RETRIES + 1} attempts: {self._last_error}")
         return None
+
+    def execute_select(self, sql: str, params: Optional[List[Any]] = None, limit: int = 1000) -> List[Dict[str, Any]]:
+        """Execute a read-only SELECT query against Fabric and return rows as dictionaries.
+
+        Args:
+            sql: SQL SELECT statement
+            params: Optional positional parameters for pyodbc placeholders
+            limit: Hard safety cap for returned rows
+
+        Returns:
+            List of dictionaries (column -> value)
+        """
+        sql_text = (sql or '').strip()
+        if not sql_text:
+            raise ValueError('SQL text is required')
+
+        normalized = sql_text.lower()
+        if not normalized.startswith('select') and not normalized.startswith('with'):
+            raise ValueError('Only read-only SELECT/CTE queries are allowed')
+        if ';' in normalized and any(token in normalized for token in [' insert ', ' update ', ' delete ', ' drop ', ' alter ', ' create ', ' merge ', ' truncate ']):
+            raise ValueError('Only read-only SELECT/CTE queries are allowed')
+
+        conn = self._get_connection()
+        if not conn:
+            raise RuntimeError(self._last_error or 'Unable to connect to Fabric')
+
+        cursor = conn.cursor()
+        try:
+            cursor.execute(sql_text, params or [])
+            columns = [column[0] for column in cursor.description] if cursor.description else []
+            rows = cursor.fetchmany(max(1, int(limit)))
+            return [dict(zip(columns, row)) for row in rows]
+        finally:
+            cursor.close()
     
     def search_by_promo_code(self, promo_code: str) -> Optional[Dict[str, Any]]:
         """Search for a promotion by promo code (cached).

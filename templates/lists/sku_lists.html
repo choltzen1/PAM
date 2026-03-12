@@ -1,0 +1,42 @@
+{% extends 'lists/lists_base.html' %}
+{% block title %}SKU Lists · Lists Workspace{% endblock %}
+{% block body_class %}lists--sku{% endblock %}
+{% block header_left %}SKU Lists{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/lists.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="lists-page-wrapper">
+
+  <div class="lists-page-hero">
+    <div class="lists-page-hero__icon">
+      <i class="bi bi-upc-scan"></i>
+    </div>
+    <div class="lists-page-hero__content">
+      <h1>SKU Lists</h1>
+      <p>Upload a SKU group Excel file to validate entries and generate SQL INSERT statements for <code>PROMO_SKU_GROUPS</code>.</p>
+    </div>
+    <span class="status-badge status-alpha">Alpha</span>
+  </div>
+
+  <div class="lists-upload-area">
+    <div class="lists-upload-dropzone" id="skuDropzone">
+      <i class="bi bi-file-earmark-spreadsheet"></i>
+      <p class="lists-upload-dropzone__label">Drop your SKU Excel file here</p>
+      <p class="lists-upload-dropzone__hint">or <label for="skuFileInput" class="lists-upload-dropzone__browse">browse</label></p>
+      <input type="file" id="skuFileInput" accept=".xlsx,.xls" hidden>
+    </div>
+  </div>
+
+  <div class="lists-placeholder-notice">
+    <i class="bi bi-tools"></i>
+    <div>
+      <strong>Under Construction</strong>
+      <p>SKU list automation is being built. Check back soon — upload, validation, and SQL generation will be available here.</p>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

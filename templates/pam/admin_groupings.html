@@ -23,15 +23,15 @@
       <div class="panel-header">
         <span><i class="fas fa-layer-group"></i> Reference Groupings <span id="groupingsCount" class="count-badge" title="Visible / Total">0</span></span>
         <div class="toolbar">
-          <select id="refKind" class="form-control mini-btn" onchange="onKindChange()" title="Grouping type">
+          <select id="refKind" class="form-control mini-btn" title="Grouping type">
             <option value="soc">SOC</option>
             <option value="account">Account Types</option>
             <option value="sales">Sales Apps</option>
           </select>
-          <div class="search-box"><input id="searchBox" type="text" placeholder="Search code, label, item..." oninput="onSearchInput()" /></div>
-          <button class="btn-admin mini-btn" onclick="toggleSort()" id="sortBtn" title="Toggle sort order"><i class="fas fa-sort-alpha-down"></i></button>
-          <button class="btn-admin mini-btn" onclick="showReferenceGroupingForm()" title="New"><i class="fas fa-plus"></i></button>
-          <button class="btn-admin secondary mini-btn" onclick="reloadCurrent()" title="Reload"><i class="fas fa-sync"></i></button>
+          <div class="search-box"><input id="searchBox" type="text" placeholder="Search code, label, item..." /></div>
+          <button class="btn-admin mini-btn" id="sortBtn" title="Toggle sort order"><i class="fas fa-sort-alpha-down"></i></button>
+          <button class="btn-admin mini-btn" id="showGroupingFormBtn" title="New"><i class="fas fa-plus"></i></button>
+          <button class="btn-admin secondary mini-btn" id="reloadCurrentBtn" title="Reload"><i class="fas fa-sync"></i></button>
         </div>
       </div>
       <div class="panel-body">
@@ -54,8 +54,8 @@
           <div class="panel-footer panel-footer--spaced">
             <div id="formHint" class="form-hint">Enter code, label, and optional items (comma separated) for all kinds (SOC, Account Types, Sales Apps).</div>
             <div class="panel-footer-actions">
-              <button class="btn-admin mini-btn" onclick="saveReferenceGrouping()"><i class="fas fa-save"></i> Save</button>
-              <button class="btn-admin secondary mini-btn" onclick="cancelReferenceGroupingForm()">Cancel</button>
+              <button class="btn-admin mini-btn" id="saveGroupingBtn"><i class="fas fa-save"></i> Save</button>
+              <button class="btn-admin secondary mini-btn" id="cancelGroupingFormBtn">Cancel</button>
             </div>
           </div>
         </div>
@@ -224,6 +224,16 @@ function deleteReferenceGrouping(code){
 }
 
 // Init
-document.addEventListener('DOMContentLoaded', ()=>{ loadReferenceGroupings(); });
+document.addEventListener('DOMContentLoaded', () => {
+  loadReferenceGroupings();
+
+  document.getElementById('refKind')?.addEventListener('change', onKindChange);
+  document.getElementById('searchBox')?.addEventListener('input', onSearchInput);
+  document.getElementById('sortBtn')?.addEventListener('click', toggleSort);
+  document.getElementById('showGroupingFormBtn')?.addEventListener('click', showReferenceGroupingForm);
+  document.getElementById('reloadCurrentBtn')?.addEventListener('click', reloadCurrent);
+  document.getElementById('saveGroupingBtn')?.addEventListener('click', saveReferenceGrouping);
+  document.getElementById('cancelGroupingFormBtn')?.addEventListener('click', cancelReferenceGroupingForm);
+});
 </script>
 {% endblock %}

@@ -73,7 +73,13 @@ body { background: var(--bg); }
 /* Responsive adjustments */
 @media (max-width: 1200px) { .landing-intro h1 { font-size:1.8rem; } }
 @media (max-width: 900px) { .landing-intro h1 { font-size:1.65rem; } .landing-intro p.tagline { font-size:.95rem; } }
-@media (max-width: 640px) { .landing-wrapper { padding: 1.25rem 1rem 1.5rem; } .landing-grid { gap:.85rem; } .landing-intro h1 { font-size:1.45rem; } }
+@media (max-width: 640px) {
+  .landing-wrapper { padding: 1.25rem 1rem 1.5rem; }
+  .landing-grid { gap:.85rem; }
+  .landing-intro h1 { font-size:1.45rem; }
+  body.landing--standard .workspaces-section { grid-template-columns: 1fr; }
+  body.landing--standard > .app-main-scroll { overflow-y: auto; }
+}
 @media (max-width: 480px) { .landing-grid { grid-template-columns: repeat(auto-fill, minmax(180px,1fr)); } }
 
 /* Footer refinement for landing page */
@@ -100,16 +106,25 @@ html[data-theme='dark'] body.landing--fullscreen {
   background-attachment: fixed;
 }
 
+/* Lock the landing page to viewport height — no outer scroll */
+body.landing--standard > .app-main-scroll {
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
 /* Standard landing layout */
 body.landing--standard .landing-wrapper {
   width: 96vw;
   max-width: 2000px;
   margin: 0 auto;
-  padding: clamp(1rem, 2.5vh, 3rem) clamp(1.25rem, 3vw, 4rem);
+  padding: clamp(0.6rem, 1.5vh, 2rem) clamp(1.25rem, 3vw, 4rem);
   display: flex;
   flex-direction: column;
-  gap: clamp(1.5rem, 2.5vh, 3rem);
+  gap: clamp(0.75rem, 1.5vh, 2rem);
   box-sizing: border-box;
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
 body.landing--standard .landing-disclaimer {
@@ -265,8 +280,8 @@ html[data-theme='dark'] body.landing--fullscreen .stat-label { color: rgba(255,2
 /* Workspace cards grid */
 body.landing--standard .workspaces-section {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: clamp(1.25rem, 2vw, 3rem);
+  grid-template-columns: repeat(3, 1fr);
+  gap: clamp(1rem, 1.5vw, 2.25rem);
   align-content: start;
   align-items: start;
 }
@@ -426,6 +441,13 @@ body.landing--fullscreen .status-alpha {
   border-color: rgba(245,158,11,0.25);
 }
 
+body.landing--standard .status-planned,
+body.landing--fullscreen .status-planned {
+  background: rgba(99,102,241,0.12);
+  color: #6366F1;
+  border-color: rgba(99,102,241,0.25);
+}
+
 body.landing--standard .card-body,
 body.landing--fullscreen .card-body {
   padding: 0 clamp(1rem, 1.5vw, 2rem) clamp(0.5rem, 1vw, 1.25rem) clamp(1rem, 1.5vw, 2rem);
@@ -545,7 +567,7 @@ body.landing--fullscreen .workspace-card:hover .card-cta i { transform: translat
 @media (max-width: 1024px) {
   body.landing--standard .workspaces-section,
   body.landing--fullscreen .workspaces-section {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr);
   }
 
   body.landing--standard .workspace-card,

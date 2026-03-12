@@ -15,8 +15,8 @@
   
   <div class="user-management-tabs control-bar">
     <div class="tabs-left">
-      <button class="tab-btn active" onclick="showUserTab('users')">Users</button>
-      <button class="tab-btn" onclick="showUserTab('groups')">Groups & Permissions</button>
+      <button class="tab-btn active" data-tab="users">Users</button>
+      <button class="tab-btn" data-tab="groups">Groups & Permissions</button>
     </div>
     <div class="tabs-right">
       <a href="/admin" class="tab-btn back-btn">← Back to Admin Dashboard</a>
@@ -27,7 +27,7 @@
   <div id="usersTab" class="tab-content active">
     <div class="user-management-header">
       <h2 class="section-title">Manage Users</h2>
-      <button class="btn-primary" onclick="showCreateUserForm()">+ Add New User</button>
+      <button class="btn-primary" id="addNewUserBtn">+ Add New User</button>
     </div>
     
     <!-- User Form -->
@@ -63,8 +63,8 @@
         </div>
       </div>
       <div class="form-actions">
-        <button type="button" class="btn-secondary" onclick="cancelUserForm()">Cancel</button>
-        <button type="button" class="btn-primary" onclick="saveUser()">Save User</button>
+        <button type="button" class="btn-secondary" id="cancelUserFormBtn">Cancel</button>
+        <button type="button" class="btn-primary" id="saveUserBtn">Save User</button>
       </div>
     </div>
     
@@ -318,8 +318,18 @@ function showAlert(message, type = 'success') {
 
 // Initialize
 document.addEventListener('DOMContentLoaded', function() {
-  console.log('User Management page loaded');
   loadUsers();
+
+  // Bind previously-inline event handlers
+  document.getElementById('addNewUserBtn')?.addEventListener('click', showCreateUserForm);
+  document.getElementById('cancelUserFormBtn')?.addEventListener('click', cancelUserForm);
+  document.getElementById('saveUserBtn')?.addEventListener('click', saveUser);
+
+  // Tab buttons (event delegation via data-tab attribute)
+  document.querySelector('.user-management-tabs')?.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-tab]');
+    if (btn) showUserTab(btn.getAttribute('data-tab'));
+  });
 });
 </script>
 

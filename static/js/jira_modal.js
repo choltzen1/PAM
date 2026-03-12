@@ -1,4 +1,8 @@
 // JIRA Modal Functions
+function getCsrfToken() {
+  return document.querySelector('meta[name="csrf-token"]')?.content || '';
+}
+
 function openJiraModal(ticketType = 'bptcr') {
   // Store the ticket type for later use
   window.currentTicketType = ticketType;
@@ -201,6 +205,7 @@ function createJiraTicket() {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
+      'X-CSRFToken': getCsrfToken(),
     },
     body: JSON.stringify(formData)
   })
@@ -240,8 +245,8 @@ function createJiraTicket() {
           if (statusDiv) {
             statusDiv.innerHTML = `
               <i class="fas fa-check-circle"></i>
-              <strong>${ticketLabel}</strong> 
-              <a href="${data.ticket_url}" target="_blank">${data.ticket_key}</a>
+              <strong>${escapeHtml(ticketLabel)}</strong>
+              <a href="${escapeHtml(data.ticket_url)}" target="_blank">${escapeHtml(data.ticket_key)}</a>
             `;
           } else {
             // Add the status if it doesn't exist
@@ -249,8 +254,8 @@ function createJiraTicket() {
             statusDiv.className = 'jira-ticket-status';
             statusDiv.innerHTML = `
               <i class="fas fa-check-circle"></i>
-              <strong>${ticketLabel}</strong> 
-              <a href="${data.ticket_url}" target="_blank">${data.ticket_key}</a>
+              <strong>${escapeHtml(ticketLabel)}</strong>
+              <a href="${escapeHtml(data.ticket_url)}" target="_blank">${escapeHtml(data.ticket_key)}</a>
             `;
             targetCard.appendChild(statusDiv);
           }
@@ -289,9 +294,9 @@ function showJiraSuccessPopup(info){
   toast.className = 'jira-success-toast';
   toast.innerHTML = `
     <div class="jira-success-toast__body">
-      <div class="jira-success-toast__title">${info.typeLabel ? info.typeLabel+' ' : ''}JIRA Ticket Created</div>
+      <div class="jira-success-toast__title">${info.typeLabel ? escapeHtml(info.typeLabel)+' ' : ''}JIRA Ticket Created</div>
       <div class="jira-success-toast__meta">
-        <a href="${info.url}" target="_blank" class="jira-success-toast__link">${info.key}</a><br>
+        <a href="${escapeHtml(info.url)}" target="_blank" class="jira-success-toast__link">${escapeHtml(info.key)}</a><br>
         ${info.message ? `<span>${escapeHtml(info.message)}</span><br>`:''}
         <span class="jira-success-toast__hint">Opens in new tab.</span>
       </div>
@@ -609,6 +614,7 @@ function createDcdJiraTicket() {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
+      'X-CSRFToken': getCsrfToken(),
     },
     body: JSON.stringify(formData)
   })
@@ -627,8 +633,8 @@ function createDcdJiraTicket() {
       
       statusDiv.innerHTML = `
         <i class="fas fa-check-circle"></i>
-        <strong>DCD JIRA Ticket Created:</strong> 
-        <a href="${data.ticket_url}" target="_blank">${data.ticket_key}</a>
+        <strong>DCD JIRA Ticket Created:</strong>
+        <a href="${escapeHtml(data.ticket_url)}" target="_blank">${escapeHtml(data.ticket_key)}</a>
       `;
     } else {
       alert(`❌ Error creating DCD JIRA ticket:\n\n${data.error || 'Unknown error occurred'}`);

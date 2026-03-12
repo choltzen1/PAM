@@ -1,5 +1,8 @@
 # promo/builders.py
+import logging
 from services.jira_utils import create_jira_summary
+
+logger = logging.getLogger(__name__)
 
 def generate_promo_eligibility_sql(
     promo_data,
@@ -55,7 +58,7 @@ def generate_promo_eligibility_sql(
     )
     
     if has_trade_data and has_tiered_data:
-        print("[GEN][ABORT] Both trade tiers and tiered groups detected; incompatible.")
+        logger.warning("[GEN] Both trade tiers and tiered groups detected; incompatible.")
         return "-- ERROR: Cannot generate SQL - Trade-in tiers and tiered groups cannot be used together.\n-- Please clear one of the configurations before generating SQL."
     
     # Helper function to safely get integer values
@@ -181,9 +184,9 @@ def generate_promo_eligibility_sql(
     # Collect critical missing fields (diagnostics only)
     critical_fields = ['code','promo_start_date','promo_end_date','bill_facing_name']
     missing_crit = [f for f in critical_fields if not promo_data.get(f)]
-    print(f"[GEN][START] code={promo_data.get('code')} start={promo_data.get('promo_start_date')} end={promo_data.get('promo_end_date')} operator_id={promo_data.get('operator_id')} sku_group_id={promo_data.get('sku_group_id')} tiered_group_id={promo_data.get('tiered_group_id')} trade_in_group_id={promo_data.get('trade_in_group_id')}")
+    logger.debug("[GEN] code=%s start=%s end=%s operator_id=%s sku_group_id=%s tiered_group_id=%s trade_in_group_id=%s", promo_data.get('code'), promo_data.get('promo_start_date'), promo_data.get('promo_end_date'), promo_data.get('operator_id'), promo_data.get('sku_group_id'), promo_data.get('tiered_group_id'), promo_data.get('trade_in_group_id'))
     if missing_crit:
-        print(f"[GEN][MISSING_CRIT] {missing_crit}")
+        logger.debug("[GEN] Missing critical fields: %s", missing_crit)
 
     # Map promo data to SQL fields
     sql_values = {
@@ -340,7 +343,7 @@ def generate_promo_eligibility_sql(
 
     # Generate the base SQL statement
     base_sql = f"INSERT INTO {eligibility_table} ({','.join(columns)}) VALUES ({','.join(values_list)});"
-    print(f"[GEN][BASE_LEN] {len(base_sql)} chars (without ancillary sections)")
+    logger.debug("[GEN][BASE_LEN] %d chars (without ancillary sections)", len(base_sql))
     
     # Create template header
     operator_id = promo_data.get('operator_id', '')
@@ -398,7 +401,7 @@ def generate_promo_eligibility_sql(
     # Generate PROMO_TRADEIN_GROUPS INSERT statements
     tradein_groups_sql = generate_tradein_groups_sql()
     if tradein_groups_sql:
-        print(f"[GEN][TRADEIN_GROUPS] {len(tradein_groups_sql)} chars")
+        logger.debug("[GEN][TRADEIN_GROUPS] %d chars", len(tradein_groups_sql))
     
     # Generate PROMO_TIERED_GROUPS INSERT statements
     def generate_tiered_groups_sql():
@@ -430,7 +433,7 @@ def generate_promo_eligibility_sql(
     # Generate PROMO_TIERED_GROUPS INSERT statements
     tiered_groups_sql = generate_tiered_groups_sql()
     if tiered_groups_sql:
-        print(f"[GEN][TIERED_GROUPS] {len(tiered_groups_sql)} chars")
+        logger.debug("[GEN][TIERED_GROUPS] %d chars", len(tiered_groups_sql))
     
     # Generate PROMO_DEVICE_GROUPS INSERT statements
     def generate_device_groups_sql():
@@ -476,7 +479,7 @@ def generate_promo_eligibility_sql(
             excel_read_time = time.time() - excel_start_time
             
             if excel_read_time > 0.5:
-                print(f"    Excel file read: {excel_read_time:.2f}s ({len(df)} rows)")
+                logger.debug("    Excel file read: %.2fs (%d rows)", excel_read_time, len(df))
             
             # Find the first row with actual SKU data (non-empty in both columns)
             start_row = 0
@@ -529,10 +532,10 @@ def generate_promo_eligibility_sql(
     device_start_time = time.time()
     device_groups_sql = generate_device_groups_sql()
     if device_groups_sql:
-        print(f"[GEN][DEVICE_GROUPS] {len(device_groups_sql)} chars")
+        logger.debug("[GEN][DEVICE_GROUPS] %d chars", len(device_groups_sql))
     device_time = time.time() - device_start_time
     if device_time > 1.0:
-        print(f"  Device Groups SQL: {device_time:.2f}s")
+        logger.debug("  Device Groups SQL: %.2fs", device_time)
 
     # Generate PROMO_SEGMENT_GROUPS INSERT statements
     def generate_segment_groups_sql():
@@ -558,7 +561,7 @@ def generate_promo_eligibility_sql(
     # Generate PROMO_SEGMENT_GROUPS INSERT statements
     segment_groups_sql = generate_segment_groups_sql()
     if segment_groups_sql:
-        print(f"[GEN][SEGMENT_GROUPS] {len(segment_groups_sql)} chars")
+        logger.debug("[GEN][SEGMENT_GROUPS] %d chars", len(segment_groups_sql))
     
     # Generate trade-in device SQL from uploaded Excel file
     def generate_tradein_device_sql():
@@ -579,7 +582,7 @@ def generate_promo_eligibility_sql(
             f"Insert into {qualify('PROMO_MK_MDL_GROUPS')}"
         )
     if tradein_device_sql:
-        print(f"[GEN][TRADEIN_DEVICE] {len(tradein_device_sql)} chars")
+        logger.debug("[GEN][TRADEIN_DEVICE] %d chars", len(tradein_device_sql))
     
     # Generate efpe_generic_params update statement if broken_trade is Y
     efpe_update_sql = ""
@@ -637,9 +640,9 @@ END;"""
     
     # Log performance info (only print if slow)
     if total_time > 2.0:
-        print(f"⚠️  SQL Generation Performance: {total_time:.2f}s, Output: {len(template_sql):,} chars")
-    
-    print(f"[GEN][FINAL_LEN] {len(template_sql)} chars")
+        logger.warning("SQL Generation Performance: %.2fs, Output: %d chars", total_time, len(template_sql))
+
+    logger.debug("[GEN][FINAL_LEN] %d chars", len(template_sql))
     return template_sql
 
 def generate_eligibility_insert(data: dict) -> str:

@@ -41,6 +41,7 @@ def seed_promo(client, code='TEST123'):
 @pytest.fixture()
 def client(monkeypatch):
     app.config['TESTING'] = True
+    app.config['WTF_CSRF_ENABLED'] = False
     _PROMO_STORE.clear()
     dm = getattr(module, 'data_manager', None)
     if dm is None:

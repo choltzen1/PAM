@@ -2,13 +2,11 @@ import pandas as pd
 from sqlalchemy import create_engine, text
 import urllib.parse
 from typing import Dict, Any, List, Optional, Tuple
-from datetime import datetime
+from datetime import datetime, timezone
 import logging
 import os
 import json
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 from .field_map import FIELD_DB_MAP, canonical_to_physical, quote_identifier, EDITABLE_CANONICAL_FIELDS
@@ -607,7 +605,7 @@ class DatabaseManager:
                     engine = self.get_engine()
                     with engine.begin() as conn:
                         conn.execute(text("INSERT INTO PAM.date_diagnostics_history (captured_at, window_days, total_with_value, valid_dates, invalid_dates, invalid_ratio) VALUES (:captured_at, :window_days, :total_with_value, :valid_dates, :invalid_dates, :invalid_ratio)"), {
-                            'captured_at': datetime.utcnow().isoformat(),
+                            'captured_at': datetime.now(timezone.utc).isoformat(),
                             'window_days': days,
                             'total_with_value': total_with_value,
                             'valid_dates': valid_count,

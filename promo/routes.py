@@ -1,14 +1,18 @@
-from flask import Blueprint, request, render_template, redirect, url_for, flash, jsonify, send_file
+from flask import Blueprint, request, render_template, redirect, url_for, flash, jsonify, send_file, after_this_request
 import base64, json
 from werkzeug.utils import secure_filename
 from werkzeug.routing import BuildError
 import os
+import datetime as dt
 from typing import Optional, TYPE_CHECKING, Dict, Any
 from services.mail_service import MailService
 from sqlalchemy import text
 from data.database import DatabaseManager
 from data.version_history import log_version_event, get_next_sql_gen_count
-from auth import role_required
+import logging
+from auth import role_required, get_current_user_name
+
+logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from data.storage import PromoDataManager
@@ -54,45 +58,6 @@ def _ensure_data_manager():
         raise RuntimeError("Data manager not initialized. Call init_data_manager() first.")
     return data_manager
 
-def _get_current_user_name() -> str | None:
-    """Extract display name from Azure App Service Easy Auth headers.
-    Preference order: givenname+surname -> name -> preferred_username/email -> header fallback.
-    """
-    try:
-        b64 = request.headers.get('X-MS-CLIENT-PRINCIPAL')
-        if b64:
-            try:
-                decoded = base64.b64decode(b64)
-                payload = json.loads(decoded.decode('utf-8'))
-                claims = payload.get('claims', [])
-                def claim(key: str):
-                    for c in claims:
-                        if c.get('typ') == key:
-                            return c.get('val')
-                    return None
-                given = claim('givenname') or claim('http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname')
-                surname = claim('surname') or claim('http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname')
-                full = None
-                if (given or surname):
-                    gn = (given or '').strip()
-                    sn = (surname or '').strip()
-                    full = f"{gn} {sn}".strip()
-                name = claim('name') or claim('http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name')
-                if not full:
-                    full = name
-                if not full:
-                    preferred = claim('preferred_username') or claim('http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress') or claim('emailaddress')
-                    full = preferred
-                if full:
-                    return full
-            except Exception:
-                pass
-        simple = request.headers.get('X-MS-CLIENT-PRINCIPAL-NAME')
-        if simple:
-            return simple
-    except Exception:
-        pass
-    return None
 
 def _format_dt(value) -> str:
     if not value:
@@ -113,6 +78,7 @@ def _parse_json(value):
         return None
 
 @promo_bp.route('/version-history', endpoint='version_history')
+@role_required('pam_users')
 def version_history_page():
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 50, type=int)
@@ -236,7 +202,7 @@ def version_history_page():
         owners=owners,
         selected_owner=owner_filter,
         search_query=search,
-        user_name=_get_current_user_name()
+        user_name=get_current_user_name()
     )
 
 # --- Primary RDC list route (legacy /promotions removed) ---
@@ -280,11 +246,6 @@ def _render_rdc_page():
                 search=search,
                 owner_filter=owner_filter
             )
-    # DEBUG
-    import logging
-    logger = logging.getLogger(__name__)
-    if promo_data.get('promotions'):
-        logger.info(f"RDC DEBUG First promo owner: '{promo_data['promotions'][0].get('owner')}'")
     return render_template(
         'pam/rdc.html',
         promotions=promo_data['promotions'],
@@ -444,7 +405,7 @@ def date_mismatch_page():
 def update_pam_date_bp(promo_code):
     dm = _ensure_data_manager()
     try:
-        res = dm.sync_promo_end_date_from_orbit(promo_code, user_name=_get_current_user_name() or 'System')
+        res = dm.sync_promo_end_date_from_orbit(promo_code, user_name=get_current_user_name() or 'System')
         status = 200 if res.get('success') else 400
         return jsonify(res), status
     except Exception as e:
@@ -473,7 +434,8 @@ def generate_date_sql_bp():
                 promo_end_formatted = end_date_obj.strftime('%m/%d/%Y') + ' 05:00:00'
                 exp_end_formatted = exp_date_obj.strftime('%m/%d/%Y') + ' 05:00:00'
                 display_end_formatted = (end_date_obj - timedelta(days=1)).strftime('%m/%d/%Y') + ' 00:00:00'
-                sql = f"""update promo_eligibility_rules set SYS_UPDATE_DATE = sysdate, APPLICATION_ID = 'CPO', OPERATOR_ID = '{operator_id}', PROMO_END_DATE = to_date('{promo_end_formatted}','MM/DD/YYYY HH24:MI:SS'), EXPIRATION_DATE = to_date('{exp_end_formatted}','MM/DD/YYYY HH24:MI:SS'), DISPLAY_PROMO_END_DATE = to_date('{display_end_formatted}','MM/DD/YYYY HH24:MI:SS') where promo_code = '{promo_code}';"""
+                safe_code = str(promo_code).replace("'", "''")
+                sql = f"""update promo_eligibility_rules set SYS_UPDATE_DATE = sysdate, APPLICATION_ID = 'CPO', OPERATOR_ID = '{operator_id}', PROMO_END_DATE = to_date('{promo_end_formatted}','MM/DD/YYYY HH24:MI:SS'), EXPIRATION_DATE = to_date('{exp_end_formatted}','MM/DD/YYYY HH24:MI:SS'), DISPLAY_PROMO_END_DATE = to_date('{display_end_formatted}','MM/DD/YYYY HH24:MI:SS') where promo_code = '{safe_code}';"""
                 sql_statements.append(sql)
             except ValueError:
                 return jsonify({'success': False,'message': f'Invalid date format: {new_end_date}. Use MM/DD/YYYY format.'}), 400
@@ -502,7 +464,8 @@ def _generate_sql_content(promo_code, operator_id, orbit_end_date):
             promo_end_formatted = end_date_obj.strftime('%m/%d/%Y') + ' 05:00:00'
             exp_end_formatted = exp_date_obj.strftime('%m/%d/%Y') + ' 05:00:00'
             display_end_formatted = display_end_obj.strftime('%m/%d/%Y') + ' 00:00:00'
-            sql = f"""update promo_eligibility_rules set SYS_UPDATE_DATE = sysdate, APPLICATION_ID = 'CPO', OPERATOR_ID = '{operator_id}', PROMO_END_DATE = to_date('{promo_end_formatted}','MM/DD/YYYY HH24:MI:SS'), EXPIRATION_DATE = to_date('{exp_end_formatted}','MM/DD/YYYY HH24:MI:SS'), DISPLAY_PROMO_END_DATE = to_date('{display_end_formatted}','MM/DD/YYYY HH24:MI:SS') where promo_code = '{promo_code}';"""
+            safe_code = str(promo_code).replace("'", "''")
+            sql = f"""update promo_eligibility_rules set SYS_UPDATE_DATE = sysdate, APPLICATION_ID = 'CPO', OPERATOR_ID = '{operator_id}', PROMO_END_DATE = to_date('{promo_end_formatted}','MM/DD/YYYY HH24:MI:SS'), EXPIRATION_DATE = to_date('{exp_end_formatted}','MM/DD/YYYY HH24:MI:SS'), DISPLAY_PROMO_END_DATE = to_date('{display_end_formatted}','MM/DD/YYYY HH24:MI:SS') where promo_code = '{safe_code}';"""
             return sql
         except ValueError as e:
             return f'Error: Invalid date format "{orbit_end_date}". Expected MM/DD/YY or MM/DD/YYYY format. Error: {str(e)}'
@@ -518,11 +481,19 @@ def generate_sql_for_promo_bp(promo_code):
     if sql.startswith('Error:'):
         flash(sql, 'error')
         return redirect(url_for('promo.date_mismatch_page'))
-    import tempfile, os
+    import tempfile
     with tempfile.NamedTemporaryFile(mode='w', suffix='.sql', delete=False) as f:
         f.write(sql)
         temp_path = f.name
-    from flask import send_file
+
+    @after_this_request
+    def _cleanup(response):
+        try:
+            os.unlink(temp_path)
+        except Exception:
+            pass
+        return response
+
     filename = f"{promo_code}_end_date_update.sql"
     return send_file(temp_path, as_attachment=True, download_name=filename)
 
@@ -572,7 +543,8 @@ def generate_sql_submit_bp():
                 promo_end_formatted = end_date_obj.strftime('%m/%d/%Y') + ' 05:00:00'
                 exp_end_formatted = exp_date_obj.strftime('%m/%d/%Y') + ' 05:00:00'
                 display_end_formatted = (end_date_obj - timedelta(days=1)).strftime('%m/%d/%Y') + ' 00:00:00'
-                sql = f"""update promo_eligibility_rules set SYS_UPDATE_DATE = sysdate, APPLICATION_ID = 'CPO', OPERATOR_ID = '{operator_id}', PROMO_END_DATE = to_date('{promo_end_formatted}','MM/DD/YYYY HH24:MI:SS'), EXPIRATION_DATE = to_date('{exp_end_formatted}','MM/DD/YYYY HH24:MI:SS'), DISPLAY_PROMO_END_DATE = to_date('{display_end_formatted}','MM/DD/YYYY HH24:MI:SS') where promo_code = '{code}';"""
+                safe_code = str(code).replace("'", "''")
+                sql = f"""update promo_eligibility_rules set SYS_UPDATE_DATE = sysdate, APPLICATION_ID = 'CPO', OPERATOR_ID = '{operator_id}', PROMO_END_DATE = to_date('{promo_end_formatted}','MM/DD/YYYY HH24:MI:SS'), EXPIRATION_DATE = to_date('{exp_end_formatted}','MM/DD/YYYY HH24:MI:SS'), DISPLAY_PROMO_END_DATE = to_date('{display_end_formatted}','MM/DD/YYYY HH24:MI:SS') where promo_code = '{safe_code}';"""
                 sql_statements.append(sql)
             except ValueError:
                 flash(f'Invalid date format: {new_end_date}', 'error')
@@ -699,7 +671,7 @@ def edit_spe_page(promo_code):
             spe_data['code'] = promo_code
         try:
             # Persist using existing JSON compatibility path (SPE still legacy)
-            dm.save_spe_promo(promo_code, spe_data, user_name=_get_current_user_name() or 'System')
+            dm.save_spe_promo(promo_code, spe_data, user_name=get_current_user_name() or 'System')
             flash(f'SPE {promo_code} saved successfully!', 'success')
             return redirect(url_for('promo.edit_spe_page', promo_code=promo_code, tab=tab))
         except Exception as e:
@@ -1121,7 +1093,7 @@ def send_approval_email():
                     promo_owner=promo_data.get('promo_owner') or promo_data.get('Owner') or promo_data.get('owner'),
                     promo_type=promo_data.get('Desired_Execution'),
                     event_type='approval_sent',
-                    actor=_get_current_user_name() or 'System',
+                    actor=get_current_user_name() or 'System',
                     source='approval_email',
                     approval_request_id=tracking_id,
                     approval_status='sent',
@@ -1228,12 +1200,12 @@ def approve_promo():
                     promo_owner=promo_data.get('promo_owner') or promo_data.get('Owner') or promo_data.get('owner'),
                     promo_type=promo_data.get('Desired_Execution'),
                     event_type='approved',
-                    actor=_get_current_user_name() or 'System',
+                    actor=get_current_user_name() or 'System',
                     source='approval_email',
                     approval_request_id=tracking_id,
                     approval_status='approved',
-                    approval_recipient=_get_current_user_name() or 'System',
-                    approval_response_ts=datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
+                    approval_recipient=get_current_user_name() or 'System',
+                    approval_response_ts=dt.datetime.now(dt.timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
                 )
             except Exception:
                 pass
@@ -1308,13 +1280,13 @@ def reject_promo():
                     promo_owner=promo_data.get('promo_owner') or promo_data.get('Owner') or promo_data.get('owner'),
                     promo_type=promo_data.get('Desired_Execution'),
                     event_type='rejected',
-                    actor=_get_current_user_name() or 'System',
+                    actor=get_current_user_name() or 'System',
                     source='approval_email',
                     version_number=int(version_number) if str(version_number).isdigit() else None,
                     approval_request_id=tracking_id,
                     approval_status='rejected',
-                    approval_recipient=_get_current_user_name() or 'System',
-                    approval_response_ts=datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S'),
+                    approval_recipient=get_current_user_name() or 'System',
+                    approval_response_ts=dt.datetime.now(dt.timezone.utc).strftime('%Y-%m-%d %H:%M:%S'),
                     changed_fields={'rejection_notes': {'from': None, 'to': reason}}
                 )
             except Exception:
@@ -1374,7 +1346,7 @@ def reviewers_page(promo_code):
         promo_data=promo_data,
         error_message=error_message,
         pcr_versions=pcr_versions,
-        user_name=_get_current_user_name()
+        user_name=get_current_user_name()
     )
 
 @promo_bp.route('/links', endpoint='links_main_page')
@@ -1404,11 +1376,11 @@ def links_page(promo_code):
             try:
                 regular_promos = dm.get_all_promos()
                 if promo_code_upper in regular_promos:
-                    dm.save_promo(promo_code_upper, promo_data, user_name=_get_current_user_name() or 'System')
+                    dm.save_promo(promo_code_upper, promo_data, user_name=get_current_user_name() or 'System')
                 else:
                     from data.storage import PromoDataManager as JSONManager
                     json_manager = JSONManager()
-                    json_manager.save_spe_promo(promo_code_upper, promo_data, user_name=_get_current_user_name() or 'System')
+                    json_manager.save_spe_promo(promo_code_upper, promo_data, user_name=get_current_user_name() or 'System')
                 return redirect(url_for('promo.links_page', promo_code=promo_code_upper))
             except Exception as e:
                 flash(f'Error saving links: {e}', 'error')
@@ -1509,7 +1481,7 @@ def _edit_rdc(promo_code):
                                 except Exception as e:
                                     flash(f"Error processing trade-in Excel: {str(e)}", "warning")
                             
-                            dm.save_promo(promo_code, promo_data, user_name=_get_current_user_name() or 'System')
+                            dm.save_promo(promo_code, promo_data, user_name=get_current_user_name() or 'System')
                             
                             flash(f"{file_key.replace('_', ' ').title()} uploaded successfully", "success")
                         else:
@@ -1535,7 +1507,7 @@ def _edit_rdc(promo_code):
         # Save changes
         if updated_fields:
             promo_data['last_changes'] = f"Updated {', '.join(updated_fields)} on {active_tab} tab"
-            dm.save_promo(promo_code, promo_data, user_name=_get_current_user_name() or 'System')
+            dm.save_promo(promo_code, promo_data, user_name=get_current_user_name() or 'System')
             flash(f"Saved {active_tab} successfully", "success")
 
         # 4. Generate SQL only after saving & reloading DB state (source-of-truth requirement)
@@ -1575,7 +1547,7 @@ def _edit_rdc(promo_code):
                     db_snapshot['code'] = promo_code
                 # Provide fallback promo_start_date/end_date if absent so date functions don't yield all NULL
                 from datetime import datetime, timedelta
-                today = datetime.utcnow().date()
+                today = dt.datetime.now(dt.timezone.utc).date()
                 if not db_snapshot.get('promo_start_date'):
                     db_snapshot['promo_start_date'] = today.strftime('%Y-%m-%d')
                 if not db_snapshot.get('promo_end_date'):
@@ -1583,13 +1555,12 @@ def _edit_rdc(promo_code):
                 # Basic bill facing name placeholder
                 if not db_snapshot.get('bill_facing_name'):
                     db_snapshot['bill_facing_name'] = f"Auto {promo_code}"
-                # Log snapshot keys for debugging
-                print(f"[SQL GEN][DEBUG] Generating for {promo_code} with keys: {sorted(list(db_snapshot.keys()))[:30]} ...")
-                print(f"[SQL GEN][DEBUG] Field snapshot core values: code={db_snapshot.get('code')} orbit_id={db_snapshot.get('orbit_id')} sku_group_id={db_snapshot.get('sku_group_id')} start={db_snapshot.get('promo_start_date')} end={db_snapshot.get('promo_end_date')} operator_id={db_snapshot.get('operator_id')}")
+                logger.debug("[SQL GEN] Generating for %s with keys: %s ...", promo_code, sorted(list(db_snapshot.keys()))[:30])
+                logger.debug("[SQL GEN] Field snapshot core values: code=%s orbit_id=%s sku_group_id=%s start=%s end=%s operator_id=%s", db_snapshot.get('code'), db_snapshot.get('orbit_id'), db_snapshot.get('sku_group_id'), db_snapshot.get('promo_start_date'), db_snapshot.get('promo_end_date'), db_snapshot.get('operator_id'))
                 start_time = time.time()
                 sql_content = generate_promo_eligibility_sql(
                     db_snapshot,
-                    current_user=_get_current_user_name() or 'System',
+                    current_user=get_current_user_name() or 'System',
                     target_env=sql_target_env,
                     schema=sql_prod_schema if sql_target_env == 'PROD' else None
                 )
@@ -1600,8 +1571,9 @@ def _edit_rdc(promo_code):
                 # Removed DIAG header injection per user request; leaving raw generator output intact.
                 # Absolute fallback: if somehow still empty, produce minimal INSERT with just promo_code
                 if not sql_content.strip():
-                    sql_content = f"-- FALLBACK MINIMAL SQL\nINSERT INTO PROMO_ELIGIBILITY_RULES (PROMO_CODE) VALUES ('{promo_code}');\n"
-                print(f"[SQL GEN][DEBUG] Generated length for {promo_code}: {len(sql_content)} chars")
+                    safe_code = str(promo_code).replace("'", "''")
+                    sql_content = f"-- FALLBACK MINIMAL SQL\nINSERT INTO PROMO_ELIGIBILITY_RULES (PROMO_CODE) VALUES ('{safe_code}');\n"
+                logger.debug("[SQL GEN] Generated length for %s: %d chars", promo_code, len(sql_content))
                 # Attach to working promo_data for redirect display
                 promo_data['generated_sql'] = sql_content
                 promo_data['sql_generated_at'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -1615,14 +1587,14 @@ def _edit_rdc(promo_code):
                     sql_hash = sql_store.save_generated_sql(promo_code, sql_content, generation_time, source='rdc_generator')
                     promo_data['sql_hash'] = sql_hash
                 except Exception as blob_err:
-                    print(f"[SQL GEN][BLOB][ERROR] Failed to store SQL blob for {promo_code}: {blob_err}")
+                    logger.warning("[SQL GEN] Failed to store SQL blob for %s: %s", promo_code, blob_err)
                 # Persist physical file (durable across reloads)
                 saved_path = None
                 try:
                     saved_path = _persist_sql_file(dm, promo_code, sql_content, f"{promo_code}_promo_eligibility_rules.sql")
-                    print(f"[SQL GEN][WRITE] Saved SQL file for {promo_code} at {saved_path} ({len(sql_content)} bytes)")
+                    logger.debug("[SQL GEN] Saved SQL file for %s at %s (%d bytes)", promo_code, saved_path, len(sql_content))
                 except Exception as save_err:
-                    print(f"[SQL GEN][WRITE][ERROR] File save failed for {promo_code}: {save_err}")
+                    logger.warning("[SQL GEN] File save failed for %s: %s", promo_code, save_err)
                     flash(f"SQL file save failed: {save_err}", 'warning')
                 # ZLAB execution (optional)
                 if sql_target_env == 'ZLAB':
@@ -1636,7 +1608,7 @@ def _edit_rdc(promo_code):
                             with open(exec_path, 'w', encoding='utf-8') as fh:
                                 json.dump({
                                     'status': 'started',
-                                    'executed_at': datetime.utcnow().isoformat(),
+                                    'executed_at': dt.datetime.now(dt.timezone.utc).isoformat(),
                                     'promo_code': promo_code,
                                     'sql_length': len(sql_content)
                                 }, fh, indent=2)
@@ -1651,7 +1623,7 @@ def _edit_rdc(promo_code):
                             with open(exec_path, 'w', encoding='utf-8') as fh:
                                 json.dump({
                                     'status': exec_meta.get('status'),
-                                    'executed_at': datetime.utcnow().isoformat(),
+                                    'executed_at': dt.datetime.now(dt.timezone.utc).isoformat(),
                                     'promo_code': promo_code
                                 }, fh, indent=2)
                         except Exception:
@@ -1668,7 +1640,7 @@ def _edit_rdc(promo_code):
                                 json.dump({
                                     'status': 'error',
                                     'error': str(exec_err),
-                                    'executed_at': datetime.utcnow().isoformat(),
+                                    'executed_at': dt.datetime.now(dt.timezone.utc).isoformat(),
                                     'promo_code': promo_code
                                 }, fh, indent=2)
                         except Exception:
@@ -1692,7 +1664,7 @@ def _edit_rdc(promo_code):
                             promo_owner=db_snapshot.get('Owner') or db_snapshot.get('owner'),
                             promo_type=db_snapshot.get('Desired_Execution'),
                             event_type=event_type,
-                            actor=_get_current_user_name() or 'System',
+                            actor=get_current_user_name() or 'System',
                             source='sql_generation',
                             version_number=next_count,
                             sql_gen_count=next_count,
@@ -1712,7 +1684,7 @@ def _edit_rdc(promo_code):
                             promo_owner=db_snapshot.get('Owner') or db_snapshot.get('owner'),
                             promo_type=db_snapshot.get('Desired_Execution'),
                             event_type='pcr_generated',
-                            actor=_get_current_user_name() or 'System',
+                            actor=get_current_user_name() or 'System',
                             source='sql_generation',
                             version_number=next_count,
                             sql_gen_count=next_count
@@ -1721,7 +1693,7 @@ def _edit_rdc(promo_code):
                         pass
 
                 try:
-                    dm.save_promo(promo_code, promo_data, user_name=_get_current_user_name() or 'System')
+                    dm.save_promo(promo_code, promo_data, user_name=get_current_user_name() or 'System')
                 except Exception:
                     pass
 
@@ -1730,7 +1702,7 @@ def _edit_rdc(promo_code):
                 # Force tab to SQL Generation
                 active_tab = 'SQL Generation'
             except Exception as gen_err:
-                print(f"[SQL GEN][ERROR] Generation failure for {promo_code}: {gen_err}")
+                logger.error("[SQL GEN][ERROR] Generation failure for %s: %s", promo_code, gen_err)
                 from datetime import datetime
                 err_sql = ("-- GENERATION ERROR: " + str(gen_err).replace('\n',' ') + "\n"
                            "-- A minimal placeholder INSERT is provided so preview is not blank.\n"
@@ -1749,7 +1721,7 @@ def _edit_rdc(promo_code):
                 except Exception:
                     pass
                 try:
-                    dm.save_promo(promo_code, promo_data, user_name=_get_current_user_name() or 'System')
+                    dm.save_promo(promo_code, promo_data, user_name=get_current_user_name() or 'System')
                 except Exception:
                     pass
                 flash("SQL generation error captured. Placeholder shown.", 'error')
@@ -1828,13 +1800,13 @@ def _edit_rdc(promo_code):
                 if disk_sql.strip():
                     promo_data['generated_sql'] = disk_sql
                     promo_data['sql_length'] = len(disk_sql)
-                    promo_data['sql_generated_at'] = promo_data.get('sql_generated_at') or datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
+                    promo_data['sql_generated_at'] = promo_data.get('sql_generated_at') or dt.datetime.now(dt.timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
                     promo_data['sql_generation_time'] = promo_data.get('sql_generation_time') or 'N/A'
                     promo_data['sql_debug_loaded_from'] = 'GET_disk_refresh'
         else:
             promo_data['sql_disk_length'] = 0
     except Exception as load_err:
-        print(f"[SQL GEN][GET] Disk load error for {promo_code}: {load_err}")
+        logger.warning("[SQL GEN][GET] Disk load error for %s: %s", promo_code, load_err)
     # If still no SQL in memory, attempt to fetch latest from sql_store
     if not promo_data.get('generated_sql'):
         try:
@@ -1849,11 +1821,11 @@ def _edit_rdc(promo_code):
                     promo_data['sql_hash'] = blob_meta.get('sql_hash')
                     promo_data['sql_debug_loaded_from'] = 'GET_sql_store'
         except Exception as blob_get_err:
-            print(f"[SQL GEN][GET][BLOB] Failed to load SQL from store for {promo_code}: {blob_get_err}")
+            logger.warning("[SQL GEN][GET][BLOB] Failed to load SQL from store for %s: %s", promo_code, blob_get_err)
     if gen_flag and not promo_data.get('generated_sql'):
         promo_data['generated_sql'] = '-- FALLBACK MINIMAL SQL\nSELECT 1 AS no_data_placeholder;\n'
         promo_data['sql_length'] = len(promo_data['generated_sql'])
-        promo_data['sql_generated_at'] = promo_data.get('sql_generated_at') or datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
+        promo_data['sql_generated_at'] = promo_data.get('sql_generated_at') or dt.datetime.now(dt.timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
         promo_data['sql_generation_time'] = promo_data.get('sql_generation_time') or 'N/A'
         promo_data['sql_debug_loaded_from'] = 'GET_gen_flag_fallback'
     auto_open_sql_preview = True if (gen_flag and promo_data.get('generated_sql') and tab == 'SQL Generation') else False
@@ -1940,7 +1912,7 @@ def autosave_promo(promo_code):
         for ro in ['code','promo_code','orbit_id']:
             if ro in raw_changes:
                 del raw_changes[ro]
-        result = dm.save_promo(promo_code, raw_changes, user_name=(payload.get('user') or _get_current_user_name() or 'System'))
+        result = dm.save_promo(promo_code, raw_changes, user_name=(payload.get('user') or get_current_user_name() or 'System'))
         return jsonify({'success': True, 'promo_code': promo_code, **result})
     except Exception as e:
         return jsonify({'success': False, 'promo_code': promo_code, 'error': str(e)}), 500
@@ -2001,7 +1973,7 @@ def clear_trade_data(promo_code):
                 promo_data[field] = ''  # Clear the field
         
         # Save the updated promo data
-        dm.save_promo(promo_code, promo_data, user_name=_get_current_user_name() or 'System')
+        dm.save_promo(promo_code, promo_data, user_name=get_current_user_name() or 'System')
         
         return jsonify({'success': True, 'message': 'Trade data cleared successfully'})
     
@@ -2031,7 +2003,7 @@ def clear_tiers_data(promo_code):
             promo_data[field] = ''  # Clear the field
         
         # Save the updated promo data
-        dm.save_promo(promo_code, promo_data, user_name=_get_current_user_name() or 'System')
+        dm.save_promo(promo_code, promo_data, user_name=get_current_user_name() or 'System')
         
         return jsonify({'success': True, 'message': 'Tiers data cleared successfully'})
     except Exception as e:
@@ -2056,7 +2028,7 @@ def clear_segment_data(promo_code):
             promo_data[field] = ''  # Clear the field
         
         # Save the updated promo data
-        dm.save_promo(promo_code, promo_data, user_name=_get_current_user_name() or 'System')
+        dm.save_promo(promo_code, promo_data, user_name=get_current_user_name() or 'System')
         
         return jsonify({'success': True, 'message': 'Segmentation data cleared successfully'})
     except Exception as e:
@@ -2188,7 +2160,7 @@ def get_promo_codes_page():
                 'description': description,
                 'status': 'Draft',
                 'created_date': datetime.now().strftime('%Y-%m-%d'),
-                'created_by': _get_current_user_name() or 'System'
+                'created_by': get_current_user_name() or 'System'
             }
 
             if promo_type == 'spe':
@@ -2196,11 +2168,11 @@ def get_promo_codes_page():
                 promo_data['spe_type'] = request.form.get('speType', '')
                 # SPE uses JSON manager still
                 from data.storage import PromoDataManager as JSONManager
-                JSONManager().save_spe_promo(generated_code, promo_data, user_name=_get_current_user_name() or 'System')
+                JSONManager().save_spe_promo(generated_code, promo_data, user_name=get_current_user_name() or 'System')
                 flash(f'SPE promo code {generated_code} created successfully!', 'success')
                 return redirect(url_for('promo.spe_page'))
             else:
-                dm.save_promo(generated_code, promo_data, user_name=_get_current_user_name() or 'System')
+                dm.save_promo(generated_code, promo_data, user_name=get_current_user_name() or 'System')
                 flash(f'RDC promo code {generated_code} created successfully!', 'success')
                 return redirect(url_for('promo.rdc_page'))
 

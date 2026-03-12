@@ -1,0 +1,97 @@
+{% extends 'lists/lists_base.html' %}
+{% block title %}Lists Workspace · Promo Operations{% endblock %}
+{% block body_class %}landing--standard lists--home{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{{ url_for('static', filename='css/lists.css') }}">{% endblock %}
+
+{% block content %}
+<div class="landing-wrapper">
+  <!-- Compact Hero -->
+  <div class="hero-compact">
+    <div class="hero-logo">
+      <i class="bi bi-table"></i>
+    </div>
+    <div class="hero-content">
+      <h1>Lists Workspace</h1>
+      <p>Automate SKU group lists and trade-in eligibility lists from Excel uploads — generate SQL, validate entries, and export ready-to-run scripts.</p>
+    </div>
+    <div class="hero-stats">
+      <div class="stat-item">
+        <span class="stat-value">2</span>
+        <span class="stat-label">Tools</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Workspace Cards -->
+  <div class="workspaces-section">
+    <a href="{{ url_for('lists.sku_lists') }}" class="workspace-card">
+      <div class="card-header-row">
+        <div class="card-icon-wrapper">
+          <i class="bi bi-upc-scan"></i>
+        </div>
+        <span class="status-badge status-alpha">Alpha</span>
+      </div>
+      <div class="card-body">
+        <h2 class="card-title">SKU Lists</h2>
+        <p class="card-subtitle">SKU Group Automation</p>
+        <p class="card-description">Upload a SKU group Excel file, validate entries against the promo database, and generate INSERT statements ready for execution.</p>
+      </div>
+      <div class="card-footer-row">
+        <div class="card-meta">
+          <div class="meta-item">
+            <i class="bi bi-clock-fill"></i>
+            <span>Active</span>
+          </div>
+        </div>
+        <div class="card-cta">
+          <span>Open Workspace</span>
+          <i class="bi bi-arrow-right"></i>
+        </div>
+      </div>
+    </a>
+
+    <a href="{{ url_for('lists.tradein_lists') }}" class="workspace-card">
+      <div class="card-header-row">
+        <div class="card-icon-wrapper">
+          <i class="bi bi-phone-flip"></i>
+        </div>
+        <span class="status-badge status-alpha">Alpha</span>
+      </div>
+      <div class="card-body">
+        <h2 class="card-title">Trade-In Lists</h2>
+        <p class="card-subtitle">Trade-In Eligibility</p>
+        <p class="card-description">Upload a trade-in device eligibility Excel file, map tiers to promo make/model group IDs, and generate SQL INSERT statements per tier.</p>
+      </div>
+      <div class="card-footer-row">
+        <div class="card-meta">
+          <div class="meta-item">
+            <i class="bi bi-clock-fill"></i>
+            <span>Active</span>
+          </div>
+        </div>
+        <div class="card-cta">
+          <span>Open Workspace</span>
+          <i class="bi bi-arrow-right"></i>
+        </div>
+      </div>
+    </a>
+  </div>
+
+  <div class="landing-disclaimer">
+    <p>The information contained within this area is designated T-Mobile Restricted. Disclosure of the information to anyone without a direct need to know may result in termination of your employment or contract with T-Mobile.</p>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.querySelectorAll('.workspace-card').forEach(card => {
+    card.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        card.click();
+      }
+    });
+  });
+</script>
+{% endblock %}

@@ -40,15 +40,15 @@
         name="search"
         placeholder="Enter promo code"
         value="{{ promo_code or '' }}"
-        onkeypress="handleSearchKeyPress(event)"
+        id="promoSearchInput"
       />
     </div>
 
     <div class="action-buttons">
-      <button class="btn" onclick="searchPromo()">
+      <button class="btn" id="searchPromoBtn">
         <i class="fas fa-search"></i> Search
       </button>
-      <button class="btn" onclick="refreshData()">
+      <button class="btn" id="refreshDataBtn">
         <i class="fas fa-sync-alt"></i> Refresh Data
       </button>
   <a href="{{ url_for('promo.rdc_page') }}" class="btn btn-primary">
@@ -79,6 +79,7 @@
         </div>
         <div class="card-body">
           <form id="linksForm" method="post">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else '' }}">
             <!-- Link to Orbit -->
             <div class="mb-3">
               <label for="orbitLink" class="form-label">Link to Orbit:</label>
@@ -162,6 +163,11 @@ function handleSearchKeyPress(event) {
 // Focus on search box when page loads
 document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('promoSearch').focus();
+
+  // Bind previously-inline event handlers
+  document.getElementById('searchPromoBtn')?.addEventListener('click', searchPromo);
+  document.getElementById('refreshDataBtn')?.addEventListener('click', refreshData);
+  document.getElementById('promoSearchInput')?.addEventListener('keypress', handleSearchKeyPress);
   
   // Add submit handler to show save message
   const form = document.getElementById('linksForm');

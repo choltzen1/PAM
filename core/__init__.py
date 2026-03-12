@@ -49,6 +49,15 @@ def landing_page():
             'url': url_for('research.index'),
             'ribbon': 'Alpha',
             'sub': 'Data & Eligibility'
+        },
+        {
+            'key': 'lists',
+            'label': 'Lists',
+            'icon': 'bi-table',
+            'url': url_for('lists.index'),
+            'ribbon': 'Planned',
+            'sub': 'SKU & Trade-In',
+            'desc': 'Automate SKU group lists and trade-in eligibility lists — upload Excel files, validate entries, and generate SQL INSERT scripts.',
         }
     ]
     objective = (

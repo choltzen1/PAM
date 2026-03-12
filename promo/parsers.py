@@ -1,7 +1,10 @@
+import logging
 from datetime import datetime
 import pandas as pd
 import os
 from typing import List, Dict, Any
+
+logger = logging.getLogger(__name__)
 
 # --- Parser: Convert PDT one-liner into structured dict ---
 
@@ -117,7 +120,7 @@ def parse_tradein_excel(file_path: str, promo_data: Dict[str, Any]) -> List[str]
         import os
         file_size = os.path.getsize(file_path)
         if file_size > 50 * 1024 * 1024:  # 50MB limit
-            print(f"Warning: Trade-in file is very large ({file_size:,} bytes). Processing may take time.")
+            logger.warning("Trade-in file is very large (%d bytes). Processing may take time.", file_size)
         
         # Read the Excel file with optimizations for large files
         df = pd.read_excel(

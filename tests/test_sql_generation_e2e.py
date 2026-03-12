@@ -30,6 +30,7 @@ def _fake_get_promo(code):
 @pytest.fixture
 def client(monkeypatch):
     flask_app.config['TESTING'] = True
+    flask_app.config['WTF_CSRF_ENABLED'] = False
     _PROMO_STORE.clear()
     dm = getattr(app_module, 'data_manager', None)
     assert dm is not None

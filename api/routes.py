@@ -1,8 +1,11 @@
+import logging
+
 from flask import Blueprint, jsonify, request
-import base64, json
 from services.cache import TTLCache
 from services.jira_utils import create_jira_summary
-from auth import role_required
+from auth import role_required, get_current_user_name
+
+logger = logging.getLogger(__name__)
 
 api_bp = Blueprint('api', __name__, url_prefix='/api')
 
@@ -13,46 +16,6 @@ def init_data_manager(dm):
     global data_manager
     data_manager = dm
 
-
-def _get_current_user_name() -> str | None:
-    """Extract display name from Azure App Service Easy Auth headers.
-    Preference order: givenname+surname -> name -> preferred_username/email -> header fallback.
-    """
-    try:
-        b64 = request.headers.get('X-MS-CLIENT-PRINCIPAL')
-        if b64:
-            try:
-                decoded = base64.b64decode(b64)
-                payload = json.loads(decoded.decode('utf-8'))
-                claims = payload.get('claims', [])
-                def claim(key: str):
-                    for c in claims:
-                        if c.get('typ') == key:
-                            return c.get('val')
-                    return None
-                given = claim('givenname') or claim('http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname')
-                surname = claim('surname') or claim('http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname')
-                full = None
-                if (given or surname):
-                    gn = (given or '').strip()
-                    sn = (surname or '').strip()
-                    full = f"{gn} {sn}".strip()
-                name = claim('name') or claim('http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name')
-                if not full:
-                    full = name
-                if not full:
-                    preferred = claim('preferred_username') or claim('http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress') or claim('emailaddress')
-                    full = preferred
-                if full:
-                    return full
-            except Exception:
-                pass
-        simple = request.headers.get('X-MS-CLIENT-PRINCIPAL-NAME')
-        if simple:
-            return simple
-    except Exception:
-        pass
-    return None
 
 
 @api_bp.route('/get_promo_details/<promo_code>', methods=['GET'])
@@ -290,7 +253,7 @@ def update_testing_status():
         field_name = 'test_status' if test_type == 'functional' else 'zlab_status'
         promo_data[field_name] = status
         if data_manager:
-            data_manager.save_promo(promo_code, promo_data, user_name=_get_current_user_name() or 'System')
+            data_manager.save_promo(promo_code, promo_data, user_name=get_current_user_name() or 'System')
         updated_data = data_manager.get_promo(promo_code) if data_manager else {}
         saved_value = updated_data.get(field_name)
         if saved_value != status:
@@ -365,7 +328,7 @@ def set_sales_application():
             return jsonify({'success': False, 'error': 'Promo not found'}), 404
         # Update field and persist
         promo['sales_application'] = sales_app
-        data_manager.save_promo(promo_code, promo, user_name=_get_current_user_name() or 'System')
+        data_manager.save_promo(promo_code, promo, user_name=get_current_user_name() or 'System')
         return jsonify({'success': True, 'promo_code': promo_code, 'sales_application': sales_app})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
@@ -394,7 +357,7 @@ def generate_next_promo_code():
                 config = (request.args.get('config') or '').strip().lower()
                 from services.promo_code_workflow import PromoCodeWorkflow
                 workflow = PromoCodeWorkflow(data_manager)
-                result = workflow.create_from_orbit(orbit_id, execution_type=exec_type, user=_get_current_user_name() or 'System', config=config)
+                result = workflow.create_from_orbit(orbit_id, execution_type=exec_type, user=get_current_user_name() or 'System', config=config)
                 if result.get('success') and 'code' in result:
                         result['promo_code'] = result['code']
                 status = 200 if result.get('success') else (409 if result.get('existing_code') else 400)
@@ -503,7 +466,7 @@ def generate_and_ingest():
             converted['start_date'] = orbit_row.get('promo_start_date')
         if orbit_row.get('promo_end_date'):
             converted['end_date'] = orbit_row.get('promo_end_date')
-        data_manager.save_promo(next_code, converted, user_name=_get_current_user_name() or 'System')
+        data_manager.save_promo(next_code, converted, user_name=get_current_user_name() or 'System')
         saved = data_manager.get_promo(next_code) or {}
         return jsonify({'success': True, 'promo_code': next_code, 'orbit_id': orbit_id, 'rolled': rolled, 'base_letter': base_letter, 'fields_imported': len(converted), 'owner': saved.get('owner'), 'description': saved.get('description')})
     except Exception as e:
@@ -528,7 +491,7 @@ def create_from_orbit():
             return jsonify({'success': False, 'error': 'orbit_id required'}), 400
         from services.promo_code_workflow import PromoCodeWorkflow
         workflow = PromoCodeWorkflow(data_manager)
-        result = workflow.create_from_orbit(orbit_id, execution_type=desired_exec, user=_get_current_user_name() or 'System')
+        result = workflow.create_from_orbit(orbit_id, execution_type=desired_exec, user=get_current_user_name() or 'System')
         status_code = 200 if result.get('success') else (409 if result.get('existing_code') else 400)
         return jsonify(result), status_code
     except Exception as e:
@@ -576,7 +539,7 @@ def recent_generated_promos():
                         'type': row.Desired_Execution or 'RDC'
                     })
         except Exception as e:
-            print(f"[recent_generated_promos] Database query failed: {e}")
+            logger.warning("[recent_generated_promos] Database query failed: %s", e)
             return jsonify({'success': False, 'error': str(e), 'promos': []}), 500
         
         return jsonify({'success': True, 'promos': rows, 'count': len(rows)})

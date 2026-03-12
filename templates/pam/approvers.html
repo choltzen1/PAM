@@ -13,7 +13,7 @@
 
 {% block header_right %}
 <div class="approvers-header-actions">
-  <button class="btn btn-primary approvers-refresh-btn" onclick="refreshData()">
+  <button class="btn btn-primary approvers-refresh-btn" id="approversRefreshBtn">
     <i class="fas fa-sync-alt"></i> Refresh Data
   </button>
   <span class="approvers-user-label">{{ user_name or 'Coming Soon' }}</span>
@@ -113,7 +113,7 @@
               </div>
             </td>
             <td class="actions">
-              <button class="btn btn-primary send-btn" onclick="sendApprovalRequest('{{ promo_code }}')">
+              <button class="btn btn-primary send-btn" data-promo-code="{{ promo_code }}">
                 <i class="fas fa-paper-plane"></i> Send
               </button>
             </td>
@@ -128,7 +128,7 @@
         <i class="fas fa-file-signature display-1 text-info mb-3"></i>
         <h4 class="text-info">No Promotions Found</h4>
         <p class="text-muted">No promotions are available for approval assignment.</p>
-        <button class="btn btn-primary mt-3" onclick="refreshData()">
+        <button class="btn btn-primary mt-3 approvers-refresh-btn" id="approversRefreshBtnEmpty">
           <i class="fas fa-sync-alt"></i> Refresh Data
         </button>
       </div>
@@ -354,17 +354,27 @@ function updateUrl() {
   window.history.replaceState({}, '', url);
 }
 
-// Add event listeners for filtering
+// Add event listeners for filtering and bind removed inline handlers
 document.addEventListener('DOMContentLoaded', function() {
   const searchInput = document.getElementById('promo-search');
   const ownerFilter = document.getElementById('owner-filter');
-  
+
   searchInput.addEventListener('input', function() {
     filterTable();
     updateUrl();
   });
-  
+
   ownerFilter.addEventListener('change', filterTable);
+
+  // Refresh buttons (header and empty-state)
+  document.getElementById('approversRefreshBtn')?.addEventListener('click', refreshData);
+  document.getElementById('approversRefreshBtnEmpty')?.addEventListener('click', refreshData);
+
+  // Send buttons (event delegation — data-promo-code attribute set per row)
+  document.querySelector('table.approvers-table')?.addEventListener('click', (e) => {
+    const btn = e.target.closest('.send-btn[data-promo-code]');
+    if (btn) sendApprovalRequest(btn.getAttribute('data-promo-code'));
+  });
 });
 </script>
 

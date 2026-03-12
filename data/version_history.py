@@ -1,6 +1,6 @@
 import json
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, Optional
 
 from sqlalchemy import text
@@ -77,7 +77,7 @@ def log_version_event(
     dm = DatabaseManager()
     engine = dm.get_engine()
 
-    event_ts_val = event_ts or datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
+    event_ts_val = event_ts or datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
     promo_id_val = promo_id or promo_code
     event_type_val = (event_type or '').lower()
 
@@ -129,7 +129,7 @@ def _log_error(*, promo_code: str, event_type: str, error: Optional[str] = None)
     log_path = os.path.join(log_dir, 'version_history_errors.log')
     try:
         os.makedirs(log_dir, exist_ok=True)
-        ts = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
+        ts = datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
         error_val = (error or '').replace('\n', ' ').strip()
         with open(log_path, 'a', encoding='utf-8') as fh:
             fh.write(

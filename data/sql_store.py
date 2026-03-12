@@ -1,5 +1,5 @@
 import os, hashlib
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional, Tuple, Dict, Any
 from data.database import DatabaseManager
 
@@ -14,7 +14,7 @@ def save_generated_sql(promo_code: str, sql_text: str, generation_time: float, s
     )
     params = {
         'promo_code': promo_code,
-        'generated_at': datetime.utcnow().isoformat(),
+        'generated_at': datetime.now(timezone.utc).isoformat(),
         'generation_time_seconds': generation_time,
         'sql_text': sql_text,
         'generated_by': source,

@@ -27,6 +27,7 @@ flask_app = _app_module.app
 @pytest.fixture(scope='session')
 def app():
     flask_app.config['TESTING'] = True
+    flask_app.config['WTF_CSRF_ENABLED'] = False  # Disable CSRF for test client requests
     return flask_app
 
 @pytest.fixture()

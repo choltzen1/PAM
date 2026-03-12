@@ -13,7 +13,7 @@
 
 {% block header_right %}
 <div class="test-header-actions">
-  <button class="btn btn-primary test-refresh-btn" onclick="refreshData()">
+  <button class="btn btn-primary test-refresh-btn" id="testRefreshBtn">
     <i class="fas fa-sync-alt icon-inline"></i> Refresh Data
   </button>
   <span class="test-user-label">{{ user_name or 'User: Coming Soon' }}</span>
@@ -51,6 +51,9 @@
 function refreshData() {
   window.location.reload();
 }
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('testRefreshBtn')?.addEventListener('click', refreshData);
+});
 </script>
 
 {% endblock %}

@@ -1,14 +1,17 @@
 import json
+import logging
 import os
 from dotenv import load_dotenv
 import shutil
 from typing import Dict, Any, List, Optional
-from datetime import datetime
+from datetime import datetime, timezone
 from werkzeug.datastructures import FileStorage
 from werkzeug.utils import secure_filename
 from .database import DatabaseManager
 from .field_map import FIELD_DB_MAP, READ_ONLY_FIELDS, EDITABLE_CANONICAL_FIELDS
 from .version_history import log_version_event
+
+logger = logging.getLogger(__name__)
 
 
 class PromoDataManager:
@@ -22,12 +25,9 @@ class PromoDataManager:
         self.data_dir = data_dir
         self.uploads_dir = os.path.join(data_dir, "uploads")
         self.promo_uploads_dir = os.path.join(self.uploads_dir, "promotions")
-        # File paths for JSON storage (SPE/rebates legacy). RDC promos now DB-only.
-        self.promo_file = os.path.join(data_dir, "promotions.json")
+        # JSON file path for SPE promotions (not yet migrated to DB)
         self.spe_file = os.path.join(data_dir, "spe_promotions.json")
-        self.rebates_file = os.path.join(data_dir, "rebates.json")
-        # Auto-archive legacy JSON files (one-time rename to .bak) while keeping attributes pointing to new names
-        self._auto_archive_json_files()
+        self._auto_archive_spe_json()
         # Initialize database manager for live data
         self.db_manager = DatabaseManager()
         # Ensure upload directories exist
@@ -52,7 +52,7 @@ class PromoDataManager:
             'cache_valid': True,
             'cache_ttl_minutes': 0,
             'last_refresh': None,
-            'last_db_check': datetime.utcnow().isoformat(),
+            'last_db_check': datetime.now(timezone.utc).isoformat(),
             'total_cache_hits': 0,
             'total_cache_misses': 0,
             'total_db_loads': 0,
@@ -60,23 +60,16 @@ class PromoDataManager:
             'background_refresh_active': False
         }
 
-    def _auto_archive_json_files(self):
-        mapping = {
-            'promo_file': 'promotions.json',
-            'spe_file': 'spe_promotions.json',
-            'rebates_file': 'rebates.json'
-        }
-        for attr, fname in mapping.items():
-            orig_path = getattr(self, attr)
-            bak_path = orig_path + '.bak'
-            try:
-                if os.path.exists(orig_path) and not os.path.exists(bak_path):
-                    os.rename(orig_path, bak_path)
-                if os.path.exists(bak_path):
-                    setattr(self, attr, bak_path)
-            except Exception:
-                # Non-fatal; leave paths as-is
-                pass
+    def _auto_archive_spe_json(self) -> None:
+        """One-time rename of spe_promotions.json → .bak when it exists alongside DB records."""
+        bak_path = self.spe_file + '.bak'
+        try:
+            if os.path.exists(self.spe_file) and not os.path.exists(bak_path):
+                os.rename(self.spe_file, bak_path)
+            if os.path.exists(bak_path):
+                self.spe_file = bak_path
+        except Exception:
+            pass
     
     def _load_json(self, filepath: str) -> Dict[str, Any]:
         """Load data from JSON file"""
@@ -147,13 +140,13 @@ class PromoDataManager:
                             converted['generated_sql'] = sql_content
                             converted['sql_length'] = len(sql_content)
                         except Exception as read_sql_err:
-                            print(f"Read generated SQL failed for {promo_code}: {read_sql_err}")
+                            logger.warning("Read generated SQL failed for %s: %s", promo_code, read_sql_err)
                 except Exception as attach_err:
-                    print(f"Attach uploaded_files failed for {promo_code}: {attach_err}")
+                    logger.warning("Attach uploaded_files failed for %s: %s", promo_code, attach_err)
                 return converted
             return {}
         except Exception as e:
-            print(f"Database lookup failed for {promo_code}: {e}")
+            logger.error("Database lookup failed for %s: %s", promo_code, e)
             return {}
     
     def delete_promo(self, promo_code: str) -> bool:
@@ -170,7 +163,7 @@ class PromoDataManager:
                 if result.rowcount > 0:
                     deleted = True
         except Exception as e:
-            print(f"[DELETE] Database deletion failed for {promo_code}: {e}")
+            logger.error("[DELETE] Database deletion failed for %s: %s", promo_code, e)
         
         # Delete uploaded files
         try:
@@ -179,7 +172,7 @@ class PromoDataManager:
                 import shutil
                 shutil.rmtree(promo_dir)
         except Exception as e:
-            print(f"[DELETE] File cleanup failed for {promo_code}: {e}")
+            logger.warning("[DELETE] File cleanup failed for %s: %s", promo_code, e)
         
         return deleted
     
@@ -202,7 +195,7 @@ class PromoDataManager:
                 return {}
             return self.db_manager.convert_db_record_to_json_format({str(k): v for k,v in rec.items()})
         except Exception as e:
-            print(f"Fast SPE lookup failed for {promo_code}: {e}")
+            logger.warning("Fast SPE lookup failed for %s: %s", promo_code, e)
             return {}
     
     def get_all_promos(self) -> Dict[str, Any]:
@@ -210,7 +203,7 @@ class PromoDataManager:
         try:
             db_records = self.db_manager.get_promos_by_execution_type("RDC")
         except Exception as e:
-            print(f"Database lookup failed for all promos: {e}")
+            logger.error("Database lookup failed for all promos: %s", e)
             db_records = []
         result: Dict[str, Any] = {}
         for record in db_records:
@@ -227,7 +220,7 @@ class PromoDataManager:
         try:
             db_records = self.db_manager.get_promos_by_execution_type("RDC")
         except Exception as e:
-            print(f"Database lookup failed for paginated promos: {e}")
+            logger.error("Database lookup failed for paginated promos: %s", e)
             db_records = []
         promo_list: List[Dict[str, Any]] = []
         for record in db_records:
@@ -266,8 +259,8 @@ class PromoDataManager:
             promo_list = [promo for promo in promo_list if (promo.get('owner') or '') == owner_filter]
         
         # Phase-aware ordering: upcoming (Build, soonest start first), Launched (soonest end), Expired (most recent end first at tail)
-        from datetime import datetime as _dt
-        today = _dt.utcnow().date()
+        from datetime import datetime as _dt, timezone as _tz
+        today = _dt.now(_tz.utc).date()
         def parse_date(val):
             if not val:
                 return None
@@ -335,8 +328,8 @@ class PromoDataManager:
             force_upcoming=(scope == 'upcoming'),
         )
         # Compute phase only for returned rows (lightweight)
-        from datetime import datetime as _dt
-        today = _dt.utcnow().date()
+        from datetime import datetime as _dt, timezone as _tz
+        today = _dt.now(_tz.utc).date()
         def parse_date(val):
             if not val:
                 return None
@@ -367,8 +360,8 @@ class PromoDataManager:
             upcoming_only_when_no_query=False,
             force_upcoming=(scope == 'upcoming'),
         )
-        from datetime import datetime as _dt
-        today = _dt.utcnow().date()
+        from datetime import datetime as _dt, timezone as _tz
+        today = _dt.now(_tz.utc).date()
         def parse_date(val):
             if not val:
                 return None
@@ -397,10 +390,10 @@ class PromoDataManager:
                 c = conv.get('code')
                 if c:
                     out[c] = conv
-        except Exception:
-            pass
+        except Exception as e:
+            logger.warning("get_all_spe_promos failed: %s", e)
         return out
-    
+
     def save_promo(self, promo_code: str, promo_data: Dict[str, Any], user_name: str = "System"):
         """Persist promo edits: update PAM table fields, upsert extras, record diff version history."""
         promo_data = dict(promo_data or {})
@@ -420,8 +413,8 @@ class PromoDataManager:
                     'code': promo_code,
                     'description': promo_data.get('description',''),
                     'Owner': promo_data.get('Owner') or promo_data.get('owner',''),
-                    'promo_start_date': promo_data.get('promo_start_date') or datetime.utcnow().strftime('%Y-%m-%d'),
-                    'promo_end_date': promo_data.get('promo_end_date') or datetime.utcnow().strftime('%Y-%m-%d'),
+                    'promo_start_date': promo_data.get('promo_start_date') or datetime.now(timezone.utc).strftime('%Y-%m-%d'),
+                    'promo_end_date': promo_data.get('promo_end_date') or datetime.now(timezone.utc).strftime('%Y-%m-%d'),
                     'Desired_Execution': promo_data.get('Desired_Execution') or 'RDC'
                 }
                 inserted = self.db_manager.insert_minimal_promo(minimal_fields, user=user_name)
@@ -817,7 +810,7 @@ class PromoDataManager:
         Dates are date-only strings YYYY-MM-DD. If unparsable, treat as missing.
         """
         if now is None:
-            now = datetime.utcnow()
+            now = datetime.now(timezone.utc)
         def parse(d: Optional[str]):
             if not d:
                 return None
@@ -847,7 +840,7 @@ class PromoDataManager:
     def get_promo_list(self) -> List[Dict[str, Any]]:
         """Get a list of all promotions (DB only)."""
         all_promos = self.get_all_promos()
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         rows: List[Dict[str, Any]] = []
         for code, promo in all_promos.items():
             start_date = promo.get('promo_start_date') or ''
@@ -1044,10 +1037,10 @@ class PromoDataManager:
                     codes.append(code)
             return codes
         except FileNotFoundError:
-            print(f"Warning: sales_apps.txt file not found.")
+            logger.warning("sales_apps.txt file not found.")
             return []
         except Exception as e:
-            print(f"Error reading sales applications: {e}")
+            logger.error("Error reading sales applications: %s", e)
             return []
     
     def get_sales_application_details(self) -> str:

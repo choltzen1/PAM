@@ -23,7 +23,7 @@ def _fake_delete_promo(code):
 
 @pytest.fixture()
 def client(monkeypatch):
-    app = factory.create_app({'TESTING': True})
+    app = factory.create_app({'TESTING': True, 'WTF_CSRF_ENABLED': False})
     _PROMO_STORE.clear()
     dm = factory.data_manager
     monkeypatch.setattr(dm, 'get_promo', _fake_get_promo)

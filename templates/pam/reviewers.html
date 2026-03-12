@@ -35,11 +35,11 @@
             class="reviewers-search-input"
             placeholder="Enter promo code"
             value="{{ promo_code or '' }}"
-          onkeypress="handleSearchKeyPress(event)"
+            id="reviewersSearchInput"
         />
-        <button 
-          class="btn btn-primary reviewers-search-btn" 
-          onclick="searchPromo()"
+        <button
+          class="btn btn-primary reviewers-search-btn"
+          id="reviewersSearchBtn"
         >
           Search
         </button>
@@ -79,10 +79,10 @@
             </select>
           </div>
           <div class="approval-btn-group">
-            <button class="btn btn-success approve-btn" onclick="approvePromo()">
+            <button class="btn btn-success approve-btn" id="approvePromoBtn">
               <i class="fas fa-check"></i> Approve
             </button>
-            <button class="btn btn-danger reject-btn" onclick="rejectPromo()">
+            <button class="btn btn-danger reject-btn" id="rejectPromoBtn">
               <i class="fas fa-times"></i> Reject
             </button>
           </div>
@@ -91,10 +91,10 @@
           <label for="rejection-notes" class="rejection-notes-label">Rejection Notes:</label>
           <textarea id="rejection-notes" class="form-control rejection-notes-input" rows="2" placeholder="Enter reason for rejection..."></textarea>
           <div class="rejection-btn-row">
-            <button class="btn reject-back-btn" onclick="cancelReject()">
+            <button class="btn reject-back-btn" id="cancelRejectBtn">
               <i class="fas fa-arrow-left"></i> Back
             </button>
-            <button class="btn btn-danger reject-confirm-btn" onclick="confirmReject()">
+            <button class="btn btn-danger reject-confirm-btn" id="confirmRejectBtn">
               <i class="fas fa-paper-plane"></i> Send Rejection
             </button>
           </div>
@@ -579,5 +579,14 @@ function approvePromo() {
     alert('Error sending approval: ' + error);
   });
 }
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('reviewersSearchBtn')?.addEventListener('click', searchPromo);
+  document.getElementById('reviewersSearchInput')?.addEventListener('keypress', handleSearchKeyPress);
+  document.getElementById('approvePromoBtn')?.addEventListener('click', approvePromo);
+  document.getElementById('rejectPromoBtn')?.addEventListener('click', rejectPromo);
+  document.getElementById('cancelRejectBtn')?.addEventListener('click', cancelReject);
+  document.getElementById('confirmRejectBtn')?.addEventListener('click', confirmReject);
+});
 </script>
 {% endblock %}

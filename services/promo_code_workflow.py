@@ -9,8 +9,11 @@ This consolidates logic previously scattered across api/routes and data/storage 
 endpoints remain thin and re-usable by future CLI/tasks.
 """
 from __future__ import annotations
+import logging
 from typing import Optional, Dict, Any
 import re
+
+logger = logging.getLogger(__name__)
 
 from data.database import DatabaseManager
 from data.orbit_database import OrbitDatabaseManager
@@ -53,7 +56,6 @@ class PromoCodeWorkflow:
         if row and not row.get('_error'):
             # Not yet created as promo (no code)
             return {'found': True, 'table': 'orbit', 'existing_code': None, 'orbit': row}
-            return {'found': True, 'table': row.get('_table'), 'existing_code': None, 'orbit': row}
         # Check promotions for existing assignment
         for rec in self.db.get_all_promotions_unified():
             if str(rec.get('orbit_id','')) == oid:
@@ -132,7 +134,7 @@ class PromoCodeWorkflow:
         
         # Get preset overrides for the selected configuration
         preset_overrides = get_config_preset(cfg) if cfg else {}
-        print(f"[WORKFLOW] Config: '{cfg}', Preset overrides: {preset_overrides}")
+        logger.debug("[WORKFLOW] Config: '%s', Preset overrides: %s", cfg, preset_overrides)
 
         candidate_fields = {
             'code': new_code,
@@ -173,13 +175,13 @@ class PromoCodeWorkflow:
         
         # Apply preset overrides AFTER building candidate_fields (preset values take precedence)
         if preset_overrides:
-            print(f"[WORKFLOW] Applying preset overrides to candidate_fields")
+            logger.debug("[WORKFLOW] Applying preset overrides to candidate_fields")
             for key, value in preset_overrides.items():
                 candidate_fields[key] = value
-                print(f"[WORKFLOW] Override: {key} = {value}")
+                logger.debug("[WORKFLOW] Override: %s = %s", key, value)
         
         insertion = {k:v for k,v in candidate_fields.items() if v is not None}
-        print(f"[WORKFLOW] Final insertion fields: {list(insertion.keys())}")
+        logger.debug("[WORKFLOW] Final insertion fields: %s", list(insertion.keys()))
         ok = self.db.insert_promo_record(insertion)
         if not ok:
             return {'success': False, 'error': 'Insert failed', 'attempted_fields': list(insertion.keys())}

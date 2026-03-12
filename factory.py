@@ -1,6 +1,11 @@
 import os
+import logging
 from flask import Flask, request
 from flask_session import Session
+from flask_wtf.csrf import CSRFProtect
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+from cachelib.file import FileSystemCache
 import base64, json
 from dotenv import load_dotenv
 from datetime import datetime
@@ -13,11 +18,24 @@ from api.routes import api_bp, init_data_manager as init_api_data_manager
 from jira.routes import jira_bp
 from data.storage import PromoDataManager
 from research import research_bp
+from lists import lists_bp
 import threading
 import time
 
+logger = logging.getLogger(__name__)
+
 _loaded_env = load_dotenv()
-print(f"[startup] .env loaded={_loaded_env} ORBIT_DB_SERVER={os.getenv('ORBIT_DB_SERVER')} ORBIT_DB_DATABASE={os.getenv('ORBIT_DB_DATABASE')} PAM_DB_SERVER={os.getenv('PAM_DB_SERVER')} PAM_DB_DATABASE={os.getenv('PAM_DB_DATABASE')}")
+logger.info(
+    "[startup] .env loaded=%s ORBIT_DB_SERVER=%s ORBIT_DB_DATABASE=%s PAM_DB_SERVER=%s PAM_DB_DATABASE=%s",
+    _loaded_env,
+    os.getenv('ORBIT_DB_SERVER'),
+    os.getenv('ORBIT_DB_DATABASE'),
+    os.getenv('PAM_DB_SERVER'),
+    os.getenv('PAM_DB_DATABASE'),
+)
+
+csrf = CSRFProtect()
+limiter = Limiter(key_func=get_remote_address, default_limits=["300 per minute"], storage_uri="memory://")
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
@@ -70,45 +88,76 @@ def _warn_if_env_has_likely_real_secrets() -> None:
         extra = ''
         if len(set(flagged_keys)) > 8:
             extra = f" (+{len(set(flagged_keys)) - 8} more)"
-        print(f"[startup][SECURITY] WARNING: .env appears to contain real secret values for: {shown}{extra}. Keep .env local only and rotate exposed credentials.")
+        logger.warning("[startup][SECURITY] .env appears to contain real secret values for: %s%s. Keep .env local only and rotate exposed credentials.", shown, extra)
 
 
 _warn_if_env_has_likely_real_secrets()
 
 data_manager = None  # will be initialized in create_app
 
+
+def configure_logging(app: Flask) -> None:
+    """Configure application-wide logging based on environment."""
+    dev_mode = os.getenv('DEV_MODE', '').lower() in ('1', 'true', 'yes')
+    log_level = logging.DEBUG if dev_mode else logging.INFO
+
+    # Only configure the root handler if none has been set yet
+    # (avoids double-configuration when create_app is called multiple times in tests)
+    root_logger = logging.getLogger()
+    if not root_logger.handlers:
+        handler = logging.StreamHandler()
+        handler.setFormatter(logging.Formatter(
+            '%(levelname)s:%(name)s:%(message)s'
+        ))
+        root_logger.addHandler(handler)
+
+    root_logger.setLevel(log_level)
+    # Silence noisy third-party loggers in production
+    if not dev_mode:
+        logging.getLogger('werkzeug').setLevel(logging.WARNING)
+        logging.getLogger('sqlalchemy.engine').setLevel(logging.WARNING)
+
+
 def create_app(config: dict | None = None) -> Flask:
     app = Flask(__name__)
+    configure_logging(app)
     secret_key = os.getenv('FLASK_SECRET_KEY') or os.getenv('SECRET_KEY')
     if not secret_key:
         if os.getenv('DEV_MODE') == 'true' or os.getenv('PAM_VALIDATION_MODE') == '1':
             secret_key = 'dev-only-secret-key-change-me'
-            print('[startup] WARNING: using development fallback secret key; set FLASK_SECRET_KEY for shared environments')
+            logger.warning('[startup] WARNING: using development fallback secret key; set FLASK_SECRET_KEY for shared environments')
         else:
             raise RuntimeError('Missing FLASK_SECRET_KEY/SECRET_KEY. Refusing to start without an application secret key.')
     app.secret_key = secret_key
 
+    default_session_dir = os.path.join(os.getcwd(), 'data', 'sessions')
     app.config.update(
-        SESSION_TYPE='filesystem',
-        SESSION_FILE_DIR=os.path.join(os.getcwd(), 'data', 'sessions'),
+        SESSION_TYPE='cachelib',
         SESSION_PERMANENT=False,
-        SESSION_USE_SIGNER=True,
     )
 
     if config:
         app.config.update(config)
 
-    session_dir = app.config.get('SESSION_FILE_DIR')
+    session_dir = app.config.get('SESSION_FILE_DIR') or default_session_dir
     if session_dir:
         os.makedirs(session_dir, exist_ok=True)
 
+    if not app.config.get('SESSION_CACHELIB'):
+        app.config['SESSION_CACHELIB'] = FileSystemCache(cache_dir=session_dir)
+
     Session(app)
+
+    csrf.init_app(app)
+    limiter.init_app(app)
+    # Exempt the JSON API blueprint — its endpoints accept application/json bodies
+    # and are already protected by Azure AD role decorators.
+    csrf.exempt(api_bp)
 
     global data_manager
     # Single initialization path (DB-only model); validation mode no longer diverges
     data_manager = PromoDataManager()
-    # Avoid using Unicode symbols that can break in certain Windows code pages.
-    print("DB-only promo data manager initialized (JSON disabled for RDC)")
+    logger.info("DB-only promo data manager initialized (JSON disabled for RDC)")
 
     # Register blueprints
     app.register_blueprint(core_bp)
@@ -117,6 +166,7 @@ def create_app(config: dict | None = None) -> Flask:
     app.register_blueprint(jira_bp)
     app.register_blueprint(api_bp)
     app.register_blueprint(research_bp)
+    app.register_blueprint(lists_bp)
 
     # Initialize data manager in blueprints
     init_promo_data_manager(data_manager)
@@ -129,8 +179,24 @@ def create_app(config: dict | None = None) -> Flask:
     try:
         t = threading.Thread(target=_warm_app_cache, args=(data_manager,), daemon=True)
         t.start()
-    except Exception:
-        pass
+    except Exception as _e:
+        logger.warning("[startup] cache warm-up thread failed to start: %s", _e)
+
+    @app.after_request
+    def add_security_headers(response):
+        response.headers.setdefault('X-Content-Type-Options', 'nosniff')
+        response.headers.setdefault('X-Frame-Options', 'SAMEORIGIN')
+        response.headers.setdefault('Referrer-Policy', 'strict-origin-when-cross-origin')
+        response.headers.setdefault(
+            'Content-Security-Policy',
+            "default-src 'self'; "
+            "script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; "
+            "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "
+            "img-src 'self' data:; "
+            "font-src 'self' data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; "
+            "connect-src 'self';"
+        )
+        return response
 
     @app.context_processor
     def inject_current_datetime():  # type: ignore

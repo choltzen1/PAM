@@ -142,19 +142,19 @@
   <div class="modal-content large-scroll">
     <div class="modal-header">
       <h2 class="modal-title">User Management</h2>
-      <span class="close" onclick="closeModal('usersModal')">&times;</span>
+      <span class="close" data-modal-close="usersModal">&times;</span>
     </div>
-    
+
     <div class="user-management-tabs">
-      <button class="tab-btn active" onclick="showUserTab('users')">Users</button>
-      <button class="tab-btn" onclick="showUserTab('groups')">Groups & Permissions</button>
+      <button class="tab-btn active" data-tab="users">Users</button>
+      <button class="tab-btn" data-tab="groups">Groups & Permissions</button>
     </div>
     
     <!-- Users Tab -->
     <div id="usersTab" class="tab-content active">
       <div class="user-management-header">
         <h3>Manage Users</h3>
-        <button class="btn-admin" onclick="showCreateUserForm()">
+        <button class="btn-admin" id="adminAddNewUserBtn">
           <i class="fas fa-plus"></i> Add New User
         </button>
       </div>
@@ -192,8 +192,8 @@
           </div>
         </div>
         <div class="form-actions">
-          <button class="btn-admin" onclick="saveUser()">Save User</button>
-          <button class="btn-admin secondary" onclick="cancelUserForm()">Cancel</button>
+          <button class="btn-admin" id="adminSaveUserBtn">Save User</button>
+          <button class="btn-admin secondary" id="adminCancelUserFormBtn">Cancel</button>
         </div>
       </div>
       
@@ -235,11 +235,11 @@
   <div class="modal-content large-scroll">
     <div class="modal-header">
       <h2 class="modal-title">Device Groupings</h2>
-      <span class="close" onclick="closeModal('deviceGroupingsModal')">&times;</span>
+      <span class="close" data-modal-close="deviceGroupingsModal">&times;</span>
     </div>
     <div class="groupings-toolbar">
-      <button class="btn-admin" onclick="showCreateGroupingForm()"><i class="fas fa-plus"></i> New Grouping</button>
-      <button class="btn-admin secondary" onclick="reloadGroupings()"><i class="fas fa-sync"></i> Refresh</button>
+      <button class="btn-admin" id="adminShowCreateGroupingBtn"><i class="fas fa-plus"></i> New Grouping</button>
+      <button class="btn-admin secondary" id="adminReloadGroupingsBtn"><i class="fas fa-sync"></i> Refresh</button>
     </div>
     <div id="groupingForm" class="grouping-form hidden">
       <h4 id="groupingFormTitle">Create Device Grouping</h4>
@@ -256,8 +256,8 @@
         <input type="text" id="groupingSkuGroupId" maxlength="3" class="form-control" placeholder="Leave blank to auto allocate">
       </div>
       <div class="form-actions tight">
-        <button class="btn-admin" onclick="saveGrouping()"><i class="fas fa-save"></i> Save</button>
-        <button class="btn-admin secondary" onclick="cancelGroupingForm()">Cancel</button>
+        <button class="btn-admin" id="adminSaveGroupingBtn"><i class="fas fa-save"></i> Save</button>
+        <button class="btn-admin secondary" id="adminCancelGroupingFormBtn">Cancel</button>
       </div>
     </div>
     <div id="deviceGroupingsContainer" class="groupings-container"></div>
@@ -269,7 +269,7 @@
   <div class="modal-content">
     <div class="modal-header">
       <h2 class="modal-title">System Configuration</h2>
-      <span class="close" onclick="closeModal('configModal')">&times;</span>
+      <span class="close" data-modal-close="configModal">&times;</span>
     </div>
     <form id="configForm">
       <div class="form-group">
@@ -296,10 +296,10 @@
         </select>
       </div>
       <div class="card-actions">
-        <button type="button" class="btn-admin" onclick="saveConfig()">
+        <button type="button" class="btn-admin" id="adminSaveConfigBtn">
           <i class="fas fa-save"></i> Save Configuration
         </button>
-        <button type="button" class="btn-admin secondary" onclick="closeModal('configModal')">
+        <button type="button" class="btn-admin secondary" data-modal-close="configModal">
           Cancel
         </button>
       </div>
@@ -352,7 +352,7 @@
   <div class="modal-content">
     <div class="modal-header">
       <h2 class="modal-title">Integration Status</h2>
-      <span class="close" onclick="closeModal('integrationsModal')">&times;</span>
+      <span class="close" data-modal-close="integrationsModal">&times;</span>
     </div>
     <div class="table-responsive">
       <table class="admin-table">
@@ -704,7 +704,7 @@ let editingUser = null;
 let editingGrouping = null;
 let currentGroupings = {};
 
-function showUserTab(tabName) {
+function showUserTab(tabName, clickedBtn) {
   // Hide all tabs
   document.querySelectorAll('.tab-content').forEach(tab => {
     tab.classList.remove('active');
@@ -712,11 +712,11 @@ function showUserTab(tabName) {
   document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.classList.remove('active');
   });
-  
+
   // Show selected tab
   document.getElementById(tabName + 'Tab').classList.add('active');
-  event.target.classList.add('active');
-  
+  if (clickedBtn) clickedBtn.classList.add('active');
+
   if (tabName === 'users') {
     loadUsers();
   } else if (tabName === 'groups') {
@@ -895,6 +895,32 @@ function loadGroups() {
 document.addEventListener('DOMContentLoaded', function() {
   console.log('Admin Dashboard loaded successfully');
   loadCacheStatus(); // Load cache status immediately
+
+  // Modal close buttons (data-modal-close attribute delegation)
+  document.addEventListener('click', (e) => {
+    const closeTarget = e.target.closest('[data-modal-close]');
+    if (closeTarget) closeModal(closeTarget.getAttribute('data-modal-close'));
+  });
+
+  // Tab buttons (data-tab attribute delegation inside user management tabs)
+  document.querySelector('.user-management-tabs')?.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-tab]');
+    if (btn) showUserTab(btn.getAttribute('data-tab'), btn);
+  });
+
+  // User form buttons
+  document.getElementById('adminAddNewUserBtn')?.addEventListener('click', showCreateUserForm);
+  document.getElementById('adminSaveUserBtn')?.addEventListener('click', saveUser);
+  document.getElementById('adminCancelUserFormBtn')?.addEventListener('click', cancelUserForm);
+
+  // Grouping form buttons
+  document.getElementById('adminShowCreateGroupingBtn')?.addEventListener('click', showCreateGroupingForm);
+  document.getElementById('adminReloadGroupingsBtn')?.addEventListener('click', reloadGroupings);
+  document.getElementById('adminSaveGroupingBtn')?.addEventListener('click', saveGrouping);
+  document.getElementById('adminCancelGroupingFormBtn')?.addEventListener('click', cancelGroupingForm);
+
+  // Config buttons
+  document.getElementById('adminSaveConfigBtn')?.addEventListener('click', saveConfig);
 });
 
 // Device Groupings Functions

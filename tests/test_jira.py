@@ -36,6 +36,7 @@ def test_create_jira_ticket_smoke(mock_post):
 
     with patch.dict(os.environ, env_overrides, clear=False):
         app.config['TESTING'] = True
+        app.config['WTF_CSRF_ENABLED'] = False
         with app.test_client() as c:
             resp = c.post(
                 '/create_jira_ticket',

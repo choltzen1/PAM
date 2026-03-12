@@ -28,7 +28,7 @@
   <!-- Controls row converted to standardized global control group -->
   <form class="promotions-controls control-bar version-controls" method="get">
     <div class="filter-group">
-      <select id="owner-filter" name="owner" onchange="this.form.submit()">
+      <select id="owner-filter" name="owner">
         <option value="all" {% if selected_owner=='all' %}selected{% endif %}>All Owners</option>
         {% for o in owners %}
           <option value="{{ o }}" {% if selected_owner==o %}selected{% endif %}>{{ o }}</option>
@@ -41,8 +41,8 @@
     </div>
     <div class="action-buttons">
       <button class="btn btn-magenta" type="button"><i class="fas fa-download"></i> Export History</button>
-      <button class="btn btn-secondary" type="button" onclick="expandAllRows()"><i class="fas fa-expand-arrows-alt"></i> Expand All</button>
-      <button class="btn btn-secondary" type="button" onclick="collapseAllRows()"><i class="fas fa-compress-arrows-alt"></i> Collapse All</button>
+      <button class="btn btn-secondary" type="button" id="expandAllBtn"><i class="fas fa-expand-arrows-alt"></i> Expand All</button>
+      <button class="btn btn-secondary" type="button" id="collapseAllBtn"><i class="fas fa-compress-arrows-alt"></i> Collapse All</button>
       <button class="btn btn-magenta" type="submit"><i class="fas fa-search"></i> Apply</button>
       <a class="btn btn-outline" href="?"><i class="fas fa-undo"></i> Reset</a>
     </div>
@@ -80,7 +80,7 @@
         <input type="hidden" name="search" value="{{ search_query }}" />
         <input type="hidden" name="owner" value="{{ selected_owner }}" />
         <label for="per_page">Rows:</label>
-        <select name="per_page" id="per_page" onchange="this.form.submit()">
+        <select name="per_page" id="per_page">
           {% for opt in [25,50,100,150,200] %}
             <option value="{{ opt }}" {% if pagination.per_page == opt %}selected{% endif %}>{{ opt }}</option>
           {% endfor %}
@@ -109,7 +109,7 @@
           {% for promo in promotions %}
           <tr class="promo-row" data-promo="{{ promo.promo_code }}">
             <td class="expand-cell">
-              <button class="expand-btn" onclick="toggleRow('{{ promo.promo_code }}')">
+              <button class="expand-btn" type="button">
                 <i class="fas fa-chevron-right"></i>
               </button>
             </td>
@@ -317,17 +317,19 @@
     document.querySelectorAll('.expand-btn i').forEach(icon => { icon.className = 'fas fa-chevron-right'; });
   }
 
-  // Make entire promo row clickable (excluding direct link clicks) after DOM loaded
   document.addEventListener('DOMContentLoaded', () => {
+    // Auto-submit on filter/pagination select changes
+    document.getElementById('owner-filter')?.addEventListener('change', function() { this.form.submit(); });
+    document.getElementById('per_page')?.addEventListener('change', function() { this.form.submit(); });
+
+    // Expand / Collapse All buttons
+    document.getElementById('expandAllBtn')?.addEventListener('click', expandAllRows);
+    document.getElementById('collapseAllBtn')?.addEventListener('click', collapseAllRows);
+
+    // Make entire promo row clickable (excluding direct link clicks)
     document.querySelectorAll('tr.promo-row').forEach(row => {
       row.addEventListener('click', (e) => {
-        const anchor = e.target.closest('a');
-        if (anchor) {
-          // Let normal navigation (left click) proceed; don't toggle row
-          return;
-        }
-        // Avoid double toggle when clicking the explicit expand button
-        if (e.target.closest('.expand-btn')) return;
+        if (e.target.closest('a')) return;
         const promoCode = row.getAttribute('data-promo');
         toggleRow(promoCode);
       });

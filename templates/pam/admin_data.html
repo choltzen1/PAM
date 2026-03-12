@@ -9,18 +9,25 @@
   </div>
   <p class="subpage-intro">Backup data, run full refresh, inspect date quality diagnostics, and view PCR version statistics.</p>
   <div class="admin-subgrid">
-    <button class="btn-admin" onclick="backupData()"><i class="fas fa-download"></i> Backup Now</button>
-    <button class="btn-admin" onclick="dataRefresh()"><i class="fas fa-database"></i> Full Data Refresh</button>
-    <button class="btn-admin" onclick="loadDateDiagnostics()"><i class="fas fa-calendar-times"></i> Date Diagnostics</button>
-    <button class="btn-admin" onclick="loadPcrStats()"><i class="fas fa-flask"></i> PCR Stats</button>
+    <button class="btn-admin" id="backupDataBtn"><i class="fas fa-download"></i> Backup Now</button>
+    <button class="btn-admin" id="dataRefreshBtn"><i class="fas fa-database"></i> Full Data Refresh</button>
+    <button class="btn-admin" id="loadDateDiagnosticsBtn"><i class="fas fa-calendar-times"></i> Date Diagnostics</button>
+    <button class="btn-admin" id="loadPcrStatsBtn"><i class="fas fa-flask"></i> PCR Stats</button>
   </div>
   <div id="data-output" class="admin-output"></div>
 </div>
 <script>
+function getCsrfToken() { return document.querySelector('meta[name="csrf-token"]')?.content || ''; }
 function showOutput(text){document.getElementById('data-output').textContent=text;}
-function backupData(){fetch('/admin/backup',{method:'POST'}).then(r=>r.json()).then(d=>showOutput(JSON.stringify(d,null,2)));}
-function dataRefresh(){fetch('/admin/data-refresh',{method:'POST'}).then(r=>r.json()).then(d=>showOutput(JSON.stringify(d,null,2)));}
+function backupData(){fetch('/admin/backup',{method:'POST',headers:{'X-CSRFToken':getCsrfToken()}}).then(r=>r.json()).then(d=>showOutput(JSON.stringify(d,null,2)));}
+function dataRefresh(){fetch('/admin/data-refresh',{method:'POST',headers:{'X-CSRFToken':getCsrfToken()}}).then(r=>r.json()).then(d=>showOutput(JSON.stringify(d,null,2)));}
 function loadDateDiagnostics(){fetch('/admin/date-diagnostics').then(r=>r.json()).then(d=>showOutput(JSON.stringify(d,null,2)));}
 function loadPcrStats(){fetch('/admin/pcr-stats').then(r=>r.json()).then(d=>showOutput(JSON.stringify(d,null,2)));}
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('backupDataBtn')?.addEventListener('click', backupData);
+  document.getElementById('dataRefreshBtn')?.addEventListener('click', dataRefresh);
+  document.getElementById('loadDateDiagnosticsBtn')?.addEventListener('click', loadDateDiagnostics);
+  document.getElementById('loadPcrStatsBtn')?.addEventListener('click', loadPcrStats);
+});
 </script>
 {% endblock %}

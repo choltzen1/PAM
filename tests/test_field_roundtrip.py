@@ -1,5 +1,5 @@
 import types
-from datetime import datetime
+from datetime import datetime, timezone
 import pytest
 from data.field_map import EDITABLE_CANONICAL_FIELDS, canonical_to_physical
 from data.database import DatabaseManager
@@ -66,8 +66,8 @@ def build_row(code: str, field_values: dict):
         row[phys] = value
     # Always include a couple baseline fields
     row.setdefault('Owner', 'Tester')
-    row.setdefault('promo_start_date', datetime.utcnow().strftime('%Y-%m-%d'))
-    row.setdefault('promo_end_date', datetime.utcnow().strftime('%Y-%m-%d'))
+    row.setdefault('promo_start_date', datetime.now(timezone.utc).strftime('%Y-%m-%d'))
+    row.setdefault('promo_end_date', datetime.now(timezone.utc).strftime('%Y-%m-%d'))
     return row
 
 

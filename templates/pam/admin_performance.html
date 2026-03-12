@@ -9,14 +9,19 @@
   </div>
   <p class="subpage-intro">Monitor cache effectiveness and manually refresh or inspect detailed metrics.</p>
   <div class="admin-subgrid">
-    <button class="btn-admin" onclick="refreshCache()"><i class="fas fa-sync"></i> Refresh Cache</button>
-    <button class="btn-admin" onclick="showMetrics()"><i class="fas fa-chart-line"></i> Detailed Metrics</button>
+    <button class="btn-admin" id="refreshCacheBtn"><i class="fas fa-sync"></i> Refresh Cache</button>
+    <button class="btn-admin" id="showMetricsBtn"><i class="fas fa-chart-line"></i> Detailed Metrics</button>
   </div>
   <div id="perf-output" class="admin-output"></div>
 </div>
 <script>
+function getCsrfToken() { return document.querySelector('meta[name="csrf-token"]')?.content || ''; }
 function showOutput(t){document.getElementById('perf-output').textContent=t;}
-function refreshCache(){fetch('/admin/cache-refresh',{method:'POST'}).then(r=>r.json()).then(d=>showOutput(JSON.stringify(d,null,2)));}
+function refreshCache(){fetch('/admin/cache-refresh',{method:'POST',headers:{'X-CSRFToken':getCsrfToken()}}).then(r=>r.json()).then(d=>showOutput(JSON.stringify(d,null,2)));}
 function showMetrics(){fetch('/admin/cache-status').then(r=>r.json()).then(d=>showOutput(JSON.stringify(d,null,2)));}
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('refreshCacheBtn')?.addEventListener('click', refreshCache);
+  document.getElementById('showMetricsBtn')?.addEventListener('click', showMetrics);
+});
 </script>
 {% endblock %}

@@ -9,12 +9,15 @@
   </div>
   <p class="subpage-intro">Review system statistics and audit-related summaries.</p>
   <div class="admin-subgrid">
-    <button class="btn-admin" onclick="loadAudit()"><i class="fas fa-history"></i> Audit Snapshot</button>
+    <button class="btn-admin" id="loadAuditBtn"><i class="fas fa-history"></i> Audit Snapshot</button>
   </div>
   <div id="sec-output" class="admin-output"></div>
 </div>
 <script>
 function showOutput(t){document.getElementById('sec-output').textContent=t;}
 function loadAudit(){fetch('/admin/stats').then(r=>r.json()).then(d=>showOutput(JSON.stringify(d,null,2)));}
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('loadAuditBtn')?.addEventListener('click', loadAudit);
+});
 </script>
 {% endblock %}

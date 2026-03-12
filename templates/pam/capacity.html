@@ -54,7 +54,7 @@
           </h3>
           <div class="date-filter">
             <label for="week-filter">Week:</label>
-            <select id="week-filter" name="week-filter" class="week-dropdown" onchange="filterByWeek()">
+            <select id="week-filter" name="week-filter" class="week-dropdown">
               {% for wk in week_options %}
                 {% set parts = wk.split('-') %}
                 {% set display = parts[0] ~ ' - ' ~ parts[1] %}
@@ -164,10 +164,11 @@
 function filterByWeek() {
   const weekFilter = document.getElementById('week-filter');
   const selectedWeek = weekFilter.value;
-  
-  // Reload the page with the selected week parameter
   window.location.href = `/capacity?week=${encodeURIComponent(selectedWeek)}`;
 }
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('week-filter')?.addEventListener('change', filterByWeek);
+});
 </script>
 
 {% endblock %}

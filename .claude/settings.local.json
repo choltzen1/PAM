@@ -1,0 +1,39 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls -la /c/Users/CHoltze1/PAM/tests/test_*.py)",
+      "Bash(xargs grep:*)",
+      "Bash(grep -h \"^\\\\.[a-z-]*\\\\s*{\" /c/Users/CHoltze1/PAM/static/css/*.css)",
+      "Bash(grep -o \"^\\\\.[a-z-]*\" /c/Users/CHoltze1/PAM/static/css/*.css)",
+      "Bash(grep -h \"^@media\" /c/Users/CHoltze1/PAM/static/css/*.css)",
+      "Bash(python -m pytest tests/test_auth.py tests/test_cache.py tests/test_database_utils.py -v)",
+      "Bash(PYTEST_ALLOW_PROD_DB=1 python -m pytest tests/test_auth.py tests/test_cache.py tests/test_database_utils.py -v)",
+      "Bash(PYTEST_ALLOW_PROD_DB=1 python -m pytest -v)",
+      "WebSearch",
+      "Bash(python -m pytest tests/ -x -q --tb=short)",
+      "Bash(pip install:*)",
+      "Bash(python -c \"from factory import create_app; app = create_app\\(\\); print\\(''''App created successfully''''\\)\")",
+      "Bash(PYTEST_ALLOW_PROD_DB=1 python -m pytest tests/ -q --tb=short --ignore=tests/test_database_connectivity.py -m \"not integration\")",
+      "Bash(python -c \"from factory import create_app; app = create_app\\(\\); print\\(''csrf_token in globals:'', ''csrf_token'' in app.jinja_env.globals\\)\")",
+      "Bash(grep -l \"app.config\\\\[''TESTING''\\\\] = True\" tests/*.py)",
+      "Bash(sed -i \"s/app\\\\.config\\\\[''TESTING''\\\\] = True/app.config[''TESTING''] = True\\\\n    app.config[''WTF_CSRF_ENABLED''] = False/g\" tests/test_clear_endpoints.py tests/test_get_promo_codes.py tests/test_jira.py)",
+      "Bash(sed -i \"s/flask_app\\\\.config\\\\[''TESTING''\\\\] = True/flask_app.config[''TESTING''] = True\\\\n    flask_app.config[''WTF_CSRF_ENABLED''] = False/g\" tests/test_sql_generation_e2e.py)",
+      "Bash(PYTEST_ALLOW_PROD_DB=1 python -m pytest tests/test_admin_delete_promo.py -q --tb=short)",
+      "Bash(PYTEST_ALLOW_PROD_DB=1 python -m pytest tests/ -q --tb=line --ignore=tests/test_database_connectivity.py -m \"not integration\")",
+      "Bash(python -m ast tests/test_clear_endpoints.py tests/test_get_promo_codes.py tests/test_sql_generation_e2e.py)",
+      "Bash(python -c \"import ast; [ast.parse\\(open\\(f\\).read\\(\\)\\) for f in [''tests/test_clear_endpoints.py'',''tests/test_get_promo_codes.py'',''tests/test_sql_generation_e2e.py'']]; print\\(''OK''\\)\")",
+      "Bash(PYTEST_ALLOW_PROD_DB=1 python -m pytest tests/ -q --ignore=tests/test_database_connectivity.py -m \"not integration\")",
+      "Bash(PYTEST_ALLOW_PROD_DB=1 python -m pytest tests/ --ignore=tests/test_database_connectivity.py -m \"not integration\")",
+      "Bash(PYTEST_ALLOW_PROD_DB=1 python -m pytest tests/test_storage.py tests/test_security_headers.py -q --tb=short)",
+      "Bash(PYTEST_ALLOW_PROD_DB=1 python -m pytest tests/test_storage.py -v)",
+      "Bash(PYTEST_ALLOW_PROD_DB=1 python -m pytest --tb=short -q)",
+      "Bash(PYTEST_ALLOW_PROD_DB=1 python -m pytest -q)",
+      "Bash(PYTEST_ALLOW_PROD_DB=1 python -m pytest)",
+      "Bash(PYTEST_ALLOW_PROD_DB=1 python -m pytest tests/test_security_headers.py -v)",
+      "Bash(pip show:*)",
+      "Bash(pip-audit -r requirements.txt --format=columns)",
+      "Bash(PAM_VALIDATION_MODE=1 python -c \"from factory import create_app; app = create_app\\({''TESTING'': True}\\); print\\(''OK - blueprints:'', [r.name for r in app.blueprints.values\\(\\)]\\)\")",
+      "Bash(PAM_VALIDATION_MODE=1 python -c \":*)"
+    ]
+  }
+}

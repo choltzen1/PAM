@@ -19,7 +19,7 @@
 
 {% block header_right %}
 <div class="dm-header-actions">
-  <button class="btn dm-refresh-btn" onclick="refreshData()">
+  <button class="btn dm-refresh-btn" id="dmRefreshBtn">
     <i class="fas fa-sync-alt"></i> Refresh Data
   </button>
   <span class="dm-user-label">{{ user_name or 'Coming Soon' }}</span>
@@ -110,13 +110,13 @@
       </div>
       
       <div class="btn-group">
-        <button class="btn btn-primary" onclick="batchUpdatePam()" id="batchUpdateBtn">
+        <button class="btn btn-primary" id="batchUpdateBtn">
           <i class="fas fa-upload"></i> Batch Update PAM
         </button>
-        <button class="btn btn-success" onclick="batchGenerateSql()" id="batchSqlBtn">
+        <button class="btn btn-success" id="batchSqlBtn">
           <i class="fas fa-code"></i> Batch Generate SQL
         </button>
-        <button class="btn btn-secondary" onclick="clearSelection()">
+        <button class="btn btn-secondary" id="clearSelectionBtn">
           <i class="fas fa-times"></i> Clear Selection
         </button>
       </div>
@@ -138,7 +138,7 @@
                   <a href="#" id="downloadSqlBtn" class="btn btn-sm btn-outline">
                     <i class="fas fa-download"></i> Download SQL
                   </a>
-                  <button type="button" onclick="toggleSqlPreview()" id="sqlPreviewBtn"
+                  <button type="button" id="sqlPreviewBtn"
                           class="btn btn-sm btn-outline ml-5">
                     <i class="fas fa-eye"></i> Preview
                   </button>
@@ -151,7 +151,7 @@
   <div id="sqlPreviewContainer" class="hidden">
         <div class="sql-preview-header">
           <span>SQL Preview</span>
-          <button type="button" onclick="clearSqlPreview()" class="btn btn-sm btn-link">
+          <button type="button" id="clearSqlPreviewBtn" class="btn btn-sm btn-link">
             <i class="fas fa-times"></i> Close Preview
           </button>
         </div>
@@ -165,7 +165,7 @@
         <thead>
           <tr>
             <th class="txt-center">
-              <input type="checkbox" id="selectAll" onchange="toggleSelectAll()">
+              <input type="checkbox" id="selectAll">
             </th>
             <th data-sort-type="string">Promo Owner</th>
             <th data-sort-type="string">ORBIT Number</th>
@@ -180,7 +180,7 @@
           {% for promo in promos %}
           <tr class="mismatch-row" data-mismatch-type="{{ promo.mismatch_type }}" data-owner="{{ promo.owner }}" data-promo-code="{{ promo.code }}">
             <td>
-              <input type="checkbox" class="row-checkbox" value="{{ promo.code }}" onchange="updateBatchActions()">
+              <input type="checkbox" class="row-checkbox" value="{{ promo.code }}">
             </td>
             <td class="promo-owner">{{ promo.owner or 'N/A' }}</td>
             <td class="orbit-number">{{ promo.orbit_id or 'N/A' }}</td>
@@ -199,7 +199,7 @@
               {% endif %}
             </td>
             <td class="actions">
-              <button class="btn btn-sm btn-outline-secondary" onclick="syncToPam('{{ promo.code }}', this)">
+              <button class="btn btn-sm btn-outline-secondary dm-sync-btn" data-promo-code="{{ promo.code }}">
                 <i class="fas fa-upload"></i> Update PAM
               </button>
             </td>
@@ -214,7 +214,7 @@
         <i class="fas fa-calendar-check display-1 text-success mb-3"></i>
         <h4 class="text-success">No Date Mismatches Found</h4>
         <p class="text-muted">All promotion dates are in sync between ORBIT and PAM.</p>
-        <button class="btn btn-primary mt-3" onclick="refreshData()">
+        <button class="btn btn-primary mt-3 dm-refresh-btn" id="dmRefreshBtnEmpty">
           <i class="fas fa-sync-alt"></i> Check Again
         </button>
       </div>
@@ -228,7 +228,7 @@
   <div class="card-header bg-info text-white">
     <h6 class="mb-0">
       <i class="fas fa-eye"></i> SQL Preview
-      <button type="button" class="btn btn-sm btn-outline-light float-right" onclick="hideSqlPreview()">
+      <button type="button" class="btn btn-sm btn-outline-light float-right" id="hideSqlPreviewBtn">
         <i class="fas fa-times"></i> Close
       </button>
     </h6>
@@ -768,6 +768,30 @@ document.getElementById('search-input').addEventListener('input', function() {
 
 bindMismatchRowClickSelection();
 updateBatchActions();
+
+document.addEventListener('DOMContentLoaded', () => {
+  // Bind previously-inline event handlers
+  document.getElementById('dmRefreshBtn')?.addEventListener('click', refreshData);
+  document.getElementById('dmRefreshBtnEmpty')?.addEventListener('click', refreshData);
+  document.getElementById('batchUpdateBtn')?.addEventListener('click', batchUpdatePam);
+  document.getElementById('batchSqlBtn')?.addEventListener('click', batchGenerateSql);
+  document.getElementById('clearSelectionBtn')?.addEventListener('click', clearSelection);
+  document.getElementById('sqlPreviewBtn')?.addEventListener('click', toggleSqlPreview);
+  document.getElementById('clearSqlPreviewBtn')?.addEventListener('click', clearSqlPreview);
+  document.getElementById('hideSqlPreviewBtn')?.addEventListener('click', hideSqlPreview);
+  document.getElementById('selectAll')?.addEventListener('change', toggleSelectAll);
+
+  // Row checkboxes (event delegation)
+  document.querySelector('table.promo-table tbody')?.addEventListener('change', (e) => {
+    if (e.target.classList.contains('row-checkbox')) updateBatchActions();
+  });
+
+  // Sync buttons (event delegation via data-promo-code)
+  document.querySelector('table.promo-table tbody')?.addEventListener('click', (e) => {
+    const btn = e.target.closest('.dm-sync-btn[data-promo-code]');
+    if (btn) syncToPam(btn.getAttribute('data-promo-code'), btn);
+  });
+});
 </script>
 
 {% endblock %}

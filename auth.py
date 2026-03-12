@@ -248,16 +248,62 @@ def role_required(required_role: str):
 
 def get_current_user() -> Optional[Dict[str, Any]]:
     """Get the current authenticated user from Flask g object or headers.
-    
+
     Returns:
         User info dictionary or None if not authenticated
     """
     # Check if user is already stored in g (from decorator)
     if hasattr(g, 'user'):
         return g.user
-    
+
     # Otherwise, extract from headers
     return get_user_from_headers()
+
+
+def get_current_user_name() -> Optional[str]:
+    """Extract the current user's display name from Azure Easy Auth headers.
+
+    Preference order: givenname + surname → name claim → preferred_username/email
+    → X-MS-CLIENT-PRINCIPAL-NAME header fallback.
+
+    Returns:
+        Display name string, or None if not authenticated.
+    """
+    try:
+        b64 = request.headers.get('X-MS-CLIENT-PRINCIPAL')
+        if b64:
+            try:
+                payload = json.loads(base64.b64decode(b64).decode('utf-8'))
+                claims = payload.get('claims', [])
+
+                def _claim(key: str) -> Optional[str]:
+                    for c in claims:
+                        if c.get('typ') == key:
+                            return c.get('val')
+                    return None
+
+                given = _claim('givenname') or _claim('http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname')
+                surname = _claim('surname') or _claim('http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname')
+                if given or surname:
+                    return f"{(given or '').strip()} {(surname or '').strip()}".strip()
+                name = _claim('name') or _claim('http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name')
+                if name:
+                    return name
+                preferred = (
+                    _claim('preferred_username')
+                    or _claim('http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress')
+                    or _claim('emailaddress')
+                )
+                if preferred:
+                    return preferred
+            except Exception:
+                pass
+        simple = request.headers.get('X-MS-CLIENT-PRINCIPAL-NAME')
+        if simple:
+            return simple
+    except Exception:
+        pass
+    return None
 
 
 def is_admin() -> bool:
