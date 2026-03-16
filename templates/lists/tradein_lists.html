@@ -36,5 +36,16 @@
     </div>
   </div>
 
+  <div class="tradein-actions">
+    <p id="tradeinErrorMsg" class="tradein-error-msg" hidden></p>
+    <button class="tradein-create-btn" id="createTradeListBtn">
+      <i class="bi bi-plus-lg"></i> Create Trade List
+    </button>
+  </div>
+
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/tradein_lists.js') }}"></script>
 {% endblock %}

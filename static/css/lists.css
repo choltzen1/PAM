@@ -111,6 +111,41 @@ body.lists--home .workspaces-section {
   grid-template-columns: repeat(2, 1fr);
 }
 
+/* ── Trade-in page: lock to viewport, no outer scroll ── */
+body.lists--tradein > .app-main-scroll {
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+body.lists--tradein .lists-page-wrapper {
+  flex: 1;
+  min-height: 0;
+  padding-top: clamp(0.75rem, 1.5vh, 1.25rem);
+  padding-bottom: clamp(0.5rem, 1vh, 0.75rem);
+  gap: clamp(0.5rem, 1vh, 1rem);
+}
+
+body.lists--tradein .tradein-tier-grid {
+  flex: 1;
+  min-height: 0;
+}
+
+body.lists--tradein .tradein-tier-col {
+  min-height: 0;
+}
+
+body.lists--tradein .tradein-tier-textarea {
+  flex: 1;
+  min-height: 0;
+  height: 100%;
+  resize: none;
+}
+
+body.lists--tradein .tradein-actions {
+  margin-top: 0;
+}
+
 /* ── Trade-in tier columns ────────────────────────────── */
 .tradein-tier-grid {
   display: grid;
@@ -136,7 +171,7 @@ html[data-theme='dark'] .tradein-tier-label { color: rgba(255,255,255,0.75); }
 
 .tradein-tier-textarea {
   width: 100%;
-  min-height: 320px;
+  min-height: 200px;
   resize: vertical;
   border-radius: 10px;
   padding: 0.75rem 1rem;
@@ -174,6 +209,54 @@ html[data-theme='dark'] .tradein-tier-textarea:focus {
 }
 
 html[data-theme='dark'] .tradein-tier-textarea::placeholder { color: rgba(255,255,255,0.35) !important; }
+
+.tradein-actions {
+  margin-top: clamp(1rem, 1.5vw, 1.5rem);
+  display: flex;
+  justify-content: flex-end;
+}
+
+.tradein-create-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.55rem 1.25rem;
+  border-radius: 8px;
+  border: none;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.1s ease;
+  background: #E20074;
+  color: #fff;
+}
+
+.tradein-create-btn:hover { background: #b8005e; }
+.tradein-create-btn:active { transform: scale(0.97); }
+.tradein-create-btn.is-loading { opacity: 0.75; cursor: not-allowed; pointer-events: none; }
+
+.tradein-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255,255,255,0.35);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: tradein-spin 0.65s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes tradein-spin {
+  to { transform: rotate(360deg); }
+}
+
+.tradein-error-msg {
+  margin: 0;
+  font-size: 0.8rem;
+  color: #c0392b;
+  flex: 1;
+}
+
+html[data-theme='dark'] .tradein-error-msg { color: #ff6b6b; }
 
 /* ── Upload dropzone ──────────────────────────────────── */
 .lists-upload-area {

@@ -1,0 +1,195 @@
+MAXVALUE_MFG	MARKETING_NAME	Tiers
+Apple	iPhone 13	1
+Apple	iPhone 13 mini	1
+Apple	iPhone 13 Pro	1
+Apple	iPhone 13 Pro Max	1
+Apple	iPhone 14	1
+Apple	iPhone 14 Plus	1
+Apple	iPhone 14 Pro	1
+Apple	iPhone 14 Pro Max	1
+Apple	iPhone 15	1
+Apple	iPhone 15 Plus	1
+Apple	iPhone 15 Pro	1
+Apple	iPhone 15 Pro Max	1
+Apple	iPhone 16	1
+Apple	iPhone 16 Plus	1
+Apple	iPhone 16 Pro	1
+Apple	iPhone 16 Pro Max	1
+Apple	iPhone 16e	1
+Google	Pixel 6	1
+Google	Pixel 6 Pro	1
+Google	Pixel 7 5G	1
+Google	Pixel 7 Pro 5G	1
+Google	Pixel 8 5G	1
+Google	Pixel 8 Pro 5G	1
+Google	Pixel 9 5G	1
+Google	Pixel 9 Pro 5G	1
+Google	Pixel 9 Pro Fold 5G	1
+Google	Pixel 9 Pro XL 5G	1
+Google	Pixel Fold 5G	1
+Motorola	RAZR 5G 2025	1
+Motorola	RAZR Ultra 5G 2025	1
+Motorola	RAZR Plus 5G 2023	1
+Motorola	RAZR Plus 5G 2024	1
+Motorola	RAZR Plus 5G 2025	1
+OnePlus	10 Pro 5G	1
+OnePlus	9 Pro 5G	1
+Samsung	Galaxy Note 20 4G	1
+Samsung	Galaxy Note 20 5G	1
+Samsung	Galaxy Note 20 Ultra 4G	1
+Samsung	Galaxy Note 20 Ultra 5G	1
+Samsung	Galaxy S20	1
+Samsung	Galaxy S20 Fan Edition	1
+Samsung	Galaxy S20 Fan Edition 2022	1
+Samsung	Galaxy S20 Fan Edition 5G	1
+Samsung	Galaxy S20 Plus	1
+Samsung	Galaxy S20 Plus 5G	1
+Samsung	Galaxy S20 Plus 5G BTS	1
+Samsung	Galaxy S20 5G	1
+Samsung	Galaxy S20 5G BTS Edition	1
+Samsung	Galaxy S20 Ultra 4G	1
+Samsung	Galaxy S20 Ultra 5G	1
+Samsung	Galaxy S21 5G	1
+Samsung	Galaxy S21 5G Olympic	1
+Samsung	Galaxy S21 Fan Edition 5G	1
+Samsung	Galaxy S21 Plus 5G	1
+Samsung	Galaxy S21 Ultra 5G	1
+Samsung	Galaxy S22 5G	1
+Samsung	Galaxy S22 Plus 5G	1
+Samsung	Galaxy S22 Ultra 5G	1
+Samsung	Galaxy S23 5G	1
+Samsung	Galaxy S23 Fan Edition 5G	1
+Samsung	Galaxy S23 Plus 5G	1
+Samsung	Galaxy S23 Ultra 5G	1
+Samsung	Galaxy S24 5G	1
+Samsung	Galaxy S24 Fan Edition 5G	1
+Samsung	Galaxy S24 Plus 5G	1
+Samsung	Galaxy S24 Ultra 5G	1
+Samsung	Galaxy S25 5G	1
+Samsung	Galaxy S25 Fan Edition 5G	1
+Samsung	Galaxy S25 Plus 5G	1
+Samsung	Galaxy S25 Edge 5G	1
+Samsung	Galaxy S25 Ultra 5G	1
+Samsung	Galaxy Z Flip 3 5G	1
+Samsung	Galaxy Z Flip 3 5G Thom Browne	1
+Samsung	Galaxy Z Flip 4 5G	1
+Samsung	Galaxy Z Flip 5 5G	1
+Samsung	Galaxy Z Flip 6 5G	1
+Samsung	Galaxy Z Flip 7 5G	1
+Samsung	Galaxy Z Fold 3 5G	1
+Samsung	Galaxy Z Fold 3 5G Thom Browne	1
+Samsung	Galaxy Z Fold 4 5G	1
+Samsung	Galaxy Z Fold 5 5G	1
+Samsung	Galaxy Z Fold 6 5G	1
+Samsung	Galaxy Z Fold 7 5G	1
+Apple	iPhone 1	2
+Apple	iPhone 11	2
+Apple	iPhone 11 Pro	2
+Apple	iPhone 11 Pro Max	2
+Apple	iPhone 12	2
+Apple	iPhone 12 mini	2
+Apple	iPhone 12 Pro	2
+Apple	iPhone 12 Pro Max	2
+Apple	iPhone 3G	2
+Apple	iPhone 3Gs	2
+Apple	iPhone 4	2
+Apple	iPhone 4s	2
+Apple	iPhone 5	2
+Apple	iPhone 5 (CDMA)	2
+Apple	iPhone 5c	2
+Apple	iPhone 5c (CDMA)	2
+Apple	iPhone 5s	2
+Apple	iPhone 5s (CDMA)	2
+Apple	iPhone 6	2
+Apple	iPhone 6 Plus	2
+Apple	iPhone 6s	2
+Apple	iPhone 6s Plus	2
+Apple	iPhone 7	2
+Apple	iPhone 7 Plus	2
+Apple	iPhone 8	2
+Apple	iPhone 8 Plus	2
+Apple	iPhone SE	2
+Apple	iPhone SE 2	2
+Apple	iPhone SE 3	2
+Apple	iPhone X	2
+Apple	iPhone XR	2
+Apple	iPhone XS	2
+Apple	iPhone XS Max	2
+Google	Pixel 4	2
+Google	Pixel 4 XL	2
+Google	Pixel 4a	2
+Google	Pixel 4a 5G	2
+Google	Pixel 5 5G	2
+Google	Pixel 5a 5G	2
+Google	Pixel 6a	2
+Google	Pixel 7a 5G	2
+Google	Pixel 8a 5G	2
+Google	Pixel 9a 5G	2
+Motorola	Moto Edge 5G 2022	2
+Motorola	Moto Edge 5G 2023	2
+Motorola	Moto Edge 5G 2024	2
+Motorola	RAZR 5G 2024	2
+Motorola	Razr 40 5G	2
+Motorola	Razr 40 Ultra	2
+OnePlus	10T 5G	2
+OnePlus	7 Pro 5G	2
+OnePlus	7 Pro 5G (8GB)	2
+OnePlus	7T Pro (8GB)	2
+OnePlus	7T Pro 5G McLaren	2
+OnePlus	7T Pro McLaren (12GB)	2
+OnePlus	8 5G	2
+OnePlus	8 Pro 5G	2
+OnePlus	8T	2
+OnePlus	8T Cyberpunk 2077	2
+OnePlus	8T Plus 5G	2
+OnePlus	9 5G	2
+Samsung	Galaxy A32 4G	2
+Samsung	Galaxy A32 5G	2
+Samsung	Galaxy A35 5G	2
+Samsung	Galaxy A36 5G	2
+Samsung	Galaxy A51	2
+Samsung	Galaxy A51 Dual SIM	2
+Samsung	Galaxy A51 5G	2
+Samsung	Galaxy A52	2
+Samsung	Galaxy A52 5G	2
+Samsung	Galaxy A53 5G	2
+Samsung	Galaxy A54 5G	2
+Samsung	Galaxy A71	2
+Samsung	Galaxy A71 5G	2
+Samsung	Galaxy Note 10	2
+Samsung	Galaxy Note 10 5G	2
+Samsung	Galaxy Note 10 Plus 5G	2
+Samsung	Galaxy Note 10 Lite	2
+Samsung	Galaxy Note 10 Lite (6GB)	2
+Samsung	Galaxy Note 10 Lite (8GB)	2
+Samsung	Galaxy Note 8	2
+Samsung	Galaxy Note 8 (Korea)	2
+Samsung	Galaxy Note 8 Limited Edition	2
+Samsung	Galaxy Note 9	2
+Samsung	Galaxy S10	2
+Samsung	Galaxy S10 Lite	2
+Samsung	Galaxy S10 Lite (6GB)	2
+Samsung	Galaxy S10 Lite (8GB)	2
+Samsung	Galaxy S10 Plus	2
+Samsung	Galaxy S10 Plus V2	2
+Samsung	Galaxy S10 V2	2
+Samsung	Galaxy S10 5G	2
+Samsung	Galaxy S10e	2
+Samsung	Galaxy S10e V2	2
+Samsung	Galaxy S8	2
+Samsung	Galaxy S8 Plus	2
+Samsung	Galaxy S8 Plus (KT)	2
+Samsung	Galaxy S8 Plus Dual	2
+Samsung	Galaxy S8 Plus Duos	2
+Samsung	Galaxy S8 Active	2
+Samsung	Galaxy S9	2
+Samsung	Galaxy S9 Duos	2
+Samsung	Galaxy S9 Plus	2
+Samsung	Galaxy S9 Plus Dual	2
+Samsung	Galaxy S9 Plus Duos	2
+Samsung	Galaxy Z Flip	2
+Samsung	Galaxy Z Flip Thom Browne	2
+Samsung	Galaxy Z Flip 5G	2
+Samsung	Galaxy Z Fold Special 5G	2
+Samsung	Galaxy Z Fold2 5G	2
+Samsung	Galaxy Z Fold2 5G Thom Browne	2
