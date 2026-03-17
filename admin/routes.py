@@ -1013,10 +1013,10 @@ def admin_delete_reference_grouping(code):
 @admin_bp.route('/admin/validate-orbit-data')
 @role_required('pam_admin')
 def validate_orbit_data():
-    """Validate ORBIT data from Fabric against PAM field requirements.
+    """Validate ORBIT data from SQL Server staging table against PAM field requirements.
     
-    This endpoint queries Fabric for sample records and validates each field
-    against what PAM needs. Used to prove data quality for stakeholder meetings.
+    Queries [PAM].[OrbitPromoExtract_stg] for sample records and validates each
+    field against what PAM needs. Used to prove data quality for stakeholder meetings.
     
     Returns JSON with:
     - field_stats: Population % and validation status for each field
@@ -1025,83 +1025,83 @@ def validate_orbit_data():
     """
     from datetime import datetime
     
-    # PAM field mapping requirements
+    orbit_stg_table = os.getenv('ORBIT_STG_TABLE', '[PAM].[OrbitPromoExtract_stg]')
+    
+    # PAM field mapping requirements (source columns match Fabric/staging schema)
     PAM_FIELD_MAPPINGS = {
         # Required Identity Fields
-        'bill_facing_name': {'fabric_columns': ['cat_billname'], 'required': True},
-        'initiative_name': {'fabric_columns': ['cat_initiativename'], 'required': True},
-        'orbit_id': {'fabric_columns': ['cat_gtmentryid', 'cat_legacygtmentryid'], 'required': True},
-        'Owner': {'fabric_columns': ['crffc_productownername', 'crffc_businessownername'], 'required': True},
-        'promo_start_date': {'fabric_columns': ['cat_startdate', 'cat_requestedlaunchdate'], 'required': True},
+        'bill_facing_name': {'source_columns': ['cat_billname'], 'required': True},
+        'initiative_name': {'source_columns': ['cat_initiativename'], 'required': True},
+        'orbit_id': {'source_columns': ['cat_gtmentryid', 'cat_legacygtmentryid'], 'required': True},
+        'Owner': {'source_columns': ['crffc_productownername', 'crffc_businessownername'], 'required': True},
+        'promo_start_date': {'source_columns': ['cat_startdate', 'cat_requestedlaunchdate'], 'required': True},
         
         # Optional but important fields
-        'description': {'fabric_columns': ['cat_description'], 'required': False},
-        'promo_notes': {'fabric_columns': ['cat_notes'], 'required': False},
-        'promo_end_date': {'fabric_columns': ['cat_enddate'], 'required': False},
-        'comm_end_date': {'fabric_columns': ['cat_commenddate'], 'required': False},
-        'amount': {'fabric_columns': ['cat_amount', 'crffc_amount'], 'required': False},
-        'discount': {'fabric_columns': ['cat_discount'], 'required': False},
-        'product_type': {'fabric_columns': ['cat_producttypename'], 'required': False},
+        'description': {'source_columns': ['cat_description'], 'required': False},
+        'promo_notes': {'source_columns': ['cat_notes'], 'required': False},
+        'promo_end_date': {'source_columns': ['cat_enddate'], 'required': False},
+        'comm_end_date': {'source_columns': ['cat_commenddate'], 'required': False},
+        'amount': {'source_columns': ['cat_amount', 'crffc_amount'], 'required': False},
+        'discount': {'source_columns': ['cat_discount'], 'required': False},
+        'product_type': {'source_columns': ['cat_producttypename'], 'required': False},
         
         # Segmentation fields
-        'market_group': {'fabric_columns': ['cat_marketgroupname'], 'required': False},
-        'store_group': {'fabric_columns': ['cat_storegroupname'], 'required': False},
-        'soc_grouping': {'fabric_columns': ['cat_socgrouping'], 'required': False},
-        'account_type': {'fabric_columns': ['cat_accounttypename'], 'required': False},
-        'sales_application': {'fabric_columns': ['cat_salesapplicationname'], 'required': False},
-        'segment_name': {'fabric_columns': ['cat_segmentname'], 'required': False},
-        'channels': {'fabric_columns': ['cat_channelsname'], 'required': False},
+        'market_group': {'source_columns': ['cat_marketgroupname'], 'required': False},
+        'store_group': {'source_columns': ['cat_storegroupname'], 'required': False},
+        'soc_grouping': {'source_columns': ['cat_socgrouping'], 'required': False},
+        'account_type': {'source_columns': ['cat_accounttypename'], 'required': False},
+        'sales_application': {'source_columns': ['cat_salesapplicationname'], 'required': False},
+        'segment_name': {'source_columns': ['cat_segmentname'], 'required': False},
+        'channels': {'source_columns': ['cat_channelsname'], 'required': False},
         
         # Execution fields
-        'device_sales_type': {'fabric_columns': ['cat_devicesalestypename'], 'required': False},
-        'activation_type': {'fabric_columns': ['cat_activationtypename'], 'required': False},
-        'active_line_required': {'fabric_columns': ['cat_activelinerequired'], 'required': False},
-        'maintain_soc': {'fabric_columns': ['cat_maintainsoc'], 'required': False},
-        'limit_per_ban': {'fabric_columns': ['cat_limitperban'], 'required': False},
+        'device_sales_type': {'source_columns': ['cat_devicesalestypename'], 'required': False},
+        'activation_type': {'source_columns': ['cat_activationtypename'], 'required': False},
+        'active_line_required': {'source_columns': ['cat_activelinerequired'], 'required': False},
+        'maintain_soc': {'source_columns': ['cat_maintainsoc'], 'required': False},
+        'limit_per_ban': {'source_columns': ['cat_limitperban'], 'required': False},
         
         # Links
-        'orbit_link': {'fabric_columns': ['cat_orbitlink'], 'required': False},
-        'legal_link': {'fabric_columns': ['cat_legallink'], 'required': False},
-        'c2_link': {'fabric_columns': ['cat_c2link'], 'required': False},
+        'orbit_link': {'source_columns': ['cat_orbitlink'], 'required': False},
+        'legal_link': {'source_columns': ['cat_legallink'], 'required': False},
+        'c2_link': {'source_columns': ['cat_c2link'], 'required': False},
         
         # Additional owners
-        'business_owner': {'fabric_columns': ['crffc_businessownername'], 'required': False},
-        'sponsoring_vp': {'fabric_columns': ['crffc_sponsoringvpname'], 'required': False},
-        'product_owner': {'fabric_columns': ['crffc_productownername'], 'required': False},
+        'business_owner': {'source_columns': ['crffc_businessownername'], 'required': False},
+        'sponsoring_vp': {'source_columns': ['crffc_sponsoringvpname'], 'required': False},
+        'product_owner': {'source_columns': ['crffc_productownername'], 'required': False},
     }
     
     try:
-        from data.fabric_database import fabric_db as fabric
+        from data.database import DatabaseManager
+        db = DatabaseManager()
+        engine = db.get_engine()
         
-        # Test connection
-        if not fabric.test_connection():
+        if not engine:
             return jsonify({
-                'success': False, 
-                'message': 'Failed to connect to Fabric',
-                'last_error': getattr(fabric, '_last_error', 'Unknown error')
+                'success': False,
+                'message': 'Failed to connect to SQL Server',
             }), 500
         
-        # Query sample data
-        conn = fabric._get_connection()
-        cursor = conn.cursor()
+        # Get 100 recent records from staging table for analysis
+        query = text(f"""
+            SELECT TOP 100 *
+            FROM {orbit_stg_table}
+            WHERE statuscodename = 'Active'
+            ORDER BY modifiedon DESC
+        """)
         
-        # Get 100 recent active records for analysis
-        query = """
-        SELECT TOP 100 *
-        FROM dbo.ORBIT_Reporting_Table
-        WHERE statuscodename = 'Active'
-        ORDER BY modifiedon DESC
-        """
-        
-        cursor.execute(query)
-        rows = cursor.fetchall()
-        columns = [desc[0] for desc in cursor.description]
+        with engine.connect() as conn:
+            result = conn.execute(query)
+            columns = list(result.keys())
+            rows = result.fetchall()
         
         if not rows:
             return jsonify({
                 'success': True,
-                'message': 'No active records found in ORBIT',
-                'record_count': 0
+                'message': 'No active records found in ORBIT staging table',
+                'record_count': 0,
+                'data_source': orbit_stg_table
             })
         
         # Convert to list of dicts
@@ -1110,7 +1110,7 @@ def validate_orbit_data():
         # Analyze each PAM field
         field_stats = {}
         for pam_field, config in PAM_FIELD_MAPPINGS.items():
-            fabric_cols = config['fabric_columns']
+            src_cols = config['source_columns']
             required = config.get('required', False)
             
             values_found = 0
@@ -1119,7 +1119,7 @@ def validate_orbit_data():
             
             for record in records:
                 value = None
-                for fc in fabric_cols:
+                for fc in src_cols:
                     if fc in record and record[fc] is not None and str(record[fc]).strip() != '':
                         value = record[fc]
                         source_column_used = fc
@@ -1149,7 +1149,7 @@ def validate_orbit_data():
             field_stats[pam_field] = {
                 'status': status,
                 'status_icon': status_icon,
-                'source_column': source_column_used or fabric_cols[0],
+                'source_column': source_column_used or src_cols[0],
                 'population_pct': population_pct,
                 'required': required,
                 'sample_values': sample_values
@@ -1170,18 +1170,18 @@ def validate_orbit_data():
             pam_record = {}
             for pam_field, config in PAM_FIELD_MAPPINGS.items():
                 value = None
-                for fc in config['fabric_columns']:
+                for fc in config['source_columns']:
                     if fc in record and record[fc]:
                         value = record[fc]
                         break
                 if value is not None:
-                    # Truncate for display
                     pam_record[pam_field] = str(value)[:100] if isinstance(value, str) else value
             sample_records.append(pam_record)
         
         return jsonify({
             'success': True,
             'generated_at': datetime.now().isoformat(),
+            'data_source': orbit_stg_table,
             'record_count': len(records),
             'field_stats': field_stats,
             'summary': {
@@ -1208,21 +1208,22 @@ def validate_orbit_data():
 @admin_bp.route('/admin/orbit-field-coverage')
 @role_required('pam_admin')
 def orbit_field_coverage():
-    """Get detailed field coverage stats from ORBIT/Fabric.
+    """Get detailed field coverage stats from ORBIT staging table on SQL Server.
     
     Runs aggregate queries to get population % for all fields.
     """
+    orbit_stg_table = os.getenv('ORBIT_STG_TABLE', '[PAM].[OrbitPromoExtract_stg]')
+    
     try:
-        from data.fabric_database import fabric_db as fabric
+        from data.database import DatabaseManager
+        db = DatabaseManager()
+        engine = db.get_engine()
         
-        if not fabric.test_connection():
-            return jsonify({'success': False, 'message': 'Failed to connect to Fabric'}), 500
-        
-        conn = fabric._get_connection()
-        cursor = conn.cursor()
+        if not engine:
+            return jsonify({'success': False, 'message': 'Failed to connect to SQL Server'}), 500
         
         # Query field population percentages
-        query = """
+        query = text(f"""
         SELECT 
             COUNT(*) as total_records,
             
@@ -1259,19 +1260,21 @@ def orbit_field_coverage():
             ROUND(100.0 * SUM(CASE WHEN cat_orbitlink IS NOT NULL THEN 1 ELSE 0 END) / COUNT(*), 1) as orbit_link_pct,
             ROUND(100.0 * SUM(CASE WHEN cat_legallink IS NOT NULL THEN 1 ELSE 0 END) / COUNT(*), 1) as legal_link_pct
             
-        FROM dbo.ORBIT_Reporting_Table
+        FROM {orbit_stg_table}
         WHERE statuscodename = 'Active'
-        """
+        """)
         
-        cursor.execute(query)
-        row = cursor.fetchone()
-        columns = [desc[0] for desc in cursor.description]
+        with engine.connect() as conn:
+            result = conn.execute(query)
+            row = result.fetchone()
+            columns = list(result.keys())
         
-        result = dict(zip(columns, row)) if row else {}
+        coverage = dict(zip(columns, row)) if row else {}
         
         return jsonify({
             'success': True,
-            'coverage': result
+            'data_source': orbit_stg_table,
+            'coverage': coverage
         })
         
     except Exception as e:

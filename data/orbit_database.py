@@ -1,9 +1,10 @@
-"""Orbit DB manager – delegates to Fabric or falls back to SQL Server.
+"""Orbit DB manager – queries live ORBIT data from SQL Server staging table.
 
-When USE_FABRIC_ORBIT=true (default), orbit look-ups query the Microsoft
-Fabric Data Warehouse via FabricDatabaseManager.  If Fabric is unavailable
-or the flag is explicitly set to false, the manager falls back to the local
-SQL Server table (rdc.pam_orbit_data).
+Priority order:
+  1. SQL Server staging table [PAM].[OrbitPromoExtract_stg] (primary – same
+     server PAM already connects to, no OAuth/Fabric overhead)
+  2. Microsoft Fabric Data Warehouse (optional fallback when USE_FABRIC_ORBIT=true)
+  3. Legacy SQL Server table rdc.pam_orbit_data (last-resort fallback)
 """
 from __future__ import annotations
 from typing import Any, Dict, List, Optional
@@ -27,10 +28,15 @@ class OrbitDatabaseManager:
             pass
         
         self._last_error = None
+        # Primary live ORBIT source — staging extract on the same SQL Server
+        self._orbit_stg_table = os.getenv(
+            'ORBIT_STG_TABLE', '[PAM].[OrbitPromoExtract_stg]'
+        )
+        # Legacy fallback table (old local SQL Server source)
         self.table = os.getenv('ORBIT_TABLE', 'rdc.pam_orbit_data')
         self._db = DatabaseManager()
 
-        # Fabric toggle – defaults to True when Fabric env vars are present
+        # Fabric toggle – kept as optional fallback if staging table is empty/missing
         flag = os.getenv('USE_FABRIC_ORBIT', '').strip().lower()
         if flag in ('true', '1', 'yes'):
             self._use_fabric = True
@@ -42,12 +48,50 @@ class OrbitDatabaseManager:
                 os.getenv('FABRIC_SERVER') and os.getenv('FABRIC_DATABASE')
             )
 
-        if self._use_fabric:
-            logger.info("OrbitDatabaseManager: Fabric delegation ENABLED")
-        else:
-            logger.info("OrbitDatabaseManager: using local SQL Server only")
+        logger.info(
+            f"OrbitDatabaseManager: staging={self._orbit_stg_table}, "
+            f"fabric_fallback={'ON' if self._use_fabric else 'OFF'}"
+        )
 
-    # ── Fabric delegation ───────────────────────────────────────────
+    # ── SQL Server staging table lookup (primary) ─────────────────
+    def _stg_lookup(self, orbit_id: str) -> Optional[Dict[str, Any]]:
+        """Look up orbit_id from [PAM].[OrbitPromoExtract_stg] on SQL Server.
+
+        The staging table mirrors the Fabric ORBIT_Reporting_Table schema
+        (cat_*, crffc_* columns) but lives on the same SQL Server PAM already
+        connects to — no OAuth / Fabric overhead.
+        """
+        engine = self._db.get_engine()
+        if not engine:
+            return None
+
+        oid = orbit_id.strip()
+        try:
+            # Try GUID match first (cat_gtmentryid)
+            if not oid.isdigit():
+                sql = text(f"SELECT TOP 1 * FROM {self._orbit_stg_table} WHERE cat_gtmentryid = :oid")
+                with engine.connect() as conn:
+                    row = conn.execute(sql, {'oid': oid}).mappings().first()
+                if row:
+                    logger.info(f"Staging lookup: FOUND orbit {oid} via cat_gtmentryid")
+                    return dict(row)
+
+            # Try legacy numeric ID (cat_legacygtmentryid)
+            sql = text(f"SELECT TOP 1 * FROM {self._orbit_stg_table} WHERE CAST(cat_legacygtmentryid AS VARCHAR(50)) = :oid")
+            with engine.connect() as conn:
+                row = conn.execute(sql, {'oid': oid}).mappings().first()
+            if row:
+                logger.info(f"Staging lookup: FOUND orbit {oid} via cat_legacygtmentryid")
+                return dict(row)
+
+            logger.info(f"Staging lookup: orbit {oid} not found in {self._orbit_stg_table}")
+            return None
+        except Exception as e:
+            logger.warning(f"Staging lookup failed for {oid}: {e}")
+            self._last_error = str(e)
+            return None
+
+    # ── Fabric delegation (optional fallback) ─────────────────────
     def _fabric_lookup(self, orbit_id: str) -> Optional[Dict[str, Any]]:
         """Try to look up orbit_id via FabricDatabaseManager.search_by_gtm_id.
         Returns a raw dict on success, or None if Fabric is unavailable / not found.
@@ -58,7 +102,6 @@ class OrbitDatabaseManager:
             result = fabric_db.search_by_gtm_id(orbit_id)
             if result:
                 logger.info(f"Fabric lookup: FOUND orbit {orbit_id}")
-                # Store the table name so callers see the source
                 self.table = fabric_db.table
                 return result
             else:
@@ -69,20 +112,31 @@ class OrbitDatabaseManager:
             return None
 
     def get_orbit_record(self, orbit_id: str) -> Optional[Dict[str, Any]]:
-        """Get orbit record – tries Fabric first (if enabled), then SQL Server."""
+        """Get orbit record.
+
+        Priority:
+          1. SQL Server staging table [PAM].[OrbitPromoExtract_stg]
+          2. Fabric Data Warehouse (if USE_FABRIC_ORBIT is enabled)
+          3. Legacy SQL Server table (rdc.pam_orbit_data)
+        """
         oid = (orbit_id or '').strip()
         if not oid:
             return {'_error': 'orbit_id required'}
 
-        # ── Try Fabric first ───────────────────────────────────────
+        # ── 1. SQL Server staging table (primary) ──────────────────
+        stg_row = self._stg_lookup(oid)
+        if stg_row:
+            self.table = self._orbit_stg_table
+            return self._normalize_fabric_row(stg_row, oid)
+
+        # ── 2. Fabric fallback (if enabled) ────────────────────────
         if self._use_fabric:
             fabric_row = self._fabric_lookup(oid)
             if fabric_row:
                 return self._normalize_fabric_row(fabric_row, oid)
-            # Fabric returned nothing – fall through to SQL Server
-            logger.info(f"Fabric miss for {oid}, falling back to SQL Server")
+            logger.info(f"Fabric miss for {oid}, falling back to legacy SQL Server")
 
-        # ── SQL Server fallback ────────────────────────────────────
+        # ── 3. Legacy SQL Server fallback ──────────────────────────
         engine = self._db.get_engine()
         if not engine:
             return {'_error': 'Database connection unavailable – cannot look up Orbit data'}
