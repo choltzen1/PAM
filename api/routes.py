@@ -458,17 +458,22 @@ def generate_and_ingest():
                 err = orbit_row.get('_error') if isinstance(orbit_row, dict) else 'unknown error'
                 status = 404 if err == 'not found' else 500
                 return jsonify({'success': False, 'error': f'Orbit {orbit_id} not found' if status == 404 else err}), status
-        converted = {
-            'code': next_code,
-            'orbit_id': orbit_id,
-            'bill_facing_name': orbit_row.get('bill_facing_name') or orbit_row.get('description',''),
-            'description': orbit_row.get('description',''),
-            'owner': orbit_row.get('Owner') or orbit_row.get('owner')
-        }
+        # Start with all orbit fields (staging table already uses PAM names)
+        # Exclude LoadDtm (metadata) and Code (staging has its own codes, we generate ours)
+        skip_keys = {'Code', 'LoadDtm', 'Status'}
+        converted = {k: v for k, v in orbit_row.items() if v is not None and k not in skip_keys}
+        # Override required fields
+        converted['code'] = next_code
+        converted['orbit_id'] = orbit_id
+        converted['bill_facing_name'] = orbit_row.get('bill_facing_name') or orbit_row.get('description', '')
+        converted['description'] = orbit_row.get('description', '')
+        converted['Owner'] = orbit_row.get('Owner') or orbit_row.get('owner', '')
         if orbit_row.get('promo_start_date'):
-            converted['start_date'] = orbit_row.get('promo_start_date')
+            converted['promo_start_date'] = orbit_row.get('promo_start_date')
         if orbit_row.get('promo_end_date'):
-            converted['end_date'] = orbit_row.get('promo_end_date')
+            converted['promo_end_date'] = orbit_row.get('promo_end_date')
+        if orbit_row.get('initiative_name'):
+            converted['initiative_name'] = orbit_row.get('initiative_name')
         data_manager.save_promo(next_code, converted, user_name=_get_current_user_name() or 'System')
         saved = data_manager.get_promo(next_code) or {}
         return jsonify({'success': True, 'promo_code': next_code, 'orbit_id': orbit_id, 'rolled': rolled, 'base_letter': base_letter, 'fields_imported': len(converted), 'owner': saved.get('owner'), 'description': saved.get('description')})
