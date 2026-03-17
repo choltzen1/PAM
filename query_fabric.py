@@ -81,14 +81,25 @@ def _build_variants() -> list[dict]:
     return variants
 
 
-# ── OAuth token (Service Principal) ────────────────────────────────────────
+# ── OAuth token ────────────────────────────────────────────────────────────
+def _is_keyvault_ref(value: str) -> bool:
+    return value.strip().startswith("@Microsoft.KeyVault(")
+
 def _get_token_struct() -> bytes | None:
     try:
-        from azure.identity import ClientSecretCredential
+        from azure.identity import DefaultAzureCredential, ClientSecretCredential
         os.environ.setdefault("REQUESTS_CA_BUNDLE", "")
         os.environ.setdefault("CURL_CA_BUNDLE", "")
-        cred  = ClientSecretCredential(TENANT_ID, CLIENT_ID, CLIENT_SECRET,
-                                       connection_verify=False)
+
+        # Key Vault references aren't resolved in SSH — use Managed Identity instead
+        if _is_keyvault_ref(CLIENT_SECRET) or not CLIENT_SECRET:
+            logger.info("FABRIC_CLIENT_SECRET is a Key Vault reference or unset — using DefaultAzureCredential (Managed Identity)")
+            cred = DefaultAzureCredential(connection_verify=False)
+        else:
+            logger.info("Using ClientSecretCredential")
+            cred = ClientSecretCredential(TENANT_ID, CLIENT_ID, CLIENT_SECRET,
+                                          connection_verify=False)
+
         token = cred.get_token("https://database.windows.net/.default")
         tb    = token.token.encode("utf-16-le")
         return struct.pack(f"<I{len(tb)}s", len(tb), tb)
