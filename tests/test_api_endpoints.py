@@ -92,28 +92,26 @@ def test_search_orbit_not_found(client):
 
 def test_search_orbit_orbit_only_fallback(client, monkeypatch):
     target_orbit = 'ORB-NOCODE-1'
-    # Patch the DatabaseManager used inside PromoCodeWorkflow
-    import services.promo_code_workflow as wfmod
+    # Patch OrbitDatabaseManager at the service layer so we never hit real SQL/Fabric
+    import services.promo_codes_service as svc_mod
 
-    class DummyDB(wfmod.DatabaseManager):  # type: ignore
-        def get_full_orbit_record_by_orbit_id(self, orbit_id: str):  # type: ignore
+    class FakeOrbitManager:
+        def __init__(self):
+            self.table = '[PAM].[OrbitPromoExtract_stg]'
+        def get_orbit_record(self, orbit_id):
             if orbit_id == target_orbit:
                 return {
                     'orbit_id': orbit_id,
                     'bill_facing_name': 'Orbit Only Initiative',
+                    'initiative_name': 'Orbit Only Initiative',
                     'description': 'Pending promo code assignment',
-                    'owner': 'OrbitOwner',
+                    'Owner': 'OrbitOwner',
                     'promo_start_date': '2025-09-01',
-                    'promo_end_date': '2025-09-30'
+                    'promo_end_date': '2025-09-30',
                 }
-            return None
-        def get_all_promotions_unified(self):  # ensure no existing mapping
-            return []
-        def get_dataframe(self, sql, params=None):  # Return empty DataFrame for duplicate check
-            import pandas as pd
-            return pd.DataFrame()
+            return {'_error': 'not found'}
 
-    monkeypatch.setattr(wfmod, 'DatabaseManager', DummyDB)
+    monkeypatch.setattr(svc_mod, 'OrbitDatabaseManager', FakeOrbitManager)
     r = client.get(f'/api/search_orbit/{target_orbit}')
     assert r.status_code == 200
     js = r.get_json()

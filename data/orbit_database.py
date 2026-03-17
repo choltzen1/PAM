@@ -36,17 +36,10 @@ class OrbitDatabaseManager:
         self.table = os.getenv('ORBIT_TABLE', 'rdc.pam_orbit_data')
         self._db = DatabaseManager()
 
-        # Fabric toggle – kept as optional fallback if staging table is empty/missing
+        # Fabric toggle – OFF by default. Staging table is the primary source.
+        # Only enable Fabric as a backup if explicitly set USE_FABRIC_ORBIT=true.
         flag = os.getenv('USE_FABRIC_ORBIT', '').strip().lower()
-        if flag in ('true', '1', 'yes'):
-            self._use_fabric = True
-        elif flag in ('false', '0', 'no'):
-            self._use_fabric = False
-        else:
-            # Auto-detect: enable if the required Fabric vars exist
-            self._use_fabric = bool(
-                os.getenv('FABRIC_SERVER') and os.getenv('FABRIC_DATABASE')
-            )
+        self._use_fabric = flag in ('true', '1', 'yes')
 
         logger.info(
             f"OrbitDatabaseManager: staging={self._orbit_stg_table}, "
@@ -57,9 +50,8 @@ class OrbitDatabaseManager:
     def _stg_lookup(self, orbit_id: str) -> Optional[Dict[str, Any]]:
         """Look up orbit_id from [PAM].[OrbitPromoExtract_stg] on SQL Server.
 
-        The staging table mirrors the Fabric ORBIT_Reporting_Table schema
-        (cat_*, crffc_* columns) but lives on the same SQL Server PAM already
-        connects to — no OAuth / Fabric overhead.
+        The staging table uses PAM field names directly (orbit_id, Owner,
+        bill_facing_name, etc.) — no Fabric cat_*/crffc_* mapping needed.
         """
         engine = self._db.get_engine()
         if not engine:
@@ -67,21 +59,11 @@ class OrbitDatabaseManager:
 
         oid = orbit_id.strip()
         try:
-            # Try GUID match first (cat_gtmentryid)
-            if not oid.isdigit():
-                sql = text(f"SELECT TOP 1 * FROM {self._orbit_stg_table} WHERE cat_gtmentryid = :oid")
-                with engine.connect() as conn:
-                    row = conn.execute(sql, {'oid': oid}).mappings().first()
-                if row:
-                    logger.info(f"Staging lookup: FOUND orbit {oid} via cat_gtmentryid")
-                    return dict(row)
-
-            # Try legacy numeric ID (cat_legacygtmentryid)
-            sql = text(f"SELECT TOP 1 * FROM {self._orbit_stg_table} WHERE CAST(cat_legacygtmentryid AS VARCHAR(50)) = :oid")
+            sql = text(f"SELECT TOP 1 * FROM {self._orbit_stg_table} WHERE CAST(orbit_id AS VARCHAR(50)) = :oid")
             with engine.connect() as conn:
                 row = conn.execute(sql, {'oid': oid}).mappings().first()
             if row:
-                logger.info(f"Staging lookup: FOUND orbit {oid} via cat_legacygtmentryid")
+                logger.info(f"Staging lookup: FOUND orbit {oid} in {self._orbit_stg_table}")
                 return dict(row)
 
             logger.info(f"Staging lookup: orbit {oid} not found in {self._orbit_stg_table}")
@@ -127,7 +109,8 @@ class OrbitDatabaseManager:
         stg_row = self._stg_lookup(oid)
         if stg_row:
             self.table = self._orbit_stg_table
-            return self._normalize_fabric_row(stg_row, oid)
+            # Staging table already uses PAM field names — no normalization needed
+            return {k: v for k, v in stg_row.items() if v is not None}
 
         # ── 2. Fabric fallback (if enabled) ────────────────────────
         if self._use_fabric:

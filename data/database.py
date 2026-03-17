@@ -84,7 +84,7 @@ class DatabaseManager:
                     ]
                     if self.username:
                         odbc_elems.append(f'UID={self.username}')
-                        odbc_elems.append(f'PWD={self.password}')
+                        odbc_elems.append(f'PWD={{{self.password}}}')
                     else:
                         # Integrated security fallback (Windows auth)
                         odbc_elems.append('Trusted_Connection=yes')
