@@ -59,24 +59,45 @@ def _build_variants() -> list[dict]:
             )
             variants.append({"label": label, "conn_str": conn_str, "use_token": True})
 
-    # Variant B: ActiveDirectoryServicePrincipal (UID=client_id@tenant_id, PWD=secret)
-    # Same pattern as DATAVERSE_CONN_STR in .env — no token injection needed
-    sp_uid = f"{CLIENT_ID}@{TENANT_ID}"
+    # Variant B: ActiveDirectoryMsi / ActiveDirectoryManagedIdentity
+    # Driver handles MSI natively — no token injection or client secret needed.
+    # Driver 18 uses the newer keyword; Driver 17 uses the older one.
+    msi_auth = {
+        "ODBC Driver 18 for SQL Server": "ActiveDirectoryManagedIdentity",
+        "ODBC Driver 17 for SQL Server": "ActiveDirectoryMsi",
+    }
     for driver in drivers:
-        for encrypt in encrypts:
-            label = f"[sp] Driver={driver}  Encrypt={encrypt}  TrustServerCertificate=yes  port={PORT}"
-            conn_str = (
-                f"DRIVER={{{driver}}};"
-                f"SERVER={SERVER},{PORT};"
-                f"DATABASE={DATABASE};"
-                f"Authentication=ActiveDirectoryServicePrincipal;"
-                f"UID={sp_uid};"
-                f"PWD={CLIENT_SECRET};"
-                f"Encrypt={encrypt};"
-                f"TrustServerCertificate=yes;"
-                f"LoginTimeout=15;"
-            )
-            variants.append({"label": label, "conn_str": conn_str, "use_token": False})
+        auth = msi_auth.get(driver, "ActiveDirectoryMsi")
+        label = f"[msi] Driver={driver}  Auth={auth}  Encrypt=yes  port={PORT}"
+        conn_str = (
+            f"DRIVER={{{driver}}};"
+            f"SERVER={SERVER},{PORT};"
+            f"DATABASE={DATABASE};"
+            f"Authentication={auth};"
+            f"Encrypt=yes;"
+            f"TrustServerCertificate=yes;"
+            f"LoginTimeout=30;"
+        )
+        variants.append({"label": label, "conn_str": conn_str, "use_token": False})
+
+    # Variant C: ActiveDirectoryServicePrincipal — only when secret is a real value
+    if CLIENT_SECRET and not _is_keyvault_ref(CLIENT_SECRET):
+        sp_uid = f"{CLIENT_ID}@{TENANT_ID}"
+        for driver in drivers:
+            for encrypt in encrypts:
+                label = f"[sp] Driver={driver}  Encrypt={encrypt}  port={PORT}"
+                conn_str = (
+                    f"DRIVER={{{driver}}};"
+                    f"SERVER={SERVER},{PORT};"
+                    f"DATABASE={DATABASE};"
+                    f"Authentication=ActiveDirectoryServicePrincipal;"
+                    f"UID={sp_uid};"
+                    f"PWD={CLIENT_SECRET};"
+                    f"Encrypt={encrypt};"
+                    f"TrustServerCertificate=yes;"
+                    f"LoginTimeout=15;"
+                )
+                variants.append({"label": label, "conn_str": conn_str, "use_token": False})
 
     return variants
 
