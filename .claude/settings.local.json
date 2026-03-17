@@ -35,7 +35,8 @@
       "Bash(PAM_VALIDATION_MODE=1 python -c \"from factory import create_app; app = create_app\\({''TESTING'': True}\\); print\\(''OK - blueprints:'', [r.name for r in app.blueprints.values\\(\\)]\\)\")",
       "Bash(PAM_VALIDATION_MODE=1 python -c \":*)",
       "Bash(venv/Scripts/pip show:*)",
-      "Bash(\"c:/Users/CHoltze1/PAM/tradeCatalogManufacturerDeviceHierarchy.json\")"
+      "Bash(\"c:/Users/CHoltze1/PAM/tradeCatalogManufacturerDeviceHierarchy.json\")",
+      "Bash(python query_fabric.py)"
     ]
   }
 }

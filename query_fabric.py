@@ -1,60 +1,183 @@
-"""Query Microsoft Fabric Data Warehouse (read-only).
+"""Fabric Data Warehouse connection diagnostic + query runner.
 
-Uses the same token-based path as the app's Fabric manager.
+Tries multiple Encrypt/TrustServerCertificate/Driver combinations so you can
+pinpoint TLS/cert issues without changing the main app.
+
+Troubleshooting checklist covered:
+  - Encrypt=no  vs  Encrypt=yes
+  - TrustServerCertificate=yes
+  - Explicit port (FABRIC_PORT, default 1433)
+  - ODBC Driver 17  vs  ODBC Driver 18
 """
 import os
+import struct
+import logging
+import sys
 
 from dotenv import load_dotenv
 
-from data.fabric_database import FabricDatabaseManager
-
-# Load environment variables
 load_dotenv()
 
-# Confirmed Fabric endpoint defaults (can still be overridden by .env)
-os.environ.setdefault(
-    'FABRIC_SERVER',
-    'boma7puz3umuxpl3xry2bgycnq-pfqzvh7fituunjrpjq5kxzvji.datawarehouse.fabric.microsoft.com'
-)
-os.environ.setdefault('FABRIC_DATABASE', 'ORBIT_Lakehouse')
+logging.basicConfig(level=logging.INFO, format="%(levelname)s  %(message)s")
+logger = logging.getLogger(__name__)
 
-# Match your C# pattern: DefaultAzureCredential -> SQL scope token
-os.environ.setdefault('FABRIC_AUTH_MODE', 'default')
+# ── Connection parameters from environment ─────────────────────────────────
+SERVER   = os.getenv("FABRIC_SERVER", "").strip()
+DATABASE = os.getenv("FABRIC_DATABASE", "").strip()
+PORT     = os.getenv("FABRIC_PORT", "1433").strip()
+
+TENANT_ID     = os.getenv("FABRIC_TENANT_ID", "")
+CLIENT_ID     = os.getenv("FABRIC_CLIENT_ID", "")
+CLIENT_SECRET = os.getenv("FABRIC_CLIENT_SECRET", "")
+
+# Override any single param at runtime via env if desired
+FORCE_DRIVER  = os.getenv("FABRIC_DRIVER", "")        # blank = try both
+FORCE_ENCRYPT = os.getenv("FABRIC_ENCRYPT", "")       # blank = try both
 
 
-def query_fabric(sql: str, limit: int = 100):
-    """Execute a read-only query against Fabric and print rows."""
-    fabric = FabricDatabaseManager()
+# ── Candidate connection variants (tried in order) ─────────────────────────
+def _build_variants() -> list[dict]:
+    drivers  = [FORCE_DRIVER] if FORCE_DRIVER else [
+        "ODBC Driver 18 for SQL Server",
+        "ODBC Driver 17 for SQL Server",
+    ]
+    encrypts = [FORCE_ENCRYPT] if FORCE_ENCRYPT else ["yes", "no"]
 
-    print("🔌 Connecting to Fabric Data Warehouse...")
-    print("📊 Executing query:")
-    print(f"   {sql}")
+    variants = []
+
+    # Variant A: token injection (SQL_COPT_SS_ACCESS_TOKEN via attrs_before)
+    for driver in drivers:
+        for encrypt in encrypts:
+            label = f"[token] Driver={driver}  Encrypt={encrypt}  TrustServerCertificate=yes  port={PORT}"
+            conn_str = (
+                f"DRIVER={{{driver}}};"
+                f"SERVER={SERVER},{PORT};"
+                f"DATABASE={DATABASE};"
+                f"Encrypt={encrypt};"
+                f"TrustServerCertificate=yes;"
+                f"LoginTimeout=15;"
+            )
+            variants.append({"label": label, "conn_str": conn_str, "use_token": True})
+
+    # Variant B: ActiveDirectoryServicePrincipal (UID=client_id@tenant_id, PWD=secret)
+    # Same pattern as DATAVERSE_CONN_STR in .env — no token injection needed
+    sp_uid = f"{CLIENT_ID}@{TENANT_ID}"
+    for driver in drivers:
+        for encrypt in encrypts:
+            label = f"[sp] Driver={driver}  Encrypt={encrypt}  TrustServerCertificate=yes  port={PORT}"
+            conn_str = (
+                f"DRIVER={{{driver}}};"
+                f"SERVER={SERVER},{PORT};"
+                f"DATABASE={DATABASE};"
+                f"Authentication=ActiveDirectoryServicePrincipal;"
+                f"UID={sp_uid};"
+                f"PWD={CLIENT_SECRET};"
+                f"Encrypt={encrypt};"
+                f"TrustServerCertificate=yes;"
+                f"LoginTimeout=15;"
+            )
+            variants.append({"label": label, "conn_str": conn_str, "use_token": False})
+
+    return variants
+
+
+# ── OAuth token (Service Principal) ────────────────────────────────────────
+def _get_token_struct() -> bytes | None:
+    try:
+        from azure.identity import ClientSecretCredential
+        os.environ.setdefault("REQUESTS_CA_BUNDLE", "")
+        os.environ.setdefault("CURL_CA_BUNDLE", "")
+        cred  = ClientSecretCredential(TENANT_ID, CLIENT_ID, CLIENT_SECRET,
+                                       connection_verify=False)
+        token = cred.get_token("https://database.windows.net/.default")
+        tb    = token.token.encode("utf-16-le")
+        return struct.pack(f"<I{len(tb)}s", len(tb), tb)
+    except Exception as exc:
+        logger.error(f"Token acquisition failed: {exc}")
+        return None
+
+
+# ── Probe each variant ──────────────────────────────────────────────────────
+def find_working_connection(token_struct: bytes) -> tuple[str | None, object | None]:
+    """Return (label, conn) for the first variant that connects, or (None, None)."""
+    try:
+        import pyodbc
+    except ImportError:
+        logger.error("pyodbc is not installed — run: pip install pyodbc")
+        return None, None
+
+    for v in _build_variants():
+        logger.info(f"Trying: {v['label']}")
+        try:
+            if v["use_token"]:
+                conn = pyodbc.connect(v["conn_str"], attrs_before={1256: token_struct})
+            else:
+                conn = pyodbc.connect(v["conn_str"])
+            logger.info(f"  SUCCESS: {v['label']}")
+            return v["label"], conn
+        except Exception as exc:
+            logger.warning(f"  FAILED : {exc}")
+
+    return None, None
+
+
+# ── Query runner ────────────────────────────────────────────────────────────
+def query_fabric(sql: str, limit: int = 100) -> None:
+    if not SERVER or not DATABASE:
+        logger.error("FABRIC_SERVER or FABRIC_DATABASE not set in .env")
+        sys.exit(1)
+
+    logger.info(f"Server : {SERVER},{PORT}")
+    logger.info(f"Database: {DATABASE}")
+    print()
+
+    token_struct = _get_token_struct()
+    if not token_struct:
+        sys.exit(1)
+
+    label, conn = find_working_connection(token_struct)
+    if not conn:
+        logger.error("All connection variants failed — see warnings above.")
+        logger.error("Next steps:")
+        logger.error("  1. Verify FABRIC_SERVER/PORT are reachable (Test-NetConnection)")
+        logger.error("  2. Check SQL Server error log for TLS/cert errors")
+        logger.error("  3. Confirm TLS 1.2 is enabled on the server OS")
+        logger.error("  4. Confirm ODBC Driver 17 or 18 is installed locally")
+        sys.exit(1)
+
+    print(f"\nConnected via: {label}")
+    print(f"Query: {sql}")
     print("=" * 80)
 
-    rows = fabric.execute_select(sql=sql, limit=limit)
+    cursor = conn.cursor()
+    try:
+        cursor.execute(sql)
+        columns = [c[0] for c in cursor.description] if cursor.description else []
+        rows    = cursor.fetchmany(max(1, limit))
+    finally:
+        cursor.close()
+        conn.close()
+
     if not rows:
-        print("\n✅ Returned 0 row(s)")
+        print("Returned 0 row(s)")
         return
 
-    columns = list(rows[0].keys())
-    print("\n" + " | ".join(columns))
+    print(" | ".join(columns))
     print("-" * 80)
-
     for row in rows:
-        values = []
-        for col in columns:
-            val = row.get(col)
-            if val is None:
-                values.append("NULL")
-            elif isinstance(val, str):
-                values.append(val[:80])
+        vals = []
+        for v in row:
+            if v is None:
+                vals.append("NULL")
+            elif isinstance(v, str):
+                vals.append(v[:80])
             else:
-                values.append(str(val))
-        print(" | ".join(values))
+                vals.append(str(v))
+        print(" | ".join(vals))
 
-    print(f"\n✅ Returned {len(rows)} row(s)")
+    print(f"\nReturned {len(rows)} row(s)")
+
 
 if __name__ == "__main__":
-    # Example query
     sql = "SELECT TOP 5 * FROM dbo.ORBIT_Reporting_Table"
     query_fabric(sql, limit=100)
