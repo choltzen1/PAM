@@ -37,7 +37,10 @@
       "Bash(venv/Scripts/pip show:*)",
       "Bash(\"c:/Users/CHoltze1/PAM/tradeCatalogManufacturerDeviceHierarchy.json\")",
       "Bash(python query_fabric.py)",
-      "Bash(gh run:*)"
+      "Bash(gh run:*)",
+      "Bash(grep -E \"\\\\.py$\")",
+      "Bash(ls -la /c/Users/CHoltze1/PAM/data/*.py)",
+      "Read(//c/Users/CHoltze1/PAM/**)"
     ]
   }
 }

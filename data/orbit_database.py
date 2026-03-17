@@ -20,7 +20,7 @@ class OrbitDatabaseManager:
             pass
         
         self._last_error = None
-        self.table = os.getenv('ORBIT_TABLE', 'rdc.pam_orbit_data')
+        self.table = os.getenv('ORBIT_TABLE', '[PAM].[OrbitPromoExtract_stg]')
         self._db = DatabaseManager()
 
     def _connect(self):
@@ -40,11 +40,7 @@ class OrbitDatabaseManager:
             if conn is not None and hasattr(conn, 'cursor'):
                 try:
                     cursor = conn.cursor()
-                    sql = (
-                        f"SELECT TOP 1 Owner, bill_facing_name, orbit_id, description, "
-                        f"promo_srart_date AS promo_start_date, promo_end_date "
-                        f"FROM {self.table} WHERE orbit_id = ?"
-                    )
+                    sql = f"SELECT TOP 1 * FROM {self.table} WHERE orbit_id = ?"
                     cursor.execute(sql, (oid,))
                     row = cursor.fetchone()
                     if row:
@@ -53,11 +49,14 @@ class OrbitDatabaseManager:
                         mapped = {
                             'Owner': raw.get('Owner') or raw.get('owner') or raw.get('promo_owner'),
                             'promo_owner': raw.get('promo_owner') or raw.get('Owner') or raw.get('owner'),
-                            'bill_facing_name': raw.get('bill facing name') or raw.get('bill_facing_name') or raw.get('Bill_Facing_Name'),
+                            'bill_facing_name': raw.get('bill_facing_name') or raw.get('bill facing name') or raw.get('Bill_Facing_Name'),
                             'orbit_id': raw.get('orbit_id') or raw.get('cat_gtmentryid') or raw.get('cat_legacygtmentryid'),
-                            'description': raw.get('description') or raw.get('cat_description'),
+                            # staging table stores cat_initiativename in 'description'; cat_description holds the actual description
+                            'initiative_name': raw.get('initiative_name') or raw.get('initiative name') or raw.get('description'),
+                            'description': raw.get('cat_description') or raw.get('description'),
                             'promo_start_date': raw.get('promo_start_date') or raw.get('promo_srart_date') or raw.get('promo_start') or raw.get('start_date'),
                             'promo_end_date': raw.get('promo_end_date') or raw.get('end_date'),
+                            'maintain_active_line': raw.get('maintain_active_line') or raw.get('crffc_maintainactivelinedev'),
                             **raw,
                         }
                         return {k: v for k, v in mapped.items() if v is not None}
@@ -86,10 +85,11 @@ class OrbitDatabaseManager:
             'Owner': raw.get('Owner') or raw.get('owner') or raw.get('promo_owner'),
             'promo_owner': raw.get('promo_owner') or raw.get('Owner') or raw.get('owner'),
             'promo_owner_email': raw.get('promo_owner_email') or raw.get('owner_email'),
-            'bill_facing_name': raw.get('bill facing name') or raw.get('bill_facing_name') or raw.get('Bill_Facing_Name'),
-            'initiative_name': raw.get('initiative_name') or raw.get('initiative name'),
+            'bill_facing_name': raw.get('bill_facing_name') or raw.get('bill facing name') or raw.get('Bill_Facing_Name'),
+            # staging table: cat_initiativename was inserted into 'description'; cat_description holds the actual description text
+            'initiative_name': raw.get('initiative_name') or raw.get('initiative name') or raw.get('description'),
             'orbit_id': raw.get('orbit_id') or raw.get('cat_gtmentryid') or raw.get('cat_legacygtmentryid'),
-            'description': raw.get('description') or raw.get('cat_description'),
+            'description': raw.get('cat_description') or raw.get('description'),
             'promo_notes': raw.get('promo_notes'),
             'promo_start_date': raw.get('promo_start_date') or raw.get('promo_start') or raw.get('start_date'),
             'promo_end_date': raw.get('promo_end_date') or raw.get('end_date'),
@@ -167,10 +167,10 @@ class OrbitDatabaseManager:
                 chunk = cleaned_ids[i:i + chunk_size]
                 rows = []
                 try:
-                    rows = _fetch_chunk(conn, chunk, 'promo_srart_date')
+                    rows = _fetch_chunk(conn, chunk, 'promo_start_date')
                 except Exception:
                     try:
-                        rows = _fetch_chunk(conn, chunk, 'promo_start_date')
+                        rows = _fetch_chunk(conn, chunk, 'promo_srart_date')
                     except Exception:
                         continue
 
