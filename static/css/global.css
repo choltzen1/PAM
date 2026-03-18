@@ -256,25 +256,32 @@ html[data-theme='dark'] .btn-secondary {
 
 /* Light Mode Table Striping (Consistent across all tables) */
 .table tbody tr:nth-child(odd) {
-  background: #eceeef;
+  background: #fafafa;
 }
 
 .table tbody tr:nth-child(even) {
-  background: #d8dadb;
+  background: #f0f0f0;
+}
+
+.table tbody tr:hover {
+  background: #e8e8e8;
 }
 
 /* Dark Mode Table Striping (Consistent across all tables) */
 html[data-theme='dark'] .table tbody tr:nth-child(odd) {
-  background: #d2d4d5;
+  background: rgba(255, 255, 255, 0.08);
 }
 
 html[data-theme='dark'] .table tbody tr:nth-child(even) {
-  background: #b9bbbc;
+  background: rgba(255, 255, 255, 0.15);
+}
+
+html[data-theme='dark'] .table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.22);
 }
 
 html[data-theme='dark'] .table td {
-  color: #111;
-  background: transparent;
+  color: #ffffff;
 }
 
 html[data-theme='dark'] .table th {

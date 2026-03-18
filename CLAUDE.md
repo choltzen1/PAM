@@ -82,6 +82,12 @@ ORBIT_DB_SERVER/DATABASE  # Orbit analytics data source
 PAM_VALIDATION_MODE=1   # Lightweight init for test/validation runs
 ```
 
+## Workflow Practices
+
+- **Use `/superpowers:brainstorming` before starting any significant feature or UI overhaul.** Skip for quick one-liners or small multi-line fixes.
+- **Use `/superpowers:verification-before-completion` before claiming larger work is done.** Skip for trivial changes.
+- **Actively build project memory:** Record learned coding practices, branding details, architecture patterns, and database schema knowledge to `~/.claude/projects/.../memory/` so future conversations benefit from accumulated context.
+
 ## Branch Conventions
 
 - Main branch: `cade`

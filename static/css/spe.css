@@ -77,15 +77,15 @@ html[data-theme='dark'] .promotions-page-spe .promotions-user-label { color:#fff
 html[data-theme='dark'] .promotions-page-spe .promotions-controls input,
 html[data-theme='dark'] .promotions-page-spe .promotions-controls select { color:#111 !important; }
 
-/* Dark mode search input - white background */
-html[data-theme='dark'] .promotions-page-spe .search-group input { background:#ffffff; color:#111; border:1px solid #c5c7c9; }
-html[data-theme='dark'] .promotions-page-spe .search-group input::placeholder { color:#555; }
+/* Dark mode search input */
+html[data-theme='dark'] .promotions-page-spe .search-group input { background:#e0e0e0; color:#1a1a1a; border:1px solid rgba(255,255,255,0.2); }
+html[data-theme='dark'] .promotions-page-spe .search-group input::placeholder { color:#777; }
 
-/* Dark mode select boxes - white background */
+/* Dark mode select boxes */
 html[data-theme='dark'] .promotions-page-spe .filter-group select {
-  background: #ffffff;
-  color: #111;
-  border: 1px solid #c5c7c9;
+  background: #e0e0e0;
+  color: #1a1a1a;
+  border: 1px solid rgba(255,255,255,0.2);
 }
 
 /* SPE controls full-width */
@@ -110,23 +110,27 @@ html[data-theme='dark'] .promotions-page-spe .tab.active { box-shadow:none; }
 .promo-table { width:100%; border-collapse:collapse; margin:0; background:var(--bg-alt); }
 .promo-table th { background: var(--tmobile-magenta); color:#fff; font-weight:700; text-align:center; white-space:nowrap; border: none; }
 
-.promo-table td { border: none; }
+/* Force all cells to inherit row background — prevents Bootstrap --bs-table-bg from breaking striping */
+.promo-table td { border: none; background: inherit !important; }
 .promo-table td.promo-owner { font-weight:700; }
 
 /* Single clean border per row on the tr */
-.promo-table tbody tr { border-bottom: 1px solid #c5c7c9; }
-html[data-theme='dark'] .promo-table tbody tr { border-bottom: 1px solid #aaa; }
+.promo-table tbody tr { border-bottom: 1px solid #e3e3e3; }
+html[data-theme='dark'] .promo-table tbody tr { border-bottom: 1px solid rgba(255, 255, 255, 0.15); }
 
 /* Light Mode Table Striping */
-.promo-table tbody tr:nth-child(odd) { background: #eceeef; }
-.promo-table tbody tr:nth-child(even) { background: #d8dadb; }
+.promo-table tbody tr:nth-child(odd) { background: #fafafa; }
+.promo-table tbody tr:nth-child(even) { background: #f0f0f0; }
+.promo-table tbody tr:hover { background: #e8e8e8; }
 
 /* Dark Mode Table Striping */
-html[data-theme='dark'] .promo-table tbody tr:nth-child(odd) { background: #d2d4d5; }
-html[data-theme='dark'] .promo-table tbody tr:nth-child(even) { background: #b9bbbc; }
+html[data-theme='dark'] .promo-table tbody tr:nth-child(odd) { background: rgba(255, 255, 255, 0.08); }
+html[data-theme='dark'] .promo-table tbody tr:nth-child(even) { background: rgba(255, 255, 255, 0.15); }
+html[data-theme='dark'] .promo-table tbody tr:hover { background: rgba(255, 255, 255, 0.22); }
 
-/* Dark mode table text - dark for readability on light grey rows */
-html[data-theme='dark'] .promo-table td { color: #111; }
+/* Dark mode table text - white for readability on dark rows */
+html[data-theme='dark'] .promo-table td { color: #ffffff; }
+html[data-theme='dark'] .promo-table th { background: var(--tmobile-magenta); }
 
 /* Table container - remove white border/background gap */
 .promotions-page-spe .table-container {
@@ -143,7 +147,7 @@ html[data-theme='dark'] .promotions-page-spe .table-container {
 }
 
 /* Action buttons - keep black icons */
-.promo-table td.promo-actions { display:flex; justify-content:center; align-items:center; gap:.5em; background:inherit; }
+.promo-table td.promo-actions { text-align:center; white-space:nowrap; }
 .promo-table td.promo-actions .icon-button {
   display: inline-flex;
   align-items: center;
@@ -151,15 +155,13 @@ html[data-theme='dark'] .promotions-page-spe .table-container {
   min-width: 34px;
   min-height: 34px;
   padding: 0 10px;
-  margin: 0;
+  margin: 0 .2em;
   font-size: 0.95rem;
   color: #475569;
   background: rgba(248,250,252,0.9);
   border: 1px solid #cbd5e1;
   border-radius: 8px;
   box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-  backdrop-filter: blur(5px);
-  -webkit-backdrop-filter: blur(5px);
   cursor: pointer;
   transition: background .15s ease, color .15s ease, border-color .15s ease;
 }
@@ -170,14 +172,14 @@ html[data-theme='dark'] .promotions-page-spe .table-container {
 }
 
 html[data-theme='dark'] .promo-table td.promo-actions .icon-button {
-  color: #475569;
-  background: rgba(255,255,255,0.66);
-  border-color: #cbd5e1;
+  color: #FF7EB3;
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
 }
 html[data-theme='dark'] .promo-table td.promo-actions .icon-button:hover {
-  background: rgba(241,245,249,0.95);
-  color: #334155;
-  border-color: #94a3b8;
+  background: rgba(226, 0, 116, 0.2);
+  color: #fff;
+  border-color: var(--tmobile-magenta);
 }
 
 /* Enhanced dark mode styling for action buttons */

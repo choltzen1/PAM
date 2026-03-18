@@ -34,33 +34,43 @@ html[data-theme='dark'] .promotions-page-rdc .tab.active { box-shadow:none; }
 /* row striping from global */
 /* remove dark-mode table border override; use global */
 /* Use global table borders & separators */
-.promo-table td { border: none; }
+/* Force all cells to inherit row background — prevents Bootstrap --bs-table-bg from breaking striping */
+.promo-table td { border: none; background: inherit !important; }
 .promo-table td.promo-owner { font-weight:700; }
 
 /* Single clean border per row on the tr, not individual tds */
-.promo-table tbody tr { border-bottom: 1px solid #c5c7c9; }
+.promo-table tbody tr { border-bottom: 1px solid #e3e3e3; }
 .promo-table th { border: none; }
-html[data-theme='dark'] .promo-table tbody tr { border-bottom: 1px solid #aaa; }
+html[data-theme='dark'] .promo-table tbody tr { border-bottom: 1px solid rgba(255, 255, 255, 0.15); }
 
 /* Light Mode Table Striping for promo-table */
 .promo-table tbody tr:nth-child(odd) {
-	background: #eceeef;
+	background: #fafafa;
 }
 .promo-table tbody tr:nth-child(even) {
-	background: #d8dadb;
+	background: #f0f0f0;
+}
+.promo-table tbody tr:hover {
+	background: #e8e8e8;
 }
 
 /* Dark Mode Table Striping for promo-table */
 html[data-theme='dark'] .promo-table tbody tr:nth-child(odd) {
-	background: #d2d4d5;
+	background: rgba(255, 255, 255, 0.08);
 }
 html[data-theme='dark'] .promo-table tbody tr:nth-child(even) {
-	background: #b9bbbc;
+	background: rgba(255, 255, 255, 0.15);
+}
+html[data-theme='dark'] .promo-table tbody tr:hover {
+	background: rgba(255, 255, 255, 0.22);
 }
 
-/* Dark mode table text - keep dark for readability on light grey rows */
+/* Dark mode table text - white for readability on dark rows */
 html[data-theme='dark'] .promo-table td {
-	color: #111;
+	color: #ffffff;
+}
+html[data-theme='dark'] .promo-table th {
+	background: var(--tmobile-magenta);
 }
 
 /* Table container - remove white border/background gap */
@@ -77,7 +87,7 @@ html[data-theme='dark'] .promotions-page-rdc .table-container {
 	box-shadow: none;
 }
 
-.promo-table td.promo-actions { display:flex; justify-content:center; align-items:center; gap:.5em; background:inherit; }
+.promo-table td.promo-actions { text-align:center; white-space:nowrap; }
 .promo-table td.promo-actions .icon-button {
 	display: inline-flex;
 	align-items: center;
@@ -85,15 +95,13 @@ html[data-theme='dark'] .promotions-page-rdc .table-container {
 	min-width: 34px;
 	min-height: 34px;
 	padding: 0 10px;
-	margin: 0;
+	margin: 0 .2em;
 	font-size: 0.95rem;
 	color: #475569;
 	background: rgba(248,250,252,0.9);
 	border: 1px solid #cbd5e1;
 	border-radius: 8px;
 	box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-	backdrop-filter: blur(5px);
-	-webkit-backdrop-filter: blur(5px);
 	cursor: pointer;
 	transition: background .15s ease, color .15s ease, border-color .15s ease;
 }
@@ -103,30 +111,30 @@ html[data-theme='dark'] .promotions-page-rdc .table-container {
 	border-color: #94a3b8;
 }
 
-/* Dark mode icon button styling - keep black */
+/* Dark mode icon buttons */
 html[data-theme='dark'] .promo-table td.promo-actions .icon-button {
-	color: #475569;
-	background: rgba(255,255,255,0.66);
-	border-color: #cbd5e1;
+	color: #FF7EB3;
+	background: rgba(255, 255, 255, 0.1);
+	border-color: rgba(255, 255, 255, 0.2);
 }
 html[data-theme='dark'] .promo-table td.promo-actions .icon-button:hover {
-	background: rgba(241,245,249,0.95);
-	color: #334155;
-	border-color: #94a3b8;
+	background: rgba(226, 0, 116, 0.2);
+	color: #fff;
+	border-color: var(--tmobile-magenta);
 }
 .promotions-controls { display:flex; flex-wrap:wrap; align-items:center; gap:0.75rem; margin:1.125rem 0; }
 .filter-group, .search-group { display:flex; flex-direction:column; gap:0.25rem; }
 .filter-group select, .search-group input { min-width:150px; }
 /* Dark mode specific override for RDC search input to force white background & dark text */
-html[data-theme='dark'] .promotions-page-rdc .search-group input { background:#ffffff; color:#111; border:1px solid #c5c7c9; }
+html[data-theme='dark'] .promotions-page-rdc .search-group input { background:#e0e0e0; color:#1a1a1a; border:1px solid rgba(255,255,255,0.2); }
 html[data-theme='dark'] .promotions-page-rdc .search-group input::placeholder {
-	color:#555555;
+	color:#777;
 }
-/* Dark mode select boxes - keep white background for readability */
+/* Dark mode select boxes */
 html[data-theme='dark'] .promotions-page-rdc .filter-group select {
-	background: #ffffff;
-	color: #111;
-	border: 1px solid #c5c7c9;
+	background: #e0e0e0;
+	color: #1a1a1a;
+	border: 1px solid rgba(255,255,255,0.2);
 }
 .pagination-container { display:flex; justify-content:space-between; align-items:center; margin:1.5rem 0; padding:1rem; background:var(--bg-soft); border-radius:8px; border:1px solid var(--border-color); backdrop-filter:blur(3px); }
 
