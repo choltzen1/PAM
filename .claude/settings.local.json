@@ -40,7 +40,13 @@
       "Bash(gh run:*)",
       "Bash(grep -E \"\\\\.py$\")",
       "Bash(ls -la /c/Users/CHoltze1/PAM/data/*.py)",
-      "Read(//c/Users/CHoltze1/PAM/**)"
+      "Read(//c/Users/CHoltze1/PAM/**)",
+      "Bash(find /c/Users/CHoltze1/PAM -name edit_rdc.html -o -name *edit_rdc*)",
+      "Bash(python -m pytest tests/ -x -q)",
+      "mcp__plugin_playwright_playwright__browser_navigate",
+      "mcp__plugin_playwright_playwright__browser_click",
+      "mcp__plugin_playwright_playwright__browser_evaluate",
+      "mcp__plugin_playwright_playwright__browser_take_screenshot"
     ]
   }
 }

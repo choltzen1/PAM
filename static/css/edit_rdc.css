@@ -4,13 +4,13 @@ html { font-size:12px; }
 /* NOTE: Trimmed to critical classes actually referenced by edit_rdc.html to reduce payload size */
 .layout-flex { width:100%; max-width:1800px; display:flex; align-items:stretch; gap:1.125rem; }
 .left-panel { flex:1 1 240px; min-width:240px; max-width:360px; background:#fff; border-radius:8px; box-shadow:0 2px 12px rgba(0,0,0,0.06); padding:1.125rem 1.25rem; display:flex; flex-direction:column; gap:1.125rem; overflow-y:auto !important; }
-.right-panel { flex:2 1 420px; min-width:280px; max-width:840px; background:#fff; border-radius:8px; box-shadow:0 2px 12px rgba(0,0,0,0.06); padding:1.25rem 1.25rem 2.25rem; display:flex; flex-direction:column; position:relative; box-sizing:border-box; overflow-x:hidden; }
-.info-box { border-bottom:4px solid var(--tmobile-magenta); padding:1rem; }
+.right-panel { flex:2 1 420px; min-width:280px; max-width:840px; background:#fff; border-radius:8px; box-shadow:0 2px 12px rgba(0,0,0,0.06); padding:1.5rem 1.5rem 2.5rem; display:flex; flex-direction:column; position:relative; box-sizing:border-box; overflow-x:hidden; }
+.info-box { border-bottom:4px solid var(--tmobile-magenta); padding:1.1rem 1rem; }
 .info-title { font-weight:bold; color:var(--tmobile-magenta); font-size:1.1rem; margin-bottom:.5rem; }
-.tabs { display:flex; flex-wrap:wrap; width:100%; border-bottom:2px solid var(--tmobile-border); margin-bottom:1.25rem; gap:.28rem; }
+.tabs { display:flex; flex-wrap:wrap; width:100%; border-bottom:2px solid var(--tmobile-border); margin-bottom:1.5rem; gap:.35rem; }
 .tab { flex:1 1 calc(16.66% - .32rem); min-width:70px; padding:.4rem .3rem; text-align:center; text-decoration:none; background:#b0b0b0; color:#fff; border-radius:6px 6px 0 0; font-weight:600; font-size:.85rem; cursor:pointer; transition:background .17s; height:34px; display:flex; align-items:center; justify-content:center; box-sizing:border-box; }
 .tab.active { background:var(--tmobile-magenta); }
-.grid-form { display:grid; gap:.675rem .4rem; align-items:start; width:100%; box-sizing:border-box; }
+.grid-form { display:grid; gap:1rem .7rem; align-items:start; width:100%; box-sizing:border-box; }
 .four-col { grid-template-columns:1fr 1fr 1fr 1fr; }
 .two-col { grid-template-columns:1fr 1fr; }
 .one-col { grid-template-columns:1fr; }
@@ -18,11 +18,13 @@ html { font-size:12px; }
 .col-span-2 { grid-column:span 2; }
 .col-span-3 { grid-column:span 3; }
 .col-span-4 { grid-column:span 4; }
-.section-label { font-weight:bold; color:var(--tmobile-magenta); border-bottom:2px solid var(--tmobile-magenta); margin-bottom:.5rem; padding-bottom:.2rem; }
+.section-label { font-weight:bold; color:var(--tmobile-magenta); border-bottom:2px solid var(--tmobile-magenta); margin-bottom:.4rem; padding-top:.6rem; padding-bottom:.25rem; font-size:.9rem; }
 /* Form control base styling moved to global.css */
 .input-group { display:flex; flex-direction:row; flex-wrap:wrap; gap:.375em; }
 .radio-vertical { display:flex; flex-direction:row; align-items:center; gap:.3em; font-size:.85rem; }
 .save-footer { position:static !important; width:100%; margin-top:1.5rem; text-align:right; }
+.save-footer .btn { padding:.55em 1.4em; font-size:1rem; border-radius:6px; }
+.save-footer .btn-outline { padding:.5em 1.2em; font-size:.95rem; }
 .action-buttons-row { display:flex; gap:.75rem; justify-content:flex-end; }
 .btn { background:var(--tmobile-magenta); color:#fff; border:none; border-radius:5px; padding:.28em .68em; font-weight:500; font-size:.9rem; transition:background .2s; cursor:pointer; }
 .btn:hover { background:var(--tmobile-magenta-dark); }
@@ -39,7 +41,9 @@ html { font-size:12px; }
 .diag-missing { color:#b71c1c; font-weight:600; }
 
 /* Notes tab layout (replaces inline style on wrapper/textarea) */
-.edit-rdc-notes-wrap { width: 90%; margin: 0 auto; padding: 2rem; }
+.edit-rdc-notes-wrap { width: 90%; margin: 0 auto; padding: 1.5rem 1.5rem; background: #fafafa; border: 1px solid #e3e3e3; border-radius: 8px; }
+.edit-rdc-notes-wrap .section-label { padding-top: 0; }
+html[data-theme='dark'] .edit-rdc-notes-wrap { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.15); }
 .promo-notes-textarea { resize: none; width: 100%; min-height: 300px; cursor: text; }
 
 /* SQL Generation helper styles (replaces inline style attributes) */
@@ -47,9 +51,58 @@ html { font-size:12px; }
 .file-meta.is-error { color:#b00020; }
 .sql-first-time-notice { padding:10px; border:1px dashed #bbb; background:#fafafa; font-size:0.9rem; }
 
+/* =============================
+   Field Card Component (BEM)
+   Per-field bordered cards matching SQL Gen upload-section pattern.
+   Each label+input pair gets its own card.
+   ============================= */
+.c-field-card {
+	background: #fafafa;
+	border: 1px solid #e3e3e3;
+	border-radius: 8px;
+	padding: .85rem 1.1rem;
+	display: flex;
+	flex-direction: column;
+	gap: .45rem;
+	box-sizing: border-box;
+}
+.c-field-card .section-label { padding-top: 0; margin-bottom: 0; }
+.c-field-card .form-control,
+.c-field-card .form-select,
+.c-field-card textarea.form-control { width: 100%; box-sizing: border-box; }
+/* Grid layout for arranging field cards */
+.c-field-grid {
+	display: grid;
+	gap: 1rem;
+	width: 100%;
+	box-sizing: border-box;
+}
+.c-field-grid--4col { grid-template-columns: 1fr 1fr 1fr 1fr; }
+.c-field-grid--3col { grid-template-columns: 1fr 1fr 1fr; }
+.c-field-grid--2col { grid-template-columns: 1fr 1fr; }
+.c-field-grid--1col { grid-template-columns: 1fr; }
+.c-field-stack {
+	display: flex;
+	flex-direction: column;
+	gap: 1.25rem;
+	width: 100%;
+}
+/* Spanning utilities for field cards */
+.c-field-card--span-2 { grid-column: span 2; }
+.c-field-card--span-3 { grid-column: span 3; }
+.c-field-card--span-full { grid-column: 1 / -1; }
+/* Collapse multi-column grids on narrow screens */
+@media (max-width:900px) {
+	.c-field-grid--2col,
+	.c-field-grid--3col,
+	.c-field-grid--4col { grid-template-columns: 1fr; }
+	.c-field-card--span-2,
+	.c-field-card--span-3,
+	.c-field-card--span-full { grid-column: auto; }
+}
 
 /* Trade tab layout */
-.trade-section { display:flex; flex-direction:column; gap:1.35rem; }
+.trade-section { display:flex; flex-direction:column; gap:1.6rem; }
 .trade-top-row { display:flex; gap:.75rem; flex-wrap:wrap; }
 .trade-box { background:transparent; color:inherit; border:none; padding:0; display:flex; flex-direction:column; justify-content:flex-start; min-width:140px; flex:1 1 auto; }
 .trade-box-wide { flex:3 1 320px; }
@@ -72,7 +125,7 @@ html { font-size:12px; }
 .trade-box-input { display:flex; justify-content:flex-start; align-items:center; }
 .trade-box-input .form-control { margin:0; border:1px solid var(--tmobile-border); }
 .trade-box-input .form-control:focus { border-color:var(--tmobile-magenta); box-shadow:0 0 0 2px #e2007433; }
-.trade-tier-block { display:flex; flex-direction:column; gap:1rem; }
+.trade-tier-block { display:flex; flex-direction:column; gap:1rem; padding-top:.5rem; }
 .trade-tier-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:.75rem; }
 .trade-tier-grid.inputs .trade-box { padding:0; }
 .trade-box.mini { min-width:0; }
@@ -122,29 +175,68 @@ html { font-size:12px; }
 
 /* === Wide Screen Expansion === */
 @media (min-width:1600px){
+	html { font-size:13px; }
 	.layout-flex { max-width:100%; width:100%; }
-	.right-panel { max-width:none; width:100%; }
-	.left-panel { flex:0 0 380px; }
+	.right-panel { max-width:none; width:100%; padding:1.75rem 1.75rem 2.75rem; }
+	.left-panel { flex:0 0 380px; padding:1.25rem 1.5rem; }
 	/* Ensure grids stretch gracefully */
+	.grid-form { gap:1.1rem .85rem; }
 	.grid-form.four-col { grid-template-columns:repeat(4,minmax(220px,1fr)); }
 	.grid-form.two-col { grid-template-columns:repeat(2,minmax(300px,1fr)); }
+	/* Scale up labels and controls for monitor readability */
+	.section-label { font-size:1rem; padding-top:.7rem; }
+	.tab { font-size:.9rem; height:38px; }
+	.info-title { font-size:1.2rem; }
+	.info-box { padding:1.25rem 1.1rem; }
+	.trade-box-label, .trade-tier-header { font-size:1.05rem; }
+	.dcd-field-label { font-size:.95rem; }
+	.dcd-form-title { font-size:1.6rem; }
+	.dcd-section-title { font-size:1.15rem; }
+	.auto-text { font-size:.95rem; }
+	.dcd-field-row { padding:1rem 1.25rem; }
+	.c-field-card { padding:1rem 1.3rem; }
 }
 @media (min-width:2000px){
+	html { font-size:14px; }
 	.layout-flex { padding-right:2vw; padding-left:0; }
-	.right-panel { padding-right:3rem; }
+	.right-panel { padding:2rem 2.25rem 3rem; }
+	.left-panel { padding:1.5rem 1.75rem; }
+	/* Further scale for ultra-wide */
+	.grid-form { gap:1.25rem 1rem; }
+	.section-label { font-size:1.05rem; padding-top:.8rem; }
+	.tab { font-size:.95rem; height:40px; }
+	.info-title { font-size:1.3rem; }
+	.info-box { padding:1.4rem 1.2rem; }
+	.dcd-field-label { font-size:1rem; }
+	.auto-text { font-size:1rem; }
+	.dcd-jira-form { padding:2rem 2.5rem; gap:2.5rem; }
+	.dcd-field-row { padding:1.1rem 1.4rem; }
+	.c-field-card { padding:1.15rem 1.5rem; }
+	.c-field-grid { gap:1.25rem; }
+	.c-field-stack { gap:1.5rem; }
 }
 
 /* DCD JIRA Form Styles */
-.dcd-jira-form { border:1px solid var(--tmobile-border); background:#fff; padding:1.5rem 1.7rem; border-radius:10px; box-shadow:0 2px 8px rgba(0,0,0,0.06); display:flex; flex-direction:column; gap:2rem; }
+.dcd-jira-form { border:1px solid var(--tmobile-border); background:#fff; padding:1.75rem 2rem; border-radius:10px; box-shadow:0 2px 8px rgba(0,0,0,0.06); display:flex; flex-direction:column; gap:2.25rem; }
 .dcd-form-title { margin:0 0 .3rem; font-size:1.4rem; font-weight:700; color:var(--tmobile-magenta); }
 .dcd-form-subtitle { margin:0 0 .5rem; font-size:.9rem; color:#555; }
-.dcd-section { border-top:3px solid var(--tmobile-magenta); padding-top:1rem; display:flex; flex-direction:column; gap:1rem; }
+.dcd-section { border-top:3px solid var(--tmobile-magenta); padding-top:1rem; display:flex; flex-direction:column; gap:.75rem; }
 .dcd-section-title { font-size:1.05rem; font-weight:600; color:var(--tmobile-magenta); margin:0; }
-.dcd-field-grid { display:flex; flex-direction:column; gap:1rem; }
-.dcd-field-row, .dcd-field-row-split > .dcd-field-row, .dcd-field-row-multi > .dcd-field-row { background:#fafafa; border:1px solid #e3e3e3; padding:.75rem 1rem; border-radius:8px; display:flex; flex-direction:column; gap:.4rem; position:relative; }
-.dcd-field-row-split, .dcd-field-row-multi { display:grid; gap:1rem; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); }
+.dcd-field-grid { display:grid; grid-template-columns:1fr 1fr; gap:.75rem; }
+.dcd-field-row { background:#fafafa; border:1px solid #e3e3e3; padding:.85rem 1.1rem; border-radius:8px; display:flex; flex-direction:column; gap:.5rem; position:relative; }
+.dcd-field-row--full { grid-column: 1 / -1; }
+@media (max-width:900px) { .dcd-field-grid { grid-template-columns:1fr; } }
 .dcd-field-label { font-weight:600; font-size:.85rem; color:#222; }
-.dcd-field-value { display:flex; flex-direction:column; gap:.45rem; }
+.dcd-field-value { display:flex; flex-direction:row; flex-wrap:wrap; align-items:center; gap:.35rem; }
+/* Form controls and textareas inside field values take full width */
+.dcd-field-value .form-control,
+.dcd-field-value .form-select,
+.dcd-field-value textarea.form-control,
+.dcd-field-value .large-textarea { width:100%; flex:1 1 100%; }
+/* Auto-text and badge stay inline */
+.dcd-field-value .auto-text { flex:0 1 auto; }
+.dcd-field-value .auto-badge,
+.dcd-field-value .required-badge { flex:0 0 auto; }
 .auto-text { font-size:.85rem; white-space:pre-line; }
 .auto-badge, .required-badge { background:var(--tmobile-magenta); color:#fff; font-size:.65rem; padding:.25rem .45rem; border-radius:4px; font-weight:600; display:inline-block; letter-spacing:.5px; }
 .required-badge { background:#b71c1c; }
@@ -205,7 +297,7 @@ html[data-theme='dark'] .right-panel {
 html[data-theme='dark'] .left-panel .info-box {
 	background:transparent;
 }
-/* Form elements: force white background for readability & consistent with other pages */
+/* Form elements: soft lavender background to reduce contrast on dark cards */
 html[data-theme='dark'] .left-panel .form-control,
 html[data-theme='dark'] .left-panel .form-select,
 html[data-theme='dark'] .right-panel .form-control,
@@ -217,13 +309,13 @@ html[data-theme='dark'] .dcd-field-row select.form-control,
 html[data-theme='dark'] .dcd-field-row select.form-select,
 html[data-theme='dark'] .dcd-field-row .edit-input,
 html[data-theme='dark'] .dcd-field-row .edit-input.form-control {
-	background:#ffffff;
-	color:#222222;
-	border:1px solid #c5c7c9; /* softened border in dark mode */
+	background:#e0e0e0;
+	color:#1a1a1a;
+	border:1px solid rgba(255, 255, 255, 0.2);
 }
 html[data-theme='dark'] .right-panel .form-control::placeholder,
 html[data-theme='dark'] .left-panel .form-control::placeholder {
-	color:#555555;
+	color:#777;
 }
 /* Active/focus state keep magenta accent but remove dark halo */
 html[data-theme='dark'] .right-panel .form-control:focus,
@@ -248,18 +340,198 @@ html[data-theme='dark'] .right-panel p { color:#ffffff; }
 .details-box.scrollable { color:#000; }
 html[data-theme='dark'] .details-box.scrollable { color:#000; }
 
-/* DCD JIRA form: enforce black text (leave magenta titles intact) */
-.dcd-jira-form { color:#000; }
-.dcd-jira-form .dcd-form-subtitle { color:#000; }
-.dcd-jira-form .dcd-field-label { color:#000; }
-.dcd-jira-form .auto-text { color:#000; }
-/* Inputs/selects/textareas inside DCD form dark mode override to black (were #222) */
+/* Field card dark mode */
+html[data-theme='dark'] .c-field-card {
+	background: rgba(255, 255, 255, 0.08);
+	border-color: rgba(255, 255, 255, 0.15);
+}
+
+/* =============================
+   Dark Mode Scoped Label Variable
+   Lighter magenta for readability on dark plum panels (~5.2:1 contrast)
+   ============================= */
+html[data-theme='dark'] .layout-flex {
+	--label-color-dark: #FF7EB3;
+	--label-border-dark: rgba(255, 126, 179, 0.45);
+}
+
+/* =============================
+   Dark Mode Label/Title Contrast
+   ============================= */
+
+/* Section labels (Details, Dates & Times, Requirements, Tiers, Segmentation, Groupings, BPTCR, Notes, SQL Gen) */
+html[data-theme='dark'] .section-label {
+	color: var(--label-color-dark);
+	border-bottom-color: var(--label-border-dark);
+}
+
+/* Left sidebar titles */
+html[data-theme='dark'] .info-title {
+	color: var(--label-color-dark);
+}
+
+/* Left sidebar info-box borders — soften in dark mode */
+html[data-theme='dark'] .info-box {
+	border-bottom-color: var(--label-border-dark);
+}
+
+/* Trade tab labels and tier headers */
+html[data-theme='dark'] .trade-box-label,
+html[data-theme='dark'] .trade-tier-header {
+	color: var(--label-color-dark);
+	border-bottom-color: var(--label-border-dark);
+}
+
+/* =============================
+   Dark Mode Tab Contrast
+   ============================= */
+html[data-theme='dark'] .tab {
+	background: #6B5B70;
+	color: #E8E0EC;
+}
+html[data-theme='dark'] .tab.active {
+	background: var(--tmobile-magenta);
+	color: #ffffff;
+}
+html[data-theme='dark'] .tab:hover:not(.active) {
+	background: #7D6B82;
+}
+html[data-theme='dark'] .tabs {
+	border-bottom-color: var(--label-border-dark);
+}
+
+/* =============================
+   DCD JIRA Tab — Full Dark/Light Theme Adaptation
+   ============================= */
+html[data-theme='dark'] .dcd-jira-form {
+	background: var(--control-surface);
+	color: #ffffff;
+	border-color: var(--label-border-dark);
+	box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
+}
+html[data-theme='dark'] .dcd-form-title {
+	color: var(--label-color-dark);
+}
+html[data-theme='dark'] .dcd-form-subtitle {
+	color: var(--text-muted);
+}
+html[data-theme='dark'] .dcd-section {
+	border-top-color: var(--label-border-dark);
+}
+html[data-theme='dark'] .dcd-section-title {
+	color: var(--label-color-dark);
+}
+html[data-theme='dark'] .dcd-field-label {
+	color: #ffffff;
+}
+html[data-theme='dark'] .dcd-jira-form .auto-text {
+	color: var(--text);
+}
+/* DCD field rows dark card treatment */
+html[data-theme='dark'] .dcd-field-row {
+	background: rgba(255, 255, 255, 0.08);
+	border-color: rgba(255, 255, 255, 0.15);
+}
+html[data-theme='dark'] .edit-btn {
+	background: transparent;
+	border-color: var(--label-border-dark);
+	color: var(--label-color-dark);
+}
+html[data-theme='dark'] .edit-btn:hover {
+	background: rgba(255, 126, 179, 0.15);
+}
+html[data-theme='dark'] .field-help {
+	color: var(--text-muted);
+}
+html[data-theme='dark'] .field-help i {
+	color: var(--label-color-dark);
+}
+html[data-theme='dark'] .dcd-ticket-status {
+	background: rgba(66, 181, 123, 0.15);
+	border-color: rgba(66, 181, 123, 0.4);
+	color: #7fe0a8;
+}
+html[data-theme='dark'] .dcd-ticket-status i {
+	color: #7fe0a8;
+}
+/* DCD form inputs: soft lavender bg (consistent with all other tabs) */
 html[data-theme='dark'] .dcd-jira-form .form-control,
 html[data-theme='dark'] .dcd-jira-form select.form-control,
 html[data-theme='dark'] .dcd-jira-form select.form-select,
 html[data-theme='dark'] .dcd-jira-form .edit-input,
 html[data-theme='dark'] .dcd-jira-form textarea.form-control {
-	color:#000;
+	background: #e0e0e0;
+	color: #1a1a1a;
+	border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* =============================
+   BPTCR Tab — JIRA Management Card Dark Mode
+   ============================= */
+html[data-theme='dark'] .jira-management-card {
+	background: var(--control-surface);
+	border-color: var(--label-border-dark);
+	color: #ffffff;
+}
+html[data-theme='dark'] .jira-card-title {
+	color: var(--label-color-dark);
+}
+html[data-theme='dark'] .jira-card-content {
+	background: rgba(255, 255, 255, 0.08);
+	border-color: var(--label-border-dark);
+}
+html[data-theme='dark'] .jira-card-info h4 {
+	color: #ffffff;
+}
+html[data-theme='dark'] .jira-card-info p {
+	color: var(--text-muted);
+}
+
+/* =============================
+   Per-Tab Dark Mode Fixes
+   ============================= */
+
+/* Groupings: scrollable details box */
+html[data-theme='dark'] .details-box.scrollable {
+	background: #e0e0e0;
+	color: #1a1a1a;
+	border-color: var(--label-border-dark);
+	box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.15);
+}
+
+/* SQL Generation: first-time notice */
+html[data-theme='dark'] .sql-first-time-notice {
+	background: rgba(255, 126, 179, 0.12);
+	border-color: var(--label-border-dark);
+	color: #ffffff;
+}
+
+/* SQL Generation: readonly + preview areas */
+html[data-theme='dark'] .sql-readonly {
+	background: #e0e0e0;
+	color: #1a1a1a;
+	border: 1px solid rgba(255, 255, 255, 0.2);
+}
+html[data-theme='dark'] .sql-preview-header {
+	background: #d4d4d4;
+	color: #1a1a1a;
+	border-color: rgba(255, 255, 255, 0.2);
+}
+html[data-theme='dark'] .sql-preview-area {
+	background: #e0e0e0;
+	color: #1a1a1a;
+	border-color: rgba(255, 255, 255, 0.2);
+}
+
+/* SQL Generation: upload-section-title in dark mode */
+html[data-theme='dark'] .upload-section-title {
+	color: var(--label-color-dark);
+	border-bottom-color: var(--label-border-dark);
+}
+
+/* Notes: form helper text */
+html[data-theme='dark'] .edit-rdc-notes-wrap .form-text {
+	color: var(--text-muted);
 }
 
 /* =============================
@@ -267,22 +539,21 @@ html[data-theme='dark'] .dcd-jira-form textarea.form-control {
    - Non-title text forced to black
    - Upload sections boxed individually
    ============================= */
-.right-panel .upload-section { 
-	border:1px solid #c5c7c9; 
-	background:#fafafa; 
-	padding:1rem 1.1rem; 
-	border-radius:10px; 
-	display:flex; 
-	flex-direction:column; 
-	gap:.6rem; 
-	box-shadow:0 1px 3px rgba(0,0,0,0.08);
+.right-panel .upload-section {
+	border:1px solid #e3e3e3;
+	background:#fafafa;
+	padding:.85rem 1.1rem;
+	border-radius:8px;
+	display:flex;
+	flex-direction:column;
+	gap:.6rem;
+	box-shadow:none;
 	color:#000; /* non-title text */
 }
-html[data-theme='dark'] .right-panel .upload-section { 
-	background:#ffffff; 
-	border:2px solid var(--tmobile-magenta); 
-	box-shadow:0 2px 12px rgba(226,0,116,0.18); 
-	color:#000; 
+html[data-theme='dark'] .right-panel .upload-section {
+	background:rgba(255, 255, 255, 0.08);
+	border-color:rgba(255, 255, 255, 0.15);
+	color:#fff;
 }
 /* Add spacing and style between upload/SQL boxes */
 .sql-gen-row {
@@ -300,12 +571,10 @@ html[data-theme='dark'] .right-panel .upload-section {
 .sql-generation-box {
 	margin-top: 0.5rem;
 	margin-bottom: 0.5rem;
-	box-shadow: 0 2px 8px rgba(226,0,116,0.08);
-	border: 1.5px solid #c5c7c9;
-	transition: box-shadow 0.18s;
+	border: 1px solid #e3e3e3;
+	transition: border-color 0.18s;
 }
 .sql-generation-box:hover {
-	box-shadow: 0 4px 16px rgba(226,0,116,0.18);
 	border-color: var(--tmobile-magenta);
 }
 @media (max-width: 1100px) {
@@ -342,7 +611,7 @@ html[data-theme='dark'] .upload-section .file-actions .btn:hover { background:va
 .right-panel .upload-section .file-name { color:#000; }
 html[data-theme='dark'] .right-panel .upload-section .form-text,
 html[data-theme='dark'] .right-panel .upload-section .file-meta,
-html[data-theme='dark'] .right-panel .upload-section .file-name { color:#000; }
+html[data-theme='dark'] .right-panel .upload-section .file-name { color:#fff; }
 /* Existing section labels retain magenta via .section-label rule */
 
 /* SQL card + preview areas: non-title descriptive text black */
@@ -353,25 +622,24 @@ html[data-theme='dark'] .right-panel .upload-section .file-name { color:#000; }
 .right-panel #sqlPreviewArea { color:#000; }
 html[data-theme='dark'] .right-panel .sql-card,
 html[data-theme='dark'] .right-panel .sql-card .file-meta,
-html[data-theme='dark'] .right-panel .sql-card .file-name,
+html[data-theme='dark'] .right-panel .sql-card .file-name { color:#fff; }
+/* Preview areas stay dark text on white background */
 html[data-theme='dark'] .right-panel .sql-preview-header,
 html[data-theme='dark'] .right-panel #sqlPreviewArea { color:#000; }
 
 /* SQL card adopts upload-section styling when combined */
-.sql-card.upload-section { 
-	border:1px solid #c5c7c9; 
-	background:#fafafa; 
-	padding:1rem 1.1rem; 
-	border-radius:10px; 
-	display:flex; 
-	flex-direction:column; 
-	gap:.9rem; 
-	box-shadow:0 1px 3px rgba(0,0,0,0.08); 
+.sql-card.upload-section {
+	border:1px solid #e3e3e3;
+	background:#fafafa;
+	padding:.85rem 1.1rem;
+	border-radius:8px;
+	display:flex;
+	flex-direction:column;
+	gap:.9rem;
 }
-html[data-theme='dark'] .sql-card.upload-section { 
-	background:#ffffff; 
-	border-color:#c5c7c9; 
-	box-shadow:none; 
+html[data-theme='dark'] .sql-card.upload-section {
+	background:rgba(255, 255, 255, 0.08);
+	border-color:rgba(255, 255, 255, 0.15);
 }
 .upload-section-title { 
 	font-weight:700; 

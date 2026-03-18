@@ -15,8 +15,8 @@
   --tmobile-gray: #f4f4f4;
   --tmobile-dark: #2c2c2c;
   --tmobile-light: #ffffff;
-  --input-light-gray: #f5f5f5; /* unified light grey for dark mode inputs */
-  --tmobile-border-dark: #b9bbbc; /* dark mode border color used for inputs */
+  --input-light-gray: #e0e0e0; /* neutral light gray for dark mode inputs — reduces contrast */
+  --tmobile-border-dark: rgba(255, 255, 255, 0.2); /* dark mode border color used for inputs */
 }
 
 /* ===========================
@@ -651,14 +651,14 @@ html[data-theme='dark'] select {
   caret-color: var(--text) !important;
 }
 
-/* Unified dark mode input & dropdown surface (light grey + black text) */
+/* Unified dark mode input & dropdown surface (soft lavender + dark text) */
 html[data-theme='dark'] .form-control,
 html[data-theme='dark'] input[type='text'],
 html[data-theme='dark'] input[type='search'],
 html[data-theme='dark'] input[type='number'],
 html[data-theme='dark'] textarea {
   background-color: var(--input-light-gray) !important;
-  color: #000 !important;
+  color: #1a1a1a !important;
   border: 1px solid var(--tmobile-border-dark) !important;
 }
 
@@ -667,7 +667,7 @@ html[data-theme='dark'] .form-select,
 html[data-theme='dark'] select.form-select,
 html[data-theme='dark'] select:not([multiple]) {
   background-color: var(--input-light-gray) !important;
-  color:#000 !important;
+  color:#1a1a1a !important;
   border:1px solid var(--tmobile-border-dark) !important;
   /* If Bootstrap arrow was wiped earlier, reintroduce it */
   background-image: var(--bs-form-select-bg-img), var(--bs-form-select-bg-icon, none);
