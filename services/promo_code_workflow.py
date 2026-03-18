@@ -51,8 +51,8 @@ class PromoCodeWorkflow:
         oid = (orbit_id or '').strip()
         if not oid:
             return {'found': False, 'error': 'orbit_id required'}
-        # Use orbit_db directly for Fabric data
-        row = self.orbit_db.get_orbit_record(oid)
+        # Look up from staging table ([PAM].[OrbitPromoExtract_stg])
+        row = self.orbit_db.get_orbit_record_from_staging(oid)
         if row and not row.get('_error'):
             # Not yet created as promo (no code)
             return {'found': True, 'table': 'orbit', 'existing_code': None, 'orbit': row}
@@ -112,8 +112,8 @@ class PromoCodeWorkflow:
             return {'success': False, 'error': f'Orbit {oid} not found'}
         if raw_lookup.get('existing_code'):
             return {'success': False, 'error': 'Orbit already assigned', 'existing_code': raw_lookup['existing_code']}
-        # Obtain full orbit row (use orbit_db directly)
-        full_row = self.orbit_db.get_orbit_record(oid)
+        # Obtain full orbit row from staging table ([PAM].[OrbitPromoExtract_stg])
+        full_row = self.orbit_db.get_orbit_record_from_staging(oid)
         if not full_row or full_row.get('_error'):
             return {'success': False, 'error': f'Orbit {oid} not found'}
         new_code = self.generate_next_code()

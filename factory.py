@@ -153,6 +153,8 @@ def create_app(config: dict | None = None) -> Flask:
     # Exempt the JSON API blueprint — its endpoints accept application/json bodies
     # and are already protected by Azure AD role decorators.
     csrf.exempt(api_bp)
+    # Exempt core_bp — /theme is a cookie-only endpoint with no state-changing side-effects.
+    csrf.exempt(core_bp)
 
     global data_manager
     # Single initialization path (DB-only model); validation mode no longer diverges
