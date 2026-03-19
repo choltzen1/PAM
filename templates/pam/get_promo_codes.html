@@ -132,11 +132,8 @@ document.addEventListener('DOMContentLoaded', function() {
       row.className = 'priority-row d-flex align-items-center gap-2';
       row.innerHTML = `
         <div class=\"priority-index badge bg-secondary\">#${i}</div>
-        <input type=\"text\" class=\"form-control form-control-sm priority-orbit-input\" data-priority=\"${i}\" placeholder=\"Orbit ID\" />
-        <select class=\"apple-dropdown priority-config-select\">${promoTypeOptionsHtml}</select>
-        <label class=\"broken-trade-toggle hidden d-flex align-items-center gap-1 mb-0 small fw-semibold\" style=\"white-space:nowrap;\">
-          <input type=\"checkbox\" class=\"broken-trade-checkbox\" /> Broken Trade
-        </label>
+        <input type=\"text\" class=\"form-control priority-orbit-input\" data-priority=\"${i}\" placeholder=\"Orbit ID\" style=\"height:36px;\" />
+        <select class=\"apple-dropdown priority-config-select\" style=\"height:36px;\">${promoTypeOptionsHtml}</select>
       `;
       const resultBox = document.createElement('div');
       resultBox.className = 'priority-result-box';
@@ -155,21 +152,6 @@ document.addEventListener('DOMContentLoaded', function() {
   const prioritySearchState = { timers:{}, lastSeq:{}, completedSeq:{} };
 
   function attachPriorityHandlers(){
-    // Show/hide broken trade toggle based on config selection
-    document.querySelectorAll('.priority-config-select').forEach(sel=>{
-      sel.addEventListener('change', function(){
-        const toggle = this.closest('.priority-row').querySelector('.broken-trade-toggle');
-        if(toggle){
-          if(this.value === 'non-0-trade-in'){
-            toggle.classList.remove('hidden');
-          } else {
-            toggle.classList.add('hidden');
-            const cb = toggle.querySelector('.broken-trade-checkbox');
-            if(cb) cb.checked = false;
-          }
-        }
-      });
-    });
     document.querySelectorAll('.priority-orbit-input').forEach(inp=>{
       const idx = inp.getAttribute('data-priority');
       inp.addEventListener('input', function(){
@@ -308,10 +290,16 @@ document.addEventListener('DOMContentLoaded', function() {
       const filled = inputs.map(inp=>{
         const row = inp.closest('.priority-row');
         const sel = row ? row.querySelector('.priority-config-select') : null;
-        const btCb = row ? row.querySelector('.broken-trade-checkbox') : null;
-        return { idx: inp.getAttribute('data-priority'), orbitId: (inp.value||'').trim(), config: (sel && sel.value || '').toLowerCase(), broken_trade: btCb && btCb.checked ? 'Y' : 'N', alreadyGenerated: inp.dataset.alreadyGenerated === 'true' };
+        return { idx: inp.getAttribute('data-priority'), orbitId: (inp.value||'').trim(), config: (sel && sel.value || '').toLowerCase(), broken_trade: 'N', alreadyGenerated: inp.dataset.alreadyGenerated === 'true' };
       }).filter(o=>o.orbitId && !o.alreadyGenerated);
       if(!filled.length){ return; }
+      // For trade-in promos, prompt broken trade before generating
+      for(const item of filled){
+        if(item.config === 'non-0-trade-in'){
+          const answer = await showBrokenTradePrompt(item.orbitId);
+          item.broken_trade = answer;
+        }
+      }
       generateBtn.disabled = true;
       const originalText = generateBtn.textContent;
       generateBtn.textContent = 'Generating...';
@@ -509,5 +497,75 @@ function mapType(t){
   if(/rebate/i.test(t)) return 'Rebate';
   return 'RDC';
 }
+
+// Broken Trade popup — returns promise that resolves to 'Y' or 'N'
+function showBrokenTradePrompt(orbitId){
+  return new Promise(resolve=>{
+    const overlay = document.createElement('div');
+    overlay.className = 'broken-trade-modal';
+    overlay.innerHTML = `
+      <div class="broken-trade-modal-content">
+        <div class="broken-trade-modal-header">
+          <h3>Broken Trade</h3>
+          <button type="button" class="close-modal" id="btCloseBtn">&times;</button>
+        </div>
+        <div class="broken-trade-modal-body">
+          <p>Is Orbit <strong>${orbitId}</strong> a broken trade promo?</p>
+          <div class="broken-trade-modal-buttons">
+            <button class="btn bt-yes" id="btYesBtn">Yes</button>
+            <button class="btn bt-no" id="btNoBtn">No</button>
+          </div>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+    function cleanup(val){ document.body.removeChild(overlay); resolve(val); }
+    overlay.querySelector('#btYesBtn').addEventListener('click', ()=> cleanup('Y'));
+    overlay.querySelector('#btNoBtn').addEventListener('click', ()=> cleanup('N'));
+    overlay.querySelector('#btCloseBtn').addEventListener('click', ()=> cleanup('N'));
+    overlay.addEventListener('click', (e)=>{ if(e.target === overlay) cleanup('N'); });
+  });
+}
 </script>
+
+<style>
+.broken-trade-modal {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0,0,0,0.45); z-index: 99999;
+  display: flex; align-items: center; justify-content: center;
+}
+.broken-trade-modal-content {
+  background: var(--card-bg, #fff); color: var(--text, #111);
+  border-radius: 8px; width: 90%; max-width: 400px;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.45); overflow: hidden;
+}
+.broken-trade-modal-header {
+  background: var(--tmobile-magenta, #E20074); color: #fff;
+  padding: 12px 20px; display: flex; justify-content: space-between; align-items: center;
+}
+.broken-trade-modal-header h3 { margin: 0; font-size: 1.1rem; font-weight: 700; color: #fff; }
+.broken-trade-modal-header .close-modal {
+  background: transparent; border: none; color: #fff; font-size: 20px;
+  cursor: pointer; opacity: 0.8; padding: 4px 8px; border-radius: 4px;
+}
+.broken-trade-modal-header .close-modal:hover { opacity: 1; background: rgba(255,255,255,0.15); }
+.broken-trade-modal-body { padding: 24px; text-align: center; }
+.broken-trade-modal-body p { font-size: 1rem; margin: 0 0 20px; }
+.broken-trade-modal-buttons { display: flex; gap: 12px; justify-content: center; }
+.broken-trade-modal-buttons .btn {
+  padding: 10px 32px; border-radius: 6px; font-weight: 600; font-size: 0.95rem;
+  cursor: pointer; border: none; transition: background 0.15s;
+}
+.broken-trade-modal-buttons .bt-yes {
+  background: var(--tmobile-magenta, #E20074); color: #fff;
+}
+.broken-trade-modal-buttons .bt-yes:hover { background: #c00060; }
+.broken-trade-modal-buttons .bt-no {
+  background: #e0e0e0; color: #333;
+}
+.broken-trade-modal-buttons .bt-no:hover { background: #ccc; }
+html[data-theme='dark'] .broken-trade-modal-content { background: #2d1626; border: 1px solid rgba(226,0,116,0.3); }
+html[data-theme='dark'] .broken-trade-modal-body { color: #e0e0e0; }
+html[data-theme='dark'] .broken-trade-modal-buttons .bt-no { background: rgba(255,255,255,0.15); color: #e0e0e0; }
+</style>
 {% endblock %}

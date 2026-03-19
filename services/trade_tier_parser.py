@@ -14,27 +14,43 @@ from typing import List, Dict, Any
 def parse_trade_tiers(text: str) -> List[Dict[str, Any]]:
     """Parse the eligible trade-in devices text into tiers.
 
+    Splits on $NNN boundaries — handles any format:
+      $830 Tier: ...
+      $830: ...
+      $830 Apple: ...
+
     Returns list sorted by amount descending (highest first = tier 1).
     Each entry: {'amount': int, 'raw_text': str}
     """
     if not text or not text.strip():
         return []
 
-    # Find all "$NNN Tier:" patterns and split the text at those boundaries
-    # Pattern matches $XXX followed by optional space and "tier" (case-insensitive)
-    tier_pattern = re.compile(r'\$(\d+)\s*[Tt]ier\s*:', re.IGNORECASE)
+    # Match any $NNN pattern (dollar sign + digits) as a tier boundary
+    tier_pattern = re.compile(r'\$(\d+)')
 
     matches = list(tier_pattern.finditer(text))
     if not matches:
         return []
 
+    # Deduplicate amounts (same dollar value appearing multiple times = same tier)
+    seen_amounts = set()
     tiers = []
     for i, match in enumerate(matches):
         amount = int(match.group(1))
+        if amount in seen_amounts:
+            continue
+        seen_amounts.add(amount)
         start = match.end()
-        # Text runs until the next tier marker or end of string
-        end = matches[i + 1].start() if i + 1 < len(matches) else len(text)
+        # Text runs until the next $NNN marker or end of string
+        next_match = None
+        for j in range(i + 1, len(matches)):
+            if int(matches[j].group(1)) not in seen_amounts or int(matches[j].group(1)) != amount:
+                next_match = matches[j]
+                break
+        end = next_match.start() if next_match else len(text)
         raw_text = text[start:end].strip()
+        # Strip optional "Tier:" or "tier:" prefix from raw_text
+        raw_text = re.sub(r'^[Tt]ier\s*:\s*', '', raw_text)
         tiers.append({
             'amount': amount,
             'raw_text': raw_text,

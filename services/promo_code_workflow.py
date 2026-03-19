@@ -129,6 +129,7 @@ class PromoCodeWorkflow:
             return {'success': False, 'error': f'Orbit {oid} not found'}
         new_code = self.generate_next_code()
         cfg = (config or '').lower()
+        logger.info("[WORKFLOW] Config: '%s', broken_trade: '%s', full_row keys: %s", cfg, broken_trade, list(full_row.keys()) if full_row else '(none)')
         # Allocate next sku_group_id (always generate regardless of orbit row value)
         try:
             existing_db_ids = set(self.db.get_all_sku_group_ids())
@@ -157,7 +158,9 @@ class PromoCodeWorkflow:
         allocated_mk_mdl_ids = []
         if cfg == 'non-0-trade-in':
             trade_devices_text = full_row.get('crffc_eligibletradeindevices') or ''
+            logger.info("[WORKFLOW] Trade devices text length: %d, first 200 chars: %s", len(trade_devices_text), trade_devices_text[:200] if trade_devices_text else '(empty)')
             tiers = parse_trade_tiers(trade_devices_text)
+            logger.info("[WORKFLOW] Parsed %d trade tiers: %s", len(tiers), [(t['amount']) for t in tiers] if tiers else '(none)')
             if tiers:
                 # Allocate mk_mdl group IDs (one per tier)
                 try:
@@ -231,7 +234,7 @@ class PromoCodeWorkflow:
                 candidate_fields[key] = value
                 logger.debug("[WORKFLOW] Override: %s = %s", key, value)
         
-        insertion = {k:v for k,v in candidate_fields.items() if v is not None}
+        insertion = {k:v for k,v in candidate_fields.items() if v is not None and v != ''}
         logger.debug("[WORKFLOW] Final insertion fields: %s", list(insertion.keys()))
         ok = self.db.insert_promo_record(insertion)
         if not ok:

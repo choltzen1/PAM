@@ -1101,7 +1101,15 @@ class DatabaseManager:
             json_record['promo_grace'] = json_record['promo_grace_period']
         if 'trade_in_grace_period' in json_record and not json_record.get('trade_in_grace'):
             json_record['trade_in_grace'] = json_record['trade_in_grace_period']
-        
+
+        # Map DB mk_mdl_grp_tier fields to template trade_tier fields
+        for tier in [1, 2, 3, 4]:
+            json_record[f'trade_tier_{tier}_make_model'] = json_record.get(f'mk_mdl_grp_tier_{tier}') or ''
+            json_record[f'trade_tier_{tier}_amount'] = json_record.get(f'mk_mdl_grp_tier_{tier}_amount') or ''
+            json_record[f'trade_tier_{tier}_cond_id'] = json_record.get(f'mk_mdl_grp_tier_{tier}_condition_id') or ''
+            json_record[f'trade_tier_{tier}_min_fmv'] = json_record.get(f'mk_mdl_grp_tier_{tier}_min_fmv') or ''
+            json_record[f'trade_tier_{tier}_max_fmv'] = json_record.get(f'mk_mdl_grp_tier_{tier}_max_fmv') or ''
+
         return json_record
 
     # (Duplicate write helper methods removed)

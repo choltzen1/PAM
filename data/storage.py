@@ -778,7 +778,7 @@ class PromoDataManager:
             'orbit_id': orbit_id_clean,
             'description': orbit_row.get('description') or orbit_row.get('bill_facing_name') or f'Orbit {orbit_id_clean}',
             'bill_facing_name': orbit_row.get('bill_facing_name') or orbit_row.get('description'),
-            'initiative_name': orbit_row.get('initiative_name') or '',
+            'initiative_name': orbit_row.get('initiative_name'),
             'Owner': orbit_row.get('Owner') or 'Unassigned',
             'promo_start_date': orbit_row.get('promo_start_date'),
             'promo_end_date': orbit_row.get('promo_end_date'),
