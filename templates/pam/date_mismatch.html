@@ -189,8 +189,8 @@
                 {{ promo.code }}
               </a>
             </td>
-            <td class="orbit-end-date">{{ promo.orbit_end_date or 'N/A' }}</td>
-            <td class="pam-end-date">{{ promo.promo_end_date or 'N/A' }}</td>
+            <td class="orbit-end-date">{{ promo.orbit_end_date|dateonly or 'N/A' }}</td>
+            <td class="pam-end-date">{{ promo.promo_end_date|dateonly or 'N/A' }}</td>
             <td class="mismatch-type">
               {% if promo.mismatch_type %}
                 <span class="badge badge-{{ promo.mismatch_severity }}">

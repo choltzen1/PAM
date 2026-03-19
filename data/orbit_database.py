@@ -197,7 +197,8 @@ class OrbitDatabaseManager:
     def get_orbit_dates_map(self, orbit_ids: List[str]) -> Dict[str, Dict[str, Any]]:
         """Bulk fetch orbit start/end dates keyed by orbit_id.
 
-        Uses chunked IN queries to avoid one-query-per-orbit bottlenecks.
+        Uses the staging table [PAM].[OrbitPromoExtract_stg] as the
+        authoritative source for orbit data, with chunked IN queries.
         """
         cleaned_ids: List[str] = []
         seen = set()
@@ -220,29 +221,22 @@ class OrbitDatabaseManager:
         out: Dict[str, Dict[str, Any]] = {}
         chunk_size = 500
 
-        def _fetch_chunk(conn, ids_chunk: List[str], start_col_expr: str):
-            params = {f'oid{i}': oid for i, oid in enumerate(ids_chunk)}
-            placeholders = ', '.join(f":oid{i}" for i in range(len(ids_chunk)))
-            sql = text(
-                f"SELECT CAST(orbit_id AS NVARCHAR(255)) AS orbit_id, "
-                f"{start_col_expr} AS promo_start_date, "
-                f"promo_end_date "
-                f"FROM {self.table} "
-                f"WHERE CAST(orbit_id AS NVARCHAR(255)) IN ({placeholders})"
-            )
-            return conn.execute(sql, params).mappings().all()
-
         with engine.connect() as conn:
             for i in range(0, len(cleaned_ids), chunk_size):
                 chunk = cleaned_ids[i:i + chunk_size]
-                rows = []
+                params = {f'oid{i}': oid for i, oid in enumerate(chunk)}
+                placeholders = ', '.join(f":oid{i}" for i in range(len(chunk)))
+                sql = text(
+                    f"SELECT CAST(orbit_id AS NVARCHAR(255)) AS orbit_id, "
+                    f"promo_start_date, "
+                    f"promo_end_date "
+                    f"FROM {self.staging_table} "
+                    f"WHERE CAST(orbit_id AS NVARCHAR(255)) IN ({placeholders})"
+                )
                 try:
-                    rows = _fetch_chunk(conn, chunk, 'promo_srart_date')
+                    rows = conn.execute(sql, params).mappings().all()
                 except Exception:
-                    try:
-                        rows = _fetch_chunk(conn, chunk, 'promo_start_date')
-                    except Exception:
-                        continue
+                    continue
 
                 for row in rows:
                     oid = str(row.get('orbit_id') or '').strip()

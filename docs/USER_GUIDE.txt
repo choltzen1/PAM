@@ -1,0 +1,80 @@
+PAM — User Guide
+
+
+GETTING STARTED
+
+PAM is accessed through your web browser. Navigate to the PAM URL provided by your team and log in with your T-Mobile credentials. No installation is needed — your Azure account handles authentication automatically.
+
+Once logged in, the home page provides navigation to all major areas of the application. Your access level determines which actions you can take (view only, edit, approve, or admin).
+
+
+CORE WORKFLOWS
+
+
+Creating and Editing a Promotion
+
+  1. From the home page, select the promotion type you want to work with: RDC, SPE, or Rebate.
+  2. To create a new promotion, click the New Promotion button. To edit an existing one, find it in the table and click the Edit icon.
+  3. The edit page is organized into tabs. Fill in the required fields across each tab:
+       - General — Promo code, owner, bill-facing name, Orbit ID, status, dates
+       - Configuration — Discount amounts, device types, activation requirements, eligibility criteria
+       - Groups — SKU groups, SOC groupings, trade-in groups, segment groups
+  4. Save your changes when finished. PAM tracks all edits automatically in the version history.
+
+
+Generating SQL
+
+After a promotion is fully configured, PAM can generate the SQL eligibility rules needed by downstream systems.
+
+  1. Open the promotion's edit page.
+  2. Navigate to the SQL section.
+  3. Click Generate SQL. PAM builds the rules based on the promotion's configuration fields.
+  4. Review the generated SQL. You can copy it or download it directly.
+
+This replaces the need to write SQL by hand, reducing errors and saving significant time.
+
+
+Approval Workflow
+
+Promotions that require sign-off go through the approval process.
+
+  1. From the promotion list, click the Approvers icon to view or assign approvers.
+  2. Assign the appropriate reviewers (e.g., Device Finance, Revenue Accounting).
+  3. Once assigned, approvers receive notification and can review the promotion details.
+  4. Approval status is tracked directly in PAM so you can see where each promotion stands at a glance.
+
+
+Capacity Planning
+
+The Capacity page gives a high-level view of team workload and upcoming launches.
+
+  - Active Promotions — See how many promotions are currently live, broken down by type (RDC, SPE, Rebate).
+  - Weekly Launch Schedule — A calendar view showing which promotions are launching over the next several weeks.
+  - Owner Workload — See how promotions are distributed across team members to help balance the load.
+
+Use this page to plan ahead and avoid scheduling conflicts or overloading individual team members.
+
+
+Date Mismatch Detection
+
+PAM automatically compares promotion dates in PAM against the dates in Orbit (the external marketing system).
+
+  1. Navigate to the Date Mismatch page.
+  2. PAM displays any promotions where the end date in PAM does not match the end date in Orbit.
+  3. For each mismatch, you can click Update PAM to sync PAM's date to match Orbit.
+  4. You can also generate SQL updates for batch corrections.
+
+This helps catch discrepancies early before they cause issues downstream.
+
+
+TIPS
+
+  - Search and Filter — Use the search bar and filter dropdowns on any promotion list to quickly find what you need.
+  - Dark Mode — Toggle dark mode from the theme switcher in the navigation bar if you prefer a darker interface.
+  - Version History — Every change to a promotion is recorded. Visit the admin area to review the full history of edits for any promo code.
+  - JIRA Integration — You can create JIRA tickets for a promotion directly from PAM without leaving the application.
+
+
+GETTING HELP
+
+  - Primary Contact: Cade Holtzen (cade.holtzen1@t-mobile.com) Daniel Zhang (daniel.zhang8@t-mobile.com)

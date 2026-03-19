@@ -200,6 +200,19 @@ def create_app(config: dict | None = None) -> Flask:
         )
         return response
 
+    @app.template_filter('dateonly')
+    def dateonly_filter(value):
+        """Strip time portion from a date/datetime, returning just YYYY-MM-DD."""
+        if not value:
+            return value
+        if isinstance(value, datetime):
+            return value.strftime('%Y-%m-%d')
+        s = str(value).strip()
+        # Trim anything after the date portion (space + time)
+        if ' ' in s:
+            s = s.split(' ')[0]
+        return s
+
     @app.context_processor
     def inject_current_datetime():  # type: ignore
         return {'current_datetime': datetime.now().strftime("%B %d, %Y at %I:%M:%S %p")}

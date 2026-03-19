@@ -1,0 +1,44 @@
+# PAM — Promotion Automation Manager
+
+## Executive Overview
+
+
+### What is PAM?
+
+PAM is a web-based tool used by T-Mobile's promotions team to manage the full lifecycle of device promotions, from initial creation through approval and launch. It serves as the central hub where team members build out promotion details, track their status, generate the data needed for downstream systems, and coordinate approvals.
+
+
+### The Problem It Solves
+
+Before PAM, configuring a promotion required manually coordinating across spreadsheets, emails, and multiple disconnected systems. This process was time-consuming, error-prone, and difficult to track. There was no single place to see the status of a promotion or who was responsible for what.
+
+
+### Impact
+
+- **500+ promotions** launched in 2025
+
+- **~80% reduction** in the time required to configure a promotion compared to the previous manual process
+
+- Eliminated reliance on scattered spreadsheets and email chains
+
+- Gave leadership real-time visibility into promotion status and team workload
+
+
+### What PAM Does
+
+- **Promotion Management** — Create, edit, and track RDC, SPE, and Rebate promotions in one place
+
+- **Automated SQL Generation** — Generates the eligibility rules needed by downstream systems, removing manual SQL writing
+
+- **Approval Workflows** — Route promotions to the right approvers and track sign-off status
+
+- **Capacity Planning** — View active promotions, upcoming launches, and team workload to prevent overallocation
+
+- **Date Validation** — Automatically detect and resolve date conflicts between internal and external systems
+
+- **JIRA Integration** — Create and link JIRA tickets directly from PAM without switching tools
+
+
+### How It Works
+
+PAM is built as a web application and hosted on T-Mobile's Azure cloud environment. Users access it through their browser with no software installation required. It connects to T-Mobile's existing database infrastructure and integrates with internal systems like JIRA and Orbit. Access is secured through T-Mobile's standard Azure login, so only authorized team members can view or make changes based on their assigned role. PAM is designed as a one stop shop for the Promotions team. It provides a single source of truth for all promotion-related information and activities, streamlining the entire process from creation to launch. It eliminates the need for manual coordination across multiple tools and systems, saving time and reducing errors. By automating key tasks like SQL generation and approval routing, PAM allows the team to focus on strategic work rather than administrative overhead. The end result is a more efficient, transparent, and scalable promotion management process that supports T-Mobile's business goals.

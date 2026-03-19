@@ -39,35 +39,35 @@ html[data-theme='dark'] .promotions-page-rdc .tab.active { box-shadow:none; }
 .promo-table td.promo-owner { font-weight:700; }
 
 /* Single clean border per row on the tr, not individual tds */
-.promo-table tbody tr { border-bottom: 1px solid #e3e3e3; }
+.promo-table tbody tr { border-bottom: 1px solid #c5c7c9; }
 .promo-table th { border: none; }
-html[data-theme='dark'] .promo-table tbody tr { border-bottom: 1px solid rgba(255, 255, 255, 0.15); }
+html[data-theme='dark'] .promo-table tbody tr { border-bottom: 1px solid #aaa; }
 
 /* Light Mode Table Striping for promo-table */
 .promo-table tbody tr:nth-child(odd) {
-	background: #fafafa;
+	background: #eceeef;
 }
 .promo-table tbody tr:nth-child(even) {
-	background: #f0f0f0;
+	background: #d8dadb;
 }
 .promo-table tbody tr:hover {
-	background: #e8e8e8;
+	background: #cfd1d2;
 }
 
 /* Dark Mode Table Striping for promo-table */
 html[data-theme='dark'] .promo-table tbody tr:nth-child(odd) {
-	background: rgba(255, 255, 255, 0.08);
+	background: #d2d4d5;
 }
 html[data-theme='dark'] .promo-table tbody tr:nth-child(even) {
-	background: rgba(255, 255, 255, 0.15);
+	background: #b9bbbc;
 }
 html[data-theme='dark'] .promo-table tbody tr:hover {
-	background: rgba(255, 255, 255, 0.22);
+	background: #a8aaab;
 }
 
-/* Dark mode table text - white for readability on dark rows */
+/* Dark mode table text - keep dark for readability on light grey rows */
 html[data-theme='dark'] .promo-table td {
-	color: #ffffff;
+	color: #111;
 }
 html[data-theme='dark'] .promo-table th {
 	background: var(--tmobile-magenta);
@@ -111,16 +111,13 @@ html[data-theme='dark'] .promotions-page-rdc .table-container {
 	border-color: #94a3b8;
 }
 
-/* Dark mode icon buttons */
+/* Dark mode icon buttons - dark text on light grey rows */
 html[data-theme='dark'] .promo-table td.promo-actions .icon-button {
-	color: #FF7EB3;
-	background: rgba(255, 255, 255, 0.1);
-	border-color: rgba(255, 255, 255, 0.2);
+	color: #222;
 }
 html[data-theme='dark'] .promo-table td.promo-actions .icon-button:hover {
-	background: rgba(226, 0, 116, 0.2);
-	color: #fff;
-	border-color: var(--tmobile-magenta);
+	background: #f8d6ec;
+	color: var(--tmobile-magenta);
 }
 .promotions-controls { display:flex; flex-wrap:wrap; align-items:center; gap:0.75rem; margin:1.125rem 0; }
 .filter-group, .search-group { display:flex; flex-direction:column; gap:0.25rem; }

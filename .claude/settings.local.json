@@ -52,7 +52,18 @@
       "Bash(grep -E \"\\\\.\\(js|css\\)$\")",
       "Bash(find /c/Users/CHoltze1/PAM/templates -type f -name *.html)",
       "Bash(find /c/Users/CHoltze1/PAM -type f -name *.sql)",
-      "Bash(grep -r \"RDC\\\\|SPE\\\\|Rebate\\\\|PETE\\\\|BPTCR\\\\|DCD\\\\|SOC\\\\|BAN\\\\|FMV\\\\|EFPE\\\\|Orbit\" /c/Users/CHoltze1/PAM --include=*.py --include=*.md)"
+      "Bash(grep -r \"RDC\\\\|SPE\\\\|Rebate\\\\|PETE\\\\|BPTCR\\\\|DCD\\\\|SOC\\\\|BAN\\\\|FMV\\\\|EFPE\\\\|Orbit\" /c/Users/CHoltze1/PAM --include=*.py --include=*.md)",
+      "Skill(gsd:discuss-phase)",
+      "Skill(gsd:discuss-phase:*)",
+      "WebFetch(domain:hackernoon.com)",
+      "WebFetch(domain:dev.to)",
+      "WebFetch(domain:pro-business-plans.medium.com)",
+      "WebFetch(domain:blog.logrocket.com)",
+      "WebFetch(domain:www.grammarly.com)",
+      "WebFetch(domain:blog.bit.ai)",
+      "WebFetch(domain:insight7.io)",
+      "WebFetch(domain:whatfix.com)",
+      "WebFetch(domain:medium.com)"
     ]
   }
 }

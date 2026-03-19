@@ -1,0 +1,110 @@
+# PAM — Technical One-Pager
+
+
+## Overview
+
+PAM (Promotion Automation Manager) is a Flask web application that manages the lifecycle of T-Mobile's RDC, SPE, and Rebate promotions. It handles creation, configuration, SQL generation, approvals, capacity planning, and JIRA integration. SQL Server is the single authoritative data source.
+
+
+## Stack
+
+| Layer | Technology |
+|-------|------------|
+| **Backend** | Python 3.11+, Flask 3.1, SQLAlchemy 2.0, pyodbc |
+| **Frontend** | Jinja2 server-rendered HTML, vanilla JS, CSS cascade layers |
+| **Database** | SQL Server (PromoQuality), Oracle (linked server via OPENQUERY) |
+| **Hosting** | Azure App Service (Linux), Gunicorn WSGI |
+| **Auth** | Azure AD Easy Auth (JWT via `X-MS-CLIENT-PRINCIPAL` header) |
+| **CI/CD** | GitHub Actions (pytest + endpoint validation on push, auto-deploy) |
+| **Integrations** | JIRA (REST API), Microsoft Fabric (OAuth), Dataverse, SQL Server Database Mail |
+
+
+## Architecture
+
+PAM uses an application factory pattern (`factory.py::create_app()`). A single `PromoDataManager` instance is shared across all blueprints.
+
+**Blueprints:**
+
+| Blueprint | Prefix | Purpose |
+|-----------|--------|---------|
+| `core_bp` | `/` | Home, landing, theme toggle |
+| `promo_bp` | `/` | RDC/SPE/Rebate CRUD, SQL generation, date mismatch, file uploads |
+| `admin_bp` | `/admin` | Dashboard, version history, user management |
+| `api_bp` | `/api` | JSON endpoints, Orbit search, status updates |
+| `jira_bp` | `/jira` | JIRA ticket creation and epic linking |
+| `research_bp` | `/research` | PETE eligibility research workflow |
+| `lists_bp` | `/lists` | SKU and trade-in list automation |
+
+
+## Data Layer
+
+- **`PromoDataManager`** (`data/storage.py`) — Primary facade for all promotion operations
+- **`DatabaseManager`** (`data/database.py`) — SQL Server connection management via SQLAlchemy
+- **`field_map.py`** — Canonical Python names to physical SQL column name mapping
+- **`version_history.py`** — Field-level audit trail stored in `[PAM].[Version_History]`
+- **`orbit_database.py`** — Orbit lookups against `[PAM].[OrbitPromoExtract_stg]`
+
+**Key tables:**
+
+| Table | Purpose |
+|-------|---------|
+| `[PAM].[PAM_Orbit_Data_Updated]` | All promotions (RDC/SPE/Rebate via `Desired_Execution`) |
+| `[PAM].[OrbitPromoExtract_stg]` | Orbit staging data (Dataverse imports) |
+| `[PAM].[Version_History]` | Field-level change audit trail |
+| `[PAM].[generated_sql_store]` | Generated SQL metadata |
+| `RDC.Daily_EFPE_*` | Eligibility rules, SKU groups, SOC groups, trade-in groups |
+
+
+## Security
+
+| Area | Approach |
+|------|----------|
+| **Authentication** | Azure AD Easy Auth (production); dev fallback via `DEV_MODE=true` |
+| **Authorization** | 5 RBAC roles enforced via `@role_required()` decorator |
+| **CSRF** | Flask-WTF globally; exempt on `api_bp` (JSON) and `core_bp` (stateless) |
+| **Rate Limiting** | 300 req/min per IP via Flask-Limiter |
+| **SQL Injection** | Parameterized queries only (SQLAlchemy) |
+| **Secrets** | Environment variables; `.env` validated at startup |
+| **Headers** | CSP, X-Frame-Options, X-Content-Type-Options, Referrer-Policy |
+
+
+## Development
+
+```bash
+# Setup
+python -m venv venv && venv\Scripts\activate
+pip install -r requirements.txt
+copy .env.example .env  # configure local DB credentials
+
+# Run
+python app.py  # Flask dev server on port 5000
+
+# Test
+python -m pytest                        # safe mode (no DB, no HTTP)
+python -m pytest --run-integration      # with real DB + services
+python tools/validate_endpoints.py      # blueprint endpoint validation
+```
+
+**Test safety:** DB writes blocked by default, outbound HTTP blocked except localhost, prod-like DB servers rejected unless explicitly allowed.
+
+
+## Key Environment Variables
+
+| Variable | Purpose |
+|----------|---------|
+| `PAM_DB_SERVER` / `PAM_DB_DATABASE` | SQL Server connection |
+| `PAM_DB_USERNAME` / `PAM_DB_PASSWORD` | DB credentials (optional — integrated auth if omitted) |
+| `ORBIT_DB_SERVER` / `ORBIT_DB_DATABASE` | Orbit data source |
+| `FLASK_SECRET_KEY` | Session signing (required in non-dev) |
+| `DEV_MODE=true` | Local development auth fallback |
+| `PAM_VALIDATION_MODE=1` | Lightweight init for tests/validation |
+
+
+## Repository
+
+| Field | Value |
+|-------|-------|
+| **Main branch** | `cade` |
+| **CI** | GitHub Actions (`ci.yml` — test, `cade_pam-npe.yml` — deploy) |
+| **Deploy target** | Azure App Service (`PAM-npe`) |
+| **Contact** | Cade Holtzen (cade.holtzen1@t-mobile.com) |

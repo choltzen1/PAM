@@ -834,7 +834,7 @@ class DatabaseManager:
             if not oid:
                 continue
             try:
-                result = orbit_mgr.get_orbit_record(oid)
+                result = orbit_mgr.get_orbit_record_from_staging(oid)
                 if result and not result.get('_error'):
                     out[oid] = {
                         'orbit_start_date': result.get('promo_start_date', ''),

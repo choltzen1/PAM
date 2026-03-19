@@ -115,21 +115,21 @@ html[data-theme='dark'] .promotions-page-spe .tab.active { box-shadow:none; }
 .promo-table td.promo-owner { font-weight:700; }
 
 /* Single clean border per row on the tr */
-.promo-table tbody tr { border-bottom: 1px solid #e3e3e3; }
-html[data-theme='dark'] .promo-table tbody tr { border-bottom: 1px solid rgba(255, 255, 255, 0.15); }
+.promo-table tbody tr { border-bottom: 1px solid #c5c7c9; }
+html[data-theme='dark'] .promo-table tbody tr { border-bottom: 1px solid #aaa; }
 
 /* Light Mode Table Striping */
-.promo-table tbody tr:nth-child(odd) { background: #fafafa; }
-.promo-table tbody tr:nth-child(even) { background: #f0f0f0; }
-.promo-table tbody tr:hover { background: #e8e8e8; }
+.promo-table tbody tr:nth-child(odd) { background: #eceeef; }
+.promo-table tbody tr:nth-child(even) { background: #d8dadb; }
+.promo-table tbody tr:hover { background: #cfd1d2; }
 
 /* Dark Mode Table Striping */
-html[data-theme='dark'] .promo-table tbody tr:nth-child(odd) { background: rgba(255, 255, 255, 0.08); }
-html[data-theme='dark'] .promo-table tbody tr:nth-child(even) { background: rgba(255, 255, 255, 0.15); }
-html[data-theme='dark'] .promo-table tbody tr:hover { background: rgba(255, 255, 255, 0.22); }
+html[data-theme='dark'] .promo-table tbody tr:nth-child(odd) { background: #d2d4d5; }
+html[data-theme='dark'] .promo-table tbody tr:nth-child(even) { background: #b9bbbc; }
+html[data-theme='dark'] .promo-table tbody tr:hover { background: #a8aaab; }
 
-/* Dark mode table text - white for readability on dark rows */
-html[data-theme='dark'] .promo-table td { color: #ffffff; }
+/* Dark mode table text - keep dark for readability on light grey rows */
+html[data-theme='dark'] .promo-table td { color: #111; }
 html[data-theme='dark'] .promo-table th { background: var(--tmobile-magenta); }
 
 /* Table container - remove white border/background gap */
@@ -172,14 +172,11 @@ html[data-theme='dark'] .promotions-page-spe .table-container {
 }
 
 html[data-theme='dark'] .promo-table td.promo-actions .icon-button {
-  color: #FF7EB3;
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.2);
+  color: #222;
 }
 html[data-theme='dark'] .promo-table td.promo-actions .icon-button:hover {
-  background: rgba(226, 0, 116, 0.2);
-  color: #fff;
-  border-color: var(--tmobile-magenta);
+  background: #f8d6ec;
+  color: var(--tmobile-magenta);
 }
 
 /* Enhanced dark mode styling for action buttons */
