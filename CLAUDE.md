@@ -88,6 +88,42 @@ PAM_VALIDATION_MODE=1   # Lightweight init for test/validation runs
 - **Use `/superpowers:verification-before-completion` before claiming larger work is done.** Skip for trivial changes.
 - **Actively build project memory:** Record learned coding practices, branding details, architecture patterns, and database schema knowledge to `~/.claude/projects/.../memory/` so future conversations benefit from accumulated context.
 
+## Code Review Process
+
+After completing significant work (multi-file changes, template rewrites, new components), run through this checklist before declaring done. Use `/superpowers:requesting-code-review` to trigger it. Skip for trivial one-liner fixes.
+
+1. **Scope check** — Does the change match what was requested? No scope creep, no missing pieces, no unrelated modifications.
+2. **Frontend standards** — No inline CSS (`style="..."` or `<style>` blocks). BEM naming for new components (`c-block__element--modifier`). Correct CSS load order (`styles.css` → `global.css` → page CSS). Shared rules used by 2+ pages belong in `global.css`.
+3. **Cross-page consistency** — If one edit page changed (e.g., edit_rdc), verify sibling pages (edit_spe, edit_rebate) still match the same design system. Card components, dark mode, button sizing, and spacing should be uniform.
+4. **Dark mode** — Toggle dark mode and verify:
+   - Input backgrounds: `#e0e0e0` (neutral gray, not white)
+   - Card backgrounds: `rgba(255,255,255,0.08)` with border `rgba(255,255,255,0.15)`
+   - Labels: `#FF7EB3` (lighter magenta for contrast)
+   - No jarring white-on-dark elements
+5. **Responsive** — Verify on BOTH screen sizes:
+   - **14" laptop** (~1366px): grids collapse properly, content doesn't overflow, fields remain usable
+   - **27" monitor** (~2560px): layout scales up, uses available space well, text/controls aren't tiny
+6. **Data integrity** — All form field `name` attributes preserved. No inputs lost during template rewrites. Hidden fields (`csrf_token`, `active_tab`) still present.
+7. **No regressions** — Run `python -m pytest` if backend files touched. Verify Jinja template syntax if templates changed.
+8. **Accessibility** — Labels associated with inputs, sufficient color contrast ratios, keyboard navigable.
+9. **Visual verification** — Use Playwright (when available) to screenshot key pages in both light and dark themes. Confirm changes look correct programmatically.
+10. **Memory update** — If the review reveals new patterns, decisions, or gotchas, save them to project memory files.
+
+## Architecture Maintenance
+
+The architecture document lives at `docs/ARCHITECTURE.md` with 11 sections (Project Structure, System Diagram, Core Components, Data Stores, External Integrations, Deployment, Security, Development & Testing, Future Considerations, Glossary, Project Identification).
+
+**When to update:** After any change that affects the architecture — new blueprints, new database tables, new integrations, new deployment configs, new dependencies, or significant structural refactors.
+
+**How to update:**
+1. Identify which of the 11 sections are affected by the change
+2. Update only those sections — keep the rest untouched
+3. Update the "Last Updated" date in section 11
+4. If new domain terms were introduced, add them to the Glossary (section 10)
+5. If technical debt was resolved or new debt introduced, update Future Considerations (section 9)
+
+**Trigger:** Any time a conversation introduces new routes, tables, integrations, or major refactors, proactively ask: "Should I update ARCHITECTURE.md to reflect this change?"
+
 ## Branch Conventions
 
 - Main branch: `cade`

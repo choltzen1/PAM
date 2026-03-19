@@ -47,7 +47,12 @@
       "mcp__plugin_playwright_playwright__browser_click",
       "mcp__plugin_playwright_playwright__browser_evaluate",
       "mcp__plugin_playwright_playwright__browser_take_screenshot",
-      "mcp__plugin_playwright_playwright__browser_close"
+      "mcp__plugin_playwright_playwright__browser_close",
+      "Bash(find /c/Users/CHoltze1/PAM -type f -name *.js -o -name *.css)",
+      "Bash(grep -E \"\\\\.\\(js|css\\)$\")",
+      "Bash(find /c/Users/CHoltze1/PAM/templates -type f -name *.html)",
+      "Bash(find /c/Users/CHoltze1/PAM -type f -name *.sql)",
+      "Bash(grep -r \"RDC\\\\|SPE\\\\|Rebate\\\\|PETE\\\\|BPTCR\\\\|DCD\\\\|SOC\\\\|BAN\\\\|FMV\\\\|EFPE\\\\|Orbit\" /c/Users/CHoltze1/PAM --include=*.py --include=*.md)"
     ]
   }
 }
