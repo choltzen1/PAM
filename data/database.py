@@ -305,8 +305,7 @@ class DatabaseManager:
                 cat_additionaleligibilityrequirementsname,
                 cat_eligibledevices,
                 cat_channelsname,
-                cat_description,
-                initiative_name
+                cat_description
             FROM {self.source_table} WITH (NOLOCK)
             WHERE Desired_Execution = :execution_type
             ORDER BY code DESC
@@ -514,8 +513,7 @@ class DatabaseManager:
                 Broken_Trade,
                 Anticipated_volume_take_rates_total,
                 Desired_Execution,
-                cat_description,
-                initiative_name
+                cat_description
             FROM {self.source_table}
             ORDER BY code DESC
         """

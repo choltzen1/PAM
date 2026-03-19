@@ -524,7 +524,6 @@ def recent_generated_promos():
                     code,
                     orbit_id,
                     [bill facing name] as bill_facing_name,
-                    initiative_name,
                     Desired_Execution,
                     created_at
                 FROM {db.source_table}
@@ -537,7 +536,7 @@ def recent_generated_promos():
                     rows.append({
                         'code': row.code or '',
                         'orbit_id': row.orbit_id or '',
-                        'description': row.initiative_name or row.bill_facing_name or '',
+                        'description': row.bill_facing_name or '',
                         'created_at': row.created_at.isoformat() if row.created_at else '',
                         'type': row.Desired_Execution or 'RDC'
                     })
