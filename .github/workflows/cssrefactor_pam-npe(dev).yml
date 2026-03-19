@@ -63,4 +63,4 @@ jobs:
         with:
           app-name: 'pam-npe'
           slot-name: 'dev'
-          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_8D680AA99123464DBE2C8C5BE86E1A6E }}
+          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_7A79E38CEAF94B459EF17940F2E5FE53 }}
