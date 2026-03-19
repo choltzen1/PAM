@@ -1,0 +1,113 @@
+PETE — Promo Eligibility Testing Engine
+Technical One-Pager
+
+
+OVERVIEW
+
+PETE is a research module within PAM that aggregates data from multiple backend systems (SQL Server, Oracle via linked servers) to diagnose promotion eligibility for individual customer accounts. It provides EIP-based and BAN-based lookup flows, pulling equipment records, promo error reasons, rate plans, active lines, and trade-in data into a single view. Includes a chat interface for querying promo eligibility rules by promo code.
+
+
+STACK
+
+  Backend         Python (Flask blueprint), pandas, SQLAlchemy
+  Database        SQL Server (PromoQuality) + Oracle linked servers (OFSLL, PEFPEP_RO, RSCUSP)
+  Auth            Azure AD Easy Auth, requires pam_research role
+  Session         Server-side Flask session (PRG pattern for form submissions)
+  URL Prefix      /research
+
+
+ARCHITECTURE
+
+PETE lives in the research/ blueprint with four files:
+
+  research/routes.py          Flask routes — page endpoints + JSON API endpoints
+  research/pete_workflow.py   Session state management, query orchestration, chat processing
+  research/services.py        Raw SQL queries and data retrieval functions
+  research/db.py              SQLAlchemy engine factory (shared connection pool)
+
+Data flow:
+  1. User submits EIP ID or BAN via form POST
+  2. pete_workflow.py orchestrates queries via services.py
+  3. Results stored as JSON-encoded DataFrames in Flask session
+  4. PRG redirect back to GET, pete_workflow.py decodes session into template context
+  5. Template renders data tables with normalized datetime columns
+
+
+DATA SOURCES
+
+  RDC.Daily_EFPE_Basic                          Primary EIP promo data (SQL Server)
+  OFSLL -> OFSLLPROD.EDS_ACCOUNTS_TMO           EIP account records (Oracle linked server, fallback)
+  OFSLL -> OFSLLPROD.EDS_AGREEMENTS_TMO         EIP agreement/plan data (Oracle linked server)
+  PEFPEP_RO -> EFPEBATCHPROD01O.PROMO_ERROR_REASONS   Promo rejection reasons per EIP (Oracle linked server)
+  RSCUSP -> VSTAPPO.SUBSCRIBER                  Active subscriber lines by BAN (Oracle linked server)
+  ServiceAgreement.AllData + RDC.PETR_vRatePlans       Rate plan/SOC data by BAN (SQL Server)
+  General.Trade_Data_QR_Replica                 Trade-in device data by order ID (SQL Server)
+
+Eligibility rules (for chat):
+  RDC.Daily_EFPE_ELIGIBILITY_RULES              Core eligibility rules by promo code
+  RDC.Daily_EFPE_DEVICE_GROUPS                  SKU group definitions
+  RDC.Daily_EFPE_SOC_GROUPS                     SOC group definitions
+  RDC.Daily_EFPE_TRADEIN_GROUPS                 Trade-in group definitions
+  RDC.Daily_EFPE_MK_MDL_GROUPS                  Make/model tier groups
+  RDC.Daily_EFPE_PORT_GROUPS                    Port-in carrier groups
+  RDC.Daily_EFPE_SEGMENT_GROUPS                 Customer segment groups
+  RDC.Daily_EFPE_ATST_GROUPS                    Account type/sub-type groups
+  RDC.Daily_EFPE_APPLICATIONS_GROUPS            Application ID groups
+
+
+KEY FUNCTIONS
+
+  services.py:
+    get_main_data_primary(eip_id)       Query Daily_EFPE_Basic for EIP
+    get_main_data_fallback(eip_id)      Direct Oracle OPENQUERY fallback when primary lacks BAN
+    get_promo_error_reasons(eip_id)     Promo rejection reasons from PEFPEP Oracle
+    get_rate_plan_data(ban)             Rate plans + SOC data for BAN
+    get_active_aal_lines(ban)           Active subscriber lines from RSCUSP Oracle
+    get_trade_data_qr(order_ids)        Trade device records by order detail IDs
+    get_eip_ids_by_ban(ban)             BAN discovery — list all EIP accounts under a BAN
+    get_eip_ids_by_msisdn(msisdn)       MSISDN discovery — list all EIP accounts by phone number
+    get_promo_eligibility_context(code) Full eligibility join (rules + SKU + SOC + trade + port + segment)
+    generate_pete_response(prompt, df)  Chat response generator using eligibility DataFrame
+
+  pete_workflow.py:
+    run_eip_lookup(eip_id)              Full orchestrated lookup (main + errors + trade + rate plans + lines)
+    run_ban_to_eip_list(ban)            BAN discovery flow
+    process_chat(prompt)                Chat message processing with promo code extraction
+    gather_template_context()           Decode all session DataFrames into template-ready dict
+    normalize_datetime_columns(df)      Convert epoch timestamps to readable date strings
+
+
+API ENDPOINTS
+
+  /research/pete                        Main page (GET/POST)
+  /research/pete/chat                   AJAX chat endpoint (POST, returns JSON)
+  /research/api/main-data               EIP main data (GET, ?eip_id=)
+  /research/api/promo-error-reasons     Promo errors (GET, ?eip_id=)
+  /research/api/rate-plans              Rate plans (GET, ?ban=)
+  /research/api/aal-lines               Active lines (GET, ?ban=)
+  /research/api/trade-data-qr           Trade data (GET, ?order_ids=)
+  /research/api/eip-by-ban              EIP list by BAN (GET, ?ban=)
+  /research/api/eip-identify            Unified BAN/MSISDN identification (GET, ?ban= or ?msisdn=)
+  /research/api/promo-eligibility       Eligibility rules (GET, ?promo_code=)
+  /research/api/pete/chat               Chat API (POST, JSON body)
+  /research/api/pete/aggregate          Full aggregate pull (GET, ?eip_id=&ban=&promo_code=)
+
+
+SESSION STATE
+
+PETE stores query results in Flask server-side sessions as JSON-encoded pandas DataFrames. Key session keys: df_main, promo_errors, rate_plans, aal_lines, trade_data, eip_list, used_ban, eip_id, order_ids, chat_history. The PRG (Post-Redirect-Get) pattern prevents form resubmission on refresh.
+
+
+ENVIRONMENT VARIABLES
+
+  RESEARCH_DB_CONNECTION      Full ODBC connection string (optional, overrides PAM_DB_* vars)
+  RESEARCH_DB_POOL_SIZE       SQLAlchemy pool size (default: 8)
+  RESEARCH_DB_MAX_OVERFLOW    Pool overflow limit (default: 16)
+  RESEARCH_DB_POOL_TIMEOUT    Pool timeout in seconds (default: 15)
+
+Falls back to PAM_DB_SERVER / PAM_DB_DATABASE / PAM_DB_USERNAME / PAM_DB_PASSWORD if RESEARCH_DB_CONNECTION is not set.
+
+
+CONTACT
+
+  Cade Holtzen (cade.holtzen1@t-mobile.com)

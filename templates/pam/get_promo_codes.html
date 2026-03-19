@@ -134,6 +134,9 @@ document.addEventListener('DOMContentLoaded', function() {
         <div class=\"priority-index badge bg-secondary\">#${i}</div>
         <input type=\"text\" class=\"form-control form-control-sm priority-orbit-input\" data-priority=\"${i}\" placeholder=\"Orbit ID\" />
         <select class=\"apple-dropdown priority-config-select\">${promoTypeOptionsHtml}</select>
+        <label class=\"broken-trade-toggle hidden d-flex align-items-center gap-1 mb-0 small fw-semibold\" style=\"white-space:nowrap;\">
+          <input type=\"checkbox\" class=\"broken-trade-checkbox\" /> Broken Trade
+        </label>
       `;
       const resultBox = document.createElement('div');
       resultBox.className = 'priority-result-box';
@@ -152,6 +155,21 @@ document.addEventListener('DOMContentLoaded', function() {
   const prioritySearchState = { timers:{}, lastSeq:{}, completedSeq:{} };
 
   function attachPriorityHandlers(){
+    // Show/hide broken trade toggle based on config selection
+    document.querySelectorAll('.priority-config-select').forEach(sel=>{
+      sel.addEventListener('change', function(){
+        const toggle = this.closest('.priority-row').querySelector('.broken-trade-toggle');
+        if(toggle){
+          if(this.value === 'non-0-trade-in'){
+            toggle.classList.remove('hidden');
+          } else {
+            toggle.classList.add('hidden');
+            const cb = toggle.querySelector('.broken-trade-checkbox');
+            if(cb) cb.checked = false;
+          }
+        }
+      });
+    });
     document.querySelectorAll('.priority-orbit-input').forEach(inp=>{
       const idx = inp.getAttribute('data-priority');
       inp.addEventListener('input', function(){
@@ -175,13 +193,26 @@ document.addEventListener('DOMContentLoaded', function() {
   function startPrioritySearching(idx, orbitId){ showPriorityResult(idx, `<em>Searching Orbit ID ${orbitId}...</em>`, 'searching'); }
   function priorityResultFound(idx, orbitId, data){
     if(data.found){
-      showPriorityResult(idx, `
-        <div><strong>Orbit ID #${orbitId} - Promo Description:</strong> ${data.description || 'No description available'}</div>
-        <div><strong>Promo Code:</strong> ${data.promo_code || '(Not yet created)'}</div>
-        <div><strong>Type:</strong> ${data.type || 'N/A'}${data.pending_creation ? ' (Pending Creation)' : ''}</div>
-        <div><strong>Owner:</strong> ${data.owner || 'Unknown'}</div>
-        <div><strong>Start Date:</strong> ${data.start_date || 'N/A'} &nbsp; <strong>End Date:</strong> ${data.end_date || 'N/A'}</div>
-      `,'found');
+      if(data.already_generated){
+        // Already has a promo — show only the code link, mark input as done
+        showPriorityResult(idx, `
+          <div><strong>Orbit ID #${orbitId}</strong> &mdash; <span style="color:#E20074;font-weight:700;">Already Generated:</span> <a href="/edit_rdc/${data.promo_code}?tab=Details" target="_blank" class="created-promo-link" style="font-weight:700;">${data.promo_code}</a></div>
+        `,'found');
+        // Mark this input so Generate skips it
+        const inp = document.querySelector(`.priority-orbit-input[data-priority="${idx}"]`);
+        if(inp) inp.dataset.alreadyGenerated = 'true';
+      } else {
+        showPriorityResult(idx, `
+          <div><strong>Orbit ID #${orbitId} - Promo Description:</strong> ${data.description || data.initiative_name || 'No description available'}</div>
+          <div><strong>Bill Facing Name:</strong> ${data.bill_facing_name || 'N/A'}</div>
+          <div><strong>Promo Code:</strong> (Not yet created)</div>
+          <div><strong>Owner:</strong> ${data.owner || 'Unknown'}</div>
+          <div><strong>Start Date:</strong> ${data.start_date || 'N/A'} &nbsp; <strong>End Date:</strong> ${data.end_date || 'N/A'}</div>
+        `,'found');
+        // Clear flag in case user changed orbit id
+        const inp = document.querySelector(`.priority-orbit-input[data-priority="${idx}"]`);
+        if(inp) delete inp.dataset.alreadyGenerated;
+      }
     } else {
       showPriorityResult(idx, `<strong>Orbit ID ${orbitId} not found.</strong>`,'not-found');
     }
@@ -201,7 +232,7 @@ document.addEventListener('DOMContentLoaded', function() {
   }
     async function sequentialGenerate(orbits){
       for(const item of orbits){
-        const { idx, orbitId, config } = item;
+        const { idx, orbitId, config, broken_trade } = item;
         if(!orbitId) continue; // skip empties
         // Indicate generating status in that row's result box
         showPriorityResult(idx, `<em>Generating promo for Orbit ${orbitId}...</em>`, 'searching');
@@ -210,6 +241,9 @@ document.addEventListener('DOMContentLoaded', function() {
           let extra = '';
           if(config){
             extra = '&config=' + encodeURIComponent(config);
+          }
+          if(broken_trade){
+            extra += '&broken_trade=' + encodeURIComponent(broken_trade);
           }
           const res = await fetch('/api/generate_next_promo_code?orbit_id=' + encodeURIComponent(orbitId) + extra);
           const js = await res.json().catch(()=>({}));
@@ -253,7 +287,7 @@ document.addEventListener('DOMContentLoaded', function() {
             } else {
               showPriorityResult(idx, `<strong>Created Promo: (Code Unavailable)</strong><br><span class="small">Orbit ${js.orbit_id}</span>`, 'found');
             }
-            try { addOrUpdatePdtRow(js.orbit_id, js.promo_code, (js.description || '(No description)'), inferConfig(js.description||'')); } catch(e){ console.warn(e); }
+            try { addOrUpdatePdtRow(js.orbit_id, js.promo_code, (js.initiative_name || js.description || '(No description)'), inferConfig(js.initiative_name || js.description||'')); } catch(e){ console.warn(e); }
           } else {
             let errMsg = (js && (js.error || js.message)) || 'Unknown error';
             if(res.status === 404) errMsg = 'Orbit not found';
@@ -274,8 +308,9 @@ document.addEventListener('DOMContentLoaded', function() {
       const filled = inputs.map(inp=>{
         const row = inp.closest('.priority-row');
         const sel = row ? row.querySelector('.priority-config-select') : null;
-        return { idx: inp.getAttribute('data-priority'), orbitId: (inp.value||'').trim(), config: (sel && sel.value || '').toLowerCase() };
-      }).filter(o=>o.orbitId);
+        const btCb = row ? row.querySelector('.broken-trade-checkbox') : null;
+        return { idx: inp.getAttribute('data-priority'), orbitId: (inp.value||'').trim(), config: (sel && sel.value || '').toLowerCase(), broken_trade: btCb && btCb.checked ? 'Y' : 'N', alreadyGenerated: inp.dataset.alreadyGenerated === 'true' };
+      }).filter(o=>o.orbitId && !o.alreadyGenerated);
       if(!filled.length){ return; }
       generateBtn.disabled = true;
       const originalText = generateBtn.textContent;

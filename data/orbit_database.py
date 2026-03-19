@@ -132,7 +132,7 @@ class OrbitDatabaseManager:
 
         The staging table is populated by ssms_job.py from Dataverse and has
         clean friendly column names, but differs from the old orbit table:
-          - 'description' column stores cat_initiativename (the initiative name)
+          - 'initiative_name' column stores cat_initiativename
           - 'cat_description' column stores the actual description text
           - 'promo_start_date' is spelled correctly (no typo)
           - 'crffc_maintainactivelinedev' stores maintain_active_line value
@@ -156,41 +156,59 @@ class OrbitDatabaseManager:
             return {'_error': 'not found'}
 
         raw = dict(row)
-        # Staging-specific mapping: description col = initiative name, cat_description = actual description
+        # Case-insensitive helper for column lookups (SQL Server may return mixed case)
+        _lower_map = {str(k).lower(): k for k in raw.keys()}
+        def _ci(key):
+            """Case-insensitive get from raw dict."""
+            if key in raw:
+                return raw[key]
+            actual = _lower_map.get(key.lower())
+            return raw.get(actual) if actual else None
+        # Staging table has 'description' column holding cat_initiativename,
+        # and a separate 'cat_description' column for the actual description.
+        # Map explicitly — no **raw spread to avoid overwrites.
         mapped = {
-            'Owner': raw.get('Owner') or raw.get('owner'),
-            'promo_owner': raw.get('Owner') or raw.get('owner'),
-            'bill_facing_name': raw.get('bill_facing_name'),
-            'orbit_id': raw.get('orbit_id'),
-            'initiative_name': raw.get('description'),        # cat_initiativename stored as 'description'
-            'description': raw.get('cat_description'),        # actual description text
-            'promo_notes': raw.get('promo_notes'),
-            'promo_start_date': raw.get('promo_start_date'),
-            'promo_end_date': raw.get('promo_end_date'),
-            'comm_end_date': raw.get('comm_end_date'),
-            'discount': raw.get('discount'),
-            'amount': raw.get('amount'),
-            'nseip_drop': raw.get('nseip_drop'),
-            'dcd_web_cart': raw.get('dcd_web_cart'),
-            'product_type': raw.get('product_type'),
-            'bogo': raw.get('bogo'),
-            'fpd_display_promo': raw.get('fpd_display_promo'),
-            'on_menu': raw.get('on_menu'),
-            'market_group': raw.get('market_group'),
-            'store_group': raw.get('store_group'),
-            'device_sales_type': raw.get('device_sales_type'),
-            'activation_type': raw.get('activation_type'),
-            'active_line_required': raw.get('active_line_required'),
-            'maintain_soc': raw.get('maintain_soc'),
-            'maintain_active_line': raw.get('crffc_maintainactivelinedev'),
-            'limit_per_ban': raw.get('limit_per_ban'),
-            'application_grace_period': raw.get('application_grace_period'),
-            'soc_grouping': raw.get('soc_grouping'),
-            'account_type': raw.get('account_type'),
-            'sales_application': raw.get('sales_application'),
-            'device_status_group_id': raw.get('device_status_group_id'),
-            'Desired_Execution': raw.get('Desired_Execution'),
-            **raw
+            'Owner': _ci('Owner') or _ci('owner'),
+            'promo_owner': _ci('Owner') or _ci('owner'),
+            'bill_facing_name': _ci('bill_facing_name'),
+            'orbit_id': _ci('orbit_id'),
+            'initiative_name': _ci('initiative_name'),
+            'description': _ci('cat_description'),
+            'promo_notes': _ci('promo_notes'),
+            'promo_start_date': _ci('promo_start_date'),
+            'promo_end_date': _ci('promo_end_date'),
+            'comm_end_date': _ci('comm_end_date'),
+            'discount': _ci('discount'),
+            'amount': _ci('amount'),
+            'nseip_drop': _ci('nseip_drop'),
+            'dcd_web_cart': _ci('dcd_web_cart'),
+            'product_type': _ci('product_type'),
+            'bogo': _ci('bogo'),
+            'fpd_display_promo': _ci('fpd_display_promo'),
+            'on_menu': _ci('on_menu'),
+            'market_group': _ci('market_group'),
+            'store_group': _ci('store_group'),
+            'device_sales_type': _ci('device_sales_type'),
+            'activation_type': _ci('activation_type'),
+            'active_line_required': _ci('active_line_required'),
+            'maintain_soc': _ci('maintain_soc'),
+            'maintain_active_line': _ci('crffc_maintainactivelinedev'),
+            'limit_per_ban': _ci('limit_per_ban'),
+            'application_grace_period': _ci('application_grace_period'),
+            'soc_grouping': _ci('soc_grouping'),
+            'account_type': _ci('account_type'),
+            'sales_application': _ci('sales_application'),
+            'device_status_group_id': _ci('device_status_group_id'),
+            'Desired_Execution': _ci('Desired_Execution'),
+            'clawback_indicator': _ci('clawback_indicator'),
+            'Broken_Trade': _ci('Broken_Trade'),
+            'Anticipated_volume_take_rates_total': _ci('Anticipated_volume_take_rates_total'),
+            'Status': _ci('Status'),
+            'crffc_eligibletradeindevices': _ci('crffc_eligibletradeindevices'),
+            'cat_lobchannelhorizontalname': _ci('cat_lobchannelhorizontalname'),
+            'cat_additionaleligibilityrequirementsname': _ci('cat_additionaleligibilityrequirementsname'),
+            'cat_eligibledevices': _ci('cat_eligibledevices'),
+            'cat_channelsname': _ci('cat_channelsname'),
         }
         return {k: v for k, v in mapped.items() if v is not None}
 

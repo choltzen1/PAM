@@ -1,0 +1,87 @@
+PETE — Promo Eligibility Testing Engine
+User Guide
+
+
+WHAT IS PETE?
+
+PETE is a research tool built into PAM that lets you investigate whether a specific customer account qualifies for a promotion. Instead of manually querying multiple databases, PETE pulls together all the relevant data in one place — EIP details, promo error reasons, rate plans, active lines, and trade-in information — so you can quickly diagnose eligibility issues.
+
+
+GETTING STARTED
+
+Navigate to Research > PETE from the PAM homepage. You need the pam_research role to access PETE.
+
+PETE supports two lookup modes:
+
+  - By EIP ID — If you already have the 10-digit Equipment Installment Plan ID, enter it directly.
+  - By BAN — If you only have the customer's 9-digit Billing Account Number, PETE will discover all EIP accounts under that BAN and let you select one.
+
+
+CORE WORKFLOWS
+
+
+Looking Up by EIP ID
+
+  1. Select "I have an EIP ID" mode.
+  2. Enter the 10-digit EIP ID.
+  3. Click the lookup button.
+  4. PETE pulls data from multiple sources and displays results in organized sections:
+       - Main Data — Equipment details, SKU, status, BAN, MSISDN, upgrade program, order ID
+       - Promo Error Reasons — Why specific promos were rejected for this EIP
+       - Rate Plans — SOC codes and rate plan details for the associated BAN
+       - Active Lines — All active subscriber lines on the account
+       - Trade-In Data — Trade device details tied to the order
+
+
+Looking Up by BAN
+
+  1. Select "I have a BAN" mode.
+  2. Enter the 9-digit BAN.
+  3. PETE queries the OFS loan system and returns a list of all EIP accounts under that BAN.
+  4. Select the EIP account you want to investigate from the dropdown.
+  5. PETE runs the full data pull for that EIP (same results as the EIP ID lookup above).
+
+
+Using the Chat Feature
+
+PETE includes a chat interface that can answer questions about promo eligibility rules. Type a promo code in your message and ask about:
+
+  - SKUs — "What SKUs are eligible for R499?"
+  - SOCs — "Show me SOCs for R413"
+  - Segments — "What segments qualify?"
+  - Carriers — "Any carrier restrictions?"
+  - Dates — "When does this promo start and end?"
+  - Trade devices — "What trade-in makes and models are accepted?"
+  - Summary — "Give me a summary of R499" (returns all of the above at once)
+
+
+UNDERSTANDING THE RESULTS
+
+Main Data
+Shows the equipment record from the OFS loan system. Key fields: EQUIP_ID, EQUIP_SKU, EQUIP_STATUS, BAN, MSISDN, UPGRADE_PROGRAM, ORDER_DETAIL_ID, PLAN_STATUS. If the primary data source is missing BAN, PETE automatically falls back to a direct Oracle query.
+
+Promo Error Reasons
+Lists every promo that was evaluated for this EIP and why it failed. This is the most useful section for diagnosing "why didn't this customer get the promo" questions. Errors come from the EFPE batch processing system.
+
+Rate Plans
+Shows all SOC codes and rate plans on the customer's account, including effective dates. Useful for checking whether the customer has a qualifying plan.
+
+Active Lines
+All active subscriber lines under the BAN. Helps verify line count requirements (e.g., "active line required" promos).
+
+Trade-In Data
+Trade device information tied to the order. Shows make, model, and valuation data relevant to trade-in promos.
+
+
+TIPS
+
+  - If PETE shows "No accounts found" for a BAN, the customer may not have any active EIP loans.
+  - Promo error reasons are the fastest way to understand why a promo didn't apply.
+  - The chat feature works best with a specific promo code in your message.
+  - All date columns are automatically converted from raw system timestamps to readable dates.
+  - You can run multiple lookups in a session. Each new lookup clears the previous results.
+
+
+GETTING HELP
+
+  - Primary Contact: Cade Holtzen (cade.holtzen1@t-mobile.com) Daniel Zhang (daniel.zhang8@t-mobile.com)

@@ -23,6 +23,17 @@ from data.sku_group_tracking import (
     record_issued_sku_group_id,
     next_sku_group_id_progressive,
 )
+from data.trade_in_group_tracking import (
+    load_issued_trade_in_group_ids,
+    record_issued_trade_in_group_id,
+    next_trade_in_group_id_progressive,
+)
+from data.mk_mdl_group_tracking import (
+    load_issued_mk_mdl_group_ids,
+    record_issued_mk_mdl_group_id,
+    allocate_mk_mdl_group_ids,
+)
+from services.trade_tier_parser import parse_trade_tiers, build_trade_tier_fields
 from data.version_history import log_version_event
 
 # Issued code tracking (reuse existing helper location if available)
@@ -87,7 +98,7 @@ class PromoCodeWorkflow:
             num += 1
 
     # --------------- Creation -----------------------
-    def create_from_orbit(self, orbit_id: str, execution_type: str = 'RDC', user: str = 'System', config: str = '') -> Dict[str, Any]:
+    def create_from_orbit(self, orbit_id: str, execution_type: str = 'RDC', user: str = 'System', config: str = '', broken_trade: str = 'N') -> Dict[str, Any]:
         """Ingest orbit record and create promo if not already present.
 
         Returns success False with existing_code if already created.
@@ -128,6 +139,41 @@ class PromoCodeWorkflow:
             allocated_sku_group_id = next_sku_group_id_progressive(existing_all)
         except Exception as alloc_err:
             return {'success': False, 'error': f'SKU group ID allocation failed: {alloc_err}'}
+        # Allocate trade_in_group_id for non-0-trade-in configs
+        allocated_trade_in_group_id = None
+        if cfg == 'non-0-trade-in':
+            try:
+                existing_trade_db = set(self.db.get_all_trade_in_group_ids())
+            except Exception:
+                existing_trade_db = set()
+            existing_trade_all = existing_trade_db | load_issued_trade_in_group_ids()
+            try:
+                allocated_trade_in_group_id = next_trade_in_group_id_progressive(existing_trade_all)
+            except Exception as alloc_err:
+                return {'success': False, 'error': f'Trade-in group ID allocation failed: {alloc_err}'}
+
+        # Parse trade tiers and allocate mk_mdl group IDs for non-0-trade-in
+        trade_tier_fields = {}
+        allocated_mk_mdl_ids = []
+        if cfg == 'non-0-trade-in':
+            trade_devices_text = full_row.get('crffc_eligibletradeindevices') or ''
+            tiers = parse_trade_tiers(trade_devices_text)
+            if tiers:
+                # Allocate mk_mdl group IDs (one per tier)
+                try:
+                    existing_mk_mdl_db = set(self.db.get_all_mk_mdl_group_ids())
+                except Exception:
+                    existing_mk_mdl_db = set()
+                existing_mk_mdl_all = existing_mk_mdl_db | load_issued_mk_mdl_group_ids()
+                try:
+                    allocated_mk_mdl_ids = allocate_mk_mdl_group_ids(existing_mk_mdl_all, len(tiers))
+                except Exception as alloc_err:
+                    return {'success': False, 'error': f'mk_mdl group ID allocation failed: {alloc_err}'}
+                # Determine condition ID based on broken trade toggle
+                condition_id = 'BT1' if broken_trade == 'Y' else 'ST1'
+                trade_tier_fields = build_trade_tier_fields(tiers, allocated_mk_mdl_ids, condition_id)
+                trade_tier_fields['Broken_Trade'] = broken_trade
+
         # Core insertion column mapping (expand to reduce null columns). Only include keys with non-None values.
         # Defaults pulled from orbit row; will be overridden by config preset
         from promo.config_presets import get_config_preset
@@ -171,8 +217,13 @@ class PromoCodeWorkflow:
             'on_menu': full_row.get('on_menu'),
             'Desired_Execution': execution_type,
             'trade_in_grace': full_row.get('trade_in_grace'),
+            'trade_in_group_id': allocated_trade_in_group_id,
         }
         
+        # Merge trade tier fields (mk_mdl groups, amounts, condition IDs, Broken_Trade)
+        if trade_tier_fields:
+            candidate_fields.update(trade_tier_fields)
+
         # Apply preset overrides AFTER building candidate_fields (preset values take precedence)
         if preset_overrides:
             logger.debug("[WORKFLOW] Applying preset overrides to candidate_fields")
@@ -190,6 +241,18 @@ class PromoCodeWorkflow:
             record_issued_sku_group_id(allocated_sku_group_id)
         except Exception:
             pass
+        # Persist trade_in_group_id tombstone (best effort)
+        if allocated_trade_in_group_id:
+            try:
+                record_issued_trade_in_group_id(allocated_trade_in_group_id)
+            except Exception:
+                pass
+        # Persist mk_mdl_group_id tombstones (best effort)
+        for mk_id in allocated_mk_mdl_ids:
+            try:
+                record_issued_mk_mdl_group_id(mk_id)
+            except Exception:
+                pass
         created_snapshot = {
             'orbit_id': oid,
             'promo_code': new_code,

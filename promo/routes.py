@@ -1747,7 +1747,7 @@ def _edit_rdc(promo_code):
     
     # Get full promo data with all fields
     promo_data = dm.get_promo(promo_code)
-    
+
     if promo_data:
         # Overlay owner from paginated method (which works correctly in table view)
         try:

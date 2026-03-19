@@ -30,10 +30,10 @@ def get_promo_details(promo_code):
 
         promo_data = None
         if data_manager:
-            cache_key = f"promo_core:{promo_code}"
+            cache_key = f"promo_full:{promo_code}"
             promo_data = cache.get(cache_key)
             if not promo_data:
-                promo_data = data_manager.get_promo_core_by_code(promo_code)
+                promo_data = data_manager.get_promo(promo_code)
                 if promo_data:
                     cache.set(cache_key, promo_data)
         if promo_data:
@@ -207,10 +207,12 @@ def search_orbit(orbit_id):
             return jsonify(payload)
         return jsonify({
             'found': True,
-            'type': 'RDC',  # execution type not derived from orbit table now
-            'promo_code': '',
-            'pending_creation': True,
+            'type': 'RDC',
+            'promo_code': result.get('promo_code', ''),
+            'already_generated': result.get('already_generated', False),
+            'pending_creation': not result.get('already_generated', False),
             'initiative_name': result.get('initiative_name') or result.get('bill_facing_name') or result.get('description','Unknown'),
+            'bill_facing_name': result.get('bill_facing_name', ''),
             'description': result.get('description',''),
             'owner': result.get('owner',''),
             'start_date': result.get('start_date',''),
@@ -355,9 +357,10 @@ def generate_next_promo_code():
                         return jsonify({'success': False, 'error': 'orbit_id required'}), 400
                 exec_type = (request.args.get('execution_type') or 'RDC').strip() or 'RDC'
                 config = (request.args.get('config') or '').strip().lower()
+                broken_trade = (request.args.get('broken_trade') or 'N').strip().upper()
                 from services.promo_code_workflow import PromoCodeWorkflow
                 workflow = PromoCodeWorkflow(data_manager)
-                result = workflow.create_from_orbit(orbit_id, execution_type=exec_type, user=get_current_user_name() or 'System', config=config)
+                result = workflow.create_from_orbit(orbit_id, execution_type=exec_type, user=get_current_user_name() or 'System', config=config, broken_trade=broken_trade)
                 if result.get('success') and 'code' in result:
                         result['promo_code'] = result['code']
                 status = 200 if result.get('success') else (409 if result.get('existing_code') else 400)
@@ -435,7 +438,7 @@ def generate_and_ingest():
         try:
             from data.orbit_database import OrbitDatabaseManager
             odm = OrbitDatabaseManager()
-            orbit_row = odm.get_orbit_record(orbit_id)
+            orbit_row = odm.get_orbit_record_from_staging(orbit_id)
             if isinstance(orbit_row, dict) and orbit_row.get('_error'):
                 orbit_err = orbit_row.get('_error')
                 orbit_row = None
@@ -517,11 +520,11 @@ def recent_generated_promos():
             from sqlalchemy import text
             engine = db.get_engine()
             sql = f"""
-                SELECT TOP 20 
-                    code, 
-                    orbit_id, 
-                    [bill facing name] as bill_facing_name, 
-                    description,
+                SELECT TOP 20
+                    code,
+                    orbit_id,
+                    [bill facing name] as bill_facing_name,
+                    initiative_name,
                     Desired_Execution,
                     created_at
                 FROM {db.source_table}
@@ -534,14 +537,14 @@ def recent_generated_promos():
                     rows.append({
                         'code': row.code or '',
                         'orbit_id': row.orbit_id or '',
-                        'description': row.bill_facing_name or row.description or '',
+                        'description': row.initiative_name or row.bill_facing_name or '',
                         'created_at': row.created_at.isoformat() if row.created_at else '',
                         'type': row.Desired_Execution or 'RDC'
                     })
         except Exception as e:
             logger.warning("[recent_generated_promos] Database query failed: %s", e)
             return jsonify({'success': False, 'error': str(e), 'promos': []}), 500
-        
+
         return jsonify({'success': True, 'promos': rows, 'count': len(rows)})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e), 'promos': []}), 500

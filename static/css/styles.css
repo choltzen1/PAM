@@ -704,7 +704,7 @@ html[data-theme='dark'] .hub-hero-banner .tagline { color:#ffd9ef; }
 
 /* Unified Theme Switch (global) */
 .theme-toggle-group { display:flex; gap:.55rem; align-items:center; }
-.theme-switch { position:relative; width:70px; height:30px; border-radius:24px; background:var(--control-surface); border:1px solid var(--border-color); cursor:pointer; display:flex; align-items:center; justify-content:space-between; padding:0 8px; box-sizing:border-box; transition:background .35s,border-color .35s, box-shadow .35s; }
+.theme-switch { position:relative; width:70px; height:30px; border-radius:24px; background:var(--control-surface); border:none; cursor:pointer; display:flex; align-items:center; justify-content:space-between; padding:0 8px; box-sizing:border-box; transition:background .35s, box-shadow .35s; }
 .theme-switch[data-state='dark'] { background:rgba(34,37,46,0.55); backdrop-filter:blur(4px); }
 .theme-switch[data-state='light'] { background:#fafafa; }
 .theme-switch[data-state='dark'] .theme-switch-indicator { transform:translateX(38px); }

@@ -305,7 +305,8 @@ class DatabaseManager:
                 cat_additionaleligibilityrequirementsname,
                 cat_eligibledevices,
                 cat_channelsname,
-                cat_description
+                cat_description,
+                initiative_name
             FROM {self.source_table} WITH (NOLOCK)
             WHERE Desired_Execution = :execution_type
             ORDER BY code DESC
@@ -513,7 +514,8 @@ class DatabaseManager:
                 Broken_Trade,
                 Anticipated_volume_take_rates_total,
                 Desired_Execution,
-                cat_description
+                cat_description,
+                initiative_name
             FROM {self.source_table}
             ORDER BY code DESC
         """
@@ -800,18 +802,18 @@ class DatabaseManager:
     
     def get_orbit_record_by_orbit_id(self, orbit_id: str) -> Optional[Dict[str, Any]]:
         """Return minimal orbit record (bill facing name, dates).
-        
-        DELEGATES to OrbitDatabaseManager which uses Microsoft Fabric ONLY.
-        If Fabric is unavailable, this will fail (no fallback).
+
+        Uses the staging table [PAM].[OrbitPromoExtract_stg] as the
+        authoritative source for orbit data.
         """
         from .orbit_database import OrbitDatabaseManager
         orbit_mgr = OrbitDatabaseManager()
-        result = orbit_mgr.get_orbit_record(orbit_id)
-        
+        result = orbit_mgr.get_orbit_record_from_staging(orbit_id)
+
         # Handle error responses from orbit manager
         if result and result.get('_error'):
             return None
-        
+
         return result
 
     def get_orbit_dates_map(self, orbit_ids: List[str]) -> Dict[str, Dict[str, Any]]:
@@ -848,17 +850,18 @@ class DatabaseManager:
 
     def get_full_orbit_record_by_orbit_id(self, orbit_id: str) -> Optional[Dict[str, Any]]:
         """Return full orbit record (all relevant columns).
-        
-        DELEGATES to OrbitDatabaseManager which uses Microsoft Fabric ONLY.
+
+        Uses the staging table [PAM].[OrbitPromoExtract_stg] as the
+        authoritative source for orbit data.
         """
         from .orbit_database import OrbitDatabaseManager
         orbit_mgr = OrbitDatabaseManager()
-        result = orbit_mgr.get_orbit_record(orbit_id)
-        
+        result = orbit_mgr.get_orbit_record_from_staging(orbit_id)
+
         # Handle error responses from orbit manager
         if result and result.get('_error'):
             return None
-        
+
         return result
     
     def _extract_mpss_lookback(self, description: str) -> str:
@@ -1219,6 +1222,40 @@ class DatabaseManager:
             return False
 
     # --- SKU Group ID helpers ---
+    def get_all_mk_mdl_group_ids(self) -> list[str]:
+        """Return list of distinct mk_mdl_grp_tier values present in the source table."""
+        ids: list[str] = []
+        try:
+            engine = self.get_engine()
+            for tier_col in ['mk_mdl_grp_tier_1', 'mk_mdl_grp_tier_2', 'mk_mdl_grp_tier_3', 'mk_mdl_grp_tier_4']:
+                sql = f"SELECT DISTINCT {tier_col} FROM {self.source_table} WITH (NOLOCK) WHERE {tier_col} IS NOT NULL AND LEN({tier_col})=3"
+                with engine.connect() as conn:
+                    rows = conn.execute(text(sql)).fetchall()
+                for r in rows:
+                    val = (r[0] or '').strip().upper()
+                    if val:
+                        ids.append(val)
+        except Exception as e:
+            logger.error(f"Failed to fetch mk_mdl_group_ids: {e}")
+        return list(set(ids))
+
+    def get_all_trade_in_group_ids(self) -> list[str]:
+        """Return list of distinct trade_in_group_id values present in the source table."""
+        sql = f"SELECT DISTINCT trade_in_group_id FROM {self.source_table} WITH (NOLOCK) WHERE trade_in_group_id IS NOT NULL AND LEN(trade_in_group_id)=3"
+        try:
+            engine = self.get_engine()
+            with engine.connect() as conn:
+                rows = conn.execute(text(sql)).fetchall()
+            vals: list[str] = []
+            for r in rows:
+                val = (r[0] or '').strip().upper()
+                if val:
+                    vals.append(val)
+            return vals
+        except Exception as e:
+            logger.error(f"Failed to fetch trade_in_group_ids: {e}")
+            return []
+
     def get_all_sku_group_ids(self) -> list[str]:
         """Return list of distinct sku_group_id values present in the source table (uppercase, pattern-like)."""
         sql = f"SELECT DISTINCT sku_group_id FROM {self.source_table} WITH (NOLOCK) WHERE sku_group_id IS NOT NULL AND LEN(sku_group_id)=3"
