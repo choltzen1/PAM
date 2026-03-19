@@ -2,9 +2,17 @@ import os
 import logging
 from flask import Flask, request
 from flask_session import Session
-from flask_wtf.csrf import CSRFProtect
-from flask_limiter import Limiter
-from flask_limiter.util import get_remote_address
+try:
+    from flask_wtf.csrf import CSRFProtect
+except ImportError:
+    CSRFProtect = None
+
+try:
+    from flask_limiter import Limiter
+    from flask_limiter.util import get_remote_address
+except ImportError:
+    Limiter = None
+    get_remote_address = None
 from cachelib.file import FileSystemCache
 import base64, json
 from dotenv import load_dotenv
@@ -34,8 +42,8 @@ logger.info(
     os.getenv('PAM_DB_DATABASE'),
 )
 
-csrf = CSRFProtect()
-limiter = Limiter(key_func=get_remote_address, default_limits=["300 per minute"], storage_uri="memory://")
+csrf = CSRFProtect() if CSRFProtect is not None else None
+limiter = Limiter(key_func=get_remote_address, default_limits=["300 per minute"], storage_uri="memory://") if Limiter is not None else None
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
@@ -148,13 +156,12 @@ def create_app(config: dict | None = None) -> Flask:
 
     Session(app)
 
-    csrf.init_app(app)
-    limiter.init_app(app)
-    # Exempt the JSON API blueprint — its endpoints accept application/json bodies
-    # and are already protected by Azure AD role decorators.
-    csrf.exempt(api_bp)
-    # Exempt core_bp — /theme is a cookie-only endpoint with no state-changing side-effects.
-    csrf.exempt(core_bp)
+    if csrf is not None:
+        csrf.init_app(app)
+        csrf.exempt(api_bp)
+        csrf.exempt(core_bp)
+    if limiter is not None:
+        limiter.init_app(app)
 
     global data_manager
     # Single initialization path (DB-only model); validation mode no longer diverges
