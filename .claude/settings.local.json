@@ -63,7 +63,14 @@
       "WebFetch(domain:blog.bit.ai)",
       "WebFetch(domain:insight7.io)",
       "WebFetch(domain:whatfix.com)",
-      "WebFetch(domain:medium.com)"
+      "WebFetch(domain:medium.com)",
+      "Bash(find c:/Users/CHoltze1/PAM -maxdepth 3 \\\\\\(-name *.sh -o -name *.json -o -name *.yml -o -name *.yaml \\\\\\) ! -path */venv/* ! -path */.git/* ! -path */__pycache__/* ! -path */node_modules/*)",
+      "Bash(grep -n \"WEBSITE_INSTANCE_ID\\\\|WEBSITE_\\\\|RUNNING_ON_AZURE\\\\|APP_INSIGHTS\" c:/Users/CHoltze1/PAM -r --include=*.py --include=*.sh)",
+      "Bash(grep -r \"openai\\\\|anthropic\\\\|claude\\\\|llm\" /c/Users/CHoltze1/PAM --include=*.py --include=*.txt --include=*.md)",
+      "Bash(python -m pytest tests/test_ai_chat.py -v)",
+      "Bash(PYTEST_ALLOW_PROD_DB=1 python -m pytest tests/test_ai_chat.py -v)",
+      "Bash(PYTEST_ALLOW_PROD_DB=1 python -m pytest --timeout=30)",
+      "Bash(python -c \":*)"
     ]
   }
 }

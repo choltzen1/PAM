@@ -1,6 +1,7 @@
 import logging
 
 from flask import Blueprint, jsonify, request
+from sqlalchemy import text
 from services.cache import TTLCache
 from services.jira_utils import create_jira_summary
 from auth import role_required, get_current_user_name
@@ -547,3 +548,15 @@ def recent_generated_promos():
         return jsonify({'success': True, 'promos': rows, 'count': len(rows)})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e), 'promos': []}), 500
+
+
+@api_bp.route('/health', methods=['GET'])
+def health_check():
+    """Lightweight health check for Azure App Service monitoring."""
+    try:
+        engine = db.get_engine()
+        with engine.connect() as conn:
+            conn.execute(text("SELECT 1"))
+        return jsonify({'status': 'healthy', 'db': 'connected'}), 200
+    except Exception as e:
+        return jsonify({'status': 'unhealthy', 'db': str(e)}), 503

@@ -15,6 +15,9 @@ pyodbc==5.0.1
 azure-identity==1.16.1
 oracledb==2.4.1
 
+# Azure OpenAI
+openai>=1.0.0
+
 # HTTP requests and networking
 requests==2.32.4
 msal==1.35.1

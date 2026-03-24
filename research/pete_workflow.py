@@ -289,7 +289,49 @@ def process_chat(prompt: str):
     elig_df = get_promo_eligibility_context(promo_code) if promo_code else pd.DataFrame()
     if not elig_df.empty:
         elig_df = deduplicate_columns(elig_df)
-    reply = generate_pete_response(prompt, elig_df if not elig_df.empty else None)
+
+    reply = ""
+
+    # Try LLM-powered response first
+    try:
+        from ai.client import is_ai_available
+        if is_ai_available():
+            from ai.chat import pete_chat_completion
+            from ai.tools import build_pete_handlers
+            import research.services as research_svc
+            from factory import data_manager
+
+            # Build session context from current PETE state
+            session_data = {
+                'eip_id': session.get('eip_id', ''),
+                'used_ban': session.get('used_ban', ''),
+                'promo_code': promo_code or '',
+            }
+            if not elig_df.empty:
+                session_data['eligibility_summary'] = elig_df.head(50).to_string(index=False)
+            errors_raw = session.get('promo_errors')
+            if errors_raw:
+                err_df = _decode_df(errors_raw)
+                if not err_df.empty:
+                    session_data['error_summary'] = err_df.head(20).to_string(index=False)
+            main_raw = session.get('df_main')
+            if main_raw:
+                main_df = _decode_df(main_raw)
+                if not main_df.empty:
+                    session_data['main_data_summary'] = main_df.head(10).to_string(index=False)
+
+            handlers = build_pete_handlers(data_manager, research_svc)
+            history = session.get('chat_history', [])
+            reply = pete_chat_completion(prompt, history, session_data, handlers)
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).warning("[PETE] LLM chat failed, falling back to keywords: %s", e)
+        reply = ""
+
+    # Fallback to keyword matching if LLM returned nothing
+    if not reply:
+        reply = generate_pete_response(prompt, elig_df if not elig_df.empty else None)
+
     history = session.get('chat_history', [])
     history.append({'role': 'user', 'content': prompt})
     history.append({'role': 'assistant', 'content': reply})

@@ -205,6 +205,8 @@ def create_app(config: dict | None = None) -> Flask:
             "font-src 'self' data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; "
             "connect-src 'self';"
         )
+        if request.path.startswith('/static/'):
+            response.headers['Cache-Control'] = 'public, max-age=3600'
         return response
 
     @app.template_filter('dateonly')
