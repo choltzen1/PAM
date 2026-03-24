@@ -98,8 +98,8 @@ def _run_tool_loop(
                 max_tokens=2000,
             )
         except Exception as e:
-            logger.error("[ai] Chat completion failed (round %d): %s", _round, e)
-            return "I encountered an error processing your request. Please try again."
+            logger.error("[ai] Chat completion failed (round %d): %s: %s", _round, type(e).__name__, e)
+            return f"AI error: {type(e).__name__}: {e}"
 
         choice = response.choices[0]
         message = choice.message
@@ -147,5 +147,5 @@ def _run_tool_loop(
         )
         return response.choices[0].message.content or ""
     except Exception as e:
-        logger.error("[ai] Final chat completion failed: %s", e)
-        return "I was unable to complete the analysis after multiple steps. Please try a simpler question."
+        logger.error("[ai] Final chat completion failed: %s: %s", type(e).__name__, e)
+        return f"AI error: {type(e).__name__}: {e}"

@@ -56,7 +56,7 @@
 }
 
 /* Page Theme Container */
-#research-app.pete-theme { background: transparent; padding:14px 20px 56px; color:#222; font-family: system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif; min-height:calc(100dvh - var(--pete-topbar-height)); display:flex; flex-direction:column; box-sizing:border-box; max-width:1400px; margin-left:auto; margin-right:auto; width:100%; }
+#research-app.pete-theme { background: transparent; padding:14px 40px 56px; color:#222; font-family: system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif; min-height:calc(100dvh - var(--pete-topbar-height)); display:flex; flex-direction:column; box-sizing:border-box; width:100%; max-width:none; }
 #research-app.pete-theme h2, #research-app.pete-theme h5, #research-app.pete-theme h6 { color:#222; }
 #research-app.pete-theme a { color: var(--tmobile-magenta); }
 #research-app.pete-theme a:hover { color:#b8005a; }
@@ -373,7 +373,7 @@ html[data-theme='dark'] .pete-light-section .table-wrap table thead th {
   box-shadow: 0 4px 24px rgba(226,0,116,0.15), 0 0 0 1px rgba(226,0,116,0.05) inset;
   backdrop-filter: none;
   margin: 0 auto 26px;
-  width: min(96vw, 1600px);
+  width: min(96%, 1600px);
 }
 
 .pete-hero-banner img { 
@@ -666,7 +666,7 @@ html[data-theme='dark'] .order-id-box {
 }
 .pete-chat-send { background:#E20074; color:#fff; border:none; font-size:.72rem; letter-spacing:.5px; padding:10px 18px; border-radius:24px; cursor:pointer; font-weight:600; }
 .pete-chat-send:hover { filter:brightness(1.1); }
-.pete-chat-stream { max-height:200px; overflow-y:auto; padding-right:4px; display:flex; flex-direction:column; gap:6px; }
+.pete-chat-stream { max-height:500px; overflow-y:auto; padding-right:4px; display:flex; flex-direction:column; gap:6px; }
 /* Removed custom scrollbar styling to honor global invisible scrollbar */
 .pmsg .bubble { display:flex; flex-direction:column; gap:2px; background:var(--pete-chat-bubble-bg); border:1px solid var(--pete-chat-bubble-border); padding:6px 10px 7px; border-radius:10px; font-size:.65rem; width:100%; line-height:1.25; box-sizing:border-box; color:var(--pete-chat-text); }
 .pmsg.user .bubble { background:var(--pete-chat-user-bg); border-color:var(--pete-chat-user-border); color:var(--pete-chat-text); }
@@ -858,4 +858,68 @@ body.research--pete .pete-chat-inline.theme-dark .pmsg .role {
 
 body.research--pete .pete-chat-inline.theme-dark .pmsg .text {
   color: rgba(255,255,255,0.92) !important;
+}
+
+/* ===============================
+   Large monitor scaling (>1600px)
+   Scale up all PETE content EXCEPT hero banner
+   =============================== */
+@media (min-width: 1600px) {
+  /* Base font size bump for the whole PETE container */
+  #research-app.pete-theme { font-size: 1.1rem; }
+
+  /* Page title */
+  body.research--pete .pete-page-title { font-size: 2.6rem; }
+
+  /* Card titles */
+  #research-app.pete-theme .pete-search-card .card-title { font-size: 1.4rem; }
+
+  /* Form labels and check labels */
+  #research-app.pete-theme .form-check-label { font-size: 1.05rem; }
+  #research-app.pete-theme label.form-label { font-size: 1rem; }
+
+  /* Form inputs */
+  #research-app.pete-theme input.form-control,
+  #research-app.pete-theme select.form-select { font-size: 1.05rem; padding: 10px 14px; }
+
+  /* Buttons */
+  #research-app.pete-theme .btn-success,
+  #research-app.pete-theme .btn-primary,
+  #research-app.pete-theme .btn-outline-primary { font-size: 1.05rem; padding: 8px 20px; }
+
+  /* Section kicker / badges */
+  body.research--pete .pete-section-kicker { font-size: 1.3rem; }
+  #research-app.pete-theme .badge { font-size: .95rem; padding: 6px 12px; }
+
+  /* Data tables */
+  .pete-search-card .table-wrap table { font-size: .95rem; }
+  .pete-search-card .table-wrap table thead th { font-size: .9rem; padding: 10px 12px; }
+  .pete-search-card .table-wrap table tbody td { font-size: .95rem; padding: 9px 12px; }
+
+  /* Standalone pete-table (promo data, errors, rate plan tables) */
+  #research-app.pete-theme .pete-table { font-size: .95rem; }
+  #research-app.pete-theme .pete-table th { font-size: .9rem; padding: 10px 12px; }
+  #research-app.pete-theme .pete-table td { font-size: .95rem; padding: 9px 12px; }
+
+  /* Chat stream + bubbles */
+  body.research--pete .pete-chat-stream { max-height: 600px; }
+  body.research--pete .pmsg .bubble { font-size: 1rem; max-height: none; }
+  body.research--pete .pmsg .role { font-size: .85rem; }
+  body.research--pete .pete-chat-input { font-size: 1.05rem; padding: 10px 14px; }
+  body.research--pete .pete-chat-send { font-size: 1.05rem; padding: 8px 18px; }
+
+  /* Loading note */
+  body.research--pete .pete-loading-note { font-size: 1.15rem; }
+
+  /* Radio/check inputs */
+  #research-app.pete-theme .form-check-input { width: 20px; height: 20px; }
+
+  /* Search card padding */
+  .pete-search-card { padding: 26px 30px 30px; }
+
+  /* Copy buttons */
+  #research-app.pete-theme .btn-sm { font-size: .95rem; padding: 5px 14px; }
+
+  /* Order detail IDs */
+  #research-app.pete-theme .small, #research-app.pete-theme small { font-size: .95rem; }
 }
