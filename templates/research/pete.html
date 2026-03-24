@@ -309,17 +309,18 @@ function applyInlineChatTheme(){
   applyInlineChatBubbleTheme(theme);
 }
 
-function toggleInlineChat(){
+function toggleInlineChat(forceOpen){
   const chat = document.getElementById('peteChatInline');
   const btn = document.getElementById('chatToggleBtn');
   const stream = document.getElementById('peteChatStream');
   applyInlineChatTheme();
-  const nowOpen = !chat.classList.contains('open');
+  const nowOpen = typeof forceOpen === 'boolean' ? forceOpen : !chat.classList.contains('open');
   chat.classList.toggle('open', nowOpen);
   chat.setAttribute('aria-hidden', nowOpen ? 'false' : 'true');
   btn.setAttribute('aria-expanded', nowOpen ? 'true' : 'false');
   btn.innerText = nowOpen ? '✖ Close PETEbot' : '💬 PETEbot Chat';
   if(nowOpen && stream){ stream.scrollTop = stream.scrollHeight; }
+  sessionStorage.setItem('peteChatOpen', nowOpen ? '1' : '0');
 }
 // Copy buttons
 function peteBindCopy(){
@@ -351,7 +352,8 @@ function peteBindCopy(){
 document.addEventListener('DOMContentLoaded', peteBindCopy);
 document.addEventListener('DOMContentLoaded', applyInlineChatTheme);
 document.addEventListener('DOMContentLoaded', () => {
-  document.getElementById('chatToggleBtn')?.addEventListener('click', toggleInlineChat);
+  document.getElementById('chatToggleBtn')?.addEventListener('click', () => toggleInlineChat());
+  if(sessionStorage.getItem('peteChatOpen') === '1') toggleInlineChat(true);
 });
 const peteThemeObserver = new MutationObserver(() => applyInlineChatTheme());
 peteThemeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });

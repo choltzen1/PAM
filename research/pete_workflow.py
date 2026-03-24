@@ -323,6 +323,10 @@ def process_chat(prompt: str):
             handlers = build_pete_handlers(data_manager, research_svc)
             history = session.get('chat_history', [])
             reply = pete_chat_completion(prompt, history, session_data, handlers)
+            if reply.startswith("AI error:"):
+                import logging
+                logging.getLogger(__name__).warning("[PETE] LLM error, falling back: %s", reply)
+                reply = ""
     except Exception as e:
         import logging
         logging.getLogger(__name__).warning("[PETE] LLM chat failed, falling back to keywords: %s", e)
