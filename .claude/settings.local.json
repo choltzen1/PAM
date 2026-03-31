@@ -70,7 +70,25 @@
       "Bash(python -m pytest tests/test_ai_chat.py -v)",
       "Bash(PYTEST_ALLOW_PROD_DB=1 python -m pytest tests/test_ai_chat.py -v)",
       "Bash(PYTEST_ALLOW_PROD_DB=1 python -m pytest --timeout=30)",
-      "Bash(python -c \":*)"
+      "Bash(python -c \":*)",
+      "Bash(find /c/Users/CHoltze1/PAM/templates -name *edit*.html -o -name *rdc*.html -o -name *spe*.html -o -name *rebate*.html)",
+      "Bash(grep -l \"generate.*sql\\\\|validation\\\\|trade.*tier\" /c/Users/CHoltze1/PAM/tests/*.py)",
+      "Bash(xargs ls:*)",
+      "Bash(grep -r \"INSERT INTO PAM\\\\|INSERT INTO RDC\\\\|CREATE TABLE\\\\|ALTER TABLE\" c:UsersCHoltze1PAM --include=*.py)",
+      "Bash(ls -la /c/Users/CHoltze1/PAM/data/*.sql)",
+      "Bash(find /c/Users/CHoltze1/PAM -name *schema* -o -name *ddl* -o -name *create*table*)",
+      "Bash(python -m pytest tests/test_id_tracking.py tests/test_sku_group_allocator.py -v)",
+      "Bash(PYTEST_ALLOW_PROD_DB=1 python -m pytest tests/test_id_tracking.py tests/test_sku_group_allocator.py -v)",
+      "Bash(mv data/issued_codes.json data/issued_codes.json.archived)",
+      "Bash(mv data/issued_sku_groups.json data/issued_sku_groups.json.archived)",
+      "Bash(mv data/issued_trade_in_groups.json data/issued_trade_in_groups.json.archived)",
+      "Bash(mv data/issued_mk_mdl_groups.json data/issued_mk_mdl_groups.json.archived)",
+      "Bash(PYTEST_ALLOW_PROD_DB=1 python -m pytest tests/test_generate_next_promo_code.py -v)",
+      "Bash(PYTEST_ALLOW_PROD_DB=1 python -m pytest tests/test_generate_and_ingest.py -v)",
+      "Bash(ls -la /c/Users/CHoltze1/PAM/*.md /c/Users/CHoltze1/PAM/*.txt /c/Users/CHoltze1/PAM/.github/workflows/*.yml)",
+      "Bash(find /c/Users/CHoltze1/PAM -name *.json -not -path */venv/* -not -path */__pycache__/*)",
+      "Bash(git -C /c/Users/CHoltze1/PAM log --oneline --graph --all -20)",
+      "Bash(python -c \"from promo.routes import promo_bp; print\\(''''Route import OK''''\\)\")"
     ]
   }
 }

@@ -83,6 +83,12 @@ data/sessions/**
 *.db
 version_history.db
 
+# Legacy JSON tracking files (replaced by PAM.Promo_ID_Tracking table)
+data/issued_codes.json
+data/issued_sku_groups.json
+data/issued_trade_in_groups.json
+data/issued_mk_mdl_groups.json
+
 # Backup files
 *_backup.py
 *_old.py

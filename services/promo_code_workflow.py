@@ -18,21 +18,9 @@ logger = logging.getLogger(__name__)
 from data.database import DatabaseManager
 from data.orbit_database import OrbitDatabaseManager
 from data.storage import PromoDataManager
-from data.sku_group_tracking import (
-    load_issued_sku_group_ids,
-    record_issued_sku_group_id,
-    next_sku_group_id_progressive,
-)
-from data.trade_in_group_tracking import (
-    load_issued_trade_in_group_ids,
-    record_issued_trade_in_group_id,
-    next_trade_in_group_id_progressive,
-)
-from data.mk_mdl_group_tracking import (
-    load_issued_mk_mdl_group_ids,
-    record_issued_mk_mdl_group_id,
-    allocate_mk_mdl_group_ids,
-)
+from data.sku_group_tracking import next_sku_group_id_progressive
+from data.trade_in_group_tracking import next_trade_in_group_id_progressive
+from data.mk_mdl_group_tracking import allocate_mk_mdl_group_ids
 from services.trade_tier_parser import parse_trade_tiers, build_trade_tier_fields
 from data.version_history import log_version_event
 
@@ -131,11 +119,7 @@ class PromoCodeWorkflow:
         cfg = (config or '').lower()
         logger.info("[WORKFLOW] Config: '%s', broken_trade: '%s', full_row keys: %s", cfg, broken_trade, list(full_row.keys()) if full_row else '(none)')
         # Allocate next sku_group_id (always generate regardless of orbit row value)
-        try:
-            existing_db_ids = set(self.db.get_all_sku_group_ids())
-        except Exception:
-            existing_db_ids = set()
-        existing_all = existing_db_ids | load_issued_sku_group_ids()
+        existing_all = self.db.get_all_allocated_ids('sku_group_id')
         try:
             allocated_sku_group_id = next_sku_group_id_progressive(existing_all)
         except Exception as alloc_err:
@@ -143,11 +127,7 @@ class PromoCodeWorkflow:
         # Allocate trade_in_group_id for non-0-trade-in configs
         allocated_trade_in_group_id = None
         if cfg == 'non-0-trade-in':
-            try:
-                existing_trade_db = set(self.db.get_all_trade_in_group_ids())
-            except Exception:
-                existing_trade_db = set()
-            existing_trade_all = existing_trade_db | load_issued_trade_in_group_ids()
+            existing_trade_all = self.db.get_all_allocated_ids('trade_in_group_id')
             try:
                 allocated_trade_in_group_id = next_trade_in_group_id_progressive(existing_trade_all)
             except Exception as alloc_err:
@@ -163,11 +143,10 @@ class PromoCodeWorkflow:
             logger.info("[WORKFLOW] Parsed %d trade tiers: %s", len(tiers), [(t['amount']) for t in tiers] if tiers else '(none)')
             if tiers:
                 # Allocate mk_mdl group IDs (one per tier)
-                try:
-                    existing_mk_mdl_db = set(self.db.get_all_mk_mdl_group_ids())
-                except Exception:
-                    existing_mk_mdl_db = set()
-                existing_mk_mdl_all = existing_mk_mdl_db | load_issued_mk_mdl_group_ids()
+                existing_mk_mdl_all = self.db.get_all_allocated_ids_multi([
+                    'mk_mdl_grp_tier_1', 'mk_mdl_grp_tier_2',
+                    'mk_mdl_grp_tier_3', 'mk_mdl_grp_tier_4'
+                ])
                 try:
                     allocated_mk_mdl_ids = allocate_mk_mdl_group_ids(existing_mk_mdl_all, len(tiers))
                 except Exception as alloc_err:
@@ -239,23 +218,11 @@ class PromoCodeWorkflow:
         ok = self.db.insert_promo_record(insertion)
         if not ok:
             return {'success': False, 'error': 'Insert failed', 'attempted_fields': list(insertion.keys())}
-        # Persist sku_group_id tombstone (best effort)
+        # Record all allocated IDs to tracking table (permanent ledger, best-effort)
         try:
-            record_issued_sku_group_id(allocated_sku_group_id)
+            self.db.insert_tracking_record(insertion, user)
         except Exception:
-            pass
-        # Persist trade_in_group_id tombstone (best effort)
-        if allocated_trade_in_group_id:
-            try:
-                record_issued_trade_in_group_id(allocated_trade_in_group_id)
-            except Exception:
-                pass
-        # Persist mk_mdl_group_id tombstones (best effort)
-        for mk_id in allocated_mk_mdl_ids:
-            try:
-                record_issued_mk_mdl_group_id(mk_id)
-            except Exception:
-                pass
+            logger.warning("Tracking record insert failed for %s", new_code)
         created_snapshot = {
             'orbit_id': oid,
             'promo_code': new_code,

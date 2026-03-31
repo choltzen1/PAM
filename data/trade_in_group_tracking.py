@@ -1,48 +1,16 @@
-import json
-import os
+"""Trade-in group ID allocation algorithms.
+
+Trade-in group IDs follow the pattern [A-Z]\\d{2} (e.g. A01, A99, Z99).
+Total capacity: 26 x 99 = 2,574.
+
+Allocation state is managed by PAM.Promo_ID_Tracking (database table).
+JSON tombstone files have been deprecated.
+"""
 import re
 from typing import Set
 
-ISSUED_TRADE_IN_GROUPS_FILE = os.path.join('data', 'issued_trade_in_groups.json')
-
-# Trade-in group IDs follow Letter + 2 digits pattern (A01..A99, B01..B99, ..., Z99)
 _PATTERN = re.compile(r'^[A-Z]\d{2}$')
 _TOTAL_CAPACITY = 26 * 99  # 2574
-
-
-def _ensure_file():
-    os.makedirs(os.path.dirname(ISSUED_TRADE_IN_GROUPS_FILE), exist_ok=True)
-    if not os.path.exists(ISSUED_TRADE_IN_GROUPS_FILE):
-        with open(ISSUED_TRADE_IN_GROUPS_FILE, 'w', encoding='utf-8') as f:
-            json.dump([], f)
-
-
-def load_issued_trade_in_group_ids() -> Set[str]:
-    try:
-        _ensure_file()
-        with open(ISSUED_TRADE_IN_GROUPS_FILE, 'r', encoding='utf-8') as f:
-            data = json.load(f)
-            if isinstance(data, list):
-                return {x for x in data if isinstance(x, str) and _PATTERN.match(x)}
-            return set()
-    except Exception:
-        return set()
-
-
-def record_issued_trade_in_group_id(trade_in_group_id: str):
-    if not trade_in_group_id or not _PATTERN.match(trade_in_group_id):
-        return
-    try:
-        issued = load_issued_trade_in_group_ids()
-        if trade_in_group_id in issued:
-            return
-        issued.add(trade_in_group_id)
-        tmp = ISSUED_TRADE_IN_GROUPS_FILE + '.tmp'
-        with open(tmp, 'w', encoding='utf-8') as f:
-            json.dump(sorted(issued), f)
-        os.replace(tmp, ISSUED_TRADE_IN_GROUPS_FILE)
-    except Exception:
-        pass
 
 
 def _rank_id(value: str) -> int:
@@ -75,7 +43,5 @@ def next_trade_in_group_id_progressive(existing_ids: Set[str]) -> str:
 
 
 __all__ = [
-    'load_issued_trade_in_group_ids',
-    'record_issued_trade_in_group_id',
     'next_trade_in_group_id_progressive',
 ]

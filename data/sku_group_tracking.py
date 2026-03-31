@@ -1,47 +1,17 @@
-import json
-import os
-import re
-from typing import Set
+"""SKU group ID allocation algorithms.
 
-ISSUED_SKU_GROUPS_FILE = os.path.join('data', 'issued_sku_groups.json')
+SKU group IDs follow the pattern [A-Z]{2}[1-9] (e.g. AA1, AB5, ZZ9).
+Total capacity: 26 x 26 x 9 = 6,084.
+
+Allocation state is managed by PAM.Promo_ID_Tracking (database table).
+JSON tombstone files have been deprecated.
+"""
+import re
+import string
+from typing import Set
 
 _PATTERN = re.compile(r'^[A-Z]{2}[1-9]$')
 _TOTAL_CAPACITY = 26 * 26 * 9  # 6084
-
-
-def _ensure_file():
-    os.makedirs(os.path.dirname(ISSUED_SKU_GROUPS_FILE), exist_ok=True)
-    if not os.path.exists(ISSUED_SKU_GROUPS_FILE):
-        with open(ISSUED_SKU_GROUPS_FILE, 'w', encoding='utf-8') as f:
-            json.dump([], f)
-
-
-def load_issued_sku_group_ids() -> Set[str]:
-    try:
-        _ensure_file()
-        with open(ISSUED_SKU_GROUPS_FILE, 'r', encoding='utf-8') as f:
-            data = json.load(f)
-            if isinstance(data, list):
-                return {x for x in data if isinstance(x, str) and _PATTERN.match(x)}
-            return set()
-    except Exception:
-        return set()
-
-
-def record_issued_sku_group_id(sku_group_id: str):
-    if not sku_group_id or not _PATTERN.match(sku_group_id):
-        return
-    try:
-        issued = load_issued_sku_group_ids()
-        if sku_group_id in issued:
-            return
-        issued.add(sku_group_id)
-        tmp = ISSUED_SKU_GROUPS_FILE + '.tmp'
-        with open(tmp, 'w', encoding='utf-8') as f:
-            json.dump(sorted(issued), f)
-        os.replace(tmp, ISSUED_SKU_GROUPS_FILE)
-    except Exception:
-        pass
 
 
 def _rank_id(value: str) -> int:
@@ -61,7 +31,7 @@ def _decode_rank(rank: int) -> str:
 
 
 def next_sku_group_id(existing_ids: Set[str]) -> str:
-    """Given existing issued IDs (DB + tombstones), compute the next sequential ID.
+    """Given existing issued IDs, compute the next sequential ID.
 
     Skips holes by always taking max rank + 1.
     Raises RuntimeError if namespace exhausted.
@@ -72,14 +42,6 @@ def next_sku_group_id(existing_ids: Set[str]) -> str:
     if next_rank >= _TOTAL_CAPACITY:
         raise RuntimeError('SKU group ID namespace exhausted (ZZ9 reached)')
     return _decode_rank(next_rank)
-
-
-__all__ = [
-    'load_issued_sku_group_ids',
-    'record_issued_sku_group_id',
-    'next_sku_group_id',
-    'next_sku_group_id_progressive'
-]
 
 
 def next_sku_group_id_progressive(existing_ids: Set[str]) -> str:
@@ -105,7 +67,6 @@ def next_sku_group_id_progressive(existing_ids: Set[str]) -> str:
     # 2. Determine the active letter by walking from 'A' upward until we find
     #    a letter whose predecessor (if any) is exhausted (has Z9) but itself not yet exhausted.
     #    If there are no A* entries at all we still *start* at A.
-    import string
     letters = string.ascii_uppercase
 
     def block_exhausted(letter: str) -> bool:
@@ -167,3 +128,9 @@ def next_sku_group_id_progressive(existing_ids: Set[str]) -> str:
             raise RuntimeError('SKU group ID namespace exhausted (ZZ9 reached)')
         return f'{chr(ord(active_letter)+1)}A1'
     return f'{active_letter}{chr(ord(second)+1)}1'
+
+
+__all__ = [
+    'next_sku_group_id',
+    'next_sku_group_id_progressive',
+]

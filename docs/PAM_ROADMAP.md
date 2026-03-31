@@ -1,6 +1,6 @@
 # PAM — Product Roadmap
 ### Promotions Automation Manager · T-Mobile Promotions Engineering
-**Last Updated:** February 11, 2026  
+**Last Updated:** March 31, 2026  
 **Maintainer:** Cade Holtzen (cade.holtzen1@t-mobile.com)
 
 ---
@@ -21,9 +21,8 @@ PAM automates the end-to-end lifecycle of T-Mobile promotional campaigns — fro
   ▼              ▼               ▼               ▼                 ▼
 Blueprint        PETE Research,  Fabric/ORBIT    SPE & Rebates     Production
 Refactor &       PDT Parser,     Gateway +       SQL Generators    Hardening &
-Core Build       Field Mapping,  Orbit→RDC       + SPETE/Re-PETE   Observability
-                 UI Rebrand      Pipeline & Beta                          
-                                                         
+Core Build       UI Rebrand      Pipeline & Beta + PETE Expansion  Observability
+                                                  / P.A.L.
 ```
 
 ---
@@ -68,7 +67,7 @@ _Built the integration layer and PETE research toolkit. Fabric connectivity code
 
 ---
 
-## Phase 3 — RDC Pipeline Completion (2026 Q1) 🔶 IN PROGRESS ← **WE ARE HERE**
+## Phase 3 — RDC Pipeline Completion (2026 Early Q2) 🔶 IN PROGRESS ← **WE ARE HERE**
 
 _Complete the data pipeline from ORBIT into RDC SQL generation and stabilize for beta._
 
@@ -88,7 +87,7 @@ _Complete the data pipeline from ORBIT into RDC SQL generation and stabilize for
 | End-to-end SQL generation testing | ⬜ Blocked | Requires real ORBIT data flowing through the full pipeline |
 | Rejection workflow testing (email threading) | ⬜ Not Started | Route built, needs integration testing |
 
-### RDC Beta Milestone (Target: Late Q1 - Early Q2 2026)
+### RDC Beta Milestone (Target: Early Q2 2026)
 
 | Criteria | Status |
 |---|---|
@@ -134,22 +133,22 @@ _Extend the engine to handle SPE and Rebate constructs using the same RDC founda
 
 ---
 
-## Phase 5 — SPETE & Re-PETE (2026 Q2–Q3) ⬜ PLANNED
+## Phase 5 — PETE Expansion + SPETE / Re-PETE (2026 Q2) ⬜ PLANNED
 
-_Research and troubleshooting tools for SPE constructs, mirroring what PETE does for RDC._
+_Expand PETE with richer troubleshooting data pulls, add P.A.L. (PETE 2.0) eligibility guidance, and extend the research model to SPE and cross-construct workflows._
 
 | Task | Status | Notes |
 |---|---|---|
-| **SPETE workflow** | ⬜ Not Started | Listed in PAM_Updates.md as "needs basic queries" |
-| SPETE query set (SPE-specific EFPE tables) | ⬜ Not Started | Analogous to PETE's 8-table CTE but for SPE constructs |
-| SPETE chat interface | ⬜ Not Started | Can reuse PETE chat framework with SPE-specific keyword handling |
-| SPETE UI (research page) | 🔶 Partial | Card exists on research home, no actual page |
-| **Re-PETE** | ⬜ Not Started | Enhanced/next-gen PETE — scope TBD |
-| Re-PETE query expansion | ⬜ Not Started | |
-| Re-PETE UI | ⬜ Not Started | |
+| PETE enhanced data pulls (Port, AAL, manual bulk status) | ⬜ Not Started | Q2 2026 focus for RDC troubleshooting |
+| Automated Port and AAL utilization pull | ⬜ Not Started | Surface BAN/EIP usage already satisfying Port or AAL promo requirements |
+| Trade mis-shipment identification | ⬜ Not Started | Connect UPS and trade warehouse data needed to trace where a trade was lost |
+| P.A.L. (PETE 2.0) automated eligibility determination | ⬜ Not Started | Late Q2 2026 target |
+| P.A.L. reason-for-ineligibility output | ⬜ Not Started | Surface clear failure reasons alongside the automated decision |
+| **SPETE workflow** | ⬜ Not Started | SPE-specific research queries and chat based on PETE patterns |
+| Re-PETE cross-construct expansion | ⬜ Not Started | Extend research workflows across RDC, SPE, and Rebates |
 
-### Timeline Uncertainty
-> SPETE and Re-PETE timelines are **not yet defined**. They depend on the SPE construct being fully operational and on identifying the specific query patterns needed for SPE troubleshooting.
+### Planning Note
+> PETE's Q2 enhancement roadmap is now defined. SPETE and Re-PETE still depend on the SPE construct becoming operational and on confirming the highest-value research patterns with the team.
 
 ---
 
@@ -240,7 +239,9 @@ _Harden the platform for full production use across the promotions team._
 | RDC Production | Early Q2 2026 | ⬜ Pending beta results |
 | SPE SQL generation | Q2 2026 | ⬜ Planned |
 | Rebates SQL generation | Q2 2026 | ⬜ Planned |
-| SPETE / Re-PETE | Q2–Q3 2026 | ⬜ Timeline TBD |
+| PETE enhanced data pulls | Q2 2026 | ⬜ Planned |
+| P.A.L. (PETE 2.0) | Late Q2 2026 | ⬜ Planned |
+| SPETE / Re-PETE follow-on | Q2–Q3 2026 | ⬜ Planned |
 | Full production hardening | Q3 2026 | ⬜ Future |
 
 ---

@@ -7,7 +7,7 @@ def test_generate_next_simple_increment(client, monkeypatch):
     monkeypatch.setattr(
         PromoCodeWorkflow,
         'create_from_orbit',
-        lambda self, orbit_id, execution_type='RDC', user='System', config='': {
+        lambda self, orbit_id, execution_type='RDC', user='System', config='', broken_trade='N': {
             'success': True,
             'code': 'R901',
             'orbit_id': orbit_id,
@@ -26,7 +26,7 @@ def test_generate_next_letter_rollover(client, monkeypatch):
     monkeypatch.setattr(
         PromoCodeWorkflow,
         'create_from_orbit',
-        lambda self, orbit_id, execution_type='RDC', user='System', config='': {
+        lambda self, orbit_id, execution_type='RDC', user='System', config='', broken_trade='N': {
             'success': True,
             'code': 'S001',
             'orbit_id': orbit_id,

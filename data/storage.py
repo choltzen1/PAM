@@ -557,6 +557,22 @@ class PromoDataManager:
                 changed_fields=changed_payload
             )
 
+        # Sync tracking table if any group ID columns were changed
+        _TRACKED_GROUP_COLS = {
+            'sku_group_id', 'trade_in_group_id', 'bolt_trade_in_grp_id',
+            'port_in_group_id', 'segment_group_id', 'device_status_group_id',
+            'mk_mdl_grp_tier_1', 'mk_mdl_grp_tier_2', 'mk_mdl_grp_tier_3',
+            'mk_mdl_grp_tier_4', 'tiered_grp_id',
+            'promo_tier_1_sku_group_id', 'promo_tier_2_sku_group_id',
+            'promo_tier_3_sku_group_id',
+        }
+        changed_group_ids = {k: unified_after.get(k) for k in changed_fields if k in _TRACKED_GROUP_COLS}
+        if changed_group_ids:
+            try:
+                self.db_manager.update_tracking_record(promo_code, changed_group_ids)
+            except Exception as e:
+                logger.warning("Tracking table sync failed for %s: %s", promo_code, e)
+
         return {
             'success': True,
             'changed': changed_fields,

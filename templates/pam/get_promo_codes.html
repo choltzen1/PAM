@@ -528,44 +528,4 @@ function showBrokenTradePrompt(orbitId){
 }
 </script>
 
-<style>
-.broken-trade-modal {
-  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-  background: rgba(0,0,0,0.45); z-index: 99999;
-  display: flex; align-items: center; justify-content: center;
-}
-.broken-trade-modal-content {
-  background: var(--card-bg, #fff); color: var(--text, #111);
-  border-radius: 8px; width: 90%; max-width: 400px;
-  box-shadow: 0 8px 30px rgba(0,0,0,0.45); overflow: hidden;
-}
-.broken-trade-modal-header {
-  background: var(--tmobile-magenta, #E20074); color: #fff;
-  padding: 12px 20px; display: flex; justify-content: space-between; align-items: center;
-}
-.broken-trade-modal-header h3 { margin: 0; font-size: 1.1rem; font-weight: 700; color: #fff; }
-.broken-trade-modal-header .close-modal {
-  background: transparent; border: none; color: #fff; font-size: 20px;
-  cursor: pointer; opacity: 0.8; padding: 4px 8px; border-radius: 4px;
-}
-.broken-trade-modal-header .close-modal:hover { opacity: 1; background: rgba(255,255,255,0.15); }
-.broken-trade-modal-body { padding: 24px; text-align: center; }
-.broken-trade-modal-body p { font-size: 1rem; margin: 0 0 20px; }
-.broken-trade-modal-buttons { display: flex; gap: 12px; justify-content: center; }
-.broken-trade-modal-buttons .btn {
-  padding: 10px 32px; border-radius: 6px; font-weight: 600; font-size: 0.95rem;
-  cursor: pointer; border: none; transition: background 0.15s;
-}
-.broken-trade-modal-buttons .bt-yes {
-  background: var(--tmobile-magenta, #E20074); color: #fff;
-}
-.broken-trade-modal-buttons .bt-yes:hover { background: #c00060; }
-.broken-trade-modal-buttons .bt-no {
-  background: #e0e0e0; color: #333;
-}
-.broken-trade-modal-buttons .bt-no:hover { background: #ccc; }
-html[data-theme='dark'] .broken-trade-modal-content { background: #2d1626; border: 1px solid rgba(226,0,116,0.3); }
-html[data-theme='dark'] .broken-trade-modal-body { color: #e0e0e0; }
-html[data-theme='dark'] .broken-trade-modal-buttons .bt-no { background: rgba(255,255,255,0.15); color: #e0e0e0; }
-</style>
 {% endblock %}

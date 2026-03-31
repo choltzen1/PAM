@@ -554,7 +554,9 @@ def recent_generated_promos():
 def health_check():
     """Lightweight health check for Azure App Service monitoring."""
     try:
-        engine = db.get_engine()
+        from data.database import DatabaseManager
+        dbm = DatabaseManager()
+        engine = dbm.get_engine()
         with engine.connect() as conn:
             conn.execute(text("SELECT 1"))
         return jsonify({'status': 'healthy', 'db': 'connected'}), 200

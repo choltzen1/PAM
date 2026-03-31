@@ -2184,3 +2184,134 @@ def get_promo_codes_page():
         from datetime import datetime
         current_year = datetime.now().year
         return render_template('pam/get_promo_codes.html', current_year=current_year)
+
+
+# ---------------------------------------------------------------------------
+# Roadmap
+# ---------------------------------------------------------------------------
+
+@promo_bp.route('/roadmap', endpoint='roadmap_page')
+@role_required('pam_users')
+def roadmap_page():
+    """Internal team roadmap showing milestones, phases, and current progress."""
+    from datetime import date
+
+    today = date.today()
+
+    phases = [
+        {
+            'id': 1,
+            'name': 'Platform Foundation',
+            'timeframe': 'Q3 2025',
+            'status': 'complete',
+            'progress': 100,
+            'description': 'Established the core platform — modular architecture, SQL Server as system of record, approval workflows, and standardized templates.',
+            'items': [
+                {'text': 'Blueprint architecture and app factory pattern', 'done': True},
+                {'text': 'SQL Server as primary data store', 'done': True},
+                {'text': 'RDC listing, editing, and multi-tab forms', 'done': True},
+                {'text': 'Approval and review workflow with email routing', 'done': True},
+                {'text': 'Capacity planning with weekly calendar', 'done': True},
+                {'text': 'Version history tracking', 'done': True},
+                {'text': 'Admin dashboard', 'done': True},
+                {'text': 'Sequential promo code generation', 'done': True},
+            ],
+        },
+        {
+            'id': 2,
+            'name': 'Data & Research Enablement',
+            'timeframe': 'Q4 2025',
+            'status': 'complete',
+            'progress': 100,
+            'description': 'Built the ORBIT data connection, field mapping layer, and the PETE research tool for promo eligibility troubleshooting.',
+            'items': [
+                {'text': 'PETE research tool — EIP lookup, BAN discovery, eligibility checks', 'done': True},
+                {'text': 'PETE AI chat assistant for promo questions', 'done': True},
+                {'text': 'ORBIT field mapping — 45+ fields documented and mapped', 'done': True},
+                {'text': 'Microsoft Fabric Data Warehouse connection', 'done': True},
+                {'text': 'ORBIT data now flowing live into PAM', 'done': True},
+                {'text': 'Trade-in Excel parser and device group builder', 'done': True},
+            ],
+        },
+        {
+            'id': 3,
+            'name': 'RDC Promo Automation',
+            'timeframe': 'Q1 2026',
+            'status': 'active',
+            'progress': 85,
+            'description': 'Completing the end-to-end RDC pipeline: pull promo data from ORBIT, auto-fill forms, generate SQL, send for approval.',
+            'items': [
+                {'text': 'ORBIT auto-populates RDC forms with live data', 'done': False},
+                {'text': 'SQL generation using real ORBIT data', 'done': False},
+                {'text': 'Rejection workflow fully tested end-to-end', 'done': False},
+                {'text': 'SOX compliance review of approval audit trail', 'done': False},
+                {'text': 'Excel upload for SKU and trade-in lists', 'done': True},
+                {'text': 'Approval email flow built and functional', 'done': True},
+                {'text': 'UI refresh and dark mode consistency', 'done': True},
+                {'text': 'P3 team hands-on beta testing (3+ promos)', 'done': False},
+            ],
+        },
+        {
+            'id': 4,
+            'name': 'Multi-Construct Expansion',
+            'timeframe': 'Q2 2026',
+            'status': 'upcoming',
+            'progress': 30,
+            'description': 'Extending PAM to handle SPE and Rebate promos — same workflow, same approvals, different SQL output for each type.',
+            'items': [
+                {'text': 'SPE listing and edit pages', 'done': True},
+                {'text': 'Rebate listing page', 'done': True},
+                {'text': 'SPE SQL generator (needs SPE business rules from P3)', 'done': False},
+                {'text': 'Rebate edit page and SQL generator', 'done': False},
+                {'text': 'Cross-construct validation — all three types working', 'done': False},
+                {'text': 'SKU and trade-in list management', 'done': False},
+                {'text': 'SOX compliance for SPE & Rebate approvals', 'done': False},
+                {'text': 'P3 team training on SPE & Rebate workflows', 'done': False},
+            ],
+        },
+        {
+            'id': 5,
+            'name': 'PETE Expansion',
+            'timeframe': 'Q2 2026',
+            'status': 'upcoming',
+            'progress': 0,
+            'description': 'Expand PETE with Port, AAL, bulk-status, and trade troubleshooting data, then layer in P.A.L. eligibility automation and follow-on SPETE / Re-PETE research workflows.',
+            'items': [
+                {'text': 'PETE enhanced data pulls for Port, AAL, and manual bulk status', 'done': False},
+                {'text': 'Automated Port and AAL utilization pull in BAN/EIP context', 'done': False},
+                {'text': 'Trade mis-shipment identification using UPS and trade warehouse data', 'done': False},
+                {'text': 'P.A.L. (PETE 2.0) automated promo eligibility determination', 'done': False},
+                {'text': 'P.A.L. reason-for-ineligibility output', 'done': False},
+                {'text': 'SPETE research workflow for SPE troubleshooting', 'done': False},
+                {'text': 'Re-PETE cross-construct expansion', 'done': False},
+            ],
+        },
+        {
+            'id': 6,
+            'name': 'Production Hardening',
+            'timeframe': 'Q3 2026+',
+            'status': 'future',
+            'progress': 0,
+            'description': 'Making PAM rock-solid for daily production use — monitoring, automated testing, concurrent editing safeguards, and full Azure deployment.',
+            'items': [
+                {'text': 'Automated SQL output regression testing', 'done': False},
+                {'text': 'Concurrent editing protection (no more overwrite conflicts)', 'done': False},
+                {'text': 'Azure monitoring and alerting', 'done': False},
+                {'text': 'Full production environment provisioned', 'done': False},
+                {'text': 'Automated deployments to staging and production', 'done': False},
+                {'text': 'Performance monitoring dashboard', 'done': False},
+            ],
+        },
+    ]
+
+    # Summary counts
+    total_items = sum(len(p['items']) for p in phases)
+    done_items = sum(1 for p in phases for i in p['items'] if i['done'])
+    phases_complete = sum(1 for p in phases if p['status'] == 'complete')
+
+    return render_template('pam/roadmap.html',
+                           phases=phases,
+                           total_items=total_items,
+                           done_items=done_items,
+                           phases_complete=phases_complete,
+                           today=today)

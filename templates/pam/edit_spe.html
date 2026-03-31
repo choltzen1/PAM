@@ -122,7 +122,7 @@
               <div id="sms_fields" class="c-field-card c-field-card--span-full {% if promo.sms_indicator != 'Y' %}hidden{% endif %}">
                 <label class="section-label">SMS English</label>
                 <input class="form-control" name="sms_english" value="{{ promo.sms_english or '' }}" placeholder="Enter SMS English text">
-                <label class="section-label" style="margin-top:.5rem">SMS Spanish</label>
+                <label class="section-label section-label--spaced">SMS Spanish</label>
                 <input class="form-control" name="sms_spanish" value="{{ promo.sms_spanish or '' }}" placeholder="Enter SMS Spanish text">
               </div>
               <div class="c-field-card"><label class="section-label">TFB Channel Group ID</label><select class="form-select" name="tfb_channel_group_id">{% for group in ['NULL','A01','A02','A03','A04','A05'] %}<option value="{{ group }}" {% if promo.tfb_channel_group_id == group %}selected{% endif %}>{{ group }}</option>{% endfor %}</select></div>

@@ -1279,6 +1279,135 @@ class DatabaseManager:
             logger.error(f"Failed to fetch sku_group_ids: {e}")
             return []
 
+    # --- Promo ID Tracking (PAM.Promo_ID_Tracking) ---
+    # Permanent ledger of all allocated promo codes and group IDs.
+    # Rows are inserted at creation time and NEVER deleted.
+
+    _TRACKING_TABLE = 'PAM.Promo_ID_Tracking'
+    _TRACKING_COLUMNS = [
+        'code', 'orbit_id', 'sku_group_id', 'trade_in_group_id',
+        'bolt_trade_in_grp_id', 'port_in_group_id', 'segment_group_id',
+        'device_status_group_id', 'mk_mdl_grp_tier_1', 'mk_mdl_grp_tier_2',
+        'mk_mdl_grp_tier_3', 'mk_mdl_grp_tier_4', 'tiered_grp_id',
+        'promo_tier_1_sku_group_id', 'promo_tier_2_sku_group_id',
+        'promo_tier_3_sku_group_id',
+    ]
+
+    def _tracking_table_exists(self) -> bool:
+        """Check if PAM.Promo_ID_Tracking exists. Cached after first successful check."""
+        if getattr(self, '_tracking_exists_cache', None) is True:
+            return True
+        try:
+            engine = self.get_engine()
+            sql = ("SELECT 1 FROM INFORMATION_SCHEMA.TABLES "
+                   "WHERE TABLE_SCHEMA = 'PAM' AND TABLE_NAME = 'Promo_ID_Tracking'")
+            with engine.connect() as conn:
+                row = conn.execute(text(sql)).fetchone()
+            if row:
+                self._tracking_exists_cache = True
+                return True
+            return False
+        except Exception as e:
+            logger.debug("Tracking table existence check failed: %s", e)
+            return False
+
+    def insert_tracking_record(self, promo_record: dict, created_by: str = 'System') -> bool:
+        """Insert a row into PAM.Promo_ID_Tracking for a newly created promo.
+
+        Extracts all group ID columns from promo_record. Best-effort: returns
+        False on error but never blocks promo creation.
+        """
+        if not self._tracking_table_exists():
+            logger.debug("Tracking table does not exist; skipping insert")
+            return False
+        code = promo_record.get('code')
+        if not code:
+            return False
+        cols = []
+        params = {}
+        for i, col in enumerate(self._TRACKING_COLUMNS):
+            val = promo_record.get(col)
+            if val is not None and str(val).strip():
+                cols.append(col)
+                params[f'p{i}'] = str(val).strip()
+        # Always include created_by
+        cols.append('created_by')
+        params['p_created_by'] = created_by
+        col_sql = ', '.join(cols)
+        val_sql = ', '.join(f':{k}' for k in params)
+        sql = f"INSERT INTO {self._TRACKING_TABLE} ({col_sql}) VALUES ({val_sql})"
+        try:
+            engine = self.get_engine()
+            with engine.begin() as conn:
+                conn.execute(text(sql), params)
+            logger.info("Tracking record inserted for %s", code)
+            return True
+        except Exception as e:
+            logger.warning("Failed to insert tracking record for %s: %s", code, e)
+            return False
+
+    def update_tracking_record(self, promo_code: str, updates: dict) -> bool:
+        """Update group ID columns in the tracking table after a manual edit.
+
+        Only updates columns that exist in _TRACKING_COLUMNS (ignores others).
+        """
+        if not self._tracking_table_exists() or not promo_code or not updates:
+            return False
+        trackable = {k: v for k, v in updates.items() if k in self._TRACKING_COLUMNS and k != 'code'}
+        if not trackable:
+            return False
+        set_clauses = []
+        params = {'promo_code': promo_code}
+        for i, (col, val) in enumerate(trackable.items()):
+            param = f'u{i}'
+            set_clauses.append(f"{col} = :{param}")
+            params[param] = str(val).strip() if val is not None else None
+        sql = f"UPDATE {self._TRACKING_TABLE} SET {', '.join(set_clauses)} WHERE code = :promo_code"
+        try:
+            engine = self.get_engine()
+            with engine.begin() as conn:
+                conn.execute(text(sql), params)
+            logger.info("Tracking record updated for %s: %s", promo_code, list(trackable.keys()))
+            return True
+        except Exception as e:
+            logger.warning("Failed to update tracking record for %s: %s", promo_code, e)
+            return False
+
+    def get_all_allocated_ids(self, column_name: str) -> set:
+        """Return set of all ever-allocated values for a given group ID column.
+
+        Queries PAM.Promo_ID_Tracking (permanent ledger). Falls back to the
+        live promo table if the tracking table does not exist yet.
+        """
+        result = set()
+        try:
+            engine = self.get_engine()
+            if self._tracking_table_exists():
+                sql = (f"SELECT DISTINCT {column_name} FROM {self._TRACKING_TABLE} WITH (NOLOCK) "
+                       f"WHERE {column_name} IS NOT NULL AND LTRIM(RTRIM({column_name})) <> ''")
+            else:
+                phys = quote_identifier(canonical_to_physical(column_name)) if column_name in FIELD_DB_MAP else column_name
+                sql = (f"SELECT DISTINCT {phys} FROM {self.source_table} WITH (NOLOCK) "
+                       f"WHERE {phys} IS NOT NULL AND LTRIM(RTRIM({phys})) <> ''")
+            with engine.connect() as conn:
+                rows = conn.execute(text(sql)).fetchall()
+            for r in rows:
+                val = (r[0] or '').strip().upper()
+                if val:
+                    result.add(val)
+        except Exception as e:
+            logger.error("Failed to fetch allocated IDs for %s: %s", column_name, e)
+        return result
+
+    def get_all_allocated_ids_multi(self, column_names: list) -> set:
+        """Return union of allocated IDs across multiple columns (e.g. mk_mdl tiers)."""
+        result = set()
+        for col in column_names:
+            result |= self.get_all_allocated_ids(col)
+        return result
+
+    # Legacy group ID helpers (deprecated — use get_all_allocated_ids instead)
+
     # Version-history and promo_history persistence removed per project reset.
     # All functions that previously wrote to or read from `PAM.promo_history` have been deleted.
     # If you need to reintroduce history, implement a new module under `data/` and wire callers explicitly.

@@ -1,0 +1,112 @@
+{% extends "pam/base_pam.html" %}
+
+{% block title %}PAM Roadmap{% endblock %}
+
+{% block head %}
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet" />
+{% endblock %}
+
+{% block header_left %}
+<div class="global-header-promotions">
+  <i class="bi bi-map header-icon"></i>
+  <div class="header-text">
+    <h2>Product Roadmap</h2>
+    <p>PAM development timeline and milestones</p>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="roadmap-page">
+
+  <!-- Summary Bar -->
+  <div class="roadmap-summary control-bar">
+    <div class="summary-number">
+      <div class="number">{{ phases_complete }}</div>
+      <div class="label">PHASES COMPLETE</div>
+    </div>
+    <div class="summary-number">
+      <div class="number">{{ phases|length }}</div>
+      <div class="label">TOTAL PHASES</div>
+    </div>
+    <div class="summary-number">
+      <div class="number">{{ done_items }}</div>
+      <div class="label">ITEMS DONE</div>
+    </div>
+    <div class="summary-number">
+      <div class="number">{{ total_items }}</div>
+      <div class="label">TOTAL ITEMS</div>
+    </div>
+    <div class="summary-number">
+      <div class="number">{{ ((done_items / total_items) * 100)|round|int }}%</div>
+      <div class="label">OVERALL</div>
+    </div>
+  </div>
+
+  <!-- Timeline -->
+  <div class="roadmap-timeline">
+    {% for phase in phases %}
+    <div class="roadmap-phase roadmap-phase--{{ phase.status }}">
+
+      <!-- Timeline connector -->
+      <div class="roadmap-connector">
+        <div class="roadmap-dot">
+          {% if phase.status == 'complete' %}
+            <i class="bi bi-check-lg"></i>
+          {% elif phase.status == 'active' %}
+            <i class="bi bi-play-fill"></i>
+          {% else %}
+            <span class="roadmap-dot__number">{{ phase.id }}</span>
+          {% endif %}
+        </div>
+        {% if not loop.last %}
+        <div class="roadmap-line"></div>
+        {% endif %}
+      </div>
+
+      <!-- Phase card -->
+      <div class="roadmap-card">
+        <div class="roadmap-card__header">
+          <div class="roadmap-card__title-row">
+            <h3 class="roadmap-card__title">Phase {{ phase.id }}: {{ phase.name }}</h3>
+            <span class="roadmap-badge roadmap-badge--{{ phase.status }}">
+              {% if phase.status == 'complete' %}Complete
+              {% elif phase.status == 'active' %}In Progress
+              {% elif phase.status == 'upcoming' %}Up Next
+              {% else %}Planned
+              {% endif %}
+            </span>
+          </div>
+          <span class="roadmap-card__timeframe">{{ phase.timeframe }}</span>
+        </div>
+
+        <!-- Progress bar -->
+        <progress class="roadmap-progress roadmap-progress--{{ phase.status }}" value="{{ phase.progress }}" max="100">{{ phase.progress }}%</progress>
+        <div class="roadmap-progress__label">{{ phase.progress }}% complete</div>
+
+        <p class="roadmap-card__desc">{{ phase.description }}</p>
+
+        <!-- Deliverables -->
+        <ul class="roadmap-items">
+          {%- for item in phase['items'] %}
+          <li class="roadmap-item {{ 'roadmap-item--done' if item['done'] else '' }}">
+            <i class="bi {{ 'bi-check-circle-fill' if item['done'] else 'bi-circle' }}"></i>
+            <span>{{ item['text'] }}</span>
+          </li>
+          {%- endfor %}
+        </ul>
+      </div>
+
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Footer note -->
+  <div class="roadmap-footer-note">
+    <i class="bi bi-info-circle"></i>
+    Last updated {{ today.strftime('%B %d, %Y') }}. For the detailed internal plan, see the
+    <a href="https://github.com" target="_blank" rel="noopener">PAM Internal Roadmap</a> doc.
+    </div>
+
+</div>
+{% endblock %}
