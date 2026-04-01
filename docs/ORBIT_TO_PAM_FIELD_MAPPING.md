@@ -1,7 +1,8 @@
 # ORBIT → PAM Field Mapping Reference
 
-> **Last Updated**: January 21, 2026  
-> **Source**: `dbo.ORBIT_Reporting_Table` (Microsoft Fabric)  
+> **Last Updated**: March 17, 2026  
+> **Primary Source**: `[PAM].[OrbitPromoExtract_stg]` (SQL Server staging table)  
+> **Fallback Source**: `dbo.ORBIT_Reporting_Table` (Microsoft Fabric)  
 > **Destination**: PAM PromoQuality Database
 
 ---

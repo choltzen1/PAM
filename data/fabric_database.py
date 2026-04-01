@@ -1,170 +1,183 @@
 """Microsoft Fabric Data Warehouse manager for ORBIT data.
 
-Provides read access to ORBIT_Reporting_Table in Microsoft Fabric using 
-Service Principal authentication. Designed to be a drop-in replacement for
-orbit_database.py with the same interface.
+Provides read access to ORBIT_Reporting_Table in Microsoft Fabric using
+dual authentication:
+  - Managed Identity (Azure App Service) — preferred in production
+  - Service Principal (local development) — fallback
 
-Key Features:
-- OAuth token-based authentication (Service Principal)
-- Token caching (~1 hour validity)
-- Thread-safe connection management
-- Same query interface as OrbitDatabaseManager
-- Query result caching (survives transient Fabric outages)
-- Circuit breaker (avoids hammering a dead connection)
+Resilience features:
+  - Persistent connection reused across queries (fast path: ~0s overhead)
+  - Connection auto-expires after 5 minutes to avoid Fabric staleness
+  - Health check uses a thread-based hard timeout (never hangs Flask)
+  - Token caching (~50 min, tokens valid ~60 min)
+  - Query result cache: serves stale data when Fabric is temporarily down
+  - Circuit breaker: stops retrying a dead connection for a cooldown period
+  - Automatic retry with backoff on transient connection failures
+  - All timeouts enforced via daemon threads (ODBC driver can never block)
+  - No nested locks — token lock, connection lock, cache lock are independent
 """
 from __future__ import annotations
 from typing import Any, Dict, List, Optional
 import os
+import hashlib
 import struct
 import time
-import hashlib
-import json
 import logging
 from datetime import datetime, timedelta
-from threading import Lock
+from threading import Lock, Thread
 from dotenv import load_dotenv, find_dotenv
-from functools import wraps
 
 logger = logging.getLogger(__name__)
 
+# ── Tuning constants ───────────────────────────────────────────────────
+_CONN_MAX_AGE = 300              # seconds before forcing reconnect
+_CONNECT_HARD_TIMEOUT = 15       # per-attempt timeout (seconds)
+_HEALTH_CHECK_TIMEOUT = 5        # SELECT 1 timeout (seconds)
+_MAX_CONNECT_ATTEMPTS = 3        # retries per connection cycle
+_RETRY_BACKOFF = [0.5, 1.0]     # sleep between retries (seconds)
 
-# ── Query result cache (module-level, survives across requests) ────────────
-_query_cache: Dict[str, Dict] = {}        # key -> {"data": ..., "ts": datetime}
+# ── Query result cache (module-level, survives across requests) ────────
+_query_cache: Dict[str, Dict] = {}
 _query_cache_lock = Lock()
-QUERY_CACHE_TTL_MINUTES = 30              # serve stale data up to 30 min
+_QUERY_CACHE_TTL = 30            # minutes — serve stale data up to this long
+_QUERY_CACHE_MAX_ENTRIES = 500   # cap cache size to prevent memory bloat
+
 
 def _cache_key(method: str, *args) -> str:
-    """Build a deterministic cache key from method name + arguments."""
     raw = f"{method}:" + "|".join(str(a) for a in args)
     return hashlib.md5(raw.encode()).hexdigest()
 
+
 def _cache_get(key: str):
-    """Return cached data if fresh enough, else None."""
     with _query_cache_lock:
         entry = _query_cache.get(key)
-        if entry and datetime.now() < entry["ts"] + timedelta(minutes=QUERY_CACHE_TTL_MINUTES):
+        if entry and datetime.now() < entry["ts"] + timedelta(minutes=_QUERY_CACHE_TTL):
             return entry["data"]
     return None
 
+
 def _cache_set(key: str, data):
-    """Store data in the query cache."""
     with _query_cache_lock:
+        # Evict oldest entries if cache is too large
+        if len(_query_cache) >= _QUERY_CACHE_MAX_ENTRIES:
+            oldest_key = min(_query_cache, key=lambda k: _query_cache[k]["ts"])
+            del _query_cache[oldest_key]
         _query_cache[key] = {"data": data, "ts": datetime.now()}
 
 
+def _is_azure() -> bool:
+    """Detect if running on Azure App Service."""
+    return os.getenv('WEBSITE_INSTANCE_ID') is not None
+
+
 class FabricDatabaseManager:
-    """Manages Microsoft Fabric Data Warehouse connections for ORBIT data.
-    
-    Resilience features:
-    - Circuit breaker: if connection fails, skip retries for a cooldown period
-    - Query cache: successful results are cached and served when Fabric is down
-    - Short timeouts: web-friendly (15s connect, not 60s)
-    - Retry with backoff: 2 retries with 2s, 5s delays
+    """Manages a persistent connection to Microsoft Fabric Data Warehouse.
+
+    Authentication strategy (automatic):
+      1. Azure App Service → Managed Identity (zero-secret, auto-rotated)
+      2. Local development → Service Principal (from .env)
+      3. Fallback → DefaultAzureCredential (covers edge cases)
+
+    The connection is reused across queries for performance.  If it goes
+    stale, times out, or is older than _CONN_MAX_AGE, it is transparently
+    replaced.  All timeouts are enforced from Python (via daemon threads)
+    so Flask never hangs.
     """
-    
-    # Class-level token cache (shared across instances)
+
+    # Class-level token cache (shared across instances / threads)
     _cached_token = None
     _token_expiry = None
     _token_lock = Lock()
-    
-    # Class-level persistent connection (shared across instances)
-    _connection = None
-    _connection_lock = Lock()
-    _connection_last_used = None
 
-    # ── Circuit breaker state (class-level) ─────────────────────────
-    _circuit_open = False          # True = skip connection attempts
-    _circuit_opened_at = None      # When the circuit was tripped
-    _circuit_fail_count = 0        # Consecutive failures
+    # Circuit breaker — avoid hammering Fabric when it's down
+    _circuit_open = False
+    _circuit_opened_at = None
+    _circuit_fail_count = 0
     _circuit_lock = Lock()
-    CIRCUIT_COOLDOWN_SECONDS = 120  # Wait 2 min before retrying after failure
-    CIRCUIT_FAIL_THRESHOLD = 2     # Trip after 2 consecutive failures
-    
+    _CIRCUIT_COOLDOWN = 120   # seconds before retrying after trip
+    _CIRCUIT_THRESHOLD = 2    # consecutive failures to trip
+
     def __init__(self):
-        """Initialize Fabric connection parameters from environment"""
-        # Load environment variables
+        """Initialize Fabric connection parameters from environment."""
         try:
             env_path = find_dotenv()
             if env_path:
                 load_dotenv(env_path)
         except Exception:
             pass
-        
-        # Service Principal credentials
+
         self.tenant_id = os.getenv('FABRIC_TENANT_ID')
         self.client_id = os.getenv('FABRIC_CLIENT_ID')
         self.client_secret = os.getenv('FABRIC_CLIENT_SECRET')
-        
-        # Fabric Data Warehouse connection details
         self.server = os.getenv('FABRIC_SERVER')
         self.database = os.getenv('FABRIC_DATABASE')
         self.port = '1433'
         self.driver = 'ODBC Driver 18 for SQL Server'
         self.ssl_verify = (os.getenv('FABRIC_SSL_VERIFY') or 'false').strip().lower() in {'1', 'true', 'yes'}
-        
-        # ORBIT table name in Fabric
         self.table = 'dbo.ORBIT_Reporting_Table'
         self.auth_mode = (os.getenv('FABRIC_AUTH_MODE') or 'auto').strip().lower()
-        
-        # Error tracking
         self._last_error = None
+        self._last_auth_method = None
         self._used_connection_string = None
-        
-        # Validate required credentials
-        if not all([self.tenant_id, self.client_id, self.client_secret, self.server, self.database]):
-            missing = []
-            if not self.tenant_id: missing.append('FABRIC_TENANT_ID')
-            if not self.client_id: missing.append('FABRIC_CLIENT_ID')
-            if not self.client_secret: missing.append('FABRIC_CLIENT_SECRET')
-            if not self.server: missing.append('FABRIC_SERVER')
-            if not self.database: missing.append('FABRIC_DATABASE')
-            logger.warning(f"Fabric credentials incomplete. Missing: {', '.join(missing)}")
-    
+
+        # Persistent connection state (protected by _conn_lock)
+        self._connection = None
+        self._conn_created_at = None
+        self._conn_lock = Lock()
+
+        # Log configuration state
+        if not self.server or not self.database:
+            missing = [v for v, val in {
+                'FABRIC_SERVER': self.server,
+                'FABRIC_DATABASE': self.database,
+            }.items() if not val]
+            logger.warning(f"Fabric config incomplete. Missing: {', '.join(missing)}")
+        else:
+            logger.info(f"FabricDatabaseManager initialized "
+                        f"(azure={_is_azure()}, server={self.server[:30]}...)")
+
+    # ── Authentication ───────────────────────────────────────────────
+
     def _get_access_token(self) -> Optional[bytes]:
-        """Get OAuth access token for Fabric, with caching
-        
-        Supports multiple authentication methods:
-        1. Managed Identity (preferred for Azure App Service)
-        2. Service Principal with client secret (fallback for local dev)
-        
-        Returns:
-            Token struct bytes for pyodbc, or None if authentication fails
+        """Get OAuth access token for Fabric, with caching.
+
+        Auth priority:
+          1. Managed Identity (on Azure App Service — no secrets needed)
+          2. Service Principal (local dev — uses .env credentials)
+          3. DefaultAzureCredential (covers Azure CLI, VS Code, etc.)
+
+        Returns token struct bytes for pyodbc, or None on failure.
+        Uses its own lock — never called while holding _conn_lock.
         """
         with self._token_lock:
-            # Check if cached token is still valid
-            if self._cached_token and self._token_expiry:
-                if datetime.now() < self._token_expiry:
-                    logger.debug("Using cached Fabric access token")
-                    return self._cached_token
-            
-            # Need to get a new token
+            if (self._cached_token and self._token_expiry
+                    and datetime.now() < self._token_expiry):
+                return self._cached_token
+
             try:
-                from azure.identity import DefaultAzureCredential, ClientSecretCredential, ManagedIdentityCredential
-                
-                # Disable SSL verification for corporate networks (local dev)
-                os.environ['REQUESTS_CA_BUNDLE'] = ''
-                os.environ['CURL_CA_BUNDLE'] = ''
-                
+                # Disable SSL verification for corporate proxy environments
+                os.environ.setdefault('REQUESTS_CA_BUNDLE', '')
+                os.environ.setdefault('CURL_CA_BUNDLE', '')
+
                 credential = None
-                auth_method = "Unknown"
-                
-                # Check if running on Azure (WEBSITE_INSTANCE_ID is set on Azure App Service)
-                is_azure = os.getenv('WEBSITE_INSTANCE_ID') is not None
+                scope = "https://database.windows.net/.default"
+                auth_method = "unknown"
 
-                # Mode: default -> mimic C# pattern (DefaultAzureCredential first)
                 if self.auth_mode == 'default':
+                    from azure.identity import DefaultAzureCredential
                     logger.info("Authenticating with Fabric using DefaultAzureCredential (FABRIC_AUTH_MODE=default)")
-                    credential = DefaultAzureCredential(connection_verify=self.ssl_verify)
+                    credential = DefaultAzureCredential(
+                        exclude_interactive_browser_credential=True,
+                        connection_verify=self.ssl_verify,
+                    )
                     auth_method = "DefaultAzureCredential"
-
-                # Mode: managed_identity -> force MI
                 elif self.auth_mode == 'managed_identity':
+                    from azure.identity import ManagedIdentityCredential
                     logger.info("Authenticating with Fabric using Managed Identity (FABRIC_AUTH_MODE=managed_identity)")
                     credential = ManagedIdentityCredential(connection_verify=self.ssl_verify)
                     auth_method = "Managed Identity"
-
-                # Mode: service_principal -> force client secret flow
                 elif self.auth_mode == 'service_principal':
+                    from azure.identity import ClientSecretCredential
                     logger.info("Authenticating with Fabric using Service Principal (FABRIC_AUTH_MODE=service_principal)")
                     credential = ClientSecretCredential(
                         tenant_id=self.tenant_id,
@@ -173,161 +186,223 @@ class FabricDatabaseManager:
                         connection_verify=self.ssl_verify,
                     )
                     auth_method = "Service Principal"
-
-                # Mode: auto (default) -> MI on Azure, then SP, then DAC
                 else:
-                    if is_azure:
+                    if _is_azure():
                         try:
+                            from azure.identity import ManagedIdentityCredential
                             logger.info("Detected Azure environment, trying Managed Identity...")
-                            credential = ManagedIdentityCredential(connection_verify=self.ssl_verify)
-                            credential.get_token("https://database.windows.net/.default")
+                            candidate = ManagedIdentityCredential(connection_verify=self.ssl_verify)
+                            candidate.get_token(scope)
+                            credential = candidate
                             auth_method = "Managed Identity"
-                            logger.info("✅ Using Managed Identity authentication")
+                            logger.info("Managed Identity authentication OK")
                         except Exception as mi_err:
-                            logger.warning(f"Managed Identity failed: {mi_err}, falling back to Service Principal")
+                            logger.warning(f"Managed Identity failed: {mi_err}, falling back to other auth methods")
                             credential = None
 
                     if credential is None and self.client_id and self.client_secret:
-                        logger.info("Authenticating with Fabric using Service Principal...")
-                        credential = ClientSecretCredential(
-                            tenant_id=self.tenant_id,
-                            client_id=self.client_id,
-                            client_secret=self.client_secret,
-                            connection_verify=self.ssl_verify,
-                        )
-                        auth_method = "Service Principal"
+                        try:
+                            from azure.identity import ClientSecretCredential
+                            logger.info("Authenticating with Fabric using Service Principal...")
+                            credential = ClientSecretCredential(
+                                tenant_id=self.tenant_id,
+                                client_id=self.client_id,
+                                client_secret=self.client_secret,
+                                connection_verify=self.ssl_verify,
+                            )
+                            auth_method = "Service Principal"
+                        except Exception as sp_err:
+                            logger.warning(f"Service Principal init failed: {sp_err}")
+                            credential = None
 
                     if credential is None:
+                        from azure.identity import DefaultAzureCredential
                         logger.info("Trying DefaultAzureCredential...")
-                        credential = DefaultAzureCredential(connection_verify=self.ssl_verify)
+                        credential = DefaultAzureCredential(
+                            exclude_interactive_browser_credential=True,
+                            connection_verify=self.ssl_verify,
+                        )
                         auth_method = "DefaultAzureCredential"
-                
-                # Get token for SQL Database scope
-                token = credential.get_token("https://database.windows.net/.default")
-                
-                # Convert to pyodbc format
+
+                token = credential.get_token(scope)
                 token_bytes = token.token.encode('utf-16-le')
-                token_struct = struct.pack(f'<I{len(token_bytes)}s', len(token_bytes), token_bytes)
-                
-                # Cache the token (expires in ~1 hour, cache for 50 minutes to be safe)
+                token_struct = struct.pack(
+                    f'<I{len(token_bytes)}s', len(token_bytes), token_bytes
+                )
+
                 self._cached_token = token_struct
                 self._token_expiry = datetime.now() + timedelta(minutes=50)
-                
-                logger.info(f"✅ Successfully obtained Fabric access token via {auth_method}")
+                self._last_auth_method = auth_method
+                logger.info(f"Fabric token acquired via {auth_method}")
                 return token_struct
-                
-            except Exception as e:
-                logger.error(f"Failed to obtain Fabric access token: {e}")
-                self._last_error = str(e)
-                return None
-    
-    def _get_connection(self, _retry_count=0):
-        """Get or establish persistent connection to Fabric Data Warehouse.
-        
-        Includes circuit breaker + retry logic with exponential backoff.
-        Timeouts are web-friendly (15s connect) so pages don't hang.
-        
-        Returns:
-            pyodbc connection object or None
-        """
-        MAX_RETRIES = 2
-        RETRY_DELAYS = [2, 5]  # seconds between retries
 
-        # ── Circuit breaker check ──────────────────────────────────
-        with self._circuit_lock:
-            if self._circuit_open:
-                elapsed = (datetime.now() - self._circuit_opened_at).total_seconds() if self._circuit_opened_at else 999
-                if elapsed < self.CIRCUIT_COOLDOWN_SECONDS:
-                    logger.warning(f"Circuit breaker OPEN – skipping Fabric connection ({int(self.CIRCUIT_COOLDOWN_SECONDS - elapsed)}s until retry)")
-                    return None
-                else:
-                    logger.info("Circuit breaker cooldown expired – attempting reconnection")
-                    self._circuit_open = False
-                    self._circuit_fail_count = 0
-        
-        with self._connection_lock:
-            # Check if connection exists and is alive
-            if self._connection:
-                try:
-                    cursor = self._connection.cursor()
-                    cursor.execute("SELECT 1")
-                    cursor.close()
-                    self._connection_last_used = datetime.now()
-                    # Reset circuit breaker on success
-                    with self._circuit_lock:
-                        self._circuit_fail_count = 0
-                        self._circuit_open = False
-                    return self._connection
-                except Exception:
-                    logger.warning("Existing Fabric connection is dead, recreating...")
-                    try:
-                        self._connection.close()
-                    except:
-                        pass
-                    self._connection = None
-            
-            # Create new persistent connection with retries
-            import pyodbc
-            
-            # Get access token (force refresh if this is a retry)
-            if _retry_count > 0:
-                self._cached_token = None
-                self._token_expiry = None
-            
-            token_struct = self._get_access_token()
-            if not token_struct:
-                return None
-            
-            connection_string = (
-                f"DRIVER={{{self.driver}}};"
-                f"SERVER={self.server},{self.port};"
-                f"DATABASE={self.database};"
-                f"Encrypt=yes;"
-                f"TrustServerCertificate=yes;"
-                f"Connection Timeout=15;"
-                f"Login Timeout=15;"
-            )
-            self._used_connection_string = connection_string
-            
-            attempt = _retry_count + 1
-            logger.info(f"Connecting to Fabric (attempt {attempt}/{MAX_RETRIES + 1}): {self.server}")
-            
-            try:
-                self._connection = pyodbc.connect(
-                    connection_string,
-                    attrs_before={1256: token_struct}  # SQL_COPT_SS_ACCESS_TOKEN
-                )
-                
-                self._connection_last_used = datetime.now()
-                logger.info("✅ Established persistent Fabric Data Warehouse connection")
-                # Reset circuit breaker on success
-                with self._circuit_lock:
-                    self._circuit_fail_count = 0
-                    self._circuit_open = False
-                return self._connection
-                
             except Exception as e:
+                logger.error(f"Fabric token acquisition failed: {e}")
                 self._last_error = str(e)
-                if _retry_count < MAX_RETRIES:
-                    delay = RETRY_DELAYS[_retry_count]
-                    logger.warning(f"Fabric connection attempt {attempt} failed: {e}. Retrying in {delay}s...")
-                    time.sleep(delay)
-                    self._connection = None
-                # Release lock before recursive retry
-        
-        # Retry outside the lock
-        if _retry_count < MAX_RETRIES:
-            return self._get_connection(_retry_count=_retry_count + 1)
-        
-        # All retries exhausted – trip the circuit breaker
+                return None
+
+    # ── Connection management ───────────────────────────────────────
+
+    def _kill_connection(self):
+        """Silently close the persistent connection.
+        Caller must already hold _conn_lock or be in a safe context."""
+        if self._connection:
+            try:
+                self._connection.close()
+            except Exception:
+                pass
+        self._connection = None
+        self._conn_created_at = None
+
+    def _is_connection_fresh(self) -> bool:
+        """True if the persistent connection exists and is not expired."""
+        if not self._connection or not self._conn_created_at:
+            return False
+        age = (datetime.now() - self._conn_created_at).total_seconds()
+        return age < _CONN_MAX_AGE
+
+    def _health_check(self) -> bool:
+        """Run SELECT 1 with a hard timeout via daemon thread.
+        Never blocks longer than _HEALTH_CHECK_TIMEOUT seconds."""
+        if not self._connection:
+            return False
+
+        ok = [False]
+
+        def _ping():
+            try:
+                cursor = self._connection.cursor()
+                cursor.execute("SELECT 1")
+                cursor.fetchone()
+                cursor.close()
+                ok[0] = True
+            except Exception:
+                pass
+
+        t = Thread(target=_ping, daemon=True)
+        t.start()
+        t.join(timeout=_HEALTH_CHECK_TIMEOUT)
+        return ok[0]
+
+    def _circuit_check(self) -> bool:
+        """Return True if we should attempt a connection."""
+        with self._circuit_lock:
+            if not self._circuit_open:
+                return True
+            elapsed = (datetime.now() - self._circuit_opened_at).total_seconds() \
+                if self._circuit_opened_at else 999
+            if elapsed >= self._CIRCUIT_COOLDOWN:
+                logger.info("Circuit breaker cooldown elapsed — retrying Fabric")
+                self._circuit_open = False
+                self._circuit_fail_count = 0
+                return True
+            logger.warning(
+                f"Circuit breaker OPEN — skipping Fabric "
+                f"({int(self._CIRCUIT_COOLDOWN - elapsed)}s until retry)"
+            )
+            return False
+
+    def _circuit_record_success(self):
+        with self._circuit_lock:
+            self._circuit_fail_count = 0
+            self._circuit_open = False
+
+    def _circuit_record_failure(self):
         with self._circuit_lock:
             self._circuit_fail_count += 1
-            if self._circuit_fail_count >= self.CIRCUIT_FAIL_THRESHOLD:
+            if self._circuit_fail_count >= self._CIRCUIT_THRESHOLD:
                 self._circuit_open = True
                 self._circuit_opened_at = datetime.now()
-                logger.error(f"Circuit breaker TRIPPED – Fabric unreachable. Cooling down for {self.CIRCUIT_COOLDOWN_SECONDS}s")
-        
-        logger.error(f"Failed to connect to Fabric after {MAX_RETRIES + 1} attempts: {self._last_error}")
+                logger.error(
+                    f"Circuit breaker TRIPPED after "
+                    f"{self._circuit_fail_count} consecutive failures"
+                )
+
+    def _build_connection_string(self) -> str:
+        """Build the ODBC connection string.
+        Uses TrustServerCertificate=no on Azure (proper CA certs available),
+        TrustServerCertificate=yes locally (corporate proxy may intercept TLS).
+        """
+        trust_cert = "no" if _is_azure() else "yes"
+        return (
+            f"DRIVER={{{self.driver}}};"
+            f"SERVER={self.server},{self.port};"
+            f"DATABASE={self.database};"
+            f"Encrypt=yes;"
+            f"TrustServerCertificate={trust_cert};"
+            f"Connection Timeout={_CONNECT_HARD_TIMEOUT};"
+            f"Login Timeout={_CONNECT_HARD_TIMEOUT};"
+        )
+
+    def _open_connection(self):
+        """Open a new pyodbc connection to Fabric with retry + hard timeout.
+
+        Each attempt is capped at _CONNECT_HARD_TIMEOUT seconds via a daemon
+        thread so we never block Flask.  Respects circuit breaker state.
+        On success, resets the circuit breaker.
+        On total failure, trips the circuit breaker.
+        """
+        if not self._circuit_check():
+            return None
+
+        import pyodbc
+
+        token_struct = self._get_access_token()
+        if not token_struct:
+            self._circuit_record_failure()
+            return None
+
+        connection_string = self._build_connection_string()
+        self._used_connection_string = connection_string
+
+        for attempt in range(1, _MAX_CONNECT_ATTEMPTS + 1):
+            result = [None]
+            error = [None]
+
+            def _try_connect():
+                try:
+                    result[0] = pyodbc.connect(
+                        connection_string,
+                        attrs_before={1256: token_struct},
+                        timeout=_CONNECT_HARD_TIMEOUT,
+                    )
+                except Exception as e:
+                    error[0] = e
+
+            start = time.time()
+            t = Thread(target=_try_connect, daemon=True)
+            t.start()
+            t.join(timeout=_CONNECT_HARD_TIMEOUT)
+            elapsed = time.time() - start
+
+            if result[0] is not None:
+                logger.info(
+                    f"Fabric connected in {elapsed:.1f}s "
+                    f"(attempt {attempt}, auth={self._last_auth_method})"
+                )
+                self._circuit_record_success()
+                return result[0]
+
+            if t.is_alive():
+                logger.warning(
+                    f"Fabric connect attempt {attempt}/{_MAX_CONNECT_ATTEMPTS} "
+                    f"hard-timed-out after {elapsed:.1f}s"
+                )
+                self._last_error = "Connection timed out (hard limit)"
+            else:
+                logger.warning(
+                    f"Fabric connect attempt {attempt}/{_MAX_CONNECT_ATTEMPTS} "
+                    f"failed after {elapsed:.1f}s: {error[0]}"
+                )
+                self._last_error = str(error[0])
+
+            # Backoff before retry
+            if attempt < _MAX_CONNECT_ATTEMPTS:
+                backoff = _RETRY_BACKOFF[min(attempt - 1, len(_RETRY_BACKOFF) - 1)]
+                time.sleep(backoff)
+
+        # All attempts exhausted — on second failure cycle, trip the breaker
+        self._circuit_record_failure()
         return None
 
     def execute_select(self, sql: str, params: Optional[List[Any]] = None, limit: int = 1000) -> List[Dict[str, Any]]:
@@ -363,300 +438,221 @@ class FabricDatabaseManager:
             return [dict(zip(columns, row)) for row in rows]
         finally:
             cursor.close()
-    
-    def search_by_promo_code(self, promo_code: str) -> Optional[Dict[str, Any]]:
-        """Search for a promotion by promo code (cached).
-        
-        Args:
-            promo_code: The promotion code to search for
-            
-        Returns:
-            Dictionary of promotion data or None if not found
-        """
-        key = _cache_key("search_by_promo_code", promo_code)
-        cached = _cache_get(key)
-        if cached is not None:
-            logger.debug(f"Cache HIT for promo code {promo_code}")
-            return cached
 
-        conn = self._get_connection()
-        if not conn:
-            # Fabric is down – return stale cache if available
-            with _query_cache_lock:
-                entry = _query_cache.get(key)
-                if entry:
-                    logger.warning(f"Fabric down – serving STALE cache for promo code {promo_code}")
-                    return entry["data"]
-            return None
-        
-        try:
-            cursor = conn.cursor()
-            query = f"SELECT * FROM {self.table} WHERE crffc_promocodeid = ?"
-            cursor.execute(query, (promo_code,))
-            
-            row = cursor.fetchone()
-            if not row:
-                cursor.close()
-                _cache_set(key, None)
-                return None
-            
-            # Convert row to dictionary
-            columns = [column[0] for column in cursor.description]
-            result = dict(zip(columns, row))
-            
-            cursor.close()
-            _cache_set(key, result)
-            return result
-            
-        except Exception as e:
-            logger.error(f"Error searching for promo code {promo_code}: {e}")
-            self._last_error = str(e)
-            return None
-    
-    def search_by_gtm_id(self, gtm_id: str) -> Optional[Dict[str, Any]]:
-        """Search for a promotion by GTM Entry ID (GUID) or Legacy GTM ID (number). Cached.
-        
-        Args:
-            gtm_id: The GTM Entry ID (GUID) or Legacy GTM ID (number) to search for
-            
-        Returns:
-            Dictionary of promotion data or None if not found
-        """
-        key = _cache_key("search_by_gtm_id", gtm_id)
-        cached = _cache_get(key)
-        if cached is not None:
-            logger.debug(f"Cache HIT for GTM ID {gtm_id}")
-            return cached
+    def _get_connection(self):
+        """Get a healthy persistent connection, creating one if needed.
 
-        conn = self._get_connection()
-        if not conn:
-            with _query_cache_lock:
-                entry = _query_cache.get(key)
-                if entry:
-                    logger.warning(f"Fabric down – serving STALE cache for GTM ID {gtm_id}")
-                    return entry["data"]
-            return None
-        
-        try:
-            cursor = conn.cursor()
-            
-            # Try to determine if this is a legacy ID (numeric) or GUID
-            # Legacy IDs are typically 5-6 digit numbers
-            gtm_str = str(gtm_id).strip()
-            
-            # JOIN with Promotion_Details to get promo owner info
-            # Use LEFT JOIN so we still get results even if no promo code assigned
-            if gtm_str.isdigit():
-                # Search by legacy GTM ID
-                query = f"""
-                    SELECT o.*, 
-                           pd.crffc_promoowner, 
-                           pd.crffc_promoowneremail
-                    FROM {self.table} o
-                    LEFT JOIN dbo.Promotion_Details pd ON o.cat_gtmentryid = pd.crffc_gtmentryrecord
-                    WHERE o.cat_legacygtmentryid = ?
-                """
-                cursor.execute(query, (int(gtm_str),))
+        This is the ONLY method that touches _conn_lock.
+        Lock is held briefly — just for the health check and swap.
+        The expensive _open_connection() call happens OUTSIDE the lock.
+        """
+        with self._conn_lock:
+            if self._is_connection_fresh():
+                if self._health_check():
+                    return self._connection
+                logger.warning("Fabric persistent connection failed health check")
+                self._kill_connection()
+            elif self._connection:
+                logger.info("Fabric persistent connection expired, reconnecting")
+                self._kill_connection()
+
+        # Slow path: open new connection (outside lock)
+        new_conn = self._open_connection()
+
+        with self._conn_lock:
+            if new_conn:
+                # Race condition guard: if another thread reconnected, use theirs
+                if self._connection and self._is_connection_fresh():
+                    try:
+                        new_conn.close()
+                    except Exception:
+                        pass
+                    return self._connection
+
+                self._kill_connection()
+                self._connection = new_conn
+                self._conn_created_at = datetime.now()
+                return self._connection
             else:
-                # Search by GTM Entry ID (GUID)
-                query = f"""
-                    SELECT o.*, 
-                           pd.crffc_promoowner, 
-                           pd.crffc_promoowneremail
-                    FROM {self.table} o
-                    LEFT JOIN dbo.Promotion_Details pd ON o.cat_gtmentryid = pd.crffc_gtmentryrecord
-                    WHERE o.cat_gtmentryid = ?
-                """
-                cursor.execute(query, (gtm_str,))
-            
-            row = cursor.fetchone()
-            if not row:
-                cursor.close()
-                _cache_set(key, None)
                 return None
-            
-            columns = [column[0] for column in cursor.description]
-            result = dict(zip(columns, row))
-            
-            cursor.close()
-            _cache_set(key, result)
-            return result
-            
-        except Exception as e:
-            logger.error(f"Error searching for GTM ID {gtm_id}: {e}")
-            self._last_error = str(e)
-            return None
-    
-    def get_all_promotions(self, limit: Optional[int] = None) -> List[Dict[str, Any]]:
-        """Get all promotions from Fabric (cached).
-        
-        Args:
-            limit: Optional limit on number of results
-            
+
+    # ── Query execution ────────────────────────────────────────────
+
+    def _execute_query(self, query: str, params: tuple = (),
+                       *, fetchone: bool = False, cache_tag: str = ""):
+        """Execute a query on the persistent connection, return results.
+
         Returns:
-            List of promotion dictionaries
+          - If fetchone=True:  dict | None
+          - If fetchone=False: list[dict]
+        On any error, kills the connection so next call will reconnect.
+        Results are cached — if Fabric is down, stale data is served.
         """
-        key = _cache_key("get_all_promotions", limit)
-        cached = _cache_get(key)
-        if cached is not None:
-            return cached
+        ck = _cache_key(cache_tag or query, *params) \
+            if (cache_tag or params) else _cache_key(query)
 
         conn = self._get_connection()
         if not conn:
-            with _query_cache_lock:
-                entry = _query_cache.get(key)
-                if entry:
-                    logger.warning("Fabric down – serving STALE cache for get_all_promotions")
-                    return entry["data"]
-            return []
-        
-        try:
-            cursor = conn.cursor()
-            
-            if limit:
-                query = f"SELECT TOP {limit} * FROM {self.table} ORDER BY modifiedon DESC"
-            else:
-                query = f"SELECT * FROM {self.table} ORDER BY modifiedon DESC"
-            
-            cursor.execute(query)
-            
-            columns = [column[0] for column in cursor.description]
-            results = []
-            
-            for row in cursor.fetchall():
-                results.append(dict(zip(columns, row)))
-            
-            cursor.close()
-            
-            logger.info(f"Retrieved {len(results)} promotions from Fabric")
-            _cache_set(key, results)
-            return results
-            
-        except Exception as e:
-            logger.error(f"Error getting all promotions: {e}")
-            self._last_error = str(e)
-            return []
-    
-    def search_promotions(self, 
-                         search_term: Optional[str] = None,
-                         start_date: Optional[str] = None,
-                         end_date: Optional[str] = None,
-                         limit: int = 100) -> List[Dict[str, Any]]:
-        """Search promotions with optional filters (cached).
-        
-        Args:
-            search_term: Search in initiative name or promo code
-            start_date: Filter by start date (YYYY-MM-DD)
-            end_date: Filter by end date (YYYY-MM-DD)
-            limit: Maximum number of results
-            
-        Returns:
-            List of matching promotion dictionaries
-        """
-        key = _cache_key("search_promotions", search_term, start_date, end_date, limit)
-        cached = _cache_get(key)
-        if cached is not None:
-            return cached
+            cached = _cache_get(ck)
+            if cached is not None:
+                logger.info("Fabric unavailable — serving cached result")
+                return cached
+            return None if fetchone else []
 
-        conn = self._get_connection()
-        if not conn:
-            with _query_cache_lock:
-                entry = _query_cache.get(key)
-                if entry:
-                    logger.warning("Fabric down – serving STALE cache for search_promotions")
-                    return entry["data"]
-            return []
-        
         try:
             cursor = conn.cursor()
-            
-            # Build query with filters
-            where_clauses = []
-            params = []
-            
-            if search_term:
-                where_clauses.append("(cat_initiativename LIKE ? OR crffc_promocodeid LIKE ?)")
-                search_pattern = f"%{search_term}%"
-                params.extend([search_pattern, search_pattern])
-            
-            if start_date:
-                where_clauses.append("cat_startdate >= ?")
-                params.append(start_date)
-            
-            if end_date:
-                where_clauses.append("cat_enddate <= ?")
-                params.append(end_date)
-            
-            where_sql = " AND ".join(where_clauses) if where_clauses else "1=1"
-            query = f"SELECT TOP {limit} * FROM {self.table} WHERE {where_sql} ORDER BY modifiedon DESC"
-            
             cursor.execute(query, params)
-            
-            columns = [column[0] for column in cursor.description]
-            results = []
-            
-            for row in cursor.fetchall():
-                results.append(dict(zip(columns, row)))
-            
+            columns = [col[0] for col in cursor.description]
+
+            if fetchone:
+                row = cursor.fetchone()
+                result = dict(zip(columns, row)) if row else None
+            else:
+                result = [dict(zip(columns, r)) for r in cursor.fetchall()]
+
             cursor.close()
-            
-            logger.info(f"Search returned {len(results)} promotions")
-            _cache_set(key, results)
-            return results
-            
+
+            if result:
+                _cache_set(ck, result)
+
+            return result
+
         except Exception as e:
-            logger.error(f"Error searching promotions: {e}")
+            logger.error(f"Fabric query failed: {e}")
             self._last_error = str(e)
-            return []
-    
-    def test_connection(self) -> bool:
-        """Test the Fabric connection
-        
-        Returns:
-            True if connection successful, False otherwise
+            with self._conn_lock:
+                self._kill_connection()
+            cached = _cache_get(ck)
+            if cached is not None:
+                logger.info("Fabric query failed — serving cached result")
+                return cached
+            return None if fetchone else []
+
+    # ── Public API ─────────────────────────────────────────────────
+
+    def search_by_gtm_id(self, gtm_id: str) -> Optional[Dict[str, Any]]:
+        """Search by GTM Entry ID (GUID) or Legacy GTM ID (number).
+        JOINs Promotion_Details to get promo owner name & email.
         """
+        gtm_str = str(gtm_id).strip()
+
+        if gtm_str.isdigit():
+            query = f"""
+                SELECT o.*,
+                       pd.crffc_promoowner,
+                       pd.crffc_promoowneremail
+                FROM {self.table} o
+                LEFT JOIN dbo.Promotion_Details pd
+                    ON o.cat_gtmentryid = pd.crffc_gtmentryrecord
+                WHERE o.cat_legacygtmentryid = ?
+            """
+            params = (int(gtm_str),)
+        else:
+            query = f"""
+                SELECT o.*,
+                       pd.crffc_promoowner,
+                       pd.crffc_promoowneremail
+                FROM {self.table} o
+                LEFT JOIN dbo.Promotion_Details pd
+                    ON o.cat_gtmentryid = pd.crffc_gtmentryrecord
+                WHERE o.cat_gtmentryid = ?
+            """
+            params = (gtm_str,)
+
+        return self._execute_query(query, params, fetchone=True)
+
+    def search_by_promo_code(self, promo_code: str) -> Optional[Dict[str, Any]]:
+        """Search for a promotion by promo code."""
+        query = f"SELECT * FROM {self.table} WHERE crffc_promocodeid = ?"
+        return self._execute_query(query, (promo_code,), fetchone=True)
+
+    def get_all_promotions(self, limit: Optional[int] = None) -> List[Dict[str, Any]]:
+        """Get all promotions from Fabric."""
+        if limit:
+            query = f"SELECT TOP {int(limit)} * FROM {self.table} ORDER BY modifiedon DESC"
+        else:
+            query = f"SELECT * FROM {self.table} ORDER BY modifiedon DESC"
+        return self._execute_query(query)
+
+    def search_promotions(self,
+                          search_term: Optional[str] = None,
+                          start_date: Optional[str] = None,
+                          end_date: Optional[str] = None,
+                          limit: int = 100) -> List[Dict[str, Any]]:
+        """Search promotions with optional filters."""
+        where_clauses: list = []
+        params: list = []
+
+        if search_term:
+            where_clauses.append(
+                "(cat_initiativename LIKE ? OR crffc_promocodeid LIKE ?)"
+            )
+            pat = f"%{search_term}%"
+            params.extend([pat, pat])
+        if start_date:
+            where_clauses.append("cat_startdate >= ?")
+            params.append(start_date)
+        if end_date:
+            where_clauses.append("cat_enddate <= ?")
+            params.append(end_date)
+
+        where_sql = " AND ".join(where_clauses) if where_clauses else "1=1"
+        query = (
+            f"SELECT TOP {int(limit)} * FROM {self.table} "
+            f"WHERE {where_sql} ORDER BY modifiedon DESC"
+        )
+        return self._execute_query(query, tuple(params))
+
+    def test_connection(self) -> bool:
+        """Test the Fabric connection end-to-end."""
         conn = self._get_connection()
         if not conn:
             return False
-        
         try:
             cursor = conn.cursor()
             cursor.execute("SELECT @@VERSION")
             version = cursor.fetchone()
-            logger.info(f"Fabric connection test successful: {version[0][:50]}...")
+            logger.info(f"Fabric connection OK: {version[0][:60]}...")
             cursor.close()
             return True
         except Exception as e:
             logger.error(f"Fabric connection test failed: {e}")
             self._last_error = str(e)
+            with self._conn_lock:
+                self._kill_connection()
             return False
-    
+
     def get_last_error(self) -> Optional[str]:
-        """Get the last error message"""
+        """Get the last error message."""
         return self._last_error
 
     def get_status(self) -> Dict[str, Any]:
-        """Return a snapshot of connection health for debug endpoints."""
+        """Return a snapshot of connection health for monitoring/debug."""
         with self._circuit_lock:
             circuit_info = {
-                'circuit_open': self._circuit_open,
+                'open': self._circuit_open,
                 'fail_count': self._circuit_fail_count,
-                'opened_at': str(self._circuit_opened_at) if self._circuit_opened_at else None,
                 'cooldown_remaining': None,
             }
             if self._circuit_open and self._circuit_opened_at:
-                remaining = self.CIRCUIT_COOLDOWN_SECONDS - (datetime.now() - self._circuit_opened_at).total_seconds()
+                remaining = self._CIRCUIT_COOLDOWN - \
+                    (datetime.now() - self._circuit_opened_at).total_seconds()
                 circuit_info['cooldown_remaining'] = max(0, int(remaining))
 
         with _query_cache_lock:
             cache_info = {
-                'cached_queries': len(_query_cache),
-                'cache_ttl_minutes': QUERY_CACHE_TTL_MINUTES,
+                'entries': len(_query_cache),
+                'max_entries': _QUERY_CACHE_MAX_ENTRIES,
+                'ttl_minutes': _QUERY_CACHE_TTL,
             }
 
         return {
             'connected': self._connection is not None,
-            'last_used': str(self._connection_last_used) if self._connection_last_used else None,
+            'connection_age_s': int(
+                (datetime.now() - self._conn_created_at).total_seconds()
+            ) if self._conn_created_at else None,
+            'auth_method': self._last_auth_method,
+            'is_azure': _is_azure(),
             'last_error': self._last_error,
             'token_cached': self._cached_token is not None,
             'token_expires': str(self._token_expiry) if self._token_expiry else None,

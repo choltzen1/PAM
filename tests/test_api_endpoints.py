@@ -95,28 +95,73 @@ def test_search_orbit_not_found(client):
 
 def test_search_orbit_orbit_only_fallback(client, monkeypatch):
     target_orbit = 'ORB-NOCODE-1'
-    # Patch the DatabaseManager used inside PromoCodeWorkflow
-    import services.promo_code_workflow as wfmod
+    # Patch OrbitDatabaseManager at the service layer so we never hit real SQL/Fabric
+    from types import SimpleNamespace
+    import data.database as database_module
+    import services.promo_codes_service as svc_mod
 
-    class DummyDB(wfmod.DatabaseManager):  # type: ignore
-        def get_full_orbit_record_by_orbit_id(self, orbit_id: str):  # type: ignore
-            if orbit_id == target_orbit:
-                return {
-                    'orbit_id': orbit_id,
-                    'bill_facing_name': 'Orbit Only Initiative',
-                    'description': 'Pending promo code assignment',
-                    'owner': 'OrbitOwner',
-                    'promo_start_date': '2025-09-01',
-                    'promo_end_date': '2025-09-30'
-                }
+    class FakePamResult:
+        def fetchone(self):
             return None
-        def get_all_promotions_unified(self):  # ensure no existing mapping
-            return []
-        def get_dataframe(self, sql, params=None, retry_on_failure=True):  # Return empty DataFrame for duplicate check
-            import pandas as pd
-            return pd.DataFrame()
 
-    monkeypatch.setattr(wfmod, 'DatabaseManager', DummyDB)
+    class FakePamConnection:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, tb):
+            return False
+
+        def execute(self, sql, params):
+            return FakePamResult()
+
+    class FakePamEngine:
+        def connect(self):
+            return FakePamConnection()
+
+    class FakeDatabaseManager:
+        def __init__(self):
+            self.source_table = '[PAM].[PAM_Orbit_Data_Updated]'
+
+        def get_engine(self):
+            return FakePamEngine()
+
+    class FakeMappingsResult:
+        def mappings(self):
+            return self
+
+        def first(self):
+            return {
+                'orbit_id': target_orbit,
+                'bill_facing_name': 'Orbit Only Initiative',
+                'initiative_name': 'Orbit Only Initiative',
+                'cat_description': 'Pending promo code assignment',
+                'Owner': 'OrbitOwner',
+                'promo_start_date': '2025-09-01',
+                'promo_end_date': '2025-09-30',
+            }
+
+    class FakeOrbitConnection:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, tb):
+            return False
+
+        def execute(self, sql, params):
+            return FakeMappingsResult()
+
+    class FakeOrbitEngine:
+        def connect(self):
+            return FakeOrbitConnection()
+
+    class FakeOrbitManager:
+        def __init__(self):
+            self.table = '[PAM].[OrbitPromoExtract_stg]'
+            self.staging_table = '[PAM].[OrbitPromoExtract_stg]'
+            self._db = SimpleNamespace(get_engine=lambda: FakeOrbitEngine())
+
+    monkeypatch.setattr(database_module, 'DatabaseManager', FakeDatabaseManager)
+    monkeypatch.setattr(svc_mod, 'OrbitDatabaseManager', FakeOrbitManager)
     r = client.get(f'/api/search_orbit/{target_orbit}')
     assert r.status_code == 200
     js = r.get_json()
